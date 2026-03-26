@@ -942,6 +942,7 @@
     // Sign in
     document.getElementById('btn-sign-in').addEventListener('click', async () => {
       try {
+        await initAuth(); // ensure MSAL instance is ready
         await signIn();
         currentUser = getCurrentUser();
         if (currentUser) await loadDashboard();
