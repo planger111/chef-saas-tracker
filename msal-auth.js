@@ -4,14 +4,11 @@ let _msalInstance = null;
 let _account = null;
 
 function _getMsalConfig() {
-  // Build redirectUri from current page URL (strips query string and hash)
-  // This allows the same app to work from localhost AND GitHub Pages
-  const redirectUri = window.location.origin + window.location.pathname;
   return {
     auth: {
       clientId: CONFIG.clientId,
       authority: `https://login.microsoftonline.com/${CONFIG.tenantId}`,
-      redirectUri: redirectUri,
+      redirectUri: window.location.origin,
     },
     cache: {
       cacheLocation: "sessionStorage",
