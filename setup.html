@@ -3,233 +3,114 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Motion Tracker — One-Time Setup</title>
+  <title>Chef SaaS Tracker - Setup</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <div class="setup-container">
-    <h1 style="font-size:22px; font-weight:800; color:#0078d4; margin-bottom:16px;">⚙️ Motion Tracker — One-Time Setup</h1>
-
-    <div class="setup-warning">
-      ⚠️ <strong>Run this once only.</strong> It creates the SharePoint lists your app needs.
-      Running it a second time will attempt to create lists that already exist — Graph API will return errors for those, which is harmless.
-    </div>
-
+    <h1 style="font-size:22px;font-weight:800;color:#0078d4;margin-bottom:16px;">Chef SaaS Tracker - One-Time Setup</h1>
+    <div class="setup-warning">Run this once. Creates ChefSaaS/ folder in SharePoint Documents with seed data files. No special permissions needed.</div>
     <div id="section-signin">
-      <p style="margin-bottom:16px; color:#555; font-size:15px;">Sign in with your Progress account to get started.</p>
+      <p style="margin-bottom:16px;color:#555;font-size:15px;">Sign in with your Progress account to get started.</p>
       <button class="btn btn-primary" id="btn-sign-in">Sign in with Microsoft</button>
     </div>
-
     <div id="section-setup" style="display:none;">
       <div class="card" style="margin-bottom:16px;">
-        <div style="font-size:13px; color:#666; margin-bottom:4px;">SharePoint site:</div>
-        <div style="font-size:15px; font-weight:600; color:#0078d4; word-break:break-all;" id="site-url-display"></div>
+        <div style="font-size:13px;color:#666;margin-bottom:4px;">SharePoint site:</div>
+        <div style="font-size:15px;font-weight:600;color:#0078d4;word-break:break-all;" id="site-url-display"></div>
+        <div style="font-size:12px;color:#888;margin-top:4px;">Engagement data: Documents/ChefSaaS/chef-saas_engagements.csv</div>
       </div>
-      <button class="btn btn-primary" id="btn-create-lists">Create All Lists &amp; Seed Data</button>
+      <button class="btn btn-primary" id="btn-create-lists">Initialize Data Files</button>
       <div class="setup-log" id="setup-log" style="display:none;"></div>
-
-      <div id="permission-help" style="display:none;margin-top:20px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:16px;">
-        <strong>⚠️ Permission Fix Required</strong>
-        <p style="margin:10px 0 6px;font-size:14px;">Your account needs <strong>Site Owner</strong> access on the SharePoint site to create lists. Send this to IT:</p>
-        <div style="background:#f8f9fa;border-radius:6px;padding:12px;font-size:13px;font-family:monospace;white-space:pre-wrap;">To: IT Admin
-Subject: SharePoint Site Owner Access Request
-
-Please grant Site Owner permissions for my account on:
-https://progresssoftware.sharepoint.com/sites/INFRASalesLeadership
-
-Steps:
-1. Go to the SharePoint site
-2. Settings (gear icon) → Site Permissions
-3. Add me (phil.langer@progress.com) as Site Owner
-4. Save
-
-This is needed to set up the Chef SaaS Play Tracker app lists.
-Thank you.</div>
-      </div>
     </div>
   </div>
-
   <script src="msal-browser.js"></script>
   <script src="config.js"></script>
   <script src="msal-auth.js"></script>
   <script src="graph-api.js"></script>
-
   <script>
-    function log(icon, message) {
-      const logEl = document.getElementById("setup-log");
-      logEl.style.display = "block";
-      const item = document.createElement("div");
+    function log(icon, msg) {
+      var el = document.getElementById("setup-log");
+      el.style.display = "block";
+      var item = document.createElement("div");
       item.className = "setup-log-item";
-      item.textContent = `${icon} ${message}`;
-      logEl.appendChild(item);
+      item.textContent = icon + " " + msg;
+      el.appendChild(item);
       item.scrollIntoView({ behavior: "smooth", block: "end" });
     }
 
-    async function safeCreateList(displayName, columns) {
-      try {
-        await createList(displayName, columns);
-        log("✅", `Created list: ${displayName}`);
-      } catch (err) {
-        if (err.message.includes("409") || err.message.toLowerCase().includes("already exists")) {
-          log("⚠️", `List already exists (skipped): ${displayName}`);
-        } else {
-          log("❌", `Failed to create ${displayName}: ${err.message}`);
-          throw err;
-        }
-      }
-    }
-
-    async function safeCreateItem(listName, fields, label) {
-      try {
-        await createListItem(listName, fields);
-        log("✅", label);
-      } catch (err) {
-        log("❌", `Failed: ${label} — ${err.message}`);
-      }
-    }
-
     async function runSetup() {
-      const btn = document.getElementById("btn-create-lists");
-      btn.disabled = true;
-      btn.textContent = "Running setup…";
+      var btn = document.getElementById("btn-create-lists");
+      btn.disabled = true; btn.textContent = "Setting up...";
       document.getElementById("setup-log").innerHTML = "";
-
       try {
-        // ── Step 1: Resolve site ID ──────────────────────────────────────
-        log("🔄", "Connecting to SharePoint site…");
-        await getSiteId();
-        log("✅", "SharePoint site found.");
+        log("...", "Connecting to SharePoint...");
+        await getSiteId(); await getDriveId();
+        log("OK", "SharePoint connected.");
 
-        // ── Step 2: Create Lists ─────────────────────────────────────────
-        log("🔄", "Creating lists…");
+        var pitch = "Hey [name] - quick question. Are you still running Chef on your own servers? Most customers tell us the same thing: the tool works, but managing the infrastructure around it is a constant drain. We built Chef SaaS to take all of that off your plate. Would it be worth 20 minutes to see if that math works for your environment?";
 
-        // sales_play_assignment — one row per account × rep × play (from Excel upload)
-        await safeCreateList("ChefSaaS_Assignments", [
-          { name: "assignment_id",   type: "text" },
-          { name: "play_id",         type: "text" },
-          { name: "play_name",       type: "text" },
-          { name: "account_id",      type: "text" },
-          { name: "account_name",    type: "text" },
-          { name: "rep_email",       type: "text" },
-          { name: "rep_name",        type: "text" },
-          { name: "elevator_pitch",  type: "text", multiline: true },
-          { name: "icp",             type: "text" },
-          { name: "target_persona",  type: "text" },
-          { name: "response_set_id", type: "text" },
-          { name: "priority",        type: "text" },
-          { name: "product_family",  type: "text" },
-          { name: "region",          type: "text" },
-          { name: "due_date",        type: "text" },
-          { name: "admin_notes",     type: "text", multiline: true },
-          { name: "active_flag",     type: "boolean" },
-        ]);
+        log("...", "Creating assignments.json...");
+        await writeJsonFile("assignments.json", { assignments: [
+          { play_id:"chef-saas", play_name:"Chef SaaS", account_id:"acc-001", account_name:"Acme Corp",             rep_email:"rich.martinez@progress.com", rep_name:"Rich Martinez", elevator_pitch:pitch, icp:"Existing on-prem Chef customers", target_persona:"Director of IT Ops", response_set_id:"SAAS_STANDARD", priority:"High", active_flag:true },
+          { play_id:"chef-saas", play_name:"Chef SaaS", account_id:"acc-002", account_name:"Stratosphere Cloud Co.", rep_email:"rich.martinez@progress.com", rep_name:"Rich Martinez", elevator_pitch:pitch, icp:"Existing on-prem Chef customers", target_persona:"Director of IT Ops", response_set_id:"SAAS_STANDARD", priority:"High", active_flag:true },
+          { play_id:"chef-saas", play_name:"Chef SaaS", account_id:"acc-003", account_name:"Ironclad Systems",       rep_email:"rob.kelly@progress.com",    rep_name:"Rob Kelly",    elevator_pitch:pitch, icp:"Existing on-prem Chef customers", target_persona:"VP Engineering",   response_set_id:"SAAS_STANDARD", priority:"High", active_flag:true },
+          { play_id:"chef-saas", play_name:"Chef SaaS", account_id:"acc-004", account_name:"Meridian Data Labs",     rep_email:"rob.kelly@progress.com",    rep_name:"Rob Kelly",    elevator_pitch:pitch, icp:"Existing on-prem Chef customers", target_persona:"VP Engineering",   response_set_id:"SAAS_STANDARD", priority:"High", active_flag:true },
+          { play_id:"chef-saas", play_name:"Chef SaaS", account_id:"acc-005", account_name:"Apex Technology Group",  rep_email:"nick.russo@progress.com",   rep_name:"Nick Russo",   elevator_pitch:pitch, icp:"Existing on-prem Chef customers", target_persona:"CTO",             response_set_id:"SAAS_STANDARD", priority:"High", active_flag:true }
+        ]});
+        log("OK", "assignments.json created (replace with your full account list via DEMO-ingest.html).");
 
-        // response_option — controls dropdowns per response_set_id
-        await safeCreateList("ChefSaaS_ResponseOptions", [
-          { name: "response_set_id", type: "text" },
-          { name: "outcome_type",    type: "text" },   // Interested | Not Interested
-          { name: "reason_code",     type: "text" },
-          { name: "reason_label",    type: "text" },
-          { name: "sort_order",      type: "number" },
-          { name: "active_flag",     type: "boolean" },
-        ]);
+        log("...", "Creating response-options.json...");
+        await writeJsonFile("response-options.json", { options: [
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested",     reason_code:"FOLLOW_UP",      reason_label:"Wants follow-up conversation",  sort_order:1, active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested",     reason_code:"COST_VALUE",     reason_label:"Pricing / performance value",    sort_order:2, active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested",     reason_code:"SAAS_FLEX",      reason_label:"SaaS flexibility",              sort_order:3, active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested",     reason_code:"OPS_EFFICIENCY", reason_label:"Operational efficiency",         sort_order:4, active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested",     reason_code:"SIMPLIFY",       reason_label:"Simplify upgrade path",         sort_order:5, active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested",     reason_code:"BETTER_SUPPORT", reason_label:"Better support model",          sort_order:6, active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"CANNOT_SAAS",    reason_label:"Cannot do SaaS",                sort_order:1, active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"NO_PAIN",        reason_label:"No current pain",               sort_order:2, active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"BAD_TIMING",     reason_label:"Bad timing",                    sort_order:3, active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"BUDGET",         reason_label:"Budget issue",                  sort_order:4, active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"SOLVED",         reason_label:"Already solved elsewhere",       sort_order:5, active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"SECURITY",       reason_label:"Security / compliance concern",  sort_order:6, active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"WRONG_CONTACT",  reason_label:"No authority / wrong contact",   sort_order:7, active_flag:true }
+        ]});
+        log("OK", "response-options.json created.");
 
-        // sales_play_execution — what reps log after a real conversation
-        await safeCreateList("ChefSaaS_Executions", [
-          { name: "execution_id",        type: "text" },
-          { name: "submitted_at",        type: "text" },
-          { name: "assignment_id",       type: "text" },
-          { name: "play_id",             type: "text" },
-          { name: "play_name",           type: "text" },
-          { name: "account_id",          type: "text" },
-          { name: "account_name",        type: "text" },
-          { name: "rep_email",           type: "text" },
-          { name: "rep_name",            type: "text" },
-          { name: "interaction_type",    type: "text" },   // Call | Email | Text
-          { name: "outcome",             type: "text" },   // Interested | Not Interested
-          { name: "reason_code",         type: "text" },
-          { name: "reason_label",        type: "text" },
-          { name: "next_step_type",      type: "text" },
-          { name: "timing",              type: "text" },
-          { name: "contact_engaged",     type: "text" },
-          { name: "opportunity_id",      type: "text" },
-          { name: "pitch_confidence",    type: "number" },
-          { name: "short_reaction",      type: "text" },
-          { name: "notes",               type: "text", multiline: true },
-          { name: "points_earned",       type: "number" },
-          { name: "source",              type: "text" },
-        ]);
-
-        // ── Step 3: Seed sales_plays ─────────────────────────────────────
-        log("🔄", "Seeding response_option (SAAS_STANDARD set)…");
-        const responseOptions = [
-          // Interested reasons
-          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested", reason_code:"FOLLOW_UP",     reason_label:"Wants follow-up conversation",   sort_order:1,  active_flag:true },
-          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested", reason_code:"COST_VALUE",    reason_label:"Pricing / performance value",     sort_order:2,  active_flag:true },
-          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested", reason_code:"SAAS_FLEX",     reason_label:"SaaS flexibility",               sort_order:3,  active_flag:true },
-          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested", reason_code:"OPS_EFFICIENCY",reason_label:"Operational efficiency",          sort_order:4,  active_flag:true },
-          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested", reason_code:"SIMPLIFY",      reason_label:"Simplify upgrade path",          sort_order:5,  active_flag:true },
-          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested", reason_code:"BETTER_SUPPORT",reason_label:"Better support model",           sort_order:6,  active_flag:true },
-          // Not Interested reasons
-          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"CANNOT_SAAS",   reason_label:"Cannot do SaaS",                sort_order:1,  active_flag:true },
-          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"NO_PAIN",        reason_label:"No current pain",               sort_order:2,  active_flag:true },
-          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"BAD_TIMING",     reason_label:"Bad timing",                    sort_order:3,  active_flag:true },
-          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"BUDGET",         reason_label:"Budget issue",                  sort_order:4,  active_flag:true },
-          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"SOLVED",         reason_label:"Already solved elsewhere",      sort_order:5,  active_flag:true },
-          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"SECURITY",       reason_label:"Security / compliance concern",  sort_order:6,  active_flag:true },
-          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"WRONG_CONTACT",  reason_label:"No authority / wrong contact",   sort_order:7,  active_flag:true },
-        ];
-        for (const opt of responseOptions) {
-          await safeCreateItem("ChefSaaS_ResponseOptions", opt, `response_option: ${opt.reason_label}`);
-        }
-
-        log("🎉", "Setup complete! You can now open index.html to use the app.");
-        btn.textContent = "Setup Complete ✅";
-
-      } catch (err) {
-        log("❌", `Setup stopped due to error: ${err.message}`);
-        btn.disabled = false;
-        btn.textContent = "Retry Setup";
-
-        if (err.message && err.message.includes('403')) {
-          log("ℹ️", "403 = You need Site Owner permissions on the SharePoint site to create lists.");
-          log("ℹ️", "Ask IT to grant you 'Site Owner' access on INFRASalesLeadership, then retry.");
-          log("ℹ️", "OR ask IT to run this in SharePoint Admin: Site → Settings → Site Permissions → Add you as Owner.");
-          document.getElementById('permission-help').style.display = 'block';
-        }
+        log("DONE", "Setup complete! Go to http://localhost:7341/index.html");
+        log("INFO", "Engagement data will appear in SharePoint > Documents > ChefSaaS > chef-saas_engagements.csv");
+        log("INFO", "Open that CSV in Excel anytime to see all rep activity.");
+        btn.textContent = "Setup Complete";
+      } catch(err) {
+        log("ERROR", "Setup failed: " + err.message);
+        btn.disabled = false; btn.textContent = "Retry";
+        console.error(err);
       }
     }
 
-    document.getElementById("btn-sign-in").addEventListener("click", async () => {
+    document.getElementById("btn-sign-in").addEventListener("click", async function() {
       try {
-        const account = await signIn();
+        var account = await signIn();
         if (account) {
           document.getElementById("section-signin").style.display = "none";
           document.getElementById("section-setup").style.display = "block";
           document.getElementById("site-url-display").textContent = CONFIG.sharepointSiteUrl;
         }
-      } catch (err) {
-        const msg = err && err.message ? err.message : '';
-        if (msg.includes('popup_window_error') || msg.includes('popupWindowError')) {
-          alert('⚠️ Popup was blocked. Please allow popups for localhost:7341 and try again.');
-        } else {
-          alert('⚠️ Sign in failed: ' + (msg || 'Unknown error'));
-        }
-      }
+      } catch(err) { alert("Sign in failed: " + (err.message || err)); }
     });
+
     document.getElementById("btn-create-lists").addEventListener("click", runSetup);
 
-    (async () => {
+    (async function() {
       try {
-        const account = await initAuth();
+        var account = await initAuth();
         if (account) {
           document.getElementById("section-signin").style.display = "none";
           document.getElementById("section-setup").style.display = "block";
           document.getElementById("site-url-display").textContent = CONFIG.sharepointSiteUrl;
         }
-      } catch (err) {
-        console.error("Auth init error:", err);
-      }
+      } catch(err) { console.error("Auth init:", err); }
     })();
   </script>
 </body>

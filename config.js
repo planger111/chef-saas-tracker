@@ -12,5 +12,5 @@ const CONFIG = {
 
   // Leave these as-is
   graphBaseUrl: "https://graph.microsoft.com/v1.0",
-  scopes: ["https://graph.microsoft.com/Sites.Manage.All"],
+  scopes: ["https://graph.microsoft.com/Sites.ReadWrite.All"],
 };

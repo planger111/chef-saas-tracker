@@ -475,18 +475,12 @@
         allPlays    = plays    || [];
         totalPoints = points   || 0;
 
-        // Fetch latest logs for every play
+        // Fetch latest logs for this rep across all accounts
         const accountIds = repAccounts.map(a => a.account_id);
-        const logFetches = allPlays.map(play =>
-          getLatestExecutionPerAccount(play.play_id, accountIds).then(logs => ({ play_id: play.play_id, logs }))
-        );
-        const logResults = await Promise.all(logFetches);
+        latestLogs = await getLatestLogsForRep(email, accountIds);
 
-        // Merge all logs (last-write wins per account — only one play typically active at a time)
-        latestLogs = {};
-        logResults.forEach(({ logs }) => {
-          if (logs) Object.assign(latestLogs, logs);
-        });
+        // Build logResults in same shape renderPlayCards expects
+        const logResults = allPlays.map(play => ({ play_id: play.play_id, logs: latestLogs }));
 
         // Render greeting
         const firstName = name ? name.split(' ')[0] : 'there';
@@ -640,9 +634,10 @@
     async function loadPlayDetail(play) {
       showScreen('screen-loading');
       try {
-        // Refresh logs for this play
+        // Refresh logs for this rep
+        const email = currentUser ? currentUser.email : null;
         const accountIds = repAccounts.map(a => a.account_id);
-        const logs = await getLatestExecutionPerAccount(play.play_id, accountIds);
+        const logs = await getLatestLogsForRep(email, accountIds);
         if (logs) Object.assign(latestLogs, logs);
 
         document.getElementById('play-detail-title').textContent = play.play_name;

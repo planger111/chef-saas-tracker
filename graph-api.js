@@ -1,225 +1,202 @@
-// Chef SaaS Motion Tracker — Graph API (v3 engagement model)
+// Chef SaaS Motion Tracker - SharePoint CSV file backend
+// Assignments read from assignments.json, engagements written to per-play CSV files
+// Only needs Sites.ReadWrite.All (already granted)
 
 let _siteId = null;
+let _driveId = null;
 
 async function _graphFetch(path, options = {}) {
   const token = await getAccessToken();
-  const url = path.startsWith("http") ? path : `${CONFIG.graphBaseUrl}${path}`;
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Graph API error ${response.status}: ${errorText}`);
-  }
-  if (response.status === 204) return null;
-  return response.json();
+  const url = path.startsWith("http") ? path : (CONFIG.graphBaseUrl + path);
+  const resp = await fetch(url, { ...options, headers: { Authorization: "Bearer " + token, "Content-Type": "application/json", ...(options.headers || {}) } });
+  if (!resp.ok) { const t = await resp.text(); throw new Error("Graph " + resp.status + ": " + t); }
+  if (resp.status === 204) return null;
+  return resp.json();
 }
 
 async function getSiteId() {
   if (_siteId) return _siteId;
   const url = new URL(CONFIG.sharepointSiteUrl);
-  const data = await _graphFetch(`/sites/${url.hostname}:${url.pathname}`);
-  _siteId = data.id;
-  return _siteId;
+  const data = await _graphFetch("/sites/" + url.hostname + ":" + url.pathname);
+  _siteId = data.id; return _siteId;
 }
 
-async function getListItems(listName, selectFields, filterQuery) {
+async function getDriveId() {
+  if (_driveId) return _driveId;
   const siteId = await getSiteId();
-  let url = `/sites/${siteId}/lists/${encodeURIComponent(listName)}/items?$expand=fields&$top=999`;
-  if (filterQuery) url += `&$filter=${encodeURIComponent(filterQuery)}`;
-  if (selectFields) url += `&$select=${encodeURIComponent(selectFields)}`;
-
-  const allItems = [];
-  let nextUrl = url;
-  while (nextUrl) {
-    const data = await _graphFetch(nextUrl);
-    if (data.value) allItems.push(...data.value);
-    nextUrl = data["@odata.nextLink"] || null;
-  }
-  return allItems;
+  const data = await _graphFetch("/sites/" + siteId + "/drive");
+  _driveId = data.id; return _driveId;
 }
 
-async function createListItem(listName, fields) {
-  const siteId = await getSiteId();
-  const url = `/sites/${siteId}/lists/${encodeURIComponent(listName)}/items`;
-  return _graphFetch(url, { method: "POST", body: JSON.stringify({ fields }) });
-}
-
-async function createList(listDisplayName, columns) {
-  const siteId = await getSiteId();
-  const columnDefs = columns.map((col) => {
-    const def = { name: col.name };
-    if (col.type === "text") def.text = col.multiline ? { allowMultipleLines: true } : {};
-    else if (col.type === "number") def.number = {};
-    else if (col.type === "boolean") def.boolean = {};
-    else def.text = {};
-    return def;
+async function putFile(filePath, content, contentType) {
+  const driveId = await getDriveId();
+  const token = await getAccessToken();
+  const resp = await fetch(CONFIG.graphBaseUrl + "/drives/" + driveId + "/root:/" + filePath + ":/content", {
+    method: "PUT", headers: { Authorization: "Bearer " + token, "Content-Type": contentType || "text/plain" }, body: content
   });
-  return _graphFetch(`/sites/${siteId}/lists`, {
-    method: "POST",
-    body: JSON.stringify({
-      displayName: listDisplayName,
-      columns: columnDefs,
-      list: { template: "genericList" },
-    }),
-  });
+  if (!resp.ok) { const t = await resp.text(); throw new Error("Upload " + resp.status + ": " + t); }
+  return resp.json();
 }
 
-// ─── Points & Levels ──────────────────────────────────────────────────────────
+async function getFileText(filePath) {
+  const driveId = await getDriveId();
+  const token = await getAccessToken();
+  try {
+    const meta = await _graphFetch("/drives/" + driveId + "/root:/" + filePath);
+    const resp = await fetch(meta["@microsoft.graph.downloadUrl"], { headers: { Authorization: "Bearer " + token } });
+    if (!resp.ok) return null;
+    return resp.text();
+  } catch(e) { return null; }
+}
 
-const POINTS = {
-  "Not Interested":         15,   // learning value — reason required
-  "Interested":             30,
-  "Interested + Next Step": 45,
-};
+async function writeJsonFile(filePath, data) {
+  return putFile("ChefSaaS/" + filePath, JSON.stringify(data, null, 2), "application/json");
+}
+
+// ─── Assignments ──────────────────────────────────────────────────────────
+
+async function getPlayAssignments(repEmail) {
+  const text = await getFileText("ChefSaaS/assignments.json");
+  if (!text) return [];
+  const data = JSON.parse(text);
+  const list = (data.assignments || []).filter(a => a.active_flag !== false);
+  if (!repEmail) return list;
+  return list.filter(a => (a.rep_email || "").toLowerCase() === repEmail.toLowerCase());
+}
+
+async function getRepAccounts(repEmail) { return getPlayAssignments(repEmail); }
+
+async function getPlays() {
+  try {
+    const all = await getPlayAssignments(null);
+    const seen = new Set();
+    return all.filter(a => { if (!a.play_id || seen.has(a.play_id)) return false; seen.add(a.play_id); return true; })
+              .map(a => ({ play_id: a.play_id, play_name: a.play_name || a.play_id }));
+  } catch(e) { return [{ play_id: "chef-saas", play_name: "Chef SaaS" }]; }
+}
+
+// ─── Response Options ─────────────────────────────────────────────────────
+
+async function getResponseOptions(responseSetId, outcomeType) {
+  const text = await getFileText("ChefSaaS/response-options.json");
+  if (!text) return [];
+  const data = JSON.parse(text);
+  return (data.options || [])
+    .filter(o => o.active_flag !== false &&
+      (!responseSetId || (o.response_set_id || "").toUpperCase() === responseSetId.toUpperCase()) &&
+      (!outcomeType || o.outcome_type === outcomeType))
+    .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+    .map(o => o.reason_label);
+}
+
+// ─── Points ───────────────────────────────────────────────────────────────
 
 function calculatePoints(outcome, nextStepType) {
-  if (outcome === "Interested" && nextStepType) return POINTS["Interested + Next Step"];
-  if (outcome === "Interested") return POINTS["Interested"];
-  if (outcome === "Not Interested") return POINTS["Not Interested"];
+  if (outcome === "Not Interested") return 15;
+  if (outcome === "Interested") return nextStepType ? 45 : 30;
   return 0;
 }
 
-const LEVELS = [
-  { min: 500, name: "Legend",   badge: "🌟" },
-  { min: 300, name: "Champion", badge: "🏆" },
-  { min: 150, name: "Pro",      badge: "🎯" },
-  { min: 50,  name: "Pitcher",  badge: "⚾" },
-  { min: 0,   name: "Rookie",   badge: "🌱" },
-];
+// ─── CSV helpers ──────────────────────────────────────────────────────────
 
-function getLevel(totalPoints) {
-  return LEVELS.find((l) => totalPoints >= l.min) || LEVELS[LEVELS.length - 1];
+const CSV_HEADERS = ["id","submitted_at","play_id","play_name","account_id","account_name","rep_email","rep_name","interaction_type","outcome","reason_label","next_step_type","timing","contact_engaged","opportunity_id","pitch_confidence","short_reaction","notes","points_earned"];
+
+function csvEscape(val) {
+  val = val !== undefined && val !== null ? String(val) : "";
+  if (val.includes(",") || val.includes('"') || val.includes("\n")) val = '"' + val.replace(/"/g, '""') + '"';
+  return val;
 }
 
-// ─── Play Assignments ─────────────────────────────────────────────────────────
+function toCsvRow(fields) { return CSV_HEADERS.map(h => csvEscape(fields[h])).join(","); }
 
-async function getPlayAssignments(repEmail) {
-  const items = await getListItems("ChefSaaS_Assignments");
-  return items.map(i => i.fields).filter(f =>
-    f.active_flag !== false &&
-    (repEmail ? (f.rep_email || "").toLowerCase() === repEmail.toLowerCase() : true)
-  );
-}
-
-// ─── Response Options ─────────────────────────────────────────────────────────
-
-async function getResponseOptions(responseSetId) {
-  const items = await getListItems("ChefSaaS_ResponseOptions");
-  return items.map(i => i.fields).filter(f =>
-    f.active_flag !== false &&
-    (!responseSetId || (f.response_set_id || "").toUpperCase() === responseSetId.toUpperCase())
-  ).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-}
-
-// ─── Executions ───────────────────────────────────────────────────────────────
-
-async function logEngagement(fields) {
-  const pts = calculatePoints(fields.outcome, fields.next_step_type);
-  return createListItem("ChefSaaS_Executions", {
-    ...fields,
-    points_earned: pts,
-    submitted_at: new Date().toISOString(),
-    source: "web-app-v3",
+function parseCSV(text) {
+  const lines = text.trim().split("\n");
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(",").map(h => h.trim());
+  return lines.slice(1).map(line => {
+    const vals = [];
+    let cur = "", inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"' && !inQ) { inQ = true; }
+      else if (c === '"' && inQ && line[i+1] === '"') { cur += '"'; i++; }
+      else if (c === '"' && inQ) { inQ = false; }
+      else if (c === ',' && !inQ) { vals.push(cur); cur = ""; }
+      else cur += c;
+    }
+    vals.push(cur);
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = (vals[i] || "").trim(); });
+    return obj;
   });
 }
 
-async function getExecutions(filters = {}) {
-  const items = await getListItems("ChefSaaS_Executions");
-  let results = items.map(i => i.fields);
-  if (filters.repEmail) results = results.filter(r => r.rep_email === filters.repEmail);
-  if (filters.playId)   results = results.filter(r => r.play_id   === filters.playId);
-  return results.sort((a, b) => (b.submitted_at || "").localeCompare(a.submitted_at || ""));
+// ─── Log engagement (append row to play CSV) ──────────────────────────────
+
+async function logEngagement(fields) {
+  const pts = calculatePoints(fields.outcome, fields.next_step_type);
+  const entry = { ...fields, id: Date.now().toString(), submitted_at: new Date().toISOString(), points_earned: pts };
+  const playId = (fields.play_id || "engagements").replace(/[^a-z0-9]/gi, "_");
+  const filePath = "ChefSaaS/" + playId + "_engagements.csv";
+  const existing = await getFileText(filePath);
+  const csv = (existing && existing.trim()) ? existing.trimEnd() + "\n" + toCsvRow(entry) : CSV_HEADERS.join(",") + "\n" + toCsvRow(entry);
+  await putFile(filePath, csv, "text/csv");
+  return entry;
 }
 
-async function getLatestExecutionPerAccount(playId, accountIds) {
-  const items = await getListItems("ChefSaaS_Executions");
-  const logs = items.map(i => i.fields).filter(f => !playId || f.play_id === playId);
+// ─── Read engagements ─────────────────────────────────────────────────────
 
+async function _getAllLogsForRep(repEmail) {
+  const plays = await getPlays();
+  let allLogs = [];
+  for (const play of plays) {
+    const playId = play.play_id.replace(/[^a-z0-9]/gi, "_");
+    const text = await getFileText("ChefSaaS/" + playId + "_engagements.csv");
+    if (!text) continue;
+    const rows = parseCSV(text).filter(r => !repEmail || (r.rep_email || "").toLowerCase() === repEmail.toLowerCase());
+    allLogs = allLogs.concat(rows);
+  }
+  return allLogs;
+}
+
+async function getLatestLogsForRep(repEmail, accountIds) {
+  const logs = await _getAllLogsForRep(repEmail);
   const latest = {};
-  for (const log of logs) {
+  logs.forEach(log => {
     const key = log.account_id;
-    if (!key) continue;
-    if (!latest[key] || (log.submitted_at || "") > (latest[key].submitted_at || "")) {
-      latest[key] = log;
-    }
-  }
-  if (accountIds) {
-    const result = {};
-    for (const id of accountIds) result[id] = latest[id] || null;
-    return result;
-  }
+    if (!key) return;
+    if (!latest[key] || log.submitted_at > (latest[key].submitted_at || "")) latest[key] = log;
+  });
+  if (accountIds) { const r = {}; accountIds.forEach(id => { r[id] = latest[id] || null; }); return r; }
   return latest;
 }
 
+async function getLatestExecutionPerAccount(playId, accountIds) {
+  const user = getCurrentUser();
+  return getLatestLogsForRep(user ? user.email : null, accountIds);
+}
+
 async function getRepPoints(repEmail) {
-  const items = await getListItems("ChefSaaS_Executions");
-  const logs = items.map(i => i.fields).filter(f => f.rep_email === repEmail || f.submitted_by === repEmail);
+  const logs = await _getAllLogsForRep(repEmail);
   return logs.reduce((sum, l) => sum + (Number(l.points_earned) || 0), 0);
 }
 
 async function getLeaderboard() {
-  const items = await getListItems("ChefSaaS_Executions");
-  const logs = items.map(i => i.fields);
-
-  const repMap = {};
-  for (const log of logs) {
-    const key = log.rep_email || log.submitted_by;
-    if (!key) continue;
-    if (!repMap[key]) {
-      repMap[key] = {
-        email: key,
-        repName: log.rep_name || key,
-        totalPoints: 0,
-        engagedAccounts: new Set(),
-        interestedAccounts: new Set(),
-      };
-    }
-    repMap[key].totalPoints += Number(log.points_earned) || 0;
-    if (log.account_id) {
-      repMap[key].engagedAccounts.add(log.account_id);
-      if (log.outcome === "Interested") repMap[key].interestedAccounts.add(log.account_id);
-    }
-  }
-
-  return Object.values(repMap)
-    .map(r => ({
-      ...r,
-      engagedAccounts: r.engagedAccounts.size,
-      interestedAccounts: r.interestedAccounts.size,
-    }))
-    .sort((a, b) => b.totalPoints - a.totalPoints);
-}
-
-// ─── Plays (distinct play_ids from assignments) ───────────────────────────────
-
-async function getPlays() {
   try {
-    const items = await getListItems("ChefSaaS_Assignments");
-    const seen = new Set();
-    return items.map(i => i.fields).filter(f => {
-      if (!f.play_id || seen.has(f.play_id)) return false;
-      seen.add(f.play_id);
-      return true;
-    }).map(f => ({ play_id: f.play_id, play_name: f.play_name || f.play_id }));
-  } catch (e) {
-    console.warn('getPlays failed:', e);
-    return [{ play_id: 'chef-saas', play_name: 'Chef SaaS' }];
-  }
-}
-
-// ─── Legacy fallback (getRepAccounts) ─────────────────────────────────────────
-
-async function getRepAccounts(repEmail) {
-  try {
-    return await getPlayAssignments(repEmail);
-  } catch (e) {
-    return [];
-  }
+    const plays = await getPlays();
+    const repMap = {};
+    for (const play of plays) {
+      const playId = play.play_id.replace(/[^a-z0-9]/gi, "_");
+      const text = await getFileText("ChefSaaS/" + playId + "_engagements.csv");
+      if (!text) continue;
+      parseCSV(text).forEach(log => {
+        const key = log.rep_email; if (!key) return;
+        if (!repMap[key]) repMap[key] = { email: key, repName: log.rep_name || key, totalPoints: 0, engagedAccounts: new Set(), interestedAccounts: new Set() };
+        repMap[key].totalPoints += Number(log.points_earned) || 0;
+        if (log.account_id) { repMap[key].engagedAccounts.add(log.account_id); if (log.outcome === "Interested") repMap[key].interestedAccounts.add(log.account_id); }
+      });
+    }
+    return Object.values(repMap).map(r => ({ ...r, engagedAccounts: r.engagedAccounts.size, interestedAccounts: r.interestedAccounts.size }))
+                                .sort((a, b) => b.totalPoints - a.totalPoints);
+  } catch(e) { return []; }
 }
