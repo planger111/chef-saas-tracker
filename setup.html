@@ -27,6 +27,25 @@
       </div>
       <button class="btn btn-primary" id="btn-create-lists">Create All Lists &amp; Seed Data</button>
       <div class="setup-log" id="setup-log" style="display:none;"></div>
+
+      <div id="permission-help" style="display:none;margin-top:20px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:16px;">
+        <strong>⚠️ Permission Fix Required</strong>
+        <p style="margin:10px 0 6px;font-size:14px;">Your account needs <strong>Site Owner</strong> access on the SharePoint site to create lists. Send this to IT:</p>
+        <div style="background:#f8f9fa;border-radius:6px;padding:12px;font-size:13px;font-family:monospace;white-space:pre-wrap;">To: IT Admin
+Subject: SharePoint Site Owner Access Request
+
+Please grant Site Owner permissions for my account on:
+https://progresssoftware.sharepoint.com/sites/INFRASalesLeadership
+
+Steps:
+1. Go to the SharePoint site
+2. Settings (gear icon) → Site Permissions
+3. Add me (phil.langer@progress.com) as Site Owner
+4. Save
+
+This is needed to set up the Chef SaaS Play Tracker app lists.
+Thank you.</div>
+      </div>
     </div>
   </div>
 
@@ -171,6 +190,13 @@
         log("❌", `Setup stopped due to error: ${err.message}`);
         btn.disabled = false;
         btn.textContent = "Retry Setup";
+
+        if (err.message && err.message.includes('403')) {
+          log("ℹ️", "403 = You need Site Owner permissions on the SharePoint site to create lists.");
+          log("ℹ️", "Ask IT to grant you 'Site Owner' access on INFRASalesLeadership, then retry.");
+          log("ℹ️", "OR ask IT to run this in SharePoint Admin: Site → Settings → Site Permissions → Add you as Owner.");
+          document.getElementById('permission-help').style.display = 'block';
+        }
       }
     }
 
