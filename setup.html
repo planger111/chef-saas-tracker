@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Motion Tracker — One-Time Setup</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="setup-container">
+    <h1 style="font-size:22px; font-weight:800; color:#0078d4; margin-bottom:16px;">⚙️ Motion Tracker — One-Time Setup</h1>
+
+    <div class="setup-warning">
+      ⚠️ <strong>Run this once only.</strong> It creates the SharePoint lists your app needs.
+      Running it a second time will attempt to create lists that already exist — Graph API will return errors for those, which is harmless.
+    </div>
+
+    <div id="section-signin">
+      <p style="margin-bottom:16px; color:#555; font-size:15px;">Sign in with your Progress account to get started.</p>
+      <button class="btn btn-primary" id="btn-sign-in">Sign in with Microsoft</button>
+    </div>
+
+    <div id="section-setup" style="display:none;">
+      <div class="card" style="margin-bottom:16px;">
+        <div style="font-size:13px; color:#666; margin-bottom:4px;">SharePoint site:</div>
+        <div style="font-size:15px; font-weight:600; color:#0078d4; word-break:break-all;" id="site-url-display"></div>
+      </div>
+      <button class="btn btn-primary" id="btn-create-lists">Create All Lists &amp; Seed Data</button>
+      <div class="setup-log" id="setup-log" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script src="https://alcdn.msauth.net/browser/2.38.3/js/msal-browser.min.js"></script>
+  <script src="config.js"></script>
+  <script src="msal-auth.js"></script>
+  <script src="graph-api.js"></script>
+
+  <script>
+    function log(icon, message) {
+      const logEl = document.getElementById("setup-log");
+      logEl.style.display = "block";
+      const item = document.createElement("div");
+      item.className = "setup-log-item";
+      item.textContent = `${icon} ${message}`;
+      logEl.appendChild(item);
+      item.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+
+    async function safeCreateList(displayName, columns) {
+      try {
+        await createList(displayName, columns);
+        log("✅", `Created list: ${displayName}`);
+      } catch (err) {
+        if (err.message.includes("409") || err.message.toLowerCase().includes("already exists")) {
+          log("⚠️", `List already exists (skipped): ${displayName}`);
+        } else {
+          log("❌", `Failed to create ${displayName}: ${err.message}`);
+          throw err;
+        }
+      }
+    }
+
+    async function safeCreateItem(listName, fields, label) {
+      try {
+        await createListItem(listName, fields);
+        log("✅", label);
+      } catch (err) {
+        log("❌", `Failed: ${label} — ${err.message}`);
+      }
+    }
+
+    async function runSetup() {
+      const btn = document.getElementById("btn-create-lists");
+      btn.disabled = true;
+      btn.textContent = "Running setup…";
+      document.getElementById("setup-log").innerHTML = "";
+
+      try {
+        // ── Step 1: Resolve site ID ──────────────────────────────────────
+        log("🔄", "Connecting to SharePoint site…");
+        await getSiteId();
+        log("✅", "SharePoint site found.");
+
+        // ── Step 2: Create Lists ─────────────────────────────────────────
+        log("🔄", "Creating lists…");
+
+        // sales_play_assignment — one row per account × rep × play (from Excel upload)
+        await safeCreateList("sales_play_assignment", [
+          { name: "assignment_id",   type: "text" },
+          { name: "play_id",         type: "text" },
+          { name: "play_name",       type: "text" },
+          { name: "account_id",      type: "text" },
+          { name: "account_name",    type: "text" },
+          { name: "rep_email",       type: "text" },
+          { name: "rep_name",        type: "text" },
+          { name: "elevator_pitch",  type: "text", multiline: true },
+          { name: "icp",             type: "text" },
+          { name: "target_persona",  type: "text" },
+          { name: "response_set_id", type: "text" },
+          { name: "priority",        type: "text" },
+          { name: "product_family",  type: "text" },
+          { name: "region",          type: "text" },
+          { name: "due_date",        type: "text" },
+          { name: "admin_notes",     type: "text", multiline: true },
+          { name: "active_flag",     type: "boolean" },
+        ]);
+
+        // response_option — controls dropdowns per response_set_id
+        await safeCreateList("response_option", [
+          { name: "response_set_id", type: "text" },
+          { name: "outcome_type",    type: "text" },   // Interested | Not Interested
+          { name: "reason_code",     type: "text" },
+          { name: "reason_label",    type: "text" },
+          { name: "sort_order",      type: "number" },
+          { name: "active_flag",     type: "boolean" },
+        ]);
+
+        // sales_play_execution — what reps log after a real conversation
+        await safeCreateList("sales_play_execution", [
+          { name: "execution_id",        type: "text" },
+          { name: "submitted_at",        type: "text" },
+          { name: "assignment_id",       type: "text" },
+          { name: "play_id",             type: "text" },
+          { name: "play_name",           type: "text" },
+          { name: "account_id",          type: "text" },
+          { name: "account_name",        type: "text" },
+          { name: "rep_email",           type: "text" },
+          { name: "rep_name",            type: "text" },
+          { name: "interaction_type",    type: "text" },   // Call | Email | Text
+          { name: "outcome",             type: "text" },   // Interested | Not Interested
+          { name: "reason_code",         type: "text" },
+          { name: "reason_label",        type: "text" },
+          { name: "next_step_type",      type: "text" },
+          { name: "timing",              type: "text" },
+          { name: "contact_engaged",     type: "text" },
+          { name: "opportunity_id",      type: "text" },
+          { name: "pitch_confidence",    type: "number" },
+          { name: "short_reaction",      type: "text" },
+          { name: "notes",               type: "text", multiline: true },
+          { name: "points_earned",       type: "number" },
+          { name: "source",              type: "text" },
+        ]);
+
+        // ── Step 3: Seed sales_plays ─────────────────────────────────────
+        log("🔄", "Seeding response_option (SAAS_STANDARD set)…");
+        const responseOptions = [
+          // Interested reasons
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested", reason_code:"FOLLOW_UP",     reason_label:"Wants follow-up conversation",   sort_order:1,  active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested", reason_code:"COST_VALUE",    reason_label:"Pricing / performance value",     sort_order:2,  active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested", reason_code:"SAAS_FLEX",     reason_label:"SaaS flexibility",               sort_order:3,  active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested", reason_code:"OPS_EFFICIENCY",reason_label:"Operational efficiency",          sort_order:4,  active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested", reason_code:"SIMPLIFY",      reason_label:"Simplify upgrade path",          sort_order:5,  active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Interested", reason_code:"BETTER_SUPPORT",reason_label:"Better support model",           sort_order:6,  active_flag:true },
+          // Not Interested reasons
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"CANNOT_SAAS",   reason_label:"Cannot do SaaS",                sort_order:1,  active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"NO_PAIN",        reason_label:"No current pain",               sort_order:2,  active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"BAD_TIMING",     reason_label:"Bad timing",                    sort_order:3,  active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"BUDGET",         reason_label:"Budget issue",                  sort_order:4,  active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"SOLVED",         reason_label:"Already solved elsewhere",      sort_order:5,  active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"SECURITY",       reason_label:"Security / compliance concern",  sort_order:6,  active_flag:true },
+          { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"WRONG_CONTACT",  reason_label:"No authority / wrong contact",   sort_order:7,  active_flag:true },
+        ];
+        for (const opt of responseOptions) {
+          await safeCreateItem("response_option", opt, `response_option: ${opt.reason_label}`);
+        }
+
+        log("🎉", "Setup complete! You can now open index.html to use the app.");
+        btn.textContent = "Setup Complete ✅";
+
+      } catch (err) {
+        log("❌", `Setup stopped due to error: ${err.message}`);
+        btn.disabled = false;
+        btn.textContent = "Retry Setup";
+      }
+    }
+
+    document.getElementById("btn-sign-in").addEventListener("click", () => signIn());
+    document.getElementById("btn-create-lists").addEventListener("click", runSetup);
+
+    (async () => {
+      try {
+        const account = await initAuth();
+        if (account) {
+          document.getElementById("section-signin").style.display = "none";
+          document.getElementById("section-setup").style.display = "block";
+          document.getElementById("site-url-display").textContent = CONFIG.sharepointSiteUrl;
+        }
+      } catch (err) {
+        console.error("Auth init error:", err);
+      }
+    })();
+  </script>
+</body>
+</html>
