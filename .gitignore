@@ -1,3 +1,6 @@
 *.csv
 *.xlsx
 .DS_Store
+DEMO-*.html
+setup.html
+admin.html
