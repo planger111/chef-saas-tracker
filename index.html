@@ -947,15 +947,16 @@
     // Sign in
     document.getElementById('btn-sign-in').addEventListener('click', async () => {
       try {
-        await initAuth(); // ensure MSAL instance is ready
-        await signIn();
-        currentUser = getCurrentUser();
-        if (currentUser) await loadDashboard();
+        const account = await signIn();
+        if (account) {
+          currentUser = getCurrentUser();
+          await loadDashboard();
+        }
       } catch (err) {
         console.error('Sign in error:', err);
         const msg = err && err.message ? err.message : '';
-        if (msg.includes('redirect') || msg.includes('AADSTS50011')) {
-          alert('⚠️ Sign in failed: This URL is not registered as a valid redirect URI in Azure AD.\n\nAsk IT to add:\n' + window.location.origin + window.location.pathname + '\n\nTo the app registration → Authentication → Single-page application.');
+        if (msg.includes('popup_window_error') || msg.includes('popupWindowError')) {
+          alert('⚠️ Popup was blocked. Please allow popups for localhost:7341 in your browser and try again.');
         } else {
           alert('⚠️ Sign in failed. Please try again.\n\nError: ' + (msg || 'Unknown'));
         }

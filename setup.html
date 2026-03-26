@@ -175,8 +175,21 @@
     }
 
     document.getElementById("btn-sign-in").addEventListener("click", async () => {
-      await initAuth(); // ensure MSAL instance is ready
-      signIn();
+      try {
+        const account = await signIn();
+        if (account) {
+          document.getElementById("section-signin").style.display = "none";
+          document.getElementById("section-setup").style.display = "block";
+          document.getElementById("site-url-display").textContent = CONFIG.sharepointSiteUrl;
+        }
+      } catch (err) {
+        const msg = err && err.message ? err.message : '';
+        if (msg.includes('popup_window_error') || msg.includes('popupWindowError')) {
+          alert('⚠️ Popup was blocked. Please allow popups for localhost:7341 and try again.');
+        } else {
+          alert('⚠️ Sign in failed: ' + (msg || 'Unknown error'));
+        }
+      }
     });
     document.getElementById("btn-create-lists").addEventListener("click", runSetup);
 
