@@ -85,7 +85,7 @@
         log("🔄", "Creating lists…");
 
         // sales_play_assignment — one row per account × rep × play (from Excel upload)
-        await safeCreateList("sales_play_assignment", [
+        await safeCreateList("ChefSaaS_Assignments", [
           { name: "assignment_id",   type: "text" },
           { name: "play_id",         type: "text" },
           { name: "play_name",       type: "text" },
@@ -106,7 +106,7 @@
         ]);
 
         // response_option — controls dropdowns per response_set_id
-        await safeCreateList("response_option", [
+        await safeCreateList("ChefSaaS_ResponseOptions", [
           { name: "response_set_id", type: "text" },
           { name: "outcome_type",    type: "text" },   // Interested | Not Interested
           { name: "reason_code",     type: "text" },
@@ -116,7 +116,7 @@
         ]);
 
         // sales_play_execution — what reps log after a real conversation
-        await safeCreateList("sales_play_execution", [
+        await safeCreateList("ChefSaaS_Executions", [
           { name: "execution_id",        type: "text" },
           { name: "submitted_at",        type: "text" },
           { name: "assignment_id",       type: "text" },
@@ -161,7 +161,7 @@
           { response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_code:"WRONG_CONTACT",  reason_label:"No authority / wrong contact",   sort_order:7,  active_flag:true },
         ];
         for (const opt of responseOptions) {
-          await safeCreateItem("response_option", opt, `response_option: ${opt.reason_label}`);
+          await safeCreateItem("ChefSaaS_ResponseOptions", opt, `response_option: ${opt.reason_label}`);
         }
 
         log("🎉", "Setup complete! You can now open index.html to use the app.");

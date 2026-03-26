@@ -101,7 +101,7 @@ function getLevel(totalPoints) {
 // ─── Play Assignments ─────────────────────────────────────────────────────────
 
 async function getPlayAssignments(repEmail) {
-  const items = await getListItems("sales_play_assignment");
+  const items = await getListItems("ChefSaaS_Assignments");
   return items.map(i => i.fields).filter(f =>
     f.active_flag !== false &&
     (repEmail ? (f.rep_email || "").toLowerCase() === repEmail.toLowerCase() : true)
@@ -111,7 +111,7 @@ async function getPlayAssignments(repEmail) {
 // ─── Response Options ─────────────────────────────────────────────────────────
 
 async function getResponseOptions(responseSetId) {
-  const items = await getListItems("response_option");
+  const items = await getListItems("ChefSaaS_ResponseOptions");
   return items.map(i => i.fields).filter(f =>
     f.active_flag !== false &&
     (!responseSetId || (f.response_set_id || "").toUpperCase() === responseSetId.toUpperCase())
@@ -122,7 +122,7 @@ async function getResponseOptions(responseSetId) {
 
 async function logEngagement(fields) {
   const pts = calculatePoints(fields.outcome, fields.next_step_type);
-  return createListItem("sales_play_execution", {
+  return createListItem("ChefSaaS_Executions", {
     ...fields,
     points_earned: pts,
     submitted_at: new Date().toISOString(),
@@ -131,7 +131,7 @@ async function logEngagement(fields) {
 }
 
 async function getExecutions(filters = {}) {
-  const items = await getListItems("sales_play_execution");
+  const items = await getListItems("ChefSaaS_Executions");
   let results = items.map(i => i.fields);
   if (filters.repEmail) results = results.filter(r => r.rep_email === filters.repEmail);
   if (filters.playId)   results = results.filter(r => r.play_id   === filters.playId);
@@ -139,7 +139,7 @@ async function getExecutions(filters = {}) {
 }
 
 async function getLatestExecutionPerAccount(playId, accountIds) {
-  const items = await getListItems("sales_play_execution");
+  const items = await getListItems("ChefSaaS_Executions");
   const logs = items.map(i => i.fields).filter(f => !playId || f.play_id === playId);
 
   const latest = {};
@@ -159,13 +159,13 @@ async function getLatestExecutionPerAccount(playId, accountIds) {
 }
 
 async function getRepPoints(repEmail) {
-  const items = await getListItems("sales_play_execution");
+  const items = await getListItems("ChefSaaS_Executions");
   const logs = items.map(i => i.fields).filter(f => f.rep_email === repEmail || f.submitted_by === repEmail);
   return logs.reduce((sum, l) => sum + (Number(l.points_earned) || 0), 0);
 }
 
 async function getLeaderboard() {
-  const items = await getListItems("sales_play_execution");
+  const items = await getListItems("ChefSaaS_Executions");
   const logs = items.map(i => i.fields);
 
   const repMap = {};
@@ -201,7 +201,7 @@ async function getLeaderboard() {
 
 async function getPlays() {
   try {
-    const items = await getListItems("sales_play_assignment");
+    const items = await getListItems("ChefSaaS_Assignments");
     const seen = new Set();
     return items.map(i => i.fields).filter(f => {
       if (!f.play_id || seen.has(f.play_id)) return false;
