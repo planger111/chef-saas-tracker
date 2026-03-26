@@ -947,7 +947,12 @@
         if (currentUser) await loadDashboard();
       } catch (err) {
         console.error('Sign in error:', err);
-        alert('⚠️ Sign in failed. Please try again.');
+        const msg = err && err.message ? err.message : '';
+        if (msg.includes('redirect') || msg.includes('AADSTS50011')) {
+          alert('⚠️ Sign in failed: This URL is not registered as a valid redirect URI in Azure AD.\n\nAsk IT to add:\n' + window.location.origin + window.location.pathname + '\n\nTo the app registration → Authentication → Single-page application.');
+        } else {
+          alert('⚠️ Sign in failed. Please try again.\n\nError: ' + (msg || 'Unknown'));
+        }
       }
     });
 
