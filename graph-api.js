@@ -196,3 +196,30 @@ async function getLeaderboard() {
     }))
     .sort((a, b) => b.totalPoints - a.totalPoints);
 }
+
+// ─── Plays (distinct play_ids from assignments) ───────────────────────────────
+
+async function getPlays() {
+  try {
+    const items = await getListItems("sales_play_assignment");
+    const seen = new Set();
+    return items.map(i => i.fields).filter(f => {
+      if (!f.play_id || seen.has(f.play_id)) return false;
+      seen.add(f.play_id);
+      return true;
+    }).map(f => ({ play_id: f.play_id, play_name: f.play_name || f.play_id }));
+  } catch (e) {
+    console.warn('getPlays failed:', e);
+    return [{ play_id: 'chef-saas', play_name: 'Chef SaaS' }];
+  }
+}
+
+// ─── Legacy fallback (getRepAccounts) ─────────────────────────────────────────
+
+async function getRepAccounts(repEmail) {
+  try {
+    return await getPlayAssignments(repEmail);
+  } catch (e) {
+    return [];
+  }
+}
