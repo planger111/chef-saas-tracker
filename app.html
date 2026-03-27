@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Chef SaaS Motion Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* v2 log-form step indicator */
+    .log-step-indicator { display:flex; background:#f0f6ff; border-bottom:1px solid #d0e4f7; padding:8px 16px; gap:16px; font-size:12px; font-weight:600; color:#9ca3af; }
+    /* Pitch brief card */
+    .pitch-card { background:#eff6ff; border-left:4px solid #0078d4; border-radius:0 8px 8px 0; padding:14px 16px; margin-bottom:12px; font-size:14px; line-height:1.5; color:#1a1a1a; }
+    .pitch-card-label { font-size:11px; font-weight:700; color:#0078d4; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+    /* Admin notes callout */
+    .admin-notes-callout { background:#fffbeb; border-left:4px solid #f59e0b; border-radius:0 8px 8px 0; padding:12px 14px; margin-bottom:12px; font-size:13px; color:#78350f; }
+    /* ICP / Persona chips */
+    .play-meta-row { display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+    .play-meta-chip { background:#f3f4f6; border-radius:6px; padding:6px 10px; font-size:12px; flex:1; min-width:0; }
+    .play-meta-chip-label { font-weight:700; color:#374151; font-size:11px; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px; }
+    .play-meta-chip-value { color:#1a1a1a; font-size:13px; }
+    /* Pitch confidence star rating */
+    .star-rating-row { display:flex; gap:6px; margin-top:4px; }
+    .star-rating-row input[type="radio"] { display:none; }
+    .star-rating-row label { font-size:28px; color:#d1d5db; cursor:pointer; line-height:1; transition:color 0.1s; }
+    .star-rating-row label:hover { color:#f59e0b; }
+    .star-rating-row input[type="radio"]:checked + label { color:#f59e0b; }
+    /* Account header card inside form */
+    .account-header-card { background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:12px 14px; margin-bottom:16px; }
+    .account-header-name { font-weight:700; font-size:16px; margin:0 0 4px; }
+    .account-header-meta { font-size:12px; color:#6b7280; }
+  </style>
+</head>
+<body>
+
+  <!-- ===================== SCREEN: LOADING ===================== -->
+  <div id="screen-loading" class="screen active">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:16px;">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading…</p>
+    </div>
+  </div>
+
+  <!-- ===================== SCREEN: LOGIN ===================== -->
+  <div id="screen-login" class="screen">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:32px;text-align:center;gap:16px;">
+      <div style="font-size:56px;">🍴</div>
+      <h1 style="color:#0078d4;font-weight:bold;margin:0;">Chef SaaS Motion Tracker</h1>
+      <p style="margin:0;color:#555;font-size:15px;">Sales Play Tracker</p>
+      <div style="height:16px;"></div>
+      <button id="btn-sign-in" class="btn btn-primary btn-block">Sign In with Microsoft</button>
+      <p style="font-size:12px;color:#999;margin:0;">Use your Progress corporate account</p>
+    </div>
+  </div>
+
+  <!-- ===================== SCREEN: DASHBOARD ===================== -->
+  <div id="screen-dashboard" class="screen">
+    <!-- Header -->
+    <div class="header">
+      <span class="header-title">Chef SaaS Tracker</span>
+      <button id="btn-sign-out-header" class="btn btn-secondary" style="font-size:12px;padding:4px 10px;">Sign Out</button>
+    </div>
+
+    <div style="padding:16px;max-width:480px;margin:0 auto;">
+
+      <!-- User greeting -->
+      <div class="user-greeting" id="dashboard-greeting"></div>
+
+      <!-- Points card -->
+      <div class="points-card" id="dashboard-points-card">
+        <div>
+          <div class="points-total" id="dashboard-total-points">0</div>
+          <div class="points-label">Total Points</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="level-badge">
+            <span class="level-emoji" id="dashboard-level-emoji">🌱</span>
+            <span class="level-name" id="dashboard-level-name">Rookie</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Schedule alert (hidden by default) -->
+      <div class="schedule-alert" id="dashboard-schedule-alert" style="display:none;"></div>
+
+      <!-- Plays -->
+      <div class="section-label">YOUR PLAYS</div>
+      <div id="dashboard-plays-list">
+        <div style="text-align:center;color:#999;padding:24px;">Loading plays…</div>
+      </div>
+
+      <!-- Leaderboard peek -->
+      <div class="section-label">LEADERBOARD</div>
+      <div class="leaderboard-peek" id="dashboard-leaderboard-peek">
+        <div style="text-align:center;color:#999;padding:16px;">Loading…</div>
+      </div>
+
+      <!-- Sign out link -->
+      <div style="text-align:center;margin-top:24px;margin-bottom:32px;">
+        <a href="#" id="btn-sign-out-bottom" style="font-size:13px;color:#999;text-decoration:none;">Log out</a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCREEN: PLAY DETAIL ===================== -->
+  <div id="screen-play-detail" class="screen">
+    <div class="header">
+      <button class="header-back btn btn-secondary" id="btn-back-to-dashboard">← Back</button>
+      <span class="header-title" id="play-detail-title">Play</span>
+    </div>
+
+    <div style="padding:16px;max-width:480px;margin:0 auto;">
+
+      <!-- Filter tabs -->
+      <div class="filter-tabs" id="play-filter-tabs">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="not-started">Not Started</button>
+        <button class="filter-tab" data-filter="interested">Interested</button>
+        <button class="filter-tab" data-filter="not-interested">Not Interested</button>
+      </div>
+
+      <!-- Account list -->
+      <div id="play-account-list">
+        <div style="text-align:center;color:#999;padding:24px;">Loading accounts…</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCREEN: LOG FORM ===================== -->
+  <div id="screen-log-form" class="screen">
+    <div class="header">
+      <button class="header-back btn btn-secondary" id="btn-back-to-play">← Back</button>
+      <span class="header-title" id="log-form-title">Log Interaction</span>
+    </div>
+
+    <!-- Step indicator (2 steps) -->
+    <div class="log-step-indicator">
+      <span id="step-ind-1" style="color:#0078d4;font-weight:700;">1. Interaction</span>
+      <span>›</span>
+      <span id="step-ind-2">2. Details</span>
+    </div>
+
+    <div style="padding:16px;max-width:480px;margin:0 auto;">
+
+      <!-- STEP 1: Interaction -->
+      <div id="log-step-1">
+        <div id="log-form-account-header" class="account-header-card"></div>
+
+        <div class="form-group">
+          <label class="form-label">Interaction Type <span style="color:#d32f2f;">*</span></label>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
+            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
+              <input type="radio" name="interaction-type" value="Call" style="width:18px;height:18px;accent-color:#0078d4;"> 📞 Call
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
+              <input type="radio" name="interaction-type" value="Email" style="width:18px;height:18px;accent-color:#0078d4;"> 📧 Email
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
+              <input type="radio" name="interaction-type" value="Text" style="width:18px;height:18px;accent-color:#0078d4;"> 💬 Text
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:16px;">
+          <label class="form-label">Outcome <span style="color:#d32f2f;">*</span></label>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
+            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
+              <input type="radio" name="outcome" value="Interested" style="width:18px;height:18px;accent-color:#0078d4;"> ✅ Interested
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
+              <input type="radio" name="outcome" value="Not Interested" style="width:18px;height:18px;accent-color:#0078d4;"> ❌ Not Interested
+            </label>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="btn-step1-next" style="margin-top:16px;">Next →</button>
+      </div>
+
+      <!-- STEP 2: Details -->
+      <div id="log-step-2" style="display:none;">
+        <div id="log-form-account-header-2" class="account-header-card"></div>
+
+        <!-- Interested fields -->
+        <div id="interested-fields">
+          <div class="form-group">
+            <label class="form-label">Interested Reason</label>
+            <select class="form-control" id="field-interested-reason">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Next Step</label>
+            <select class="form-control" id="field-next-step-type">
+              <option value="">— Select —</option>
+              <option>Schedule follow-up</option>
+              <option>Send information</option>
+              <option>Introduce stakeholder</option>
+              <option>Revisit later</option>
+              <option>Create opportunity</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Timing</label>
+            <select class="form-control" id="field-timing">
+              <option value="">— Select —</option>
+              <option>Now</option>
+              <option>This month</option>
+              <option>Next quarter</option>
+              <option>Later</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Pitch Confidence <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <div class="star-rating-row" id="field-pitch-confidence">
+              <input type="radio" name="pitch-confidence" id="pc1" value="1"><label for="pc1">★</label>
+              <input type="radio" name="pitch-confidence" id="pc2" value="2"><label for="pc2">★</label>
+              <input type="radio" name="pitch-confidence" id="pc3" value="3"><label for="pc3">★</label>
+              <input type="radio" name="pitch-confidence" id="pc4" value="4"><label for="pc4">★</label>
+              <input type="radio" name="pitch-confidence" id="pc5" value="5"><label for="pc5">★</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Short Reaction <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <input type="text" class="form-control" id="field-short-reaction" maxlength="100" placeholder="One-line customer reaction…" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contact Engaged <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <input type="text" class="form-control" id="field-contact-engaged-int" placeholder="Name / title…" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Opportunity ID <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <input type="text" class="form-control" id="field-opportunity-id-int" placeholder="e.g. SFDC opportunity ID…" />
+          </div>
+        </div>
+
+        <!-- Not Interested fields -->
+        <div id="not-interested-fields" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Not Interested Reason</label>
+            <select class="form-control" id="field-not-interested-reason">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Contact Engaged <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <input type="text" class="form-control" id="field-contact-engaged-ni" placeholder="Name / title…" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Opportunity ID <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <input type="text" class="form-control" id="field-opportunity-id-ni" placeholder="e.g. SFDC opportunity ID…" />
+          </div>
+        </div>
+
+        <!-- Always shown on step 2 -->
+        <div class="form-group">
+          <label class="form-label">Notes <span style="font-weight:400;color:#888;">(optional)</span></label>
+          <textarea class="form-control" id="field-notes" rows="3" placeholder="Any additional context…" style="resize:vertical;"></textarea>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="btn-submit-engagement" style="margin-top:8px;">Submit ✓</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCREEN: CONFIRM ===================== -->
+  <div id="screen-confirm" class="screen">
+    <div class="header">
+      <span class="header-title">✅ Submitted!</span>
+    </div>
+
+    <div style="padding:24px;max-width:480px;margin:0 auto;text-align:center;display:flex;flex-direction:column;gap:20px;align-items:center;">
+
+      <!-- Account name -->
+      <div id="confirm-account-name" style="font-size:20px;font-weight:bold;color:#222;"></div>
+
+      <!-- Points earned callout -->
+      <div class="points-earned-callout">
+        <div class="points-earned-number" id="confirm-points-earned">+0 pts</div>
+        <div class="points-earned-label">Points Earned</div>
+      </div>
+
+      <!-- Level badge -->
+      <div class="level-badge" style="font-size:18px;">
+        <span class="level-emoji" id="confirm-level-emoji">🌱</span>
+        <span class="level-name" id="confirm-level-name">Rookie</span>
+      </div>
+
+      <!-- Total points -->
+      <div style="color:#555;font-size:15px;">
+        Total: <strong id="confirm-total-points">0</strong> pts
+      </div>
+
+      <!-- Back button -->
+      <button id="btn-back-to-accounts" class="btn btn-primary btn-block">Back to My Accounts</button>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCREEN: LEADERBOARD ===================== -->
+  <div id="screen-leaderboard" class="screen">
+    <div class="header">
+      <button class="header-back btn btn-secondary" id="btn-back-to-dashboard-lb">← Back</button>
+      <span class="header-title">Leaderboard</span>
+    </div>
+
+    <div style="padding:16px;max-width:480px;margin:0 auto;">
+      <div id="leaderboard-list">
+        <div style="text-align:center;color:#999;padding:24px;">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ===================== SCRIPTS ===================== -->
+  <script src="msal-browser.js"></script>
+  <script src="config.js"></script>
+  <script src="msal-auth.js"></script>
+  <script src="graph-api.js"></script>
+  <script src="form-engine.js"></script>
+
+  <script>
+    // ─────────────────────────────────────────────
+    // STATE
+    // ─────────────────────────────────────────────
+    let currentUser    = null;  // {name, email}
+    let currentPlay    = null;  // {play_id, play_name}
+    let currentAccount = null;  // account object from loadRepAccounts
+    let repAccounts    = [];    // all accounts for this rep
+    let allPlays       = [];    // all plays
+    let latestLogs     = {};    // {[account_id]: log entry or null}
+    let totalPoints    = 0;
+    let lastPointsEarned = 0;
+    let activeFilter   = 'all'; // 'all' | 'not-started' | 'interested' | 'not-interested'
+    let currentStep    = 1;     // current step in log form wizard (1|2)
+    const _responseOptionsCache = {};  // keyed by response_set_id
+
+    // ─────────────────────────────────────────────
+    // UTILITIES
+    // ─────────────────────────────────────────────
+    function escHtml(str) {
+      return String(str === null || str === undefined ? '' : str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Try play_assignments first (v2); fall back to target_accounts (v1)
+    async function loadRepAccounts(email, name) {
+      try {
+        const assignments = await getPlayAssignments(email);
+        if (assignments && assignments.length > 0) return assignments;
+      } catch (e) {
+        console.warn('getPlayAssignments failed, falling back to target_accounts:', e);
+      }
+      return getRepAccounts(email, name);
+    }
+
+    // ─────────────────────────────────────────────
+    // RESPONSE OPTIONS — load + cache
+    // ─────────────────────────────────────────────
+    const DEFAULT_INTERESTED_OPTIONS = [
+      { reason_label: 'Lower total cost',          reason_code: '' },
+      { reason_label: 'Reduce ops overhead',       reason_code: '' },
+      { reason_label: 'Improve compliance posture',reason_code: '' },
+      { reason_label: 'Simplify upgrade path',     reason_code: '' },
+      { reason_label: 'SaaS flexibility',          reason_code: '' },
+      { reason_label: 'Better support model',      reason_code: '' },
+    ];
+    const DEFAULT_NOT_INTERESTED_OPTIONS = [
+      { reason_label: 'Cannot do SaaS',                  reason_code: '' },
+      { reason_label: 'No current pain',                  reason_code: '' },
+      { reason_label: 'Bad timing',                       reason_code: '' },
+      { reason_label: 'Budget issue',                     reason_code: '' },
+      { reason_label: 'Already solved elsewhere',         reason_code: '' },
+      { reason_label: 'Security / compliance concern',    reason_code: '' },
+      { reason_label: 'No authority / wrong contact',     reason_code: '' },
+    ];
+
+    async function loadResponseOptionsForForm(account) {
+      const rsId = (account.response_set_id || '').toUpperCase();
+      if (!rsId) return { interested: DEFAULT_INTERESTED_OPTIONS, notInterested: DEFAULT_NOT_INTERESTED_OPTIONS };
+      if (_responseOptionsCache[rsId]) return _responseOptionsCache[rsId];
+
+      try {
+        const options = await getResponseOptions(rsId);
+        if (options && options.length > 0) {
+          const interested    = options.filter(o => (o.outcome_type || '').toLowerCase() === 'interested');
+          const notInterested = options.filter(o => (o.outcome_type || '').toLowerCase() === 'not interested');
+          const result = {
+            interested:    interested.length    > 0 ? interested    : DEFAULT_INTERESTED_OPTIONS,
+            notInterested: notInterested.length > 0 ? notInterested : DEFAULT_NOT_INTERESTED_OPTIONS,
+          };
+          _responseOptionsCache[rsId] = result;
+          return result;
+        }
+      } catch (e) {
+        console.warn('getResponseOptions failed, using defaults:', e);
+      }
+      return { interested: DEFAULT_INTERESTED_OPTIONS, notInterested: DEFAULT_NOT_INTERESTED_OPTIONS };
+    }
+
+    function buildReasonOptions(options) {
+      return '<option value="">— Select —</option>' +
+        options.map(o =>
+          `<option value="${escHtml(o.reason_label)}" data-reason-code="${escHtml(o.reason_code || '')}">${escHtml(o.reason_label)}</option>`
+        ).join('');
+    }
+
+    // ─────────────────────────────────────────────
+    // SCREEN MANAGEMENT
+    // ─────────────────────────────────────────────
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById(id);
+      if (target) {
+        target.classList.add('active');
+        window.scrollTo(0, 0);
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // ACCOUNT STATUS HELPERS
+    // ─────────────────────────────────────────────
+    function getAccountStatus(accountId) {
+      const log = latestLogs[accountId];
+
+      if (!log) {
+        return { status: null, statusLabel: 'Not Started', badgeClass: 'badge-not-started', lastDate: null };
+      }
+
+      const lastDate = log.submitted_at || log.submitted_date || null;
+
+      if (log.outcome === 'Interested') {
+        return { status: 'Interested', statusLabel: 'Interested', badgeClass: 'badge-won', lastDate };
+      }
+      if (log.outcome === 'Not Interested') {
+        return { status: 'Not Interested', statusLabel: 'Not Interested', badgeClass: 'badge-lost', lastDate };
+      }
+
+      return { status: null, statusLabel: 'Not Started', badgeClass: 'badge-not-started', lastDate: null };
+    }
+
+    function isCompleted(accountId) {
+      const log = latestLogs[accountId];
+      return !!(log && log.outcome);
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return 'Never';
+      try {
+        return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      } catch {
+        return dateStr;
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // DASHBOARD
+    // ─────────────────────────────────────────────
+    async function loadDashboard() {
+      showScreen('screen-loading');
+      try {
+        currentUser = getCurrentUser();
+        const email = currentUser.email;
+        const name  = currentUser.name;
+
+        // Fetch everything in parallel (play_assignments first, falls back to target_accounts)
+        const [accounts, plays, points] = await Promise.all([
+          loadRepAccounts(email, name),
+          getPlays(),
+          getRepPoints(email)
+        ]);
+
+        repAccounts = accounts || [];
+        allPlays    = plays    || [];
+        totalPoints = points   || 0;
+
+        // Fetch latest logs for this rep across all accounts
+        const accountIds = repAccounts.map(a => a.account_id);
+        latestLogs = await getLatestLogsForRep(email, accountIds);
+
+        // Build logResults in same shape renderPlayCards expects
+        const logResults = allPlays.map(play => ({ play_id: play.play_id, logs: latestLogs }));
+
+        // Render greeting
+        const firstName = name ? name.split(' ')[0] : 'there';
+        document.getElementById('dashboard-greeting').textContent = `Welcome back, ${firstName} 👋`;
+
+        // Render points card
+        renderPointsCard(totalPoints);
+
+        // Render plays
+        renderPlayCards(logResults);
+
+        // Render leaderboard peek
+        const lbData = await getLeaderboard();
+        renderLeaderboardPeek(lbData);
+
+        showScreen('screen-dashboard');
+
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+        const msg = err && err.message ? err.message : '';
+        if (msg.includes('404') || msg.includes('does not exist') || msg.includes('itemNotFound')) {
+          showError('SharePoint lists not set up yet. Please ask your admin to run setup.html to create the required lists, then reload.');
+        } else {
+          showError('Failed to load dashboard. Please try again.\n\nError: ' + msg);
+        }
+      }
+    }
+
+    function renderPointsCard(pts) {
+      const level = getLevel(pts);
+      document.getElementById('dashboard-total-points').textContent = pts.toLocaleString();
+      document.getElementById('dashboard-level-emoji').textContent  = level.badge;
+      document.getElementById('dashboard-level-name').textContent   = level.name;
+    }
+
+    function renderPlayCards(logResults) {
+      const container = document.getElementById('dashboard-plays-list');
+      if (!allPlays.length) {
+        container.innerHTML = '<div style="text-align:center;color:#999;padding:24px;">No plays assigned yet.</div>';
+        return;
+      }
+
+      const html = allPlays.map(play => {
+        const total      = repAccounts.length;
+        const engaged    = repAccounts.filter(a => !!latestLogs[a.account_id]).length;
+        const interested = repAccounts.filter(a => {
+          const log = latestLogs[a.account_id];
+          return !!(log && log.outcome === 'Interested');
+        }).length;
+        const pct        = total > 0 ? Math.round((engaged / total) * 100) : 0;
+
+        return `
+          <div class="play-card" data-play-id="${play.play_id}" style="cursor:pointer;">
+            <div class="play-card-header">
+              <span class="play-card-name">${play.play_name}</span>
+              <span class="play-card-count">${engaged}/${total} engaged</span>
+            </div>
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" style="width:${pct}%;"></div>
+            </div>
+            <div class="progress-pct">${pct}% engaged</div>
+            <div class="funnel-row">
+              <div class="funnel-stat">
+                <span class="funnel-num">${engaged}</span>
+                <span class="funnel-label">Engaged</span>
+              </div>
+              <div class="funnel-arrow">→</div>
+              <div class="funnel-stat funnel-won">
+                <span class="funnel-num">${interested}</span>
+                <span class="funnel-label">Interested 🏆</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = html;
+
+      // Bind click handlers
+      container.querySelectorAll('.play-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const playId = card.dataset.playId;
+          const play   = allPlays.find(p => p.play_id === playId);
+          if (play) {
+            currentPlay  = play;
+            activeFilter = 'all';
+            loadPlayDetail(play);
+          }
+        });
+      });
+    }
+
+    function renderScheduleAlert() {
+      // v2: no scheduled pitch date concept — keep the element hidden
+      const alertEl = document.getElementById('dashboard-schedule-alert');
+      if (alertEl) alertEl.style.display = 'none';
+    }
+
+    // ─────────────────────────────────────────────
+    // LEADERBOARD PEEK
+    // ─────────────────────────────────────────────
+    function renderLeaderboardPeek(data) {
+      const container = document.getElementById('dashboard-leaderboard-peek');
+      if (!data || !data.length) {
+        container.innerHTML = '<div style="text-align:center;color:#999;padding:12px;">No data yet.</div>';
+        return;
+      }
+
+      const top3    = data.slice(0, 3);
+      const userIdx = data.findIndex(r => r.email === currentUser.email);
+      const showUser = userIdx > 2;
+
+      const rankEmoji = ['🥇', '🥈', '🥉'];
+
+      const rowHtml = (entry, rank) => {
+        const level  = getLevel(entry.totalPoints || 0);
+        const isMe   = entry.email === currentUser.email;
+        return `
+          <div class="leaderboard-peek-row${isMe ? ' current-user' : ''}">
+            <span class="leaderboard-peek-rank">${rank <= 3 ? rankEmoji[rank - 1] : rank}</span>
+            <span class="leaderboard-peek-name">${entry.repName || entry.email}${isMe ? ' (you)' : ''}</span>
+            <span class="leaderboard-peek-pts">${(entry.totalPoints || 0).toLocaleString()} pts</span>
+          </div>
+        `;
+      };
+
+      let rows = top3.map((e, i) => rowHtml(e, i + 1)).join('');
+
+      if (showUser && userIdx >= 0) {
+        rows += `<div style="text-align:center;color:#bbb;font-size:11px;padding:2px 0;">•••</div>`;
+        rows += rowHtml(data[userIdx], userIdx + 1);
+      }
+
+      container.innerHTML = `
+        <div class="leaderboard-peek-header">
+          Top Reps
+          <a href="#" id="view-full-leaderboard" style="float:right;font-size:13px;color:#0078d4;text-decoration:none;">View Full Leaderboard →</a>
+        </div>
+        ${rows}
+      `;
+
+      document.getElementById('view-full-leaderboard').addEventListener('click', e => {
+        e.preventDefault();
+        loadLeaderboard();
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // PLAY DETAIL
+    // ─────────────────────────────────────────────
+    async function loadPlayDetail(play) {
+      showScreen('screen-loading');
+      try {
+        // Refresh logs for this rep
+        const email = currentUser ? currentUser.email : null;
+        const accountIds = repAccounts.map(a => a.account_id);
+        const logs = await getLatestLogsForRep(email, accountIds);
+        if (logs) Object.assign(latestLogs, logs);
+
+        document.getElementById('play-detail-title').textContent = play.play_name;
+        renderAccountList(repAccounts, activeFilter);
+
+        // Sync filter tabs UI
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+          tab.classList.toggle('active', tab.dataset.filter === activeFilter);
+        });
+
+        showScreen('screen-play-detail');
+      } catch (err) {
+        console.error('Play detail load error:', err);
+        showError('Failed to load play details. Please try again.');
+      }
+    }
+
+    function renderAccountList(accounts, filter) {
+      const container = document.getElementById('play-account-list');
+
+      // Apply filter
+      const filtered = accounts.filter(account => {
+        const { status } = getAccountStatus(account.account_id);
+
+        if (filter === 'all') return true;
+        if (filter === 'not-started')   return !status;
+        if (filter === 'interested')    return status === 'Interested';
+        if (filter === 'not-interested') return status === 'Not Interested';
+
+        return true;
+      });
+
+      if (!filtered.length) {
+        container.innerHTML = '<div style="text-align:center;color:#999;padding:24px;">No accounts match this filter.</div>';
+        return;
+      }
+
+      const html = filtered.map(account => {
+        const { statusLabel, badgeClass, lastDate } = getAccountStatus(account.account_id);
+        const region  = account.region  || '';
+        const segment = account.segment || '';
+        const meta    = [region, segment].filter(Boolean).join(' · ');
+
+        return `
+          <div class="account-row" data-account-id="${account.account_id}" style="cursor:pointer;">
+            <div class="account-row-info">
+              <div class="account-row-name">${account.account_name || account.name || account.account_id}</div>
+              ${meta ? `<div class="account-row-meta">${meta}</div>` : ''}
+            </div>
+            <div class="account-row-right">
+              <span class="status-badge ${badgeClass}">${statusLabel}</span>
+              <div class="account-row-date">${formatDate(lastDate)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = html;
+
+      // Bind click handlers
+      container.querySelectorAll('.account-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const accountId = row.dataset.accountId;
+          const account   = repAccounts.find(a => a.account_id === accountId);
+          if (account) showLogForm(account, currentPlay);
+        });
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // LOG FORM — 2-STEP WIZARD
+    // ─────────────────────────────────────────────
+    async function showLogForm(account, play) {
+      currentAccount = account;
+      currentPlay    = play;
+      currentStep    = 1;
+
+      const accountName = account.account_name || account.name || account.account_id;
+      const persona  = account.target_persona || '';
+      const meta = [account.region || '', account.segment || '', persona].filter(Boolean).join(' · ');
+      const headerHtml = `<div class="account-header-name">${escHtml(accountName)}</div>${meta ? `<div class="account-header-meta">${escHtml(meta)}</div>` : ''}`;
+
+      document.getElementById('log-form-account-header').innerHTML   = headerHtml;
+      document.getElementById('log-form-account-header-2').innerHTML = headerHtml;
+
+      // Reset all fields
+      document.querySelectorAll('input[name="interaction-type"]').forEach(r => r.checked = false);
+      document.querySelectorAll('input[name="outcome"]').forEach(r => r.checked = false);
+      document.querySelectorAll('input[name="pitch-confidence"]').forEach(r => r.checked = false);
+      ['field-not-interested-reason', 'field-interested-reason', 'field-next-step-type', 'field-timing'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      ['field-short-reaction', 'field-contact-engaged-int', 'field-contact-engaged-ni',
+       'field-opportunity-id-int', 'field-opportunity-id-ni', 'field-notes'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+
+      goToLogStep(1);
+      showScreen('screen-log-form');
+
+      // Load response options from API (cached after first call per response_set_id)
+      loadResponseOptionsForForm(account).then(({ interested, notInterested }) => {
+        document.getElementById('field-interested-reason').innerHTML     = buildReasonOptions(interested);
+        document.getElementById('field-not-interested-reason').innerHTML = buildReasonOptions(notInterested);
+      });
+    }
+
+    function goToLogStep(step) {
+      currentStep = step;
+      document.getElementById('log-step-1').style.display = step === 1 ? 'block' : 'none';
+      document.getElementById('log-step-2').style.display = step === 2 ? 'block' : 'none';
+
+      if (step === 2) {
+        // Show/hide outcome-specific fields based on step 1 selection
+        const outcome = document.querySelector('input[name="outcome"]:checked')?.value;
+        document.getElementById('interested-fields').style.display     = outcome === 'Interested'     ? 'block' : 'none';
+        document.getElementById('not-interested-fields').style.display = outcome === 'Not Interested' ? 'block' : 'none';
+      }
+
+      const titles = { 1: 'Log Interaction', 2: 'Details' };
+      document.getElementById('log-form-title').textContent = titles[step] || 'Log Interaction';
+
+      ['step-ind-1', 'step-ind-2'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        el.style.color      = (i + 1) === step ? '#0078d4' : '#9ca3af';
+        el.style.fontWeight = (i + 1) === step ? '700' : '400';
+      });
+
+      window.scrollTo(0, 0);
+    }
+
+    // ─────────────────────────────────────────────
+    // SUBMIT — log real customer interaction
+    // ─────────────────────────────────────────────
+    async function submitEngagement() {
+      const interactionType = document.querySelector('input[name="interaction-type"]:checked')?.value;
+      const outcome         = document.querySelector('input[name="outcome"]:checked')?.value;
+
+      if (!interactionType) { alert('Please select an interaction type.'); return; }
+      if (!outcome)         { alert('Please select an outcome.'); return; }
+
+      const btn = document.getElementById('btn-submit-engagement');
+      btn.textContent = 'Submitting…';
+      btn.disabled    = true;
+
+      try {
+        const nextStepType = document.getElementById('field-next-step-type').value || '';
+
+        // Resolve reason_label + reason_code from whichever dropdown is active
+        const reasonSelectId = outcome === 'Interested' ? 'field-interested-reason' : 'field-not-interested-reason';
+        const reasonSelect   = document.getElementById(reasonSelectId);
+        const selectedOption = reasonSelect ? reasonSelect.options[reasonSelect.selectedIndex] : null;
+        const reasonLabel    = selectedOption ? (selectedOption.value || '') : '';
+        const reasonCode     = selectedOption ? (selectedOption.dataset.reasonCode || '') : '';
+
+        const pitchConfidenceEl = document.querySelector('input[name="pitch-confidence"]:checked');
+        const pitchConfidence   = pitchConfidenceEl ? Number(pitchConfidenceEl.value) : null;
+
+        const data = {
+          account_id:       currentAccount.account_id,
+          account_name:     currentAccount.account_name || currentAccount.name || currentAccount.account_id,
+          play_id:          (currentPlay || {}).play_id   || currentAccount.play_id   || '',
+          play_name:        (currentPlay || {}).play_name || currentAccount.play_name || '',
+          rep_email:        currentUser.email,
+          rep_name:         currentUser.name,
+          interaction_type: interactionType,
+          outcome,
+          reason_label:     reasonLabel,
+          reason_code:      reasonCode,
+          next_step_type:   outcome === 'Interested' ? nextStepType : '',
+          timing:           outcome === 'Interested' ? (document.getElementById('field-timing').value || '') : '',
+          contact_engaged:  outcome === 'Interested'
+            ? (document.getElementById('field-contact-engaged-int').value || '')
+            : (document.getElementById('field-contact-engaged-ni').value  || ''),
+          opportunity_id:   outcome === 'Interested'
+            ? (document.getElementById('field-opportunity-id-int').value || '')
+            : (document.getElementById('field-opportunity-id-ni').value  || ''),
+          ...(outcome === 'Interested' && pitchConfidence ? { pitch_confidence: pitchConfidence } : {}),
+          ...(outcome === 'Interested' ? { short_reaction: document.getElementById('field-short-reaction').value || '' } : {}),
+          notes: document.getElementById('field-notes').value || '',
+        };
+
+        await logEngagement(data);
+        lastPointsEarned = calculatePoints(outcome, data.next_step_type);
+        totalPoints      = await getRepPoints(currentUser.email);
+        latestLogs[currentAccount.account_id] = { ...data, outcome };
+        showConfirm();
+
+      } catch (err) {
+        console.error('Submit error:', err);
+        btn.textContent = 'Submit ✓';
+        btn.disabled    = false;
+        alert('⚠️ Something went wrong submitting. Please try again.');
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // CONFIRM SCREEN
+    // ─────────────────────────────────────────────
+    function showConfirm() {
+      const accountName = currentAccount.account_name || currentAccount.name || currentAccount.account_id;
+      const level       = getLevel(totalPoints);
+
+      document.getElementById('confirm-account-name').textContent  = accountName;
+      document.getElementById('confirm-points-earned').textContent = `+${lastPointsEarned} pts`;
+      document.getElementById('confirm-level-emoji').textContent   = level.badge;
+      document.getElementById('confirm-level-name').textContent    = level.name;
+      document.getElementById('confirm-total-points').textContent  = totalPoints.toLocaleString();
+
+      showScreen('screen-confirm');
+      fireConfetti();
+    }
+
+    // ─────────────────────────────────────────────
+    // CONFETTI 🎉
+    // ─────────────────────────────────────────────
+    function fireConfetti() {
+      const colors = ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff922b','#cc5de8'];
+      const pieces = [];
+
+      for (let i = 0; i < 50; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left     = `${Math.random() * 100}%`;
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.transform  = `rotate(${Math.random() * 360}deg)`;
+        piece.style.animationDuration = `${0.8 + Math.random() * 1.5}s`;
+        document.body.appendChild(piece);
+        pieces.push(piece);
+      }
+
+      // Clean up after 3 seconds
+      setTimeout(() => {
+        pieces.forEach(p => p.remove());
+      }, 3000);
+    }
+
+    // ─────────────────────────────────────────────
+    // LEADERBOARD (full)
+    // ─────────────────────────────────────────────
+    async function loadLeaderboard() {
+      showScreen('screen-loading');
+      try {
+        const data = await getLeaderboard();
+        renderFullLeaderboard(data);
+        showScreen('screen-leaderboard');
+      } catch (err) {
+        console.error('Leaderboard load error:', err);
+        showError('Failed to load leaderboard.');
+      }
+    }
+
+    function renderFullLeaderboard(data) {
+      const container = document.getElementById('leaderboard-list');
+      if (!data || !data.length) {
+        container.innerHTML = '<div style="text-align:center;color:#999;padding:24px;">No data yet.</div>';
+        return;
+      }
+
+      const rankEmoji = ['🥇', '🥈', '🥉'];
+
+      const html = data.map((entry, idx) => {
+        const rank    = idx + 1;
+        const level   = getLevel(entry.totalPoints || 0);
+        const isMe    = entry.email === currentUser.email;
+        const rankStr = rank <= 3 ? rankEmoji[rank - 1] : String(rank);
+
+        return `
+          <div class="leaderboard-row${isMe ? ' current-user' : ''}">
+            <div class="leaderboard-rank">${rankStr}</div>
+            <div class="leaderboard-info">
+              <div class="leaderboard-name">${entry.repName || entry.email}${isMe ? ' 👈 you' : ''}</div>
+              <div class="leaderboard-level">${level.badge} ${level.name}</div>
+            </div>
+            <div class="leaderboard-right">
+              <div class="leaderboard-points">${(entry.totalPoints || 0).toLocaleString()} pts</div>
+              <div class="leaderboard-accounts">${entry.completedAccounts || 0} accounts</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = html;
+    }
+
+    // ─────────────────────────────────────────────
+    // ERROR HELPER
+    // ─────────────────────────────────────────────
+    function showError(msg) {
+      // Show login screen with error message as a simple fallback
+      showScreen('screen-login');
+      const note = document.querySelector('#screen-login p:last-child');
+      if (note) note.textContent = `⚠️ ${msg}`;
+    }
+
+    // ─────────────────────────────────────────────
+    // EVENT LISTENERS
+    // ─────────────────────────────────────────────
+
+    // Sign in
+    document.getElementById('btn-sign-in').addEventListener('click', async () => {
+      try {
+        const account = await signIn();
+        if (account) {
+          currentUser = getCurrentUser();
+          await loadDashboard();
+        }
+      } catch (err) {
+        console.error('Sign in error:', err);
+        const msg = err && err.message ? err.message : '';
+        if (msg.includes('popup_window_error') || msg.includes('popupWindowError')) {
+          alert('⚠️ Popup was blocked. Please allow popups for localhost:7341 in your browser and try again.');
+        } else {
+          alert('⚠️ Sign in failed. Please try again.\n\nError: ' + (msg || 'Unknown'));
+        }
+      }
+    });
+
+    // Sign out (header button)
+    document.getElementById('btn-sign-out-header').addEventListener('click', async () => {
+      await signOut();
+    });
+
+    // Sign out (bottom link)
+    document.getElementById('btn-sign-out-bottom').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await signOut();
+    });
+
+    // Back: play detail → dashboard
+    document.getElementById('btn-back-to-dashboard').addEventListener('click', () => {
+      showScreen('screen-dashboard');
+    });
+
+    // Back: log form → play detail (step-aware)
+    document.getElementById('btn-back-to-play').addEventListener('click', () => {
+      if (currentStep > 1) {
+        goToLogStep(currentStep - 1);
+      } else if (currentPlay) {
+        activeFilter = 'all';
+        renderAccountList(repAccounts, activeFilter);
+        document.querySelectorAll('.filter-tab').forEach(t => {
+          t.classList.toggle('active', t.dataset.filter === 'all');
+        });
+        showScreen('screen-play-detail');
+      }
+    });
+
+    // Back: leaderboard → dashboard
+    document.getElementById('btn-back-to-dashboard-lb').addEventListener('click', () => {
+      showScreen('screen-dashboard');
+    });
+
+    // Back to accounts (confirm screen)
+    document.getElementById('btn-back-to-accounts').addEventListener('click', () => {
+      if (currentPlay) {
+        loadPlayDetail(currentPlay);
+      } else {
+        showScreen('screen-dashboard');
+      }
+    });
+
+    // Filter tabs
+    document.getElementById('play-filter-tabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.filter-tab');
+      if (!tab) return;
+
+      activeFilter = tab.dataset.filter;
+
+      document.querySelectorAll('.filter-tab').forEach(t => {
+        t.classList.toggle('active', t === tab);
+      });
+
+      renderAccountList(repAccounts, activeFilter);
+    });
+
+    // Log form — step 1 → step 2 (validates required fields first)
+    document.getElementById('btn-step1-next').addEventListener('click', () => {
+      const interactionType = document.querySelector('input[name="interaction-type"]:checked')?.value;
+      const outcome         = document.querySelector('input[name="outcome"]:checked')?.value;
+      if (!interactionType) { alert('Please select an interaction type.'); return; }
+      if (!outcome)         { alert('Please select an outcome.'); return; }
+      goToLogStep(2);
+    });
+
+    // Log form — submit engagement (step 2)
+    document.getElementById('btn-submit-engagement').addEventListener('click', submitEngagement);
+
+    // ─────────────────────────────────────────────
+    // INIT
+    // ─────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await initAuth();
+        const user = getCurrentUser();
+        if (user) {
+          currentUser = user;
+          await loadDashboard();
+        } else {
+          showScreen('screen-login');
+        }
+      } catch (err) {
+        console.error('Init error:', err);
+        showScreen('screen-login');
+      }
+    });
+
+  </script>
+</body>
+</html>
