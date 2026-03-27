@@ -29,6 +29,7 @@ jobs:
           app_location: "/"       # root of repo is the web app
           output_location: ""     # no build step needed — plain HTML
           skip_app_build: true
+          skip_deploy_on_missing_secrets: true
 
   close_pull_request:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

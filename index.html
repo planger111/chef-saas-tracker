@@ -45,6 +45,20 @@
     .btn-admin { background: #fff; color: #0078d4; border: 2px solid #0078d4; }
     .divider { color: #bbb; font-size: 12px; margin: 20px 0; text-transform: uppercase; letter-spacing: 1px; }
     .note { font-size: 12px; color: #999; margin-top: 24px; line-height: 1.6; }
+    .setup-banner {
+      background: #fff8e1;
+      border: 1.5px solid #ffc107;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 24px;
+      text-align: left;
+      font-size: 13px;
+      line-height: 1.7;
+      color: #5a4000;
+    }
+    .setup-banner strong { display: block; margin-bottom: 4px; font-size: 14px; }
+    .setup-banner ol { padding-left: 18px; margin-top: 6px; }
+    .setup-banner a { color: #0078d4; }
   </style>
 </head>
 <body>
@@ -58,8 +72,18 @@
 
     <div class="divider">Live App</div>
 
-    <a href="app.html" class="btn btn-demo">🔐 Sign in with Progress SSO</a>
+    <div class="setup-banner" id="setup-banner">
+      <strong>⚙️ One-time setup needed</strong>
+      To activate the live app, Phil needs to:
+      <ol>
+        <li>Get the deployment token from <a href="https://portal.azure.com" target="_blank">Azure portal</a> → Static Web App → <em>Manage deployment token</em></li>
+        <li>Add it to <a href="https://github.com/planger111/chef-saas-tracker/settings/secrets/actions" target="_blank">GitHub → Secrets</a> as <code>AZURE_STATIC_WEB_APPS_API_TOKEN</code></li>
+        <li>Add this site's URL as a redirect URI in <a href="https://portal.azure.com/#view/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/~/Authentication/appId/48db2acc-9dfb-4337-9abb-302c9dfb88fc" target="_blank">Azure AD App Registration</a></li>
+        <li>Run <a href="setup.html">setup.html</a> to initialize SharePoint data</li>
+      </ol>
+    </div>
 
+    <a href="app.html" class="btn btn-demo">🔐 Sign in with Progress SSO</a>
     <a href="setup.html" class="btn btn-admin">⚙️ Admin Setup (one-time)</a>
 
     <p class="note">
