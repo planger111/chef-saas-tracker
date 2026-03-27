@@ -1,0 +1,2330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chef SaaS Tracker — Demo</title>
+  <style>
+/* Chef SaaS Motion Tracker — Mobile-First Styles */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #f5f5f5;
+  color: #1a1a1a;
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+/* ─── Desktop responsive layout ─── */
+@media (min-width: 768px) {
+  body {
+    max-width: 680px;
+  }
+  .points-card {
+    padding: 24px 28px;
+  }
+  .play-card, .leaderboard-peek, .card {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .account-row-name {
+    font-size: 16px;
+  }
+  .btn {
+    font-size: 16px;
+  }
+  .header {
+    font-size: 20px;
+    padding: 18px 24px;
+  }
+  .screen-content, .form-body {
+    padding: 20px 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  body {
+    max-width: 780px;
+  }
+}
+
+/* ─── Screens ─── */
+.screen {
+  display: none;
+}
+.screen.active {
+  display: block;
+}
+
+/* ─── Header ─── */
+.header {
+  background: #0078d4;
+  padding: 16px 20px;
+  color: white;
+  font-size: 18px;
+  font-weight: 700;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-back {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  min-width: 32px;
+}
+
+.header-title {
+  flex: 1;
+}
+
+/* ─── Cards ─── */
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 12px 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+/* ─── Buttons ─── */
+.btn {
+  display: block;
+  width: 100%;
+  min-height: 52px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  text-align: center;
+  line-height: 52px;
+  padding: 0 16px;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.btn:active {
+  opacity: 0.8;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #0078d4;
+  color: white;
+}
+
+.btn-secondary {
+  background: #e8e8e8;
+  color: #1a1a1a;
+}
+
+.btn-danger {
+  background: #d32f2f;
+  color: white;
+}
+
+.btn-sm {
+  min-height: 40px;
+  line-height: 40px;
+  font-size: 14px;
+  border-radius: 6px;
+}
+
+/* ─── Search ─── */
+.search-input {
+  width: 100%;
+  height: 48px;
+  font-size: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0 16px;
+  margin-bottom: 8px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.search-input:focus {
+  border-color: #0078d4;
+}
+
+/* ─── Account List ─── */
+.account-list {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.account-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.account-item:last-child {
+  border-bottom: none;
+}
+
+.account-item:hover, .account-item:active {
+  background: #f0f6ff;
+}
+
+.account-item-name {
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.account-item-rep {
+  font-size: 13px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.account-empty {
+  padding: 24px 16px;
+  text-align: center;
+  color: #888;
+  font-size: 15px;
+}
+
+/* ─── Form Fields ─── */
+.form-field {
+  margin-bottom: 20px;
+}
+
+.form-field label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: #333;
+}
+
+.form-field select,
+.form-field input[type="text"],
+.form-field input[type="date"] {
+  width: 100%;
+  height: 48px;
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  background: white;
+  outline: none;
+  transition: border-color 0.15s;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.form-field select:focus,
+.form-field input:focus,
+.form-field textarea:focus {
+  border-color: #0078d4;
+}
+
+.form-field textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 16px;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.form-field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23666' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+.required-star {
+  color: #d32f2f;
+}
+
+/* ─── Error Messages ─── */
+.error-msg {
+  color: #d32f2f;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.error-list {
+  background: #fff5f5;
+  border: 1px solid #ffcdd2;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.error-list p {
+  color: #d32f2f;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.error-list p:last-child {
+  margin-bottom: 0;
+}
+
+/* ─── Loading Spinner ─── */
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e0e0e0;
+  border-top-color: #0078d4;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 40px auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  text-align: center;
+  color: #666;
+  font-size: 15px;
+  margin-top: 8px;
+}
+
+/* ─── Confirmation Screen ─── */
+.confirm-center {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.confirm-check {
+  font-size: 72px;
+  color: #2e7d32;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.confirm-heading {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2e7d32;
+  margin-bottom: 8px;
+}
+
+.confirm-sub {
+  font-size: 15px;
+  color: #555;
+  margin-bottom: 32px;
+}
+
+/* ─── Play Cards ─── */
+.play-grid {
+  padding: 12px;
+}
+
+.play-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  cursor: pointer;
+  border-left: 5px solid #0078d4;
+  transition: box-shadow 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.play-card:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(0,78,212,0.2);
+}
+
+.play-card-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0078d4;
+  margin-bottom: 6px;
+}
+
+.play-card-desc {
+  font-size: 14px;
+  color: #666;
+}
+
+/* ─── Summary Cards ─── */
+.summary-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 12px;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.summary-card {
+  background: white;
+  border-radius: 10px;
+  padding: 14px 16px;
+  min-width: 110px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  border-top: 4px solid #0078d4;
+  flex-shrink: 0;
+}
+
+.summary-card-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0078d4;
+}
+
+.summary-card-label {
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+
+.summary-card.green { border-top-color: #2e7d32; }
+.summary-card.green .summary-card-value { color: #2e7d32; }
+.summary-card.orange { border-top-color: #e65100; }
+.summary-card.orange .summary-card-value { color: #e65100; }
+.summary-card.gray { border-top-color: #666; }
+.summary-card.gray .summary-card-value { color: #666; }
+
+/* ─── Status Badges ─── */
+.status-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-not-pitched { background: #f5f5f5; color: #555; }
+.badge-pitched-exploring { background: #e3f2fd; color: #0277bd; }
+.badge-active-deal { background: #e8f5e9; color: #2e7d32; }
+.badge-closed-won { background: #e8f5e9; color: #1b5e20; }
+.badge-closed-lost { background: #ffebee; color: #c62828; }
+.badge-default { background: #ede7f6; color: #4527a0; }
+
+/* ─── Filter Bar ─── */
+.filter-bar {
+  background: white;
+  padding: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.filter-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.filter-row select,
+.filter-row input[type="date"] {
+  flex: 1;
+  min-width: 130px;
+  height: 40px;
+  font-size: 14px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 0 10px;
+  background: #fafafa;
+  outline: none;
+}
+
+.filter-row select:focus,
+.filter-row input:focus {
+  border-color: #0078d4;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ─── Table ─── */
+.table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 12px 12px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 700px;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+th {
+  background: #f0f0f0;
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 2px solid #ddd;
+  font-weight: 700;
+  font-size: 13px;
+  color: #333;
+  white-space: nowrap;
+}
+
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+  color: #333;
+  vertical-align: top;
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tr:hover td {
+  background: #fafafa;
+}
+
+.no-results {
+  text-align: center;
+  color: #888;
+  padding: 32px;
+  font-size: 15px;
+}
+
+/* ─── Top Lists (Admin Insights) ─── */
+.insights-section {
+  padding: 12px;
+}
+
+.insights-grid {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.insight-card {
+  flex: 1;
+  min-width: 140px;
+  background: white;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  margin-bottom: 8px;
+}
+
+.insight-card h4 {
+  font-size: 13px;
+  font-weight: 700;
+  color: #555;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.insight-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding: 4px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.insight-item:last-child {
+  border-bottom: none;
+}
+
+.insight-count {
+  font-weight: 700;
+  color: #0078d4;
+  background: #e3f2fd;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-size: 12px;
+}
+
+/* ─── Setup Page ─── */
+.setup-container {
+  padding: 20px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.setup-warning {
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  color: #5f4c00;
+}
+
+.setup-log {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  min-height: 60px;
+}
+
+.setup-log-item {
+  font-size: 14px;
+  padding: 5px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.setup-log-item:last-child {
+  border-bottom: none;
+}
+
+/* ─── Admin Header ─── */
+.admin-header {
+  background: #0078d4;
+  padding: 14px 20px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-header-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.admin-header-right {
+  font-size: 13px;
+  text-align: right;
+}
+
+.admin-header-right a {
+  color: #cce5ff;
+  text-decoration: none;
+}
+
+/* ─── Export Row ─── */
+.export-row {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px 0;
+}
+
+.export-row .btn {
+  min-height: 40px;
+  line-height: 40px;
+  font-size: 14px;
+}
+
+/* ─── Utility ─── */
+.padded {
+  padding: 0 12px;
+}
+
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
+
+.text-center { text-align: center; }
+.text-muted { color: #666; font-size: 14px; }
+
+.user-greeting {
+  font-size: 14px;
+  color: #cce5ff;
+  font-weight: 400;
+}
+
+.selected-account-banner {
+  background: #e3f2fd;
+  border-left: 4px solid #0078d4;
+  padding: 12px 16px;
+  margin: 0 12px 4px;
+  border-radius: 0 8px 8px 0;
+}
+
+.selected-account-name {
+  font-weight: 700;
+  font-size: 15px;
+  color: #0078d4;
+}
+
+.selected-account-rep {
+  font-size: 13px;
+  color: #555;
+}
+
+/* ─── Gamification ───────────────────────────────────────────────────────── */
+
+/* Points & Level card */
+.points-card {
+  background: linear-gradient(135deg, #0078d4, #005ea2);
+  color: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.points-total {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+}
+.points-label {
+  font-size: 12px;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.level-badge {
+  text-align: center;
+}
+.level-emoji {
+  font-size: 36px;
+  display: block;
+}
+.level-name {
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+/* Play progress card */
+.play-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin: 8px 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+}
+.play-card:active { box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
+.play-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.play-card-name {
+  font-weight: 700;
+  font-size: 16px;
+}
+.play-card-count {
+  font-size: 13px;
+  color: #555;
+}
+.progress-bar-track {
+  background: #e8f0fe;
+  border-radius: 8px;
+  height: 10px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  background: linear-gradient(90deg, #0078d4, #00b4d8);
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.5s ease;
+  min-width: 4px;
+}
+.progress-pct {
+  font-size: 12px;
+  color: #0078d4;
+  font-weight: 700;
+  margin-top: 4px;
+  text-align: right;
+}
+
+/* Account list status badges */
+.status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.badge-not-started  { background: #fef3cd; color: #856404; }
+.badge-scheduled    { background: #d1ecf1; color: #0c5460; }
+.badge-in-progress  { background: #cce5ff; color: #004085; }
+.badge-won          { background: #d4edda; color: #155724; }
+.badge-lost         { background: #f8d7da; color: #721c24; }
+.badge-no-interest  { background: #e2e3e5; color: #383d41; }
+
+/* Account row */
+.account-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  background: white;
+}
+.account-row:active { background: #f5f9ff; }
+.account-row-info { flex: 1; min-width: 0; }
+.account-row-name {
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.account-row-meta {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+.account-row-right { text-align: right; flex-shrink: 0; margin-left: 8px; }
+.account-row-date { font-size: 11px; color: #999; margin-top: 4px; }
+
+/* Filter tabs */
+.filter-tabs {
+  display: flex;
+  background: white;
+  border-bottom: 2px solid #e5e5e5;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.filter-tab {
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+.filter-tab.active {
+  color: #0078d4;
+  border-bottom-color: #0078d4;
+}
+
+/* Confirm / points earned */
+.points-earned-callout {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  margin: 16px 12px;
+}
+.points-earned-number {
+  font-size: 40px;
+  font-weight: 800;
+  color: #0078d4;
+}
+.points-earned-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+}
+
+/* Leaderboard */
+.leaderboard-row {
+  display: flex;
+  align-items: center;
+  padding: 14px 20px;
+  border-bottom: 1px solid #f0f0f0;
+  background: white;
+}
+.leaderboard-row.current-user {
+  background: #f0f7ff;
+  border-left: 4px solid #0078d4;
+}
+.leaderboard-rank {
+  width: 36px;
+  font-size: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.leaderboard-info { flex: 1; min-width: 0; margin: 0 12px; }
+.leaderboard-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+.leaderboard-level {
+  font-size: 12px;
+  color: #666;
+  margin-top: 2px;
+}
+.leaderboard-right { text-align: right; flex-shrink: 0; }
+.leaderboard-points {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0078d4;
+}
+.leaderboard-accounts {
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* Scheduled pitch alert */
+.schedule-alert {
+  background: #fff3cd;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 8px 12px;
+  font-size: 13px;
+  color: #664d03;
+}
+.schedule-alert strong { font-weight: 700; }
+
+/* Leaderboard peek (mini on dashboard) */
+.leaderboard-peek {
+  background: white;
+  border-radius: 12px;
+  margin: 8px 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.leaderboard-peek-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px 8px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #333;
+}
+.leaderboard-peek-header a {
+  font-size: 12px;
+  color: #0078d4;
+  text-decoration: none;
+  font-weight: 600;
+}
+.leaderboard-peek-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-top: 1px solid #f5f5f5;
+  gap: 10px;
+  font-size: 13px;
+}
+.leaderboard-peek-row.current-user { background: #f0f7ff; }
+.leaderboard-peek-rank { width: 24px; text-align: center; font-size: 16px; }
+.leaderboard-peek-name { flex: 1; font-weight: 600; }
+.leaderboard-peek-pts { color: #0078d4; font-weight: 800; }
+
+/* Section label */
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #888;
+  padding: 16px 20px 6px;
+}
+
+/* Confetti */
+@keyframes confetti-fall {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+.confetti-piece {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  animation: confetti-fall 2s ease-in forwards;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Section header with back button */
+.screen-section-header {
+  background: white;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e5e5e5;
+  font-size: 13px;
+  color: #666;
+}
+
+/* ─── Funnel Stats (play card) ───────────────────────────────────────────── */
+.funnel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #f0f0f0;
+}
+.funnel-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+.funnel-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0078d4;
+  line-height: 1;
+}
+.funnel-won .funnel-num { color: #1a7a3c; }
+.funnel-label {
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.funnel-arrow {
+  color: #ccc;
+  font-size: 16px;
+  flex-shrink: 0;
+  margin: 0 4px;
+}
+
+</style>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f7fa; color: #1a1a1a; }
+
+    /* Layout */
+    .app-shell { max-width: 480px; margin: 0 auto; min-height: 100vh; background: #fff; position: relative; }
+    .screen { display: none; padding: 0; }
+    .screen.active { display: block; }
+
+    /* Header */
+    .app-header { background: #0078d4; color: #fff; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+    .app-header h1 { margin: 0; font-size: 18px; font-weight: 700; }
+    .app-header .header-link { color: #fff; font-size: 13px; text-decoration: none; opacity: 0.85; border: 1px solid rgba(255,255,255,0.4); border-radius: 6px; padding: 4px 10px; }
+    .app-header .header-link:hover { opacity: 1; background: rgba(255,255,255,0.15); }
+    .back-btn { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; padding: 0; line-height: 1; }
+
+    /* Content area */
+    .screen-content { padding: 16px; }
+
+    /* Cards */
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+    .card-blue { background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%); color: #fff; border: none; }
+    .card-blue .label { opacity: 0.8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .card-blue .value { font-size: 36px; font-weight: 800; line-height: 1; }
+    .card-blue .sub { font-size: 13px; opacity: 0.85; margin-top: 6px; }
+
+    /* Greeting */
+    .greeting { font-size: 20px; font-weight: 700; margin: 0 0 4px; }
+    .greeting-sub { font-size: 13px; color: #6b7280; margin: 0 0 16px; }
+
+    /* Progress bar */
+    .progress-bar-wrap { background: rgba(255,255,255,0.25); border-radius: 99px; height: 8px; margin-top: 10px; }
+    .progress-bar-fill { background: #fff; border-radius: 99px; height: 8px; transition: width 0.5s ease; }
+
+    /* Play card */
+    .play-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s; display: flex; align-items: center; gap: 12px; }
+    .play-card:hover { box-shadow: 0 2px 8px rgba(0,120,212,0.15); border-color: #0078d4; }
+    .play-card .play-icon { font-size: 28px; }
+    .play-card .play-info { flex: 1; }
+    .play-card .play-name { font-weight: 700; font-size: 15px; margin: 0 0 3px; }
+    .play-card .play-stat { font-size: 12px; color: #6b7280; margin: 0; }
+    .play-card .play-arrow { color: #0078d4; font-size: 18px; }
+
+    /* Alert box */
+    .alert { border-radius: 10px; padding: 12px 14px; font-size: 13px; margin-bottom: 12px; display: flex; align-items: flex-start; gap: 10px; }
+    .alert-yellow { background: #fffbeb; border: 1px solid #fbbf24; }
+    .alert-blue { background: #eff6ff; border: 1px solid #93c5fd; }
+    .alert-icon { font-size: 18px; flex-shrink: 0; }
+    .alert-text { flex: 1; }
+    .alert-text strong { display: block; margin-bottom: 2px; }
+
+    /* Section headers */
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .section-title { font-size: 14px; font-weight: 700; color: #374151; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; }
+    .section-link { font-size: 13px; color: #0078d4; text-decoration: none; cursor: pointer; background: none; border: none; padding: 0; }
+
+    /* Leaderboard rows */
+    .lb-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-rank { font-size: 18px; width: 28px; text-align: center; flex-shrink: 0; }
+    .lb-name { font-weight: 600; font-size: 14px; flex: 1; }
+    .lb-name .lb-sub { font-size: 11px; color: #6b7280; font-weight: 400; }
+    .lb-pts { font-weight: 700; font-size: 14px; color: #0078d4; }
+
+    /* Full leaderboard */
+    .lb-full-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f3f4f6; }
+    .lb-full-row:last-child { border-bottom: none; }
+    .lb-full-row.is-me { background: #eff6ff; margin: 0 -16px; padding: 12px 16px; }
+    .lb-avatar { width: 38px; height: 38px; border-radius: 50%; background: #0078d4; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 15px; flex-shrink: 0; }
+    .lb-level-badge { font-size: 11px; background: #f3f4f6; border-radius: 99px; padding: 2px 8px; font-weight: 600; }
+
+    /* Filter tabs */
+    .filter-tabs { display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap; }
+    .filter-tab { padding: 6px 14px; border-radius: 99px; border: 1px solid #d1d5db; background: #fff; font-size: 13px; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+    .filter-tab.active { background: #0078d4; color: #fff; border-color: #0078d4; }
+
+    /* Account list */
+    .account-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: background 0.1s; }
+    .account-row-open { background: #fff8f0; margin: 0 -16px; padding: 12px 16px; border-left: 3px solid #f97316; }
+    .account-row:hover { background: #f9fafb; margin: 0 -16px; padding: 12px 16px; }
+    .account-row:last-child { border-bottom: none; }
+    .account-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .account-info { flex: 1; min-width: 0; }
+    .account-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .account-status { font-size: 12px; color: #6b7280; }
+    .account-pts { font-size: 12px; font-weight: 600; color: #0078d4; }
+
+    /* Status badge */
+    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+    .status-badge.not-pitched { background: #f3f4f6; color: #6b7280; }
+    .status-badge.pitched-exploring { background: #eff6ff; color: #1d4ed8; }
+    .status-badge.pitched-active { background: #fef3c7; color: #92400e; }
+    .status-badge.pitched-no-interest { background: #fef2f2; color: #991b1b; }
+    .status-badge.closed-won { background: #d1fae5; color: #065f46; }
+    .status-badge.closed-lost { background: #fef2f2; color: #991b1b; }
+
+    /* Status dot colors */
+    .dot-not-pitched { background: #9ca3af; }
+    .dot-pitched-exploring { background: #3b82f6; }
+    .dot-pitched-active { background: #f59e0b; }
+    .dot-pitched-no-interest { background: #ef4444; }
+    .dot-closed-won { background: #10b981; }
+    .dot-closed-lost { background: #f87171; }
+    .dot-default { background: #9ca3af; }
+
+    /* Form */
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #374151; }
+    .form-control { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: inherit; color: #1a1a1a; background: #fff; appearance: none; -webkit-appearance: none; }
+    .form-control:focus { outline: none; border-color: #0078d4; box-shadow: 0 0 0 3px rgba(0,120,212,0.1); }
+    select.form-control { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+    textarea.form-control { resize: vertical; }
+
+    /* Account header in form */
+    .account-header-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; }
+    .account-header-name { font-weight: 700; font-size: 16px; margin: 0 0 4px; }
+    .account-header-meta { font-size: 12px; color: #6b7280; }
+
+    /* Submit button */
+    .btn-primary { width: 100%; background: #0078d4; color: #fff; border: none; border-radius: 10px; padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer; transition: background 0.15s; }
+    .btn-primary:hover { background: #005a9e; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-secondary { width: 100%; background: #f3f4f6; color: #374151; border: none; border-radius: 10px; padding: 14px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+
+    /* Confirm screen */
+    .confirm-hero { text-align: center; padding: 32px 16px 16px; }
+    .confirm-emoji { font-size: 72px; line-height: 1; margin-bottom: 12px; }
+    .confirm-title { font-size: 24px; font-weight: 800; margin: 0 0 8px; }
+    .confirm-sub { font-size: 15px; color: #6b7280; margin: 0; }
+    .points-callout { background: linear-gradient(135deg, #0078d4, #005a9e); color: #fff; border-radius: 14px; padding: 20px; text-align: center; margin: 16px; }
+    .points-callout .pts-label { font-size: 13px; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.5px; }
+    .points-callout .pts-value { font-size: 52px; font-weight: 900; line-height: 1; margin: 4px 0; }
+    .points-callout .pts-sub { font-size: 13px; opacity: 0.85; }
+
+    /* Loading */
+    .loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 16px; }
+    .spinner { width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top-color: #0078d4; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 40px 20px; color: #6b7280; }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; margin: 0; }
+
+    /* Confetti */
+    .confetti-piece { position: fixed; top: -10px; width: 10px; height: 10px; border-radius: 2px; animation: confetti-fall linear forwards; z-index: 9999; pointer-events: none; }
+    @keyframes confetti-fall { 0% { top: -10px; opacity: 1; } 100% { top: 110vh; opacity: 0; } }
+
+    /* Stats row */
+    .stats-row { display: flex; gap: 10px; margin-bottom: 12px; }
+    .stat-box { flex: 1; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; text-align: center; }
+    .stat-box .stat-val { font-size: 22px; font-weight: 800; color: #0078d4; }
+    .stat-box .stat-lbl { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.4px; margin-top: 2px; }
+
+    /* Play detail header */
+    .play-detail-header { background: linear-gradient(135deg, #0078d4, #005a9e); color: #fff; padding: 20px 16px 24px; }
+    .play-detail-title { font-size: 20px; font-weight: 800; margin: 0 0 4px; }
+    .play-detail-sub { font-size: 13px; opacity: 0.85; margin: 0 0 14px; }
+
+    /* Divider */
+    .divider { border: none; border-top: 1px solid #f3f4f6; margin: 12px 0; }
+
+    /* Last logged badge */
+    .last-logged { font-size: 11px; color: #9ca3af; }
+
+    /* My rank highlight */
+    .my-rank-card { background: #eff6ff; border: 2px solid #0078d4; border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+    .my-rank-card .rank-num { font-size: 28px; font-weight: 900; color: #0078d4; }
+    .my-rank-card .rank-info { flex: 1; }
+    .my-rank-card .rank-name { font-weight: 700; font-size: 15px; }
+    .my-rank-card .rank-pts { font-size: 13px; color: #6b7280; }
+
+    @media (prefers-color-scheme: light) { body { background: #f5f7fa; } }
+/* Elevator pitch card */
+.pitch-card {
+  background: #eff6ff;
+  border-left: 4px solid #0078d4;
+  border-radius: 0 8px 8px 0;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1a1a1a;
+}
+.pitch-card-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0078d4;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+/* Admin notes callout */
+.admin-notes-callout {
+  background: #fffbeb;
+  border-left: 4px solid #f59e0b;
+  border-radius: 0 8px 8px 0;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #78350f;
+}
+/* ICP / Persona row */
+.play-meta-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.play-meta-chip {
+  background: #f3f4f6;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.play-meta-chip-label {
+  font-weight: 700;
+  color: #374151;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-bottom: 2px;
+}
+.play-meta-chip-value {
+  color: #1a1a1a;
+  font-size: 13px;
+}
+/* Step indicator active */
+.step-ind-active { color: #0078d4 !important; }
+/* Status dot colors */
+.dot-not-started    { background: #9ca3af; }
+.dot-interested     { background: #10b981; }
+.dot-not-interested { background: #ef4444; }
+
+/* Radio button groups */
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.radio-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  font-size: 15px;
+  font-weight: 600;
+}
+.radio-option:has(input:checked) {
+  border-color: #0078d4;
+  background: #eff6ff;
+}
+.radio-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #0078d4;
+  flex-shrink: 0;
+}
+.radio-label { flex: 1; }
+
+/* Star rating */
+.star-rating { display: flex; gap: 4px; cursor: pointer; margin-top: 2px; }
+.star { font-size: 30px; color: #d1d5db; transition: color 0.1s; line-height: 1; user-select: none; }
+.star.lit { color: #f59e0b; }
+  </style>
+</head>
+<body>
+
+<!-- ======================================================
+     DEMO MODE BANNER
+     ====================================================== -->
+<div style="position:sticky; top:0; z-index:1000; background:#fff3cd; border-bottom:2px solid #ffc107; padding:10px 16px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+  <span style="font-weight:700; font-size:13px;">📋 DEMO MODE — Data stored in browser only</span>
+  <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
+    <label style="font-size:13px; font-weight:600;">Viewing as:</label>
+    <select id="demo-user-select" style="font-size:13px; padding:4px 8px; border:1px solid #ccc; border-radius:6px;">
+      <option value="rich.martinez@progress.com">Rich Martinez</option>
+      <option value="rob.kelly@progress.com">Rob Kelly</option>
+      <option value="nick.russo@progress.com">Nick Russo</option>
+      <option value="tim.hayes@progress.com">Tim Hayes</option>
+      <option value="tom.brennan@progress.com">Tom Brennan</option>
+      <option value="bob.crain@progress.com">Bob Crain</option>
+    </select>
+    <button onclick="resetDemo()" style="font-size:12px; padding:4px 10px; background:#dc3545; color:#fff; border:none; border-radius:6px; cursor:pointer; font-weight:600;" title="Clear all data and restart demo">🔄 Reset Demo</button>
+  </div>
+</div>
+
+<!-- ======================================================
+     APP SHELL
+     ====================================================== -->
+<div class="app-shell">
+
+  <!-- SCREEN: Loading -->
+  <div id="screen-loading" class="screen active">
+    <div class="loading-screen">
+      <div class="spinner"></div>
+      <p style="color:#6b7280; font-size:14px;">Loading demo…</p>
+    </div>
+  </div>
+
+  <!-- SCREEN: Dashboard -->
+  <div id="screen-dashboard" class="screen">
+    <div class="app-header">
+      <h1>Chef SaaS Tracker</h1>
+      <a href="DEMO-admin.html" class="header-link">Admin →</a>
+    </div>
+    <div class="screen-content" id="dashboard-content">
+      <!-- rendered by renderDashboard() -->
+    </div>
+  </div>
+
+  <!-- SCREEN: Play Detail -->
+  <div id="screen-play-detail" class="screen">
+    <div id="play-detail-header" class="play-detail-header">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <button class="back-btn" onclick="showDashboard()">←</button>
+        <span style="font-size:13px; opacity:0.8;">My Plays</span>
+      </div>
+      <div class="play-detail-title" id="pd-title">Chef SaaS</div>
+      <div class="play-detail-sub" id="pd-sub"></div>
+    </div>
+
+    <!-- Play info banner -->
+    <div id="play-info-banner" style="background:#f0f6ff;border-bottom:2px solid #d0e4f7;padding:12px 16px;">
+      <div id="play-pitch-text" style="font-size:13px;color:#1e3a5f;line-height:1.5;margin-bottom:8px;"></div>
+      <div style="font-size:11px;color:#5a7a9a;background:#e3edf7;border-radius:6px;padding:7px 10px;line-height:1.5;">
+        📋 <strong>Instructions:</strong> Only log real conversations — calls, emails, or texts where the customer actually responded. Do not log voicemails or unanswered outreach. This tracks genuine engagement outcomes only.
+      </div>
+    </div>
+
+    <div class="screen-content">
+      <div class="filter-tabs" id="filter-tabs">
+        <button class="filter-tab active" onclick="setFilter('all')">All</button>
+        <button class="filter-tab" onclick="setFilter('not-started')">Not Started</button>
+        <button class="filter-tab" onclick="setFilter('interested')">Interested</button>
+        <button class="filter-tab" onclick="setFilter('not-interested')">Not Interested</button>
+      </div>
+      <div id="account-list">
+        <!-- rendered by renderAccountList() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: Log Form -->
+  <div id="screen-log-form" class="screen">
+    <div class="app-header">
+      <button class="back-btn" id="log-form-back-btn" onclick="showPlayDetail()">←</button>
+      <h1 id="log-form-title" style="font-size:15px;"></h1>
+      <div style="width:32px;"></div>
+    </div>
+    <div class="screen-content">
+      <!-- STEP 1: Pitch Brief (hidden - info moved to accounts list banner) -->
+      <div id="log-step-1" style="display:none;">
+        <div id="log-form-account-header" class="account-header-card"></div>
+        <div id="pitch-brief-content"></div>
+        <button class="btn-primary" id="btn-step1-next">I'm Ready — Log Outcome →</button>
+      </div>
+      <!-- STEP 2: Log Engagement -->
+      <div id="log-step-2">
+        <div id="log-form-account-header-2" class="account-header-card"></div>
+
+        <!-- Interaction Type -->
+        <div class="form-group">
+          <label class="form-label">Interaction Type <span style="color:red;">*</span></label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="interaction-type" value="Call">
+              <span class="radio-label">📞 Call</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="interaction-type" value="Email">
+              <span class="radio-label">📧 Email</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="interaction-type" value="Text">
+              <span class="radio-label">💬 Text</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Outcome -->
+        <div id="outcome-section" class="form-group" style="display:none;margin-top:20px;">
+          <label class="form-label">Outcome <span style="color:red;">*</span></label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="outcome-radio" value="Interested">
+              <span class="radio-label">✅ Interested</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="outcome-radio" value="Not Interested">
+              <span class="radio-label">❌ Not Interested</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Conditional Details -->
+        <div id="outcome-details-section" style="display:none;margin-top:20px;padding-top:16px;border-top:2px solid #e5e7eb;">
+
+          <!-- Interested fields -->
+          <div id="interested-fields" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">Interested Reason</label>
+              <select class="form-control" id="field-interested-reason"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pitch Confidence <span style="font-weight:400;color:#888;">(optional)</span></label>
+              <div class="star-rating" id="star-rating-group" aria-label="Pitch confidence rating">
+                <span class="star" data-val="1">★</span>
+                <span class="star" data-val="2">★</span>
+                <span class="star" data-val="3">★</span>
+                <span class="star" data-val="4">★</span>
+                <span class="star" data-val="5">★</span>
+              </div>
+              <input type="hidden" id="field-pitch-confidence" value="">
+              <div style="font-size:11px;color:#6b7280;margin-top:4px;">How confident was your pitch delivery?</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Short Reaction <span style="font-weight:400;color:#888;">(optional)</span></label>
+              <input type="text" class="form-control" id="field-short-reaction" placeholder="One-line customer reaction" maxlength="100" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Next Step</label>
+              <select class="form-control" id="field-next-step-type">
+                <option value="">— Select —</option>
+                <option>Schedule follow-up</option>
+                <option>Send information</option>
+                <option>Introduce stakeholder</option>
+                <option>Revisit later</option>
+                <option>Create opportunity</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Timing</label>
+              <select class="form-control" id="field-timing">
+                <option value="">— Select —</option>
+                <option>Now</option>
+                <option>This month</option>
+                <option>Next quarter</option>
+                <option>Later</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Contact Engaged <span style="font-weight:400;color:#888;">(optional)</span></label>
+              <input type="text" class="form-control" id="field-contact-engaged" placeholder="Name / title of person you spoke with" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Opportunity ID <span style="font-weight:400;color:#888;">(optional)</span></label>
+              <input type="text" class="form-control" id="field-opportunity-id" placeholder="Salesforce Opportunity ID (if known)" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notes <span style="font-weight:400;color:#888;">(optional)</span></label>
+              <textarea class="form-control" id="field-notes" rows="2" placeholder="Additional notes…"></textarea>
+            </div>
+          </div>
+
+          <!-- Not Interested fields -->
+          <div id="not-interested-fields" style="display:none;">
+            <div class="form-group">
+              <label class="form-label">Not Interested Reason</label>
+              <select class="form-control" id="field-not-interested-reason"></select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Contact Engaged <span style="font-weight:400;color:#888;">(optional)</span></label>
+              <input type="text" class="form-control" id="field-contact-engaged-ni" placeholder="Name / title of person you spoke with" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Opportunity ID <span style="font-weight:400;color:#888;">(optional)</span></label>
+              <input type="text" class="form-control" id="field-opportunity-id-ni" placeholder="Salesforce Opportunity ID (if known)" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notes <span style="font-weight:400;color:#888;">(optional)</span></label>
+              <textarea class="form-control" id="field-notes-ni" rows="2" placeholder="Additional notes…"></textarea>
+            </div>
+          </div>
+
+        </div><!-- end outcome-details-section -->
+
+        <button class="btn-primary" id="btn-submit-engagement" style="margin-top:20px;">Log Engagement ✓</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- SCREEN: Confirm -->
+  <div id="screen-confirm" class="screen">
+    <div class="confirm-hero">
+      <div class="confirm-emoji">🎉</div>
+      <div class="confirm-title">Engagement Recorded!</div>
+      <div class="confirm-sub" id="confirm-account-name">Nice work keeping things up to date.</div>
+    </div>
+    <div class="points-callout">
+      <div class="pts-label">Points Earned</div>
+      <div class="pts-value" id="confirm-pts">+0</div>
+      <div class="pts-sub" id="confirm-level-str">Keep it up!</div>
+    </div>
+    <div style="padding:0 16px 16px;">
+      <button class="btn-primary" onclick="showPlayDetail()">Back to My Accounts</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: Leaderboard -->
+  <div id="screen-leaderboard" class="screen">
+    <div class="app-header">
+      <button class="back-btn" onclick="showDashboard()">←</button>
+      <h1>Leaderboard</h1>
+      <div style="width:32px;"></div>
+    </div>
+    <div class="screen-content">
+      <div id="my-rank-section" style="margin-bottom:16px;">
+        <!-- rendered -->
+      </div>
+      <div class="section-header">
+        <span class="section-title">All Reps</span>
+      </div>
+      <div id="leaderboard-full-list">
+        <!-- rendered by renderLeaderboard() -->
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .app-shell -->
+
+<script>
+/* ============================================================
+   HARDCODED DATA
+   ============================================================ */
+const REPS = {
+  'rich.martinez@progress.com':   { name: 'Rich Martinez',    email: 'rich.martinez@progress.com' },
+  'rob.kelly@progress.com': { name: 'Rob Kelly',  email: 'rob.kelly@progress.com' },
+  'nick.russo@progress.com':   { name: 'Nick Russo',    email: 'nick.russo@progress.com' },
+  'tim.hayes@progress.com':{ name: 'Tim Hayes', email: 'tim.hayes@progress.com' }
+};
+
+const ALL_ACCOUNTS = [
+  // Rich Martinez
+  { account_id: 'acc-001', account_name: 'Apex Digital Systems',       region: 'Northeast', segment: 'Mid-Market',  rep_email: 'rich.martinez@progress.com' },
+  { account_id: 'acc-003', account_name: 'NovaTech Solutions',          region: 'Southeast', segment: 'Enterprise',  rep_email: 'rich.martinez@progress.com' },
+  { account_id: 'acc-008', account_name: 'Vortex Automation Corp.',     region: 'Midwest',   segment: 'Mid-Market',  rep_email: 'rich.martinez@progress.com' },
+  { account_id: 'acc-012', account_name: 'Ember Analytics Co.',         region: 'West',      segment: 'SMB',         rep_email: 'rich.martinez@progress.com' },
+  { account_id: 'acc-016', account_name: 'Halcyon SaaS Partners',       region: 'Southwest', segment: 'Mid-Market',  rep_email: 'tom.brennan@progress.com' },
+  { account_id: 'acc-020', account_name: 'Nexus Automation Works',      region: 'Northeast', segment: 'Enterprise',  rep_email: 'bob.crain@progress.com' },
+  // Rob Kelly
+  { account_id: 'acc-002', account_name: 'Stratosphere Cloud Co.',      region: 'West',      segment: 'Enterprise',  rep_email: 'rob.kelly@progress.com' },
+  { account_id: 'acc-005', account_name: 'Meridian Data Labs',          region: 'Northeast', segment: 'Mid-Market',  rep_email: 'rob.kelly@progress.com' },
+  { account_id: 'acc-009', account_name: 'Quantum Platforms LLC',       region: 'Southeast', segment: 'Enterprise',  rep_email: 'rob.kelly@progress.com' },
+  { account_id: 'acc-013', account_name: 'Ironbridge Networks',         region: 'Midwest',   segment: 'Mid-Market',  rep_email: 'rob.kelly@progress.com' },
+  { account_id: 'acc-017', account_name: 'Onyx Platform Technologies',  region: 'Southwest', segment: 'SMB',         rep_email: 'bob.crain@progress.com' },
+  // Nick Russo
+  { account_id: 'acc-004', account_name: 'Pinnacle Software Group',     region: 'West',      segment: 'Mid-Market',  rep_email: 'nick.russo@progress.com' },
+  { account_id: 'acc-007', account_name: 'Helix DevOps Ltd.',           region: 'Northeast', segment: 'Enterprise',  rep_email: 'nick.russo@progress.com' },
+  { account_id: 'acc-011', account_name: 'Cascade Systems Inc.',        region: 'Southeast', segment: 'Mid-Market',  rep_email: 'nick.russo@progress.com' },
+  { account_id: 'acc-015', account_name: 'Synapse DevOps Group',        region: 'Midwest',   segment: 'SMB',         rep_email: 'tom.brennan@progress.com' },
+  { account_id: 'acc-019', account_name: 'Luminary Data Systems',       region: 'Southwest', segment: 'Enterprise',  rep_email: 'bob.crain@progress.com' },
+  // Tim Hayes
+  { account_id: 'acc-006', account_name: 'Cobalt Infrastructure Inc.',  region: 'West',      segment: 'Mid-Market',  rep_email: 'tim.hayes@progress.com' },
+  { account_id: 'acc-010', account_name: 'Silverline Technology',       region: 'Southeast', segment: 'Enterprise',  rep_email: 'tim.hayes@progress.com' },
+  { account_id: 'acc-014', account_name: 'Mosaic Cloud Services',       region: 'Northeast', segment: 'SMB',         rep_email: 'tom.brennan@progress.com' },
+  { account_id: 'acc-018', account_name: 'Titan Software Ventures',     region: 'Southwest', segment: 'Mid-Market',  rep_email: 'bob.crain@progress.com' }
+];
+
+const PLAYS = [
+  { play_id: 'chef-saas', play_name: 'Chef SaaS' }
+];
+
+/* ============================================================
+   LEVEL & POINTS
+   ============================================================ */
+function getLevel(totalPoints) {
+  if (totalPoints >= 500) return { name: 'Legend',   badge: '\u2B50', min: 500 };
+  if (totalPoints >= 300) return { name: 'Champion', badge: '\uD83C\uDFC6', min: 300 };
+  if (totalPoints >= 150) return { name: 'Pro',      badge: '\uD83C\uDFAF', min: 150 };
+  if (totalPoints >= 50)  return { name: 'Pitcher',  badge: '\u26BE', min: 50 };
+  return                         { name: 'Rookie',   badge: '\uD83C\uDF31', min: 0 };
+}
+
+function calculatePoints(logData) {
+  const { outcome, next_step_type } = logData;
+  if (outcome === 'Not Interested') return 15;
+  if (outcome === 'Interested') {
+    if (next_step_type) return 45;
+    return 30;
+  }
+  return 0;
+}
+
+/* ============================================================
+   LOCALSTORAGE HELPERS
+   ============================================================ */
+function getLogs() {
+  return JSON.parse(localStorage.getItem('chef_tracker_logs') || '[]');
+}
+function saveLogs(logs) {
+  localStorage.setItem('chef_tracker_logs', JSON.stringify(logs));
+}
+function getLatestLogForAccount(accountId) {
+  const logs = getLogs().filter(l => l.account_id === accountId);
+  logs.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
+  return logs[0] || null;
+}
+function getRepPoints(email) {
+  return getLogs()
+    .filter(l => l.submitted_by === email)
+    .reduce((sum, l) => sum + (l.points_earned || 0), 0);
+}
+
+function getAssignments() {
+  const stored = JSON.parse(localStorage.getItem('chef_tracker_assignments') || '[]');
+  if (stored.length > 0) return stored;
+  return ALL_ACCOUNTS.map(a => ({
+    assignment_id: 'default-' + a.account_id,
+    play_id: 'chef-saas',
+    play_name: 'Chef SaaS',
+    account_id: a.account_id,
+    account_name: a.account_name,
+    rep_email: a.rep_email,
+    elevator_pitch: 'Hey [name] \u2014 quick question. Are you still running Chef on your own servers? Most customers tell us the same thing: the tool works, but managing the infrastructure around it is a constant drain \u2014 patches, upgrades, keeping it available. We built Chef SaaS to take all of that off your plate. Fully managed, same automation you know, but we handle everything underneath. Teams that switch typically cut their Chef infrastructure costs by 30\u201340% and get back weeks of engineering time every quarter. Would it be worth 20 minutes to see if that math works for your environment?',
+    icp: 'DevOps teams managing 50+ nodes looking to reduce infrastructure overhead',
+    target_persona: 'VP Engineering / Head of DevOps / Infrastructure Lead',
+    response_set_id: 'SAAS_STANDARD',
+    priority: '',
+    product_family: 'Chef',
+    region: a.region || '',
+    due_date: '',
+    admin_notes: ''
+  }));
+}
+function getAssignmentsForRep(email) {
+  return getAssignments().filter(a => a.rep_email === email);
+}
+function getAssignmentForAccount(accountId) {
+  return getAssignments().find(a => a.account_id === accountId) || null;
+}
+
+/* ============================================================
+   ACCOUNT DISPLAY STATUS
+   ============================================================ */
+function getAccountDisplayStatus(log) {
+  if (!log) return 'Not Started';
+  if (log.outcome === 'Interested') return 'Interested';
+  if (log.outcome === 'Not Interested') return 'Not Interested';
+  return 'Not Started';
+}
+
+function statusDotClassNew(displayStatus) {
+  const map = {
+    'Not Started':    'dot-not-started',
+    'Interested':     'dot-interested',
+    'Not Interested': 'dot-not-interested'
+  };
+  return map[displayStatus] || 'dot-not-started';
+}
+
+/* ============================================================
+   HTML ESCAPE HELPER
+   ============================================================ */
+function escHtml(str) {
+  return String(str === null || str === undefined ? '' : str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/* ============================================================
+   LEADERBOARD
+   ============================================================ */
+function computeLeaderboard() {
+  const repMap = {};
+  const allAssignments = getAssignments();
+
+  Object.values(REPS).forEach(rep => {
+    const repAssignments = allAssignments.filter(a => a.rep_email === rep.email);
+    repMap[rep.email] = {
+      email: rep.email,
+      repName: rep.name,
+      totalPoints: 0,
+      loggedAccounts: 0,
+      interestedAccounts: 0,
+      notInterestedAccounts: 0,
+      totalAccounts: repAssignments.length || ALL_ACCOUNTS.filter(a => a.rep_email === rep.email).length,
+      lastActivity: null
+    };
+  });
+
+  getLogs().forEach(l => {
+    if (repMap[l.submitted_by]) {
+      repMap[l.submitted_by].totalPoints += (l.points_earned || 0);
+      if (!repMap[l.submitted_by].lastActivity || l.submitted_at > repMap[l.submitted_by].lastActivity) {
+        repMap[l.submitted_by].lastActivity = l.submitted_at;
+      }
+    }
+  });
+
+  const allAccountIds = getAssignments().map(a => a.account_id);
+  ALL_ACCOUNTS.forEach(a => {
+    if (!allAccountIds.includes(a.account_id)) allAccountIds.push(a.account_id);
+  });
+
+  const seen = new Set();
+  allAccountIds.forEach(accountId => {
+    if (seen.has(accountId)) return;
+    seen.add(accountId);
+    const assignment = getAssignmentForAccount(accountId) || ALL_ACCOUNTS.find(a => a.account_id === accountId);
+    if (!assignment) return;
+    const repEmail = assignment.rep_email;
+    if (!repMap[repEmail]) return;
+    const log = getLatestLogForAccount(accountId);
+    if (log) {
+      repMap[repEmail].loggedAccounts++;
+      if (log.outcome === 'Interested')     repMap[repEmail].interestedAccounts++;
+      if (log.outcome === 'Not Interested') repMap[repEmail].notInterestedAccounts++;
+    }
+  });
+
+  return Object.values(repMap).sort((a, b) => b.totalPoints - a.totalPoints);
+}
+
+/* ============================================================
+   RESPONSE OPTIONS
+   ============================================================ */
+const SAMPLE_RESPONSE_OPTIONS = [
+  {response_set_id:"SAAS_STANDARD", outcome_type:"Interested",     reason_label:"Wants follow-up conversation",  sort_order:1},
+  {response_set_id:"SAAS_STANDARD", outcome_type:"Interested",     reason_label:"Pricing / performance value",   sort_order:2},
+  {response_set_id:"SAAS_STANDARD", outcome_type:"Interested",     reason_label:"SaaS flexibility",              sort_order:3},
+  {response_set_id:"SAAS_STANDARD", outcome_type:"Interested",     reason_label:"Operational efficiency",        sort_order:4},
+  {response_set_id:"SAAS_STANDARD", outcome_type:"Interested",     reason_label:"Simplify upgrade path",         sort_order:5},
+  {response_set_id:"SAAS_STANDARD", outcome_type:"Interested",     reason_label:"Better support model",          sort_order:6},
+  {response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_label:"Cannot do SaaS",               sort_order:1},
+  {response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_label:"No current pain",              sort_order:2},
+  {response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_label:"Bad timing",                   sort_order:3},
+  {response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_label:"Budget issue",                 sort_order:4},
+  {response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_label:"Already solved elsewhere",     sort_order:5},
+  {response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_label:"Security / compliance concern",sort_order:6},
+  {response_set_id:"SAAS_STANDARD", outcome_type:"Not Interested", reason_label:"No authority / wrong contact", sort_order:7},
+];
+
+function getResponseOptions(responseSetId, outcomeType) {
+  const stored = JSON.parse(localStorage.getItem('chef_tracker_response_options') || 'null');
+  if (stored) {
+    return stored
+      .filter(o => o.response_set_id === responseSetId && o.outcome_type === outcomeType)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(o => o.reason_label);
+  }
+  // Fallback hardcoded defaults
+  if (outcomeType === 'Not Interested') {
+    return ['Cannot do SaaS','No current pain','Bad timing','Budget issue','Already solved elsewhere','Security / compliance concern','No authority / wrong contact'];
+  }
+  return ['Wants follow-up conversation','Pricing / performance value','SaaS flexibility','Operational efficiency','Simplify upgrade path','Better support model'];
+}
+
+/* ============================================================
+   SEED DATA
+   ============================================================ */
+function seedDemoData() {
+  if (!localStorage.getItem('chef_tracker_response_options')) {
+    localStorage.setItem('chef_tracker_response_options', JSON.stringify(SAMPLE_RESPONSE_OPTIONS));
+  }
+  if (getLogs().length > 0) return;
+  const daysAgo = n => { const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString(); };
+  const ts = Date.now();
+  const entries = [
+    // Rob Kelly
+    { account_id:'acc-002', account_name:'Stratosphere Cloud Co.',     rep:'rob.kelly@progress.com', repN:'Rob Kelly',  dA:5,  iType:'Call',  outcome:'Interested',     intReason:'Pricing / performance value',      nextStep:'Schedule follow-up', timing:'This month',  contact:'CTO Mike Reynolds',      pts:45 },
+    { account_id:'acc-005', account_name:'Meridian Data Labs',         rep:'rob.kelly@progress.com', repN:'Rob Kelly',  dA:10, iType:'Call',  outcome:'Interested',     intReason:'SaaS flexibility',                 nextStep:'Send information',   timing:'This month',  contact:'VP Eng Diana Frost',     pts:45 },
+    { account_id:'acc-009', account_name:'Quantum Platforms LLC',      rep:'rob.kelly@progress.com', repN:'Rob Kelly',  dA:15, iType:'Email', outcome:'Interested',     intReason:'Operational efficiency',           nextStep:'',                   timing:'',            contact:'',                       pts:30 },
+    { account_id:'acc-013', account_name:'Ironbridge Networks',        rep:'rob.kelly@progress.com', repN:'Rob Kelly',  dA:20, iType:'Call',  outcome:'Not Interested', notReason:'Already solved elsewhere',         nextStep:'',                   timing:'',            contact:'IT Director Sam Webb',   pts:15 },
+    { account_id:'acc-017', account_name:'Onyx Platform Technologies', rep:'bob.crain@progress.com', repN:'Bob Crain',  dA:35, iType:'Call',  outcome:'Not Interested', notReason:'No current pain',                  nextStep:'',                   timing:'',            contact:'',                       pts:15 },
+    // Rich Martinez
+    { account_id:'acc-001', account_name:'Apex Digital Systems',       rep:'rich.martinez@progress.com',   repN:'Rich Martinez',    dA:8,  iType:'Call',  outcome:'Interested',     intReason:'Simplify upgrade path',            nextStep:'Schedule follow-up', timing:'Next quarter', contact:'Head of Infra Tom Blake', pts:45 },
+    { account_id:'acc-003', account_name:'NovaTech Solutions',         rep:'rich.martinez@progress.com',   repN:'Rich Martinez',    dA:12, iType:'Email', outcome:'Interested',     intReason:'Better support model',             nextStep:'',                   timing:'',            contact:'',                       pts:30 },
+    { account_id:'acc-008', account_name:'Vortex Automation Corp.',    rep:'rich.martinez@progress.com',   repN:'Rich Martinez',    dA:18, iType:'Call',  outcome:'Not Interested', notReason:'Cannot do SaaS',                   nextStep:'',                   timing:'',            contact:'Sec Lead Carol Yuen',    pts:15 },
+    { account_id:'acc-012', account_name:'Ember Analytics Co.',        rep:'rich.martinez@progress.com',   repN:'Rich Martinez',    dA:3,  iType:'Text',  outcome:'Not Interested', notReason:'Bad timing',                       nextStep:'',                   timing:'',            contact:'',                       pts:15 },
+    // Nick Russo
+    { account_id:'acc-004', account_name:'Pinnacle Software Group',    rep:'nick.russo@progress.com',   repN:'Nick Russo',    dA:7,  iType:'Email', outcome:'Interested',     intReason:'Operational efficiency',           nextStep:'Send information',   timing:'This month',  contact:'DevOps Lead Raj Patel',  pts:45 },
+    { account_id:'acc-007', account_name:'Helix DevOps Ltd.',          rep:'nick.russo@progress.com',   repN:'Nick Russo',    dA:25, iType:'Call',  outcome:'Not Interested', notReason:'Budget issue',                     nextStep:'',                   timing:'',            contact:'',                       pts:15 },
+    { account_id:'acc-011', account_name:'Cascade Systems Inc.',       rep:'nick.russo@progress.com',   repN:'Nick Russo',    dA:30, iType:'Email', outcome:'Not Interested', notReason:'No current pain',                  nextStep:'',                   timing:'',            contact:'',                       pts:15 },
+    // Tim Hayes
+    { account_id:'acc-006', account_name:'Cobalt Infrastructure Inc.', rep:'tim.hayes@progress.com',repN:'Tim Hayes', dA:14, iType:'Call',  outcome:'Not Interested', notReason:'Bad timing',                       nextStep:'',                   timing:'',            contact:'',                       pts:15 },
+    { account_id:'acc-010', account_name:'Silverline Technology',      rep:'tim.hayes@progress.com',repN:'Tim Hayes', dA:6,  iType:'Call',  outcome:'Interested',     intReason:'SaaS flexibility',                 nextStep:'Revisit later',      timing:'Next quarter', contact:'CIO Janet Marsh',         pts:45 },
+    { account_id:'acc-014', account_name:'Mosaic Cloud Services',      rep:'tom.brennan@progress.com', repN:'Tom Brennan', dA:2,  iType:'Email', outcome:'Not Interested', notReason:'Security / compliance concern',     nextStep:'',                   timing:'',            contact:'',                       pts:15 }
+  ];
+
+  const logs = entries.map((e, i) => ({
+    log_id: 'seed-' + i + '-' + ts,
+    assignment_id: 'default-' + e.account_id,
+    account_id: e.account_id,
+    account_name: e.account_name,
+    play_id: 'chef-saas',
+    play_name: 'Chef SaaS',
+    interaction_type: e.iType,
+    outcome: e.outcome,
+    interested_reason: e.intReason || '',
+    not_interested_reason: e.notReason || '',
+    next_step_type: e.nextStep || '',
+    timing: e.timing || '',
+    related_opportunity: '',
+    contact_engaged: e.contact || '',
+    notes: '',
+    points_earned: e.pts,
+    submitted_by: e.rep,
+    rep_name: e.repN,
+    submitted_at: daysAgo(e.dA)
+  }));
+  saveLogs(logs);
+}
+
+/* ============================================================
+   APPLICATION STATE
+   ============================================================ */
+let currentUserEmail = 'rich.martinez@progress.com';
+let currentPlay = PLAYS[0];
+let currentAccount = null;
+let activeFilter = 'all';
+let lastPointsEarned = 0;
+let currentStep = 1;
+
+/* ============================================================
+   SCREEN NAVIGATION
+   ============================================================ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function showDashboard() {
+  renderDashboard();
+  showScreen('screen-dashboard');
+}
+
+function showPlayDetail() {
+  renderPlayDetail();
+  showScreen('screen-play-detail');
+}
+
+function showConfirm() {
+  document.getElementById('confirm-account-name').textContent = currentAccount.account_name;
+  document.getElementById('confirm-pts').textContent = '+' + lastPointsEarned;
+  const totalPts = getRepPoints(currentUserEmail);
+  const level = getLevel(totalPts);
+  document.getElementById('confirm-level-str').textContent = level.badge + ' ' + level.name + ' \u00b7 ' + totalPts + ' total pts';
+  showScreen('screen-confirm');
+  fireConfetti();
+}
+
+function showLeaderboard() {
+  renderLeaderboard();
+  showScreen('screen-leaderboard');
+}
+
+/* ============================================================
+   DASHBOARD RENDER
+   ============================================================ */
+function renderDashboard() {
+  const rep = REPS[currentUserEmail];
+  const firstName = rep.name.split(' ')[0];
+  const myAssignments = getAssignmentsForRep(currentUserEmail);
+  const myAccountIds = myAssignments.length > 0
+    ? myAssignments.map(a => a.account_id)
+    : ALL_ACCOUNTS.filter(a => a.rep_email === currentUserEmail).map(a => a.account_id);
+  const totalAccounts = myAccountIds.length;
+
+  const totalPts = getRepPoints(currentUserEmail);
+  const level = getLevel(totalPts);
+
+  const levels = [
+    { name: 'Rookie',   min: 0,   max: 50 },
+    { name: 'Pitcher',  min: 50,  max: 150 },
+    { name: 'Pro',      min: 150, max: 300 },
+    { name: 'Champion', min: 300, max: 500 },
+    { name: 'Legend',   min: 500, max: 999999 }
+  ];
+  const currentLvl = levels.find(l => totalPts >= l.min && totalPts < l.max) || levels[levels.length - 1];
+  const nextLvl    = levels.find(l => l.min > currentLvl.min);
+  const pctFill    = nextLvl ? Math.min(100, Math.round(((totalPts - currentLvl.min) / (nextLvl.min - currentLvl.min)) * 100)) : 100;
+  const nextLvlStr = nextLvl ? nextLvl.name + ' at ' + nextLvl.min + ' pts' : 'Max level!';
+
+  const loggedCount = myAccountIds.filter(id => !!getLatestLogForAccount(id)).length;
+  const interestedCount = myAccountIds.filter(id => {
+    const log = getLatestLogForAccount(id);
+    return log && log.outcome === 'Interested';
+  }).length;
+  const notInterestedCount = myAccountIds.filter(id => {
+    const log = getLatestLogForAccount(id);
+    return log && log.outcome === 'Not Interested';
+  }).length;
+  const coveragePct = totalAccounts > 0 ? Math.round((loggedCount / totalAccounts) * 100) : 0;
+
+  const lb = computeLeaderboard().slice(0, 3);
+  const rankMedals = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
+
+  let lbRowsHtml = lb.map((r, i) => `
+    <div class="lb-row">
+      <div class="lb-rank">${rankMedals[i]}</div>
+      <div class="lb-name">${r.repName}<div class="lb-sub">${getLevel(r.totalPoints).badge} ${getLevel(r.totalPoints).name}</div></div>
+      <div class="lb-pts">${r.totalPoints} pts</div>
+    </div>`).join('');
+
+  let playCardsHtml = PLAYS.map(p => {
+    const pct = totalAccounts > 0 ? Math.round((loggedCount / totalAccounts) * 100) : 0;
+    return `<div class="play-card" onclick="showPlayDetail()" style="flex-direction:column;align-items:stretch;gap:0;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <div class="play-icon">\uD83C\uDF73</div>
+        <div class="play-info" style="flex:1;">
+          <div class="play-name">${p.play_name}</div>
+          <div class="play-stat">${loggedCount} of ${totalAccounts} accounts engaged \u00b7 ${pct}%</div>
+        </div>
+        <div class="play-arrow">&#8250;</div>
+      </div>
+      <div style="background:#e8f0fe;border-radius:8px;height:8px;overflow:hidden;margin-bottom:10px;">
+        <div style="background:linear-gradient(90deg,#0078d4,#00b4d8);height:100%;border-radius:8px;width:${pct}%;min-width:${pct>0?'4px':'0'};"></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:8px;border-top:1px solid #f0f0f0;">
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:20px;font-weight:800;color:#0078d4;">${loggedCount}</div>
+          <div style="font-size:10px;color:#888;font-weight:600;text-transform:uppercase;">Engaged</div>
+        </div>
+        <div style="color:#ccc;font-size:14px;">&#8594;</div>
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:20px;font-weight:800;color:#1a7a3c;">${interestedCount}</div>
+          <div style="font-size:10px;color:#888;font-weight:600;text-transform:uppercase;">Interested \uD83C\uDFC6</div>
+        </div>
+        <div style="color:#ccc;font-size:14px;">&#183;</div>
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:20px;font-weight:800;color:#dc2626;">${notInterestedCount}</div>
+          <div style="font-size:10px;color:#888;font-weight:600;text-transform:uppercase;">Not Interested</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('dashboard-content').innerHTML = `
+    <p class="greeting">Welcome back, ${firstName} \uD83D\uDC4B</p>
+    <p class="greeting-sub">${new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' })}</p>
+
+    <div class="card card-blue">
+      <div class="label">Your Points</div>
+      <div class="value">${totalPts}</div>
+      <div class="sub">${level.badge} ${level.name} \u00b7 Next: ${nextLvlStr}</div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" style="width:${pctFill}%;"></div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-val">${totalAccounts}</div><div class="stat-lbl">Assigned</div></div>
+      <div class="stat-box"><div class="stat-val">${interestedCount}</div><div class="stat-lbl">Interested</div></div>
+      <div class="stat-box"><div class="stat-val">${notInterestedCount}</div><div class="stat-lbl">Not Interested</div></div>
+      <div class="stat-box"><div class="stat-val">${coveragePct}%</div><div class="stat-lbl">Coverage</div></div>
+    </div>
+
+    <div class="section-header" style="margin-top:4px;">
+      <span class="section-title">My Plays</span>
+    </div>
+    ${playCardsHtml}
+
+    <div class="section-header" style="margin-top:8px;">
+      <span class="section-title">Leaderboard</span>
+      <button class="section-link" onclick="showLeaderboard()">See all \u2192</button>
+    </div>
+    <div class="card" style="padding:8px 12px;">
+      ${lbRowsHtml}
+    </div>
+  `;
+}
+
+/* ============================================================
+   PLAY DETAIL RENDER
+   ============================================================ */
+function renderPlayDetail() {
+  const myAssignments = getAssignmentsForRep(currentUserEmail);
+  const totalAccounts = myAssignments.length || ALL_ACCOUNTS.filter(a => a.rep_email === currentUserEmail).length;
+  const loggedCount = myAssignments.filter(a => !!getLatestLogForAccount(a.account_id)).length;
+
+  document.getElementById('pd-title').textContent = currentPlay.play_name;
+  document.getElementById('pd-sub').textContent = `${loggedCount} of ${totalAccounts} accounts engaged`;
+
+  // Populate play info banner with pitch from first assignment
+  const firstAssignment = myAssignments[0];
+  const pitchEl = document.getElementById('play-pitch-text');
+  if (pitchEl && firstAssignment && firstAssignment.elevator_pitch) {
+    pitchEl.innerHTML = `<strong>📣 Your Pitch:</strong> ${escHtml(firstAssignment.elevator_pitch)}`;
+  } else if (pitchEl) {
+    pitchEl.textContent = '';
+  }
+
+  renderAccountList();
+}
+
+function setFilter(filter) {
+  activeFilter = filter;
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  const filterMap = { 'all': 0, 'not-started': 1, 'interested': 2, 'not-interested': 3 };
+  const tabs = document.querySelectorAll('.filter-tab');
+  if (tabs[filterMap[filter]] !== undefined) tabs[filterMap[filter]].classList.add('active');
+  renderAccountList();
+}
+
+function renderAccountList() {
+  const myAssignments = getAssignmentsForRep(currentUserEmail);
+  const sourceList = myAssignments.length > 0 ? myAssignments : ALL_ACCOUNTS.filter(a => a.rep_email === currentUserEmail);
+  const list = document.getElementById('account-list');
+
+  let items = sourceList.map(a => {
+    const log = getLatestLogForAccount(a.account_id);
+    const displayStatus = getAccountDisplayStatus(log);
+    return { ...a, log, displayStatus };
+  });
+
+  items.sort((a, b) => {
+    const aNS = a.displayStatus === 'Not Started';
+    const bNS = b.displayStatus === 'Not Started';
+    if (aNS && !bNS) return -1;
+    if (!aNS && bNS) return 1;
+    if (a.log && b.log) return new Date(b.log.submitted_at) - new Date(a.log.submitted_at);
+    return 0;
+  });
+
+  if (activeFilter === 'not-started')    items = items.filter(a => a.displayStatus === 'Not Started');
+  if (activeFilter === 'interested')     items = items.filter(a => a.displayStatus === 'Interested');
+  if (activeFilter === 'not-interested') items = items.filter(a => a.displayStatus === 'Not Interested');
+
+  if (items.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">\uD83D\uDCED</div><p>No accounts match this filter.</p></div>`;
+    return;
+  }
+
+  const notStartedCount = items.filter(a => a.displayStatus === 'Not Started').length;
+
+  list.innerHTML = (notStartedCount > 0 && activeFilter === 'all' ? `
+    <div style="padding:10px 16px 6px;font-size:12px;font-weight:700;color:#c05600;background:#fff8f0;border-bottom:1px solid #ffe0c0;display:flex;align-items:center;gap:6px;">
+      \uD83C\uDFAF ${notStartedCount} account${notStartedCount > 1 ? 's' : ''} not yet logged \u2014 tap to log
+    </div>` : '') +
+  items.map(a => {
+    const dot = statusDotClassNew(a.displayStatus);
+    const when = a.log ? timeAgo(a.log.submitted_at) : '';
+    const pts = a.log ? a.log.points_earned : 0;
+    const isNew = a.displayStatus === 'Not Started';
+    const statusEmoji = a.displayStatus === 'Interested' ? '\u2705' : a.displayStatus === 'Not Interested' ? '\u274C' : '\u2B1C';
+    const safeAccount = JSON.stringify({
+      account_id: a.account_id,
+      account_name: a.account_name,
+      rep_email: a.rep_email,
+      region: a.region || '',
+      segment: a.segment || ''
+    });
+    return `<div class="account-row${isNew ? ' account-row-open' : ''}" onclick='showLogForm(${safeAccount.replace(/'/g, "&#39;")})'>
+      <div class="account-dot ${dot}"></div>
+      <div class="account-info">
+        <div class="account-name">${a.account_name}</div>
+        <div class="account-status">${statusEmoji} ${a.displayStatus}${when ? ' \u00b7 ' + when : ''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        ${pts ? `<div class="account-pts">+${pts} pts</div>` : ''}
+        <div style="color:${isNew ? '#0078d4' : '#ccc'};font-size:18px;font-weight:700;">&#8250;</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ============================================================
+   LOG FORM — 2-STEP
+   ============================================================ */
+function showLogForm(account) {
+  currentAccount = account;
+  const assignment = getAssignmentForAccount(account.account_id);
+
+  // Set log form title to account name
+  document.getElementById('log-form-title').textContent = account.account_name;
+
+  const header = `<div class="account-header-name">${escHtml(account.account_name)}</div>
+    <div class="account-header-meta">${escHtml(account.region || '')}${account.region && account.segment ? ' · ' : ''}${escHtml(account.segment || '')}</div>`;
+  document.getElementById('log-form-account-header').innerHTML = header;
+  document.getElementById('log-form-account-header-2').innerHTML = header;
+
+  const rsid = assignment ? (assignment.response_set_id || 'SAAS_STANDARD') : 'SAAS_STANDARD';
+  const notIntReasons = getResponseOptions(rsid, 'Not Interested');
+  const intReasons    = getResponseOptions(rsid, 'Interested');
+  document.getElementById('field-not-interested-reason').innerHTML = '<option value="">— Select —</option>' + notIntReasons.map(r => `<option>${escHtml(r)}</option>`).join('');
+  document.getElementById('field-interested-reason').innerHTML = '<option value="">— Select —</option>' + intReasons.map(r => `<option>${escHtml(r)}</option>`).join('');
+
+  // Reset form fields
+  document.querySelectorAll('input[name="interaction-type"]').forEach(r => r.checked = false);
+  document.querySelectorAll('input[name="outcome-radio"]').forEach(r => r.checked = false);
+  document.getElementById('field-not-interested-reason').value = '';
+  document.getElementById('field-interested-reason').value = '';
+  document.getElementById('field-pitch-confidence').value = '';
+  document.getElementById('field-short-reaction').value = '';
+  document.getElementById('field-next-step-type').value = '';
+  document.getElementById('field-timing').value = '';
+  document.getElementById('field-opportunity-id').value = '';
+  document.getElementById('field-opportunity-id-ni').value = '';
+  document.getElementById('field-contact-engaged').value = '';
+  document.getElementById('field-contact-engaged-ni').value = '';
+  document.getElementById('field-notes').value = '';
+  document.getElementById('field-notes-ni').value = '';
+  document.querySelectorAll('.star').forEach(s => s.classList.remove('lit'));
+  document.getElementById('not-interested-fields').style.display = 'none';
+  document.getElementById('interested-fields').style.display = 'none';
+  document.getElementById('outcome-details-section').style.display = 'none';
+  document.getElementById('outcome-section').style.display = 'none';
+
+  showScreen('screen-log-form');
+}
+
+function goToLogStep(step) {
+  currentStep = step;
+  document.getElementById('log-step-1').style.display = step === 1 ? 'block' : 'none';
+  document.getElementById('log-step-2').style.display = step === 2 ? 'block' : 'none';
+
+  ['step-ind-1','step-ind-2'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.style.color = (i + 1) === step ? '#0078d4' : '#9ca3af';
+    el.style.fontWeight = (i + 1) === step ? '700' : '400';
+  });
+
+  const titles = {1: 'Play Brief', 2: 'Log Engagement'};
+  document.getElementById('log-form-title').textContent = titles[step];
+  document.getElementById('log-form-back-btn').onclick = step === 1 ? showPlayDetail : () => goToLogStep(1);
+
+  window.scrollTo(0, 0);
+}
+
+function onOutcomeRadioChange() {
+  const outcomeEl = document.querySelector('input[name="outcome-radio"]:checked');
+  if (!outcomeEl) return;
+
+  document.getElementById('outcome-details-section').style.display = 'block';
+  const isInterested = outcomeEl.value === 'Interested';
+  document.getElementById('interested-fields').style.display = isInterested ? 'block' : 'none';
+  document.getElementById('not-interested-fields').style.display = !isInterested ? 'block' : 'none';
+}
+
+function submitEngagement() {
+  const interactionTypeEl = document.querySelector('input[name="interaction-type"]:checked');
+  const outcomeEl = document.querySelector('input[name="outcome-radio"]:checked');
+  if (!interactionTypeEl) { alert('Please select an interaction type.'); return; }
+  if (!outcomeEl) { alert('Please select an outcome.'); return; }
+
+  const outcome = outcomeEl.value;
+  const logData = {
+    interaction_type: interactionTypeEl.value,
+    outcome,
+    not_interested_reason: outcome === 'Not Interested' ? (document.getElementById('field-not-interested-reason').value || '') : '',
+    interested_reason:     outcome === 'Interested'     ? (document.getElementById('field-interested-reason').value || '') : '',
+    pitch_confidence:      outcome === 'Interested'     ? (document.getElementById('field-pitch-confidence').value || '') : '',
+    short_reaction:        outcome === 'Interested'     ? (document.getElementById('field-short-reaction').value || '') : '',
+    next_step_type:        outcome === 'Interested'     ? (document.getElementById('field-next-step-type').value || '') : '',
+    timing:                outcome === 'Interested'     ? (document.getElementById('field-timing').value || '') : '',
+    opportunity_id:        outcome === 'Interested'
+      ? (document.getElementById('field-opportunity-id').value || '')
+      : (document.getElementById('field-opportunity-id-ni').value || ''),
+    contact_engaged:       outcome === 'Interested'
+      ? (document.getElementById('field-contact-engaged').value || '')
+      : (document.getElementById('field-contact-engaged-ni').value || ''),
+    notes: outcome === 'Interested'
+      ? (document.getElementById('field-notes').value || '')
+      : (document.getElementById('field-notes-ni').value || '')
+  };
+  logData.points_earned = calculatePoints(logData);
+  saveLogEntry(logData);
+}
+
+function saveLogEntry(logData) {
+  const assignment = getAssignmentForAccount(currentAccount.account_id);
+  const fullLog = {
+    log_id: 'log-' + Date.now(),
+    assignment_id: assignment ? assignment.assignment_id : '',
+    account_id: currentAccount.account_id,
+    account_name: currentAccount.account_name,
+    play_id: currentPlay.play_id,
+    play_name: currentPlay.play_name,
+    ...logData,
+    submitted_by: currentUserEmail,
+    rep_name: REPS[currentUserEmail].name,
+    submitted_at: new Date().toISOString()
+  };
+
+  const logs = getLogs();
+  logs.push(fullLog);
+  saveLogs(logs);
+  lastPointsEarned = fullLog.points_earned;
+  showConfirm();
+}
+
+/* ============================================================
+   LEADERBOARD RENDER
+   ============================================================ */
+function renderLeaderboard() {
+  const lb = computeLeaderboard();
+  const myRank = lb.findIndex(r => r.email === currentUserEmail) + 1;
+  const me = lb.find(r => r.email === currentUserEmail);
+  const rankMedals = ['\uD83E\uDD47', '\uD83E\uDD48', '\uD83E\uDD49'];
+
+  const meLevel = getLevel(me ? me.totalPoints : 0);
+  document.getElementById('my-rank-section').innerHTML = `
+    <div class="my-rank-card">
+      <div class="rank-num">#${myRank}</div>
+      <div class="rank-info">
+        <div class="rank-name">${me ? me.repName : ''} ${meLevel.badge}</div>
+        <div class="rank-pts">${me ? me.totalPoints : 0} pts \u00b7 ${meLevel.name} \u00b7 ${me ? (me.interestedAccounts || 0) : 0} interested \u00b7 ${me ? (me.loggedAccounts || 0) : 0} engaged</div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('leaderboard-full-list').innerHTML = lb.map((r, i) => {
+    const lvl = getLevel(r.totalPoints);
+    const isMe = r.email === currentUserEmail;
+    const initial = r.repName.split(' ').map(w => w[0]).join('').slice(0, 2);
+    const medal = rankMedals[i] || (i + 1) + '.';
+    return `<div class="lb-full-row${isMe ? ' is-me' : ''}">
+      <div class="lb-rank" style="font-size:${i < 3 ? '20px' : '14px'}; font-weight:700; color:#6b7280;">${medal}</div>
+      <div class="lb-avatar">${initial}</div>
+      <div class="lb-name">
+        ${r.repName}${isMe ? ' <span style="color:#0078d4;font-size:11px;">(you)</span>' : ''}
+        <div class="lb-sub">${lvl.badge} ${lvl.name} \u00b7 ${r.interestedAccounts || 0} interested \u00b7 ${r.loggedAccounts || 0} engaged</div>
+      </div>
+      <div class="lb-pts">${r.totalPoints} pts</div>
+    </div>`;
+  }).join('');
+}
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function timeAgo(isoStr) {
+  const d = new Date(isoStr);
+  const diff = Math.floor((Date.now() - d) / 86400000);
+  if (diff === 0) return 'today';
+  if (diff === 1) return '1 day ago';
+  if (diff < 30)  return diff + ' days ago';
+  return d.toLocaleDateString();
+}
+
+/* ============================================================
+   CONFETTI
+   ============================================================ */
+function fireConfetti() {
+  const colors = ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff922b','#cc5de8'];
+  for (let i = 0; i < 50; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+    el.style.transform = `rotate(${Math.random() * 360}deg)`;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 3500);
+  }
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+document.getElementById('demo-user-select').addEventListener('change', function() {
+  currentUserEmail = this.value;
+  activeFilter = 'all';
+  const active = document.querySelector('.screen.active');
+  if (active && active.id === 'screen-dashboard')    renderDashboard();
+  if (active && active.id === 'screen-play-detail')  renderPlayDetail();
+  if (active && active.id === 'screen-leaderboard')  renderLeaderboard();
+});
+
+function resetDemo() {
+  if (!confirm('Reset demo? This clears all logged engagements and reloads the page with fresh seed data.')) return;
+  ['chef_tracker_logs','chef_tracker_assignments','chef_tracker_response_options','chef_tracker_contacts'].forEach(k => localStorage.removeItem(k));
+  location.reload();
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  seedDemoData();
+
+  document.querySelectorAll('input[name="interaction-type"]').forEach(r => r.addEventListener('change', () => {
+    document.getElementById('outcome-section').style.display = 'block';
+    // Reset outcome if re-selecting interaction type
+    document.querySelectorAll('input[name="outcome-radio"]').forEach(o => o.checked = false);
+    document.getElementById('outcome-details-section').style.display = 'none';
+    document.getElementById('interested-fields').style.display = 'none';
+    document.getElementById('not-interested-fields').style.display = 'none';
+  }));
+  document.querySelectorAll('input[name="outcome-radio"]').forEach(r => r.addEventListener('change', onOutcomeRadioChange));
+  document.getElementById('btn-submit-engagement').addEventListener('click', submitEngagement);
+
+  // Star rating interaction
+  const stars = document.querySelectorAll('#star-rating-group .star');
+  const confidenceInput = document.getElementById('field-pitch-confidence');
+  stars.forEach(star => {
+    star.addEventListener('click', () => {
+      const val = parseInt(star.dataset.val, 10);
+      confidenceInput.value = val;
+      stars.forEach(s => s.classList.toggle('lit', parseInt(s.dataset.val, 10) <= val));
+    });
+    star.addEventListener('mouseover', () => {
+      const val = parseInt(star.dataset.val, 10);
+      stars.forEach(s => s.classList.toggle('lit', parseInt(s.dataset.val, 10) <= val));
+    });
+    star.addEventListener('mouseout', () => {
+      const current = parseInt(confidenceInput.value, 10) || 0;
+      stars.forEach(s => s.classList.toggle('lit', parseInt(s.dataset.val, 10) <= current));
+    });
+  });
+
+  setTimeout(() => {
+    showDashboard();
+  }, 600);
+});
+</script>
+</body>
+</html>
