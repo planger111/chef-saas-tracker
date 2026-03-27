@@ -78,7 +78,7 @@
         ]});
         log("OK", "response-options.json created.");
 
-        log("DONE", "Setup complete! Go to http://localhost:7341/index.html");
+        log("DONE", "Setup complete! Share this URL with reps: " + CONFIG.sharepointSiteUrl.replace(/\/$/, "") + "/Shared%20Documents/chef-saas-tracker/app.html");
         log("INFO", "Engagement data will appear in SharePoint > Documents > ChefSaaS > chef-saas_engagements.csv");
         log("INFO", "Open that CSV in Excel anytime to see all rep activity.");
         btn.textContent = "Setup Complete";
