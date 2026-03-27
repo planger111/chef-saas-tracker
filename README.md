@@ -1,6 +1,114 @@
 # Chef SaaS Motion Tracker
 
-A mobile-first web app for tracking Chef SaaS sales motions. Reps log their account status from any phone browser — no app install required. Managers see a live admin dashboard with filters and exports.
+A mobile-first web app for Progress INFRA Sales. Reps log account engagement outcomes from any phone — no app install required. Leadership sees a live dashboard with leaderboard and conversion data.
+
+---
+
+## Current Setup (already done)
+
+| Item | Value |
+|------|-------|
+| Azure AD App | `Chef SaaS Motion Tracker` (Client ID: `48db2acc-9dfb-4337-9abb-302c9dfb88fc`) |
+| SharePoint site | `https://progresssoftware.sharepoint.com/sites/INFRASalesLeadership` |
+| Graph permission | `Sites.ReadWrite.All` (admin consent granted) |
+| GitHub repo | `planger111/chef-saas-tracker` (private) |
+| Demo (public) | https://planger111.github.io/chef-saas-demo/ |
+
+---
+
+## Hosting: Azure Static Web Apps (IT Request)
+
+This is the right long-term hosting solution. The GitHub Actions workflow is already set up in `.github/workflows/azure-static-web-apps.yml` — IT just needs to create the Azure resource and paste one token into GitHub.
+
+### What IT needs to do (~10 minutes total)
+
+#### Step 1 — Create the Static Web App (5 min)
+
+1. Sign in to [portal.azure.com](https://portal.azure.com)
+2. Search **"Static Web Apps"** → **Create**
+3. Fill in:
+   - **Subscription:** Progress Software (whichever is appropriate)
+   - **Resource Group:** create new or use existing Sales/INFRA group
+   - **Name:** `INFRASalesPlayTracker`
+   - **Plan type:** Free
+   - **Region:** East US 2 (or closest)
+   - **Deployment source:** GitHub
+4. Click **Sign in with GitHub** → authorize → select:
+   - **Organization:** `planger111`
+   - **Repository:** `chef-saas-tracker`
+   - **Branch:** `main`
+5. **Build details:**
+   - Build preset: **Custom**
+   - App location: `/`
+   - Output location: _(leave blank)_
+6. Click **Review + Create** → **Create**
+7. Copy the URL shown (e.g. `https://infrasalesplaytracker.azurestaticapps.net`)
+
+> GitHub Actions will automatically deploy on every push to `main`. No manual deploys needed.
+
+#### Step 2 — Add redirect URI to Azure AD App (2 min)
+
+1. In Azure portal → **Azure Active Directory** → **App registrations**
+2. Find **Chef SaaS Motion Tracker** (Client ID: `48db2acc-9dfb-4337-9abb-302c9dfb88fc`)
+3. **Authentication** → under **Single-page application** → **Add URI**
+4. Add the Static Web App URL: `https://infrasalesplaytracker.azurestaticapps.net`
+5. Click **Save**
+
+---
+
+## After IT sets up hosting — Phil's steps (~5 min)
+
+1. Go to `https://infrasalesplaytracker.azurestaticapps.net/setup.html`
+2. Sign in with your Progress account
+3. Click **Initialize Data Files** — creates the `ChefSaaS/` folder in SharePoint
+4. Upload real account list to `ChefSaaS/assignments.json`
+5. Share `https://infrasalesplaytracker.azurestaticapps.net/app.html` with reps
+
+---
+
+## IT Email Template
+
+> Hi — I'm running a pilot sales tracking tool for the INFRA Sales team and need help hosting it on Azure Static Web Apps.
+>
+> **What I need:**
+> 1. Create an Azure Static Web App resource connected to my private GitHub repo (`planger111/chef-saas-tracker`, branch `main`)
+> 2. Add the resulting URL as a redirect URI on our existing Azure AD app registration (Client ID: `48db2acc-9dfb-4337-9abb-302c9dfb88fc`)
+>
+> The GitHub Actions deployment workflow is already in the repo — the app will deploy automatically once the resource is created. No build step needed, it's plain HTML/JS.
+>
+> The app uses our existing M365 SSO (Progress credentials) and stores data in SharePoint. No new permissions or licenses are needed — admin consent for `Sites.ReadWrite.All` was already granted.
+
+---
+
+## Files Reference
+
+| File | Purpose |
+|------|---------|
+| `index.html` | Pilot landing page (links to demo + real app) |
+| `app.html` | Real rep app — Azure AD SSO, reads from SharePoint |
+| `admin.html` | Leadership dashboard |
+| `setup.html` | One-time data initialization (admin only) |
+| `DEMO-index.html` | Self-contained demo — no login, localStorage only |
+| `DEMO-admin.html` | Demo leadership view |
+| `config.js` | Azure AD + SharePoint config (already filled in) |
+| `msal-auth.js` | Azure AD sign-in (popup flow) |
+| `msal-browser.js` | MSAL library (local copy, CDN was broken) |
+| `graph-api.js` | All Graph API / SharePoint file operations |
+
+---
+
+## Data Architecture
+
+Engagement data lives in SharePoint Documents → `ChefSaaS/` folder:
+
+| File | Contents |
+|------|---------|
+| `assignments.json` | Rep → account assignments (upload to assign accounts) |
+| `response-options.json` | Dropdown options for the engagement form |
+| `chef-saas_engagements.csv` | All rep engagements (open in Excel for reporting) |
+
+One CSV per play. Admin downloads and opens in Excel — no special tooling needed.
+
 
 ---
 
