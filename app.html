@@ -502,7 +502,7 @@
         console.error('Dashboard load error:', err);
         const msg = err && err.message ? err.message : '';
         if (msg.includes('404') || msg.includes('does not exist') || msg.includes('itemNotFound')) {
-          showError('SharePoint lists not set up yet. Please ask your admin to run setup.html to create the required lists, then reload.');
+          showError('SharePoint data not found. Please run setup.html to initialize the ChefSaaS data files, then reload.');
         } else {
           showError('Failed to load dashboard. Please try again.\n\nError: ' + msg);
         }

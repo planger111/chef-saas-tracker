@@ -61,7 +61,14 @@ async function getPlayAssignments(repEmail) {
   const data = JSON.parse(text);
   const list = (data.assignments || []).filter(a => a.active_flag !== false);
   if (!repEmail) return list;
-  return list.filter(a => (a.rep_email || "").toLowerCase() === repEmail.toLowerCase());
+  // Try exact match first
+  const matched = list.filter(a => (a.rep_email || "").toLowerCase() === repEmail.toLowerCase());
+  // If no match found, return all accounts so admins/testers can still use the app
+  if (matched.length === 0) {
+    console.warn("No accounts found for " + repEmail + " — showing all accounts (admin fallback)");
+    return list;
+  }
+  return matched;
 }
 
 async function getRepAccounts(repEmail) { return getPlayAssignments(repEmail); }
