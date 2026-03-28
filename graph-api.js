@@ -63,11 +63,7 @@ async function getPlayAssignments(repEmail) {
   if (!repEmail) return list;
   // Try exact match first
   const matched = list.filter(a => (a.rep_email || "").toLowerCase() === repEmail.toLowerCase());
-  // If no match found, return all accounts so admins/testers can still use the app
-  if (matched.length === 0) {
-    console.warn("No accounts found for " + repEmail + " — showing all accounts (admin fallback)");
-    return list;
-  }
+  console.log("[ChefSaaS] Signed in as: " + repEmail + " — matched " + matched.length + " accounts");
   return matched;
 }
 

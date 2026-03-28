@@ -64,6 +64,7 @@
 
       <!-- User greeting -->
       <div class="user-greeting" id="dashboard-greeting"></div>
+      <div style="font-size:11px;color:#999;margin-top:-8px;margin-bottom:8px;" id="dashboard-user-email"></div>
 
       <!-- Points card -->
       <div class="points-card" id="dashboard-points-card">
@@ -496,6 +497,7 @@
         // Render greeting
         const firstName = name ? name.split(' ')[0] : 'there';
         document.getElementById('dashboard-greeting').textContent = `Welcome back, ${firstName} 👋`;
+        document.getElementById('dashboard-user-email').textContent = email;
 
         // Render points card
         renderPointsCard(totalPoints);
