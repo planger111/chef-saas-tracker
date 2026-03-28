@@ -93,23 +93,23 @@
       <div class="summary-row" id="summary-row">
         <div class="summary-card">
           <div class="summary-card-value" id="sum-total">—</div>
-          <div class="summary-card-label">Total</div>
+          <div class="summary-card-label">Total Engagements</div>
         </div>
         <div class="summary-card orange">
           <div class="summary-card-value" id="sum-not-pitched">—</div>
-          <div class="summary-card-label">Not Pitched</div>
+          <div class="summary-card-label">Not Interested</div>
         </div>
         <div class="summary-card">
           <div class="summary-card-value" id="sum-exploring">—</div>
-          <div class="summary-card-label">Exploring</div>
+          <div class="summary-card-label">Interested</div>
         </div>
         <div class="summary-card green">
           <div class="summary-card-value" id="sum-active">—</div>
-          <div class="summary-card-label">Active Deal</div>
+          <div class="summary-card-label">Active Reps</div>
         </div>
         <div class="summary-card green">
           <div class="summary-card-value" id="sum-won">—</div>
-          <div class="summary-card-label">Closed Won</div>
+          <div class="summary-card-label">Total Points</div>
         </div>
       </div>
 
@@ -124,22 +124,19 @@
         <table id="results-table">
           <thead>
             <tr>
-              <th>Account</th>
+              <th>Date</th>
               <th>Rep</th>
-              <th>CSM</th>
-              <th>Status</th>
-              <th>Why Not Pitched</th>
-              <th>Customer Need</th>
-              <th>Blocker</th>
-              <th>Last Pitch</th>
+              <th>Account</th>
+              <th>Play</th>
+              <th>Outcome</th>
+              <th>Reason</th>
               <th>Next Step</th>
               <th>Notes</th>
-              <th>Submitted At</th>
-              <th>Submitted By</th>
+              <th>Points</th>
             </tr>
           </thead>
           <tbody id="results-body">
-            <tr><td colspan="12" class="no-results">Loading…</td></tr>
+            <tr><td colspan="9" class="no-results">Loading…</td></tr>
           </tbody>
         </table>
       </div>
@@ -252,26 +249,20 @@
       const tbody = document.getElementById("results-body");
 
       if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="12" class="no-results">No records found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="no-results">No records found.</td></tr>';
       } else {
-        tbody.innerHTML = data
-          .map(
-            (r) => `<tr>
-              <td>${escHtml(r.account_name)}</td>
-              <td>${escHtml(r.rep_name)}</td>
-              <td>${escHtml(r.csm_name)}</td>
-              <td>${statusBadge(r.answer_status)}</td>
-              <td>${escHtml(r.answer_why_not_pitched)}</td>
-              <td>${escHtml(r.answer_customer_need)}</td>
-              <td>${escHtml(r.answer_blocker)}</td>
-              <td>${escHtml(r.answer_date_last_pitch)}</td>
-              <td>${escHtml(r.answer_date_next_step)}</td>
-              <td style="max-width:200px; white-space:pre-wrap;">${escHtml(r.notes)}</td>
-              <td style="white-space:nowrap;">${escHtml(formatDate(r.submitted_at))}</td>
-              <td>${escHtml(r.submitted_by)}</td>
-            </tr>`
-          )
-          .join("");
+        const outcomeColor = o => o === 'Interested' ? 'color:#107c10;font-weight:700' : o === 'Not Interested' ? 'color:#d32f2f' : '';
+        tbody.innerHTML = data.map(r => `<tr>
+          <td style="white-space:nowrap;">${escHtml(formatDate(r.submitted_at))}</td>
+          <td>${escHtml(r.rep_name || r.rep_email)}</td>
+          <td>${escHtml(r.account_name)}</td>
+          <td>${escHtml(r.play_name)}</td>
+          <td style="${outcomeColor(r.outcome)}">${escHtml(r.outcome)}</td>
+          <td>${escHtml(r.reason_label)}</td>
+          <td>${escHtml(r.next_step_type)}</td>
+          <td style="max-width:200px;white-space:pre-wrap;">${escHtml(r.notes)}</td>
+          <td style="text-align:right;font-weight:700;color:#0078d4;">${escHtml(r.points_earned)}</td>
+        </tr>`).join("");
       }
 
       updateSummary(data);
@@ -280,10 +271,10 @@
 
     function updateSummary(data) {
       document.getElementById("sum-total").textContent = data.length;
-      document.getElementById("sum-not-pitched").textContent = data.filter((r) => r.answer_status === "Not Pitched").length;
-      document.getElementById("sum-exploring").textContent = data.filter((r) => r.answer_status === "Pitched - Exploring").length;
-      document.getElementById("sum-active").textContent = data.filter((r) => r.answer_status === "Pitched - Active Deal").length;
-      document.getElementById("sum-won").textContent = data.filter((r) => r.answer_status === "Closed Won").length;
+      document.getElementById("sum-not-pitched").textContent = data.filter(r => r.outcome === "Not Interested").length;
+      document.getElementById("sum-exploring").textContent = data.filter(r => r.outcome === "Interested").length;
+      document.getElementById("sum-active").textContent = [...new Set(data.map(r => r.rep_email).filter(Boolean))].length;
+      document.getElementById("sum-won").textContent = data.reduce((s, r) => s + (Number(r.points_earned) || 0), 0);
     }
 
     function topN(data, field, n = 5) {
@@ -315,58 +306,32 @@
     }
 
     function updateInsights(data) {
-      renderInsightList("insight-why", topN(data, "answer_why_not_pitched"));
-      renderInsightList("insight-need", topN(data, "answer_customer_need"));
-      renderInsightList("insight-blocker", topN(data, "answer_blocker"));
+      renderInsightList("insight-why", topN(data, "reason_label"));
+      renderInsightList("insight-need", topN(data, "outcome"));
+      renderInsightList("insight-blocker", topN(data, "next_step_type"));
     }
 
     function populateFilterDropdowns(data) {
-      const reps = [...new Set(data.map((r) => r.rep_name).filter(Boolean))].sort();
-      const csms = [...new Set(data.map((r) => r.csm_name).filter(Boolean))].sort();
-      const plays = [...new Set(data.map((r) => r.sales_play).filter(Boolean))].sort();
+      const reps  = [...new Set(data.map(r => r.rep_name || r.rep_email).filter(Boolean))].sort();
+      const plays = [...new Set(data.map(r => r.play_name).filter(Boolean))].sort();
 
       const repSel = document.getElementById("filter-rep");
-      reps.forEach((r) => {
-        const o = document.createElement("option");
-        o.value = r;
-        o.textContent = r;
-        repSel.appendChild(o);
-      });
+      reps.forEach(r => { const o = document.createElement("option"); o.value = r; o.textContent = r; repSel.appendChild(o); });
 
-      const csmSel = document.getElementById("filter-csm");
-      csms.forEach((c) => {
-        const o = document.createElement("option");
-        o.value = c;
-        o.textContent = c;
-        csmSel.appendChild(o);
-      });
-
+      // Reuse filter-play for outcome filter
       const playSel = document.getElementById("filter-play");
-      plays.forEach((p) => {
-        const o = document.createElement("option");
-        o.value = p;
-        o.textContent = p;
-        playSel.appendChild(o);
-      });
+      plays.forEach(p => { const o = document.createElement("option"); o.value = p; o.textContent = p; playSel.appendChild(o); });
 
       const lbPlaySel = document.getElementById("lb-filter-play");
       while (lbPlaySel.options.length > 1) lbPlaySel.remove(1);
-      plays.forEach((p) => {
-        const o = document.createElement("option");
-        o.value = p;
-        o.textContent = p;
-        lbPlaySel.appendChild(o);
-      });
+      plays.forEach(p => { const o = document.createElement("option"); o.value = p; o.textContent = p; lbPlaySel.appendChild(o); });
     }
 
     function getFilters() {
       return {
-        repName: document.getElementById("filter-rep").value,
-        csmName: document.getElementById("filter-csm").value,
-        salesPlay: document.getElementById("filter-play").value,
-        status: document.getElementById("filter-status").value,
-        blocker: document.getElementById("filter-blocker").value,
-        customerNeed: document.getElementById("filter-need").value,
+        rep_name: document.getElementById("filter-rep").value,
+        play_name: document.getElementById("filter-play").value,
+        outcome: document.getElementById("filter-status").value,
         startDate: document.getElementById("filter-start").value,
         endDate: document.getElementById("filter-end").value,
       };
@@ -383,7 +348,7 @@
         renderTable(data);
       } catch (err) {
         document.getElementById("results-body").innerHTML =
-          `<tr><td colspan="12" class="no-results" style="color:#d32f2f;">Error: ${escHtml(err.message)}</td></tr>`;
+          `<tr><td colspan="9" class="no-results" style="color:#d32f2f;">Error: ${escHtml(err.message)}</td></tr>`;
       } finally {
         btn.disabled = false;
         btn.textContent = "Apply Filters";

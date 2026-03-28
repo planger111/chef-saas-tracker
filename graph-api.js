@@ -199,7 +199,27 @@ async function getLeaderboard() {
         if (log.account_id) { repMap[key].engagedAccounts.add(log.account_id); if (log.outcome === "Interested") repMap[key].interestedAccounts.add(log.account_id); }
       });
     }
-    return Object.values(repMap).map(r => ({ ...r, engagedAccounts: r.engagedAccounts.size, interestedAccounts: r.interestedAccounts.size }))
+    return Object.values(repMap).map(r => ({ ...r, completedAccounts: r.engagedAccounts.size, engagedAccounts: r.engagedAccounts.size, interestedAccounts: r.interestedAccounts.size }))
                                 .sort((a, b) => b.totalPoints - a.totalPoints);
   } catch(e) { return []; }
+}
+
+// ─── All engagements (admin view) ────────────────────────────────────────────
+
+async function getMotionLog(filters) {
+  const plays = await getPlays();
+  let allLogs = [];
+  for (const play of plays) {
+    const playId = play.play_id.replace(/[^a-z0-9]/gi, "_");
+    const text = await getFileText("ChefSaaS/" + playId + "_engagements.csv");
+    if (!text) continue;
+    allLogs = allLogs.concat(parseCSV(text));
+  }
+  // Apply filters
+  if (filters) {
+    if (filters.rep_email) allLogs = allLogs.filter(r => (r.rep_email||"").toLowerCase() === filters.rep_email.toLowerCase());
+    if (filters.play_id)   allLogs = allLogs.filter(r => r.play_id === filters.play_id);
+    if (filters.outcome)   allLogs = allLogs.filter(r => r.outcome === filters.outcome);
+  }
+  return allLogs.sort((a, b) => (b.submitted_at || "").localeCompare(a.submitted_at || ""));
 }
