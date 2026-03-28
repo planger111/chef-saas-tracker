@@ -1,43 +1,45 @@
 // Chef SaaS Motion Tracker — Export Functions
 
 const EXPORT_COLUMNS = [
-  "log_id",
+  "submitted_at",
+  "rep_name",
+  "rep_email",
   "account_id",
   "account_name",
-  "rep_name",
-  "csm_name",
-  "sales_play",
-  "motion_type",
-  "answer_status",
-  "answer_why_not_pitched",
-  "answer_customer_need",
-  "answer_blocker",
-  "answer_date_last_pitch",
-  "answer_date_next_step",
+  "play_id",
+  "play_name",
+  "interaction_type",
+  "outcome",
+  "reason_label",
+  "next_step_type",
+  "timing",
+  "contact_engaged",
+  "pitch_confidence",
+  "short_reaction",
   "notes",
-  "submitted_at",
-  "submitted_by",
-  "source",
+  "points_earned",
+  "id",
 ];
 
 const EXPORT_HEADERS = {
-  log_id: "Log ID",
-  account_id: "Account ID",
-  account_name: "Account Name",
-  rep_name: "Rep Name",
-  csm_name: "CSM Name",
-  sales_play: "Sales Play",
-  motion_type: "Motion Type",
-  answer_status: "Status",
-  answer_why_not_pitched: "Why Not Pitched",
-  answer_customer_need: "Customer Need",
-  answer_blocker: "Blocker",
-  answer_date_last_pitch: "Last Pitch Date",
-  answer_date_next_step: "Next Step Date",
-  notes: "Notes",
-  submitted_at: "Submitted At",
-  submitted_by: "Submitted By",
-  source: "Source",
+  submitted_at:     "Date / Time",
+  rep_name:         "Rep Name",
+  rep_email:        "Rep Email",
+  account_id:       "Account ID",
+  account_name:     "Account Name",
+  play_id:          "Play ID",
+  play_name:        "Play Name",
+  interaction_type: "Interaction Type",
+  outcome:          "Outcome",
+  reason_label:     "Reason",
+  next_step_type:   "Next Step",
+  timing:           "Timing",
+  contact_engaged:  "Contact Engaged",
+  pitch_confidence: "Pitch Confidence",
+  short_reaction:   "Short Reaction",
+  notes:            "Notes",
+  points_earned:    "Points Earned",
+  id:               "Record ID",
 };
 
 function _toRows(data) {
@@ -68,7 +70,7 @@ function exportToCSV(data, filename) {
   ];
 
   const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
-  _triggerDownload(blob, filename || "motion-log.csv");
+  _triggerDownload(blob, filename || "engagements-export.csv");
 }
 
 function exportToExcel(data, filename) {
@@ -85,8 +87,15 @@ function exportToExcel(data, filename) {
 
   const workbook = window.XLSX.utils.book_new();
   const worksheet = window.XLSX.utils.aoa_to_sheet(sheetData);
-  window.XLSX.utils.book_append_sheet(workbook, worksheet, "Motion Log");
-  window.XLSX.writeFile(workbook, filename || "motion-log.xlsx");
+
+  // Auto-size columns
+  const colWidths = EXPORT_COLUMNS.map((col, i) => ({
+    wch: Math.max(EXPORT_HEADERS[col].length, ...sheetData.slice(1).map(r => String(r[i]||"").length), 10)
+  }));
+  worksheet["!cols"] = colWidths;
+
+  window.XLSX.utils.book_append_sheet(workbook, worksheet, "Engagements");
+  window.XLSX.writeFile(workbook, filename || "engagements-export.xlsx");
 }
 
 function _triggerDownload(blob, filename) {
