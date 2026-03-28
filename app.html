@@ -322,6 +322,17 @@
 
   <script>
     // ─────────────────────────────────────────────
+    // LEVELS & POINTS
+    // ─────────────────────────────────────────────
+    function getLevel(totalPoints) {
+      if (totalPoints >= 500) return { name: 'Legend',   badge: '⭐', min: 500 };
+      if (totalPoints >= 300) return { name: 'Champion', badge: '🏆', min: 300 };
+      if (totalPoints >= 150) return { name: 'Pro',      badge: '🎯', min: 150 };
+      if (totalPoints >= 50)  return { name: 'Pitcher',  badge: '⚾', min: 50 };
+      return                         { name: 'Rookie',   badge: '🌱', min: 0 };
+    }
+
+    // ─────────────────────────────────────────────
     // STATE
     // ─────────────────────────────────────────────
     let currentUser    = null;  // {name, email}
