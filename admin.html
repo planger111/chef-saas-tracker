@@ -206,6 +206,17 @@
     let _allData = [];
     let _visibleData = [];
 
+    function getLevel(pts) {
+      const levels = [
+        { name: 'Legend',   badge: '🏆', min: 500 },
+        { name: 'Champion', badge: '🥇', min: 300 },
+        { name: 'Pro',      badge: '⭐', min: 150 },
+        { name: 'Pitcher',  badge: '🎯', min: 50  },
+        { name: 'Rookie',   badge: '🌱', min: 0   },
+      ];
+      return levels.find(l => pts >= l.min) || levels[levels.length - 1];
+    }
+
     function escHtml(str) {
       return String(str === null || str === undefined ? "" : str)
         .replace(/&/g, "&amp;")
