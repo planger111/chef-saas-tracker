@@ -171,7 +171,8 @@
 
         <div class="form-group">
           <label class="form-label">Interaction Type <span style="color:#d32f2f;">*</span></label>
-          <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;" id="interaction-type-options">
+            <!-- populated dynamically from response-options.json -->
             <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
               <input type="radio" name="interaction-type" value="Call" style="width:18px;height:18px;accent-color:#0078d4;"> 📞 Call
             </label>
@@ -408,6 +409,43 @@
       { reason_label: 'Security / compliance concern',    reason_code: '' },
       { reason_label: 'No authority / wrong contact',     reason_code: '' },
     ];
+
+    let _formConfig = null;
+
+    async function loadFormConfig() {
+      if (_formConfig) return _formConfig;
+      try { _formConfig = await getFormConfig(); } catch(e) { _formConfig = null; }
+      return _formConfig || {
+        interaction_types: ["Call", "Email", "Text"],
+        next_step_types: ["Schedule follow-up", "Send information", "Introduce stakeholder", "Create opportunity", "Revisit later"],
+        timing_options: ["Now", "This month", "Next quarter", "Later"]
+      };
+    }
+
+    async function renderInteractionTypes() {
+      const config = await loadFormConfig();
+      const emojis = { "Call": "📞", "Email": "📧", "Text": "💬", "In-Person Meeting": "🤝" };
+      const container = document.getElementById('interaction-type-options');
+      container.innerHTML = config.interaction_types.map(t =>
+        `<label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
+          <input type="radio" name="interaction-type" value="${escHtml(t)}" style="width:18px;height:18px;accent-color:#0078d4;"> ${emojis[t] || '•'} ${escHtml(t)}
+        </label>`
+      ).join('');
+    }
+
+    async function renderNextStepOptions() {
+      const config = await loadFormConfig();
+      const sel = document.getElementById('field-next-step-type');
+      sel.innerHTML = '<option value="">— Select —</option>' +
+        config.next_step_types.map(t => `<option>${escHtml(t)}</option>`).join('');
+    }
+
+    async function renderTimingOptions() {
+      const config = await loadFormConfig();
+      const sel = document.getElementById('field-timing');
+      sel.innerHTML = '<option value="">— Select —</option>' +
+        config.timing_options.map(t => `<option>${escHtml(t)}</option>`).join('');
+    }
 
     async function loadResponseOptionsForForm(account) {
       const rsId = (account.response_set_id || '').toUpperCase();
@@ -792,7 +830,10 @@
       goToLogStep(1);
       showScreen('screen-log-form');
 
-      // Load response options from API (cached after first call per response_set_id)
+      // Load all form options from SharePoint (cached after first call)
+      renderInteractionTypes();
+      renderNextStepOptions();
+      renderTimingOptions();
       loadResponseOptionsForForm(account).then(({ interested, notInterested }) => {
         document.getElementById('field-interested-reason').innerHTML     = buildReasonOptions(interested);
         document.getElementById('field-not-interested-reason').innerHTML = buildReasonOptions(notInterested);

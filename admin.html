@@ -34,6 +34,7 @@
       <div class="admin-tabs" style="display:flex; border-bottom:2px solid #e9ecef; margin-bottom:16px;">
         <button class="admin-tab active" data-tab="activity-log" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#0078d4; border-bottom:2px solid #0078d4; margin-bottom:-2px;">📋 Activity Log</button>
         <button class="admin-tab" data-tab="leaderboard" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">🏆 Leaderboard</button>
+        <button class="admin-tab" data-tab="config" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">⚙️ Response Options</button>
       </div>
 
       <!-- Activity Log Tab Panel -->
@@ -184,6 +185,18 @@
           </div>
         </div>
       </div><!-- /#tab-leaderboard -->
+
+      <!-- ── Response Options Config Tab ── -->
+      <div id="tab-config" class="admin-tab-panel" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+          <div style="font-size:13px;color:#555;">Edit response options reps see in the engagement form. Changes save to SharePoint and take effect immediately.</div>
+          <button class="btn btn-success" id="btn-save-config" onclick="saveConfig()" style="background:#107c10;color:#fff;border:none;padding:9px 20px;border-radius:6px;font-weight:600;cursor:pointer;">💾 Save to SharePoint</button>
+        </div>
+        <div id="config-status" style="display:none;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:12px;"></div>
+        <div id="config-editor" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
+          <div style="text-align:center;color:#999;padding:32px;">Loading…</div>
+        </div>
+      </div><!-- /#tab-config -->
 
     </div>
   </div>
@@ -385,6 +398,7 @@
         tab.style.borderBottomColor = '#0078d4';
         document.getElementById('tab-' + tab.dataset.tab).style.display = 'block';
         if (tab.dataset.tab === 'leaderboard') loadLeaderboardTab();
+        if (tab.dataset.tab === 'config') loadConfigTab();
       });
     });
 
@@ -445,6 +459,137 @@
         showScreen("screen-main");
       }
     })();
+
+    // ── Response Options Config Tab ────────────────────────────────────────
+
+    let _currentConfig = null;
+
+    async function loadConfigTab() {
+      const el = document.getElementById('config-editor');
+      el.innerHTML = '<div style="text-align:center;color:#999;padding:32px;">Loading from SharePoint…</div>';
+      try {
+        _currentConfig = await getFullResponseConfig();
+        renderConfigEditor(_currentConfig);
+      } catch(e) {
+        el.innerHTML = `<div style="color:#d32f2f;padding:16px;">Error loading config: ${escHtml(e.message)}</div>`;
+      }
+    }
+
+    function makeOptionGroup(title, items, key, hint) {
+      const id = 'cfg-' + key.replace(/[^a-z0-9]/g, '-');
+      return `
+        <div style="background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:16px;">
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${escHtml(title)}</div>
+          ${hint ? `<div style="font-size:12px;color:#888;margin-bottom:10px;">${escHtml(hint)}</div>` : ''}
+          <div id="${id}-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+            ${items.map((item, i) => `
+              <div style="display:flex;align-items:center;gap:8px;">
+                <input type="text" value="${escHtml(item)}" data-group="${escHtml(key)}" data-index="${i}"
+                  style="flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;"
+                  oninput="updateConfigItem('${escHtml(key)}', ${i}, this.value)" />
+                <button onclick="removeConfigItem('${escHtml(key)}', ${i})"
+                  style="background:none;border:none;color:#d32f2f;font-size:18px;cursor:pointer;line-height:1;padding:4px;">✕</button>
+              </div>`).join('')}
+          </div>
+          <button onclick="addConfigItem('${escHtml(key)}')"
+            style="font-size:13px;color:#0078d4;background:none;border:1px dashed #0078d4;border-radius:6px;padding:6px 12px;cursor:pointer;width:100%;">+ Add option</button>
+        </div>`;
+    }
+
+    function makeReasonGroup(title, outcomeType, hint) {
+      const reasons = (_currentConfig.options || [])
+        .filter(o => o.outcome_type === outcomeType && o.active_flag !== false)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+      const key = 'reason_' + outcomeType.replace(/\s+/g, '_');
+      return makeOptionGroup(title, reasons.map(r => r.reason_label), key, hint);
+    }
+
+    function renderConfigEditor(config) {
+      const fc = config.form_config || {};
+      document.getElementById('config-editor').innerHTML =
+        makeReasonGroup('✅ Interested — Reasons', 'Interested', 'Why the customer said yes') +
+        makeReasonGroup('❌ Not Interested — Reasons', 'Not Interested', 'Why the customer said no') +
+        makeOptionGroup('📞 Interaction Types', fc.interaction_types || [], 'interaction_types', 'How the rep reached the customer') +
+        makeOptionGroup('📅 Next Step Types', fc.next_step_types || [], 'next_step_types', 'What happens after an Interested outcome') +
+        makeOptionGroup('⏱️ Timing Options', fc.timing_options || [], 'timing_options', 'When the customer wants to move forward');
+    }
+
+    function updateConfigItem(key, index, value) {
+      if (key.startsWith('reason_')) {
+        const outcomeType = key === 'reason_Interested' ? 'Interested' : 'Not Interested';
+        const reasons = (_currentConfig.options || []).filter(o => o.outcome_type === outcomeType && o.active_flag !== false).sort((a, b) => (a.sort_order||0)-(b.sort_order||0));
+        if (reasons[index]) reasons[index].reason_label = value;
+      } else {
+        if (!_currentConfig.form_config) _currentConfig.form_config = {};
+        if (_currentConfig.form_config[key]) _currentConfig.form_config[key][index] = value;
+      }
+    }
+
+    function removeConfigItem(key, index) {
+      if (key.startsWith('reason_')) {
+        const outcomeType = key === 'reason_Interested' ? 'Interested' : 'Not Interested';
+        const reasons = (_currentConfig.options || []).filter(o => o.outcome_type === outcomeType && o.active_flag !== false).sort((a, b) => (a.sort_order||0)-(b.sort_order||0));
+        if (reasons[index]) reasons[index].active_flag = false;
+      } else {
+        if (_currentConfig.form_config && _currentConfig.form_config[key]) {
+          _currentConfig.form_config[key].splice(index, 1);
+        }
+      }
+      renderConfigEditor(_currentConfig);
+    }
+
+    function addConfigItem(key) {
+      if (key.startsWith('reason_')) {
+        const outcomeType = key === 'reason_Interested' ? 'Interested' : 'Not Interested';
+        const existing = (_currentConfig.options || []).filter(o => o.outcome_type === outcomeType);
+        _currentConfig.options = _currentConfig.options || [];
+        _currentConfig.options.push({ response_set_id: 'SAAS_STANDARD', outcome_type: outcomeType, reason_label: '', reason_code: '', sort_order: existing.length + 1, active_flag: true });
+      } else {
+        if (!_currentConfig.form_config) _currentConfig.form_config = {};
+        _currentConfig.form_config[key] = _currentConfig.form_config[key] || [];
+        _currentConfig.form_config[key].push('');
+      }
+      renderConfigEditor(_currentConfig);
+      // Focus the new input
+      setTimeout(() => {
+        const inputs = document.querySelectorAll(`[data-group="${key}"]`);
+        if (inputs.length) inputs[inputs.length - 1].focus();
+      }, 50);
+    }
+
+    async function saveConfig() {
+      const statusEl = document.getElementById('config-status');
+      statusEl.style.display = 'block';
+      statusEl.style.background = '#fff3cd';
+      statusEl.style.color = '#856404';
+      statusEl.textContent = '⏳ Saving to SharePoint…';
+
+      // Collect current text input values before saving
+      document.querySelectorAll('[data-group]').forEach(input => {
+        const key = input.dataset.group;
+        const index = parseInt(input.dataset.index);
+        updateConfigItem(key, index, input.value);
+      });
+
+      // Re-number sort_order for reasons
+      ['Interested', 'Not Interested'].forEach(outcomeType => {
+        (_currentConfig.options || [])
+          .filter(o => o.outcome_type === outcomeType && o.active_flag !== false)
+          .sort((a, b) => (a.sort_order||0)-(b.sort_order||0))
+          .forEach((o, i) => { o.sort_order = i + 1; });
+      });
+
+      try {
+        await saveFullResponseConfig(_currentConfig);
+        statusEl.style.background = '#e8f5e9';
+        statusEl.style.color = '#107c10';
+        statusEl.textContent = '✅ Saved! Changes will appear in the rep app immediately.';
+      } catch(e) {
+        statusEl.style.background = '#fde8e8';
+        statusEl.style.color = '#c00';
+        statusEl.textContent = '✗ Save failed: ' + e.message;
+      }
+    }
   </script>
 </body>
 </html>

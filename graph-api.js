@@ -92,6 +92,36 @@ async function getResponseOptions(responseSetId, outcomeType) {
     .map(o => o.reason_label);
 }
 
+const _DEFAULT_FORM_CONFIG = {
+  interaction_types: ["Call", "Email", "Text", "In-Person Meeting"],
+  next_step_types:   ["Schedule follow-up", "Send information", "Introduce stakeholder", "Create opportunity", "Revisit later"],
+  timing_options:    ["Now", "This month", "Next quarter", "Later"]
+};
+
+async function getFormConfig() {
+  try {
+    const text = await getFileText("ChefSaaS/response-options.json");
+    if (!text) return _DEFAULT_FORM_CONFIG;
+    const data = JSON.parse(text);
+    return {
+      interaction_types: (data.form_config && data.form_config.interaction_types) || _DEFAULT_FORM_CONFIG.interaction_types,
+      next_step_types:   (data.form_config && data.form_config.next_step_types)   || _DEFAULT_FORM_CONFIG.next_step_types,
+      timing_options:    (data.form_config && data.form_config.timing_options)     || _DEFAULT_FORM_CONFIG.timing_options,
+    };
+  } catch(e) { return _DEFAULT_FORM_CONFIG; }
+}
+
+async function getFullResponseConfig() {
+  try {
+    const text = await getFileText("ChefSaaS/response-options.json");
+    return text ? JSON.parse(text) : { options: [], form_config: _DEFAULT_FORM_CONFIG };
+  } catch(e) { return { options: [], form_config: _DEFAULT_FORM_CONFIG }; }
+}
+
+async function saveFullResponseConfig(config) {
+  await writeJsonFile("response-options.json", config);
+}
+
 // ─── Points ───────────────────────────────────────────────────────────────
 
 function calculatePoints(outcome, nextStepType) {
