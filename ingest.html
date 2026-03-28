@@ -208,7 +208,7 @@
             priority: r.priority || 'Medium',
             icp_notes: r.icp_notes || '',
             elevator_pitch: r.elevator_pitch || '',
-            response_set_id: r.response_set || r.response_set_id || 'SAAS_STANDARD',
+            response_set_id: r.response_set || r.response_set_id || (r.play_id || 'SAAS').replace(/[^a-z0-9]/gi, '_').toUpperCase() + '_STANDARD',
             active_flag: String(r.active).toUpperCase() !== 'FALSE'
           });
         }

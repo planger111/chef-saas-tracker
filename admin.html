@@ -188,10 +188,20 @@
 
       <!-- ── Response Options Config Tab ── -->
       <div id="tab-config" class="admin-tab-panel" style="display:none;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
-          <div style="font-size:13px;color:#555;">Edit response options reps see in the engagement form. Changes save to SharePoint and take effect immediately.</div>
-          <button class="btn btn-success" id="btn-save-config" onclick="saveConfig()" style="background:#107c10;color:#fff;border:none;padding:9px 20px;border-radius:6px;font-weight:600;cursor:pointer;">💾 Save to SharePoint</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;">
+          <div style="font-size:13px;color:#555;">Edit response options reps see in the engagement form. Each play can have its own reasons. Changes save to SharePoint and take effect immediately.</div>
+          <button onclick="saveConfig()" style="background:#107c10;color:#fff;border:none;padding:9px 20px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;">💾 Save to SharePoint</button>
         </div>
+
+        <!-- Play picker for reasons -->
+        <div style="background:#f0f7ff;border:1px solid #d0e4f7;border-radius:8px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <label style="font-size:13px;font-weight:600;white-space:nowrap;">Editing reasons for play:</label>
+          <select id="config-play-picker" onchange="onPlayPickerChange()" style="flex:1;min-width:180px;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
+            <option value="">Loading plays…</option>
+          </select>
+          <span style="font-size:12px;color:#666;" id="config-response-set-label"></span>
+        </div>
+
         <div id="config-status" style="display:none;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:12px;"></div>
         <div id="config-editor" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
           <div style="text-align:center;color:#999;padding:32px;">Loading…</div>
@@ -463,30 +473,63 @@
     // ── Response Options Config Tab ────────────────────────────────────────
 
     let _currentConfig = null;
+    let _allAssignments = null;
+    let _selectedResponseSetId = null;
 
     async function loadConfigTab() {
       const el = document.getElementById('config-editor');
       el.innerHTML = '<div style="text-align:center;color:#999;padding:32px;">Loading from SharePoint…</div>';
       try {
-        _currentConfig = await getFullResponseConfig();
+        [_currentConfig, _allAssignments] = await Promise.all([getFullResponseConfig(), getPlayAssignments(null)]);
+
+        // Build play picker: one entry per unique (play_id, response_set_id) combo
+        const seen = new Set();
+        const plays = (_allAssignments || []).reduce((arr, a) => {
+          const k = a.play_id + '|' + (a.response_set_id || 'SAAS_STANDARD');
+          if (!seen.has(k)) { seen.add(k); arr.push({ play_id: a.play_id, play_name: a.play_name || a.play_id, response_set_id: a.response_set_id || 'SAAS_STANDARD' }); }
+          return arr;
+        }, []);
+
+        const picker = document.getElementById('config-play-picker');
+        picker.innerHTML = plays.map(p =>
+          `<option value="${escHtml(p.response_set_id)}" data-play="${escHtml(p.play_name)}">${escHtml(p.play_name)}</option>`
+        ).join('');
+        if (plays.length > 0) {
+          _selectedResponseSetId = plays[0].response_set_id;
+          document.getElementById('config-response-set-label').textContent = 'Response set: ' + _selectedResponseSetId;
+        }
         renderConfigEditor(_currentConfig);
       } catch(e) {
         el.innerHTML = `<div style="color:#d32f2f;padding:16px;">Error loading config: ${escHtml(e.message)}</div>`;
       }
     }
 
+    function onPlayPickerChange() {
+      // Flush any pending edits first
+      flushEdits();
+      const picker = document.getElementById('config-play-picker');
+      const opt = picker.options[picker.selectedIndex];
+      _selectedResponseSetId = picker.value;
+      document.getElementById('config-response-set-label').textContent = 'Response set: ' + _selectedResponseSetId;
+      renderConfigEditor(_currentConfig);
+    }
+
+    function flushEdits() {
+      document.querySelectorAll('[data-group]').forEach(input => {
+        updateConfigItem(input.dataset.group, parseInt(input.dataset.index), input.value);
+      });
+    }
+
     function makeOptionGroup(title, items, key, hint) {
-      const id = 'cfg-' + key.replace(/[^a-z0-9]/g, '-');
       return `
         <div style="background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:16px;">
           <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${escHtml(title)}</div>
           ${hint ? `<div style="font-size:12px;color:#888;margin-bottom:10px;">${escHtml(hint)}</div>` : ''}
-          <div id="${id}-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
             ${items.map((item, i) => `
               <div style="display:flex;align-items:center;gap:8px;">
                 <input type="text" value="${escHtml(item)}" data-group="${escHtml(key)}" data-index="${i}"
-                  style="flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;"
-                  oninput="updateConfigItem('${escHtml(key)}', ${i}, this.value)" />
+                  style="flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;" />
                 <button onclick="removeConfigItem('${escHtml(key)}', ${i})"
                   style="background:none;border:none;color:#d32f2f;font-size:18px;cursor:pointer;line-height:1;padding:4px;">✕</button>
               </div>`).join('')}
@@ -497,18 +540,21 @@
     }
 
     function makeReasonGroup(title, outcomeType, hint) {
+      const rsId = _selectedResponseSetId || 'SAAS_STANDARD';
       const reasons = (_currentConfig.options || [])
-        .filter(o => o.outcome_type === outcomeType && o.active_flag !== false)
+        .filter(o => o.outcome_type === outcomeType && o.active_flag !== false &&
+          (o.response_set_id || 'SAAS_STANDARD').toUpperCase() === rsId.toUpperCase())
         .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-      const key = 'reason_' + outcomeType.replace(/\s+/g, '_');
+      const key = 'reason_' + outcomeType.replace(/\s+/g, '_') + '|' + rsId;
       return makeOptionGroup(title, reasons.map(r => r.reason_label), key, hint);
     }
 
     function renderConfigEditor(config) {
       const fc = config.form_config || {};
       document.getElementById('config-editor').innerHTML =
-        makeReasonGroup('✅ Interested — Reasons', 'Interested', 'Why the customer said yes') +
-        makeReasonGroup('❌ Not Interested — Reasons', 'Not Interested', 'Why the customer said no') +
+        makeReasonGroup('✅ Interested — Reasons', 'Interested', 'Why the customer said yes (specific to this play)') +
+        makeReasonGroup('❌ Not Interested — Reasons', 'Not Interested', 'Why the customer said no (specific to this play)') +
+        '<div style="grid-column:1/-1;border-top:2px solid #eee;padding-top:4px;font-size:11px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:0.5px;">Global options (apply to all plays)</div>' +
         makeOptionGroup('📞 Interaction Types', fc.interaction_types || [], 'interaction_types', 'How the rep reached the customer') +
         makeOptionGroup('📅 Next Step Types', fc.next_step_types || [], 'next_step_types', 'What happens after an Interested outcome') +
         makeOptionGroup('⏱️ Timing Options', fc.timing_options || [], 'timing_options', 'When the customer wants to move forward');
@@ -516,8 +562,12 @@
 
     function updateConfigItem(key, index, value) {
       if (key.startsWith('reason_')) {
-        const outcomeType = key === 'reason_Interested' ? 'Interested' : 'Not Interested';
-        const reasons = (_currentConfig.options || []).filter(o => o.outcome_type === outcomeType && o.active_flag !== false).sort((a, b) => (a.sort_order||0)-(b.sort_order||0));
+        const [, outcomeRaw, rsId] = key.split('|');
+        const outcomeType = outcomeRaw === 'reason_Interested' ? 'Interested' : 'Not Interested';
+        const reasons = (_currentConfig.options || [])
+          .filter(o => o.outcome_type === outcomeType && o.active_flag !== false &&
+            (o.response_set_id || 'SAAS_STANDARD').toUpperCase() === (rsId || 'SAAS_STANDARD').toUpperCase())
+          .sort((a, b) => (a.sort_order||0)-(b.sort_order||0));
         if (reasons[index]) reasons[index].reason_label = value;
       } else {
         if (!_currentConfig.form_config) _currentConfig.form_config = {};
@@ -526,9 +576,14 @@
     }
 
     function removeConfigItem(key, index) {
+      flushEdits();
       if (key.startsWith('reason_')) {
-        const outcomeType = key === 'reason_Interested' ? 'Interested' : 'Not Interested';
-        const reasons = (_currentConfig.options || []).filter(o => o.outcome_type === outcomeType && o.active_flag !== false).sort((a, b) => (a.sort_order||0)-(b.sort_order||0));
+        const [, outcomeRaw, rsId] = key.split('|');
+        const outcomeType = outcomeRaw === 'reason_Interested' ? 'Interested' : 'Not Interested';
+        const reasons = (_currentConfig.options || [])
+          .filter(o => o.outcome_type === outcomeType && o.active_flag !== false &&
+            (o.response_set_id || 'SAAS_STANDARD').toUpperCase() === (rsId || 'SAAS_STANDARD').toUpperCase())
+          .sort((a, b) => (a.sort_order||0)-(b.sort_order||0));
         if (reasons[index]) reasons[index].active_flag = false;
       } else {
         if (_currentConfig.form_config && _currentConfig.form_config[key]) {
@@ -539,18 +594,19 @@
     }
 
     function addConfigItem(key) {
+      flushEdits();
       if (key.startsWith('reason_')) {
-        const outcomeType = key === 'reason_Interested' ? 'Interested' : 'Not Interested';
-        const existing = (_currentConfig.options || []).filter(o => o.outcome_type === outcomeType);
+        const [, outcomeRaw, rsId] = key.split('|');
+        const outcomeType = outcomeRaw === 'reason_Interested' ? 'Interested' : 'Not Interested';
+        const existing = (_currentConfig.options || []).filter(o => o.outcome_type === outcomeType && (o.response_set_id||'SAAS_STANDARD').toUpperCase() === (rsId||'SAAS_STANDARD').toUpperCase());
         _currentConfig.options = _currentConfig.options || [];
-        _currentConfig.options.push({ response_set_id: 'SAAS_STANDARD', outcome_type: outcomeType, reason_label: '', reason_code: '', sort_order: existing.length + 1, active_flag: true });
+        _currentConfig.options.push({ response_set_id: rsId || 'SAAS_STANDARD', outcome_type: outcomeType, reason_label: '', reason_code: '', sort_order: existing.length + 1, active_flag: true });
       } else {
         if (!_currentConfig.form_config) _currentConfig.form_config = {};
         _currentConfig.form_config[key] = _currentConfig.form_config[key] || [];
         _currentConfig.form_config[key].push('');
       }
       renderConfigEditor(_currentConfig);
-      // Focus the new input
       setTimeout(() => {
         const inputs = document.querySelectorAll(`[data-group="${key}"]`);
         if (inputs.length) inputs[inputs.length - 1].focus();
@@ -558,26 +614,21 @@
     }
 
     async function saveConfig() {
+      flushEdits();
       const statusEl = document.getElementById('config-status');
       statusEl.style.display = 'block';
       statusEl.style.background = '#fff3cd';
       statusEl.style.color = '#856404';
       statusEl.textContent = '⏳ Saving to SharePoint…';
 
-      // Collect current text input values before saving
-      document.querySelectorAll('[data-group]').forEach(input => {
-        const key = input.dataset.group;
-        const index = parseInt(input.dataset.index);
-        updateConfigItem(key, index, input.value);
+      // Re-number sort_order per response_set per outcome
+      const bySetAndOutcome = {};
+      (_currentConfig.options || []).filter(o => o.active_flag !== false).forEach(o => {
+        const k = (o.response_set_id||'SAAS_STANDARD') + '|' + o.outcome_type;
+        bySetAndOutcome[k] = bySetAndOutcome[k] || [];
+        bySetAndOutcome[k].push(o);
       });
-
-      // Re-number sort_order for reasons
-      ['Interested', 'Not Interested'].forEach(outcomeType => {
-        (_currentConfig.options || [])
-          .filter(o => o.outcome_type === outcomeType && o.active_flag !== false)
-          .sort((a, b) => (a.sort_order||0)-(b.sort_order||0))
-          .forEach((o, i) => { o.sort_order = i + 1; });
-      });
+      Object.values(bySetAndOutcome).forEach(arr => arr.sort((a,b) => (a.sort_order||0)-(b.sort_order||0)).forEach((o,i) => { o.sort_order = i+1; }));
 
       try {
         await saveFullResponseConfig(_currentConfig);
