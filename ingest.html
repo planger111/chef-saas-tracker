@@ -175,7 +175,7 @@
         }
         if (headerIdx < 0) throw new Error('Could not find header row with "Play ID" column');
 
-        const headers = rows[headerIdx].map(h => String(h).trim().toLowerCase().replace(/\s+/g,'_'));
+        const headers = rows[headerIdx].map(h => String(h).trim().replace(/\s*\*$/, '').toLowerCase().replace(/\s+/g,'_'));
         log('info', 'Headers found: ' + headers.filter(Boolean).join(', '));
 
         const assignments = [];
