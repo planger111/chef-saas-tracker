@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chef SaaS — Account Ingest Tool</title>
+  <script src="msal-browser.js"></script>
+  <script src="config.js"></script>
+  <script src="msal-auth.js"></script>
+  <script src="graph-api.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f6f8; color: #1a1a2e; min-height: 100vh; }
+    header { background: #0078d4; color: #fff; padding: 18px 24px; }
+    header h1 { font-size: 20px; font-weight: 700; }
+    header p { font-size: 13px; opacity: .85; margin-top: 3px; }
+    main { max-width: 800px; margin: 24px auto; padding: 0 16px 48px; display: flex; flex-direction: column; gap: 20px; }
+    .card { background: #fff; border-radius: 10px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .card h2 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
+    .step-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #0078d4; color: #fff; font-size: 12px; font-weight: 700; margin-right: 8px; }
+    button { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; transition: background .15s; }
+    .btn-primary { background: #0078d4; color: #fff; }
+    .btn-primary:hover { background: #005a9e; }
+    .btn-primary:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-success { background: #107c10; color: #fff; }
+    .btn-success:hover { background: #0a5e0a; }
+    .btn-success:disabled { background: #ccc; cursor: not-allowed; }
+    .drop-zone { border: 2px dashed #0078d4; border-radius: 8px; padding: 32px; text-align: center; cursor: pointer; transition: background .15s; }
+    .drop-zone:hover, .drop-zone.drag-over { background: #f0f7ff; }
+    .drop-zone p { color: #555; font-size: 14px; margin-top: 8px; }
+    #file-input { display: none; }
+    .preview-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
+    .preview-table th { background: #f0f0f0; padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 1px solid #ddd; }
+    .preview-table td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; }
+    .preview-table tr:hover td { background: #fafafa; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+    .badge-high { background: #fde8e8; color: #c00; }
+    .badge-medium { background: #fff3cd; color: #856404; }
+    .badge-low { background: #e8f4fd; color: #0078d4; }
+    #log { font-family: monospace; font-size: 13px; background: #1e1e2e; color: #cdd6f4; border-radius: 8px; padding: 16px; max-height: 280px; overflow-y: auto; white-space: pre-wrap; }
+    #log .ok { color: #a6e3a1; }
+    #log .err { color: #f38ba8; }
+    #log .info { color: #89dceb; }
+    #log .warn { color: #f9e2af; }
+    .status-bar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 8px; font-size: 14px; }
+    .status-signed-in { background: #e8f5e9; color: #107c10; }
+    .status-signed-out { background: #fff3cd; color: #856404; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-top: 8px; }
+    .summary-box { background: #f4f6f8; border-radius: 8px; padding: 12px; text-align: center; }
+    .summary-box .num { font-size: 28px; font-weight: 700; color: #0078d4; }
+    .summary-box .lbl { font-size: 12px; color: #666; margin-top: 4px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🍴 Chef SaaS — Account Ingest Tool</h1>
+  <p>Upload your Excel account list to SharePoint</p>
+</header>
+
+<main>
+
+  <!-- Step 1: Sign In -->
+  <div class="card">
+    <h2><span class="step-num">1</span>Sign In</h2>
+    <div id="auth-status" class="status-bar status-signed-out">⚠️ Not signed in</div>
+    <br>
+    <button class="btn-primary" id="btn-signin" onclick="doSignIn()">Sign In with Progress SSO</button>
+  </div>
+
+  <!-- Step 2: Upload Excel -->
+  <div class="card">
+    <h2><span class="step-num">2</span>Upload Excel File</h2>
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div style="font-size:32px">📂</div>
+      <strong>Click to select your Excel file</strong>
+      <p>account-upload-template.xlsx (or any .xlsx with the same columns)</p>
+    </div>
+    <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+  </div>
+
+  <!-- Step 3: Preview -->
+  <div class="card hidden" id="preview-card">
+    <h2><span class="step-num">3</span>Preview</h2>
+    <div class="summary-grid" id="summary-grid"></div>
+    <div style="overflow-x:auto; margin-top:16px;">
+      <table class="preview-table" id="preview-table">
+        <thead><tr>
+          <th>Account</th><th>Rep Email</th><th>Play</th><th>Priority</th><th>Active</th>
+        </tr></thead>
+        <tbody id="preview-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Step 4: Upload -->
+  <div class="card hidden" id="upload-card">
+    <h2><span class="step-num">4</span>Upload to SharePoint</h2>
+    <p style="font-size:14px;color:#555;margin-bottom:16px;">This will <strong>replace</strong> the current assignments.json in SharePoint with the data above.</p>
+    <button class="btn-success" id="btn-upload" onclick="doUpload()" disabled>⬆️ Upload to SharePoint</button>
+  </div>
+
+  <!-- Log -->
+  <div class="card hidden" id="log-card">
+    <h2>Log</h2>
+    <div id="log"></div>
+  </div>
+
+</main>
+
+<script>
+  let parsedAssignments = [];
+  let currentUser = null;
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
+
+  async function doSignIn() {
+    try {
+      log('info', 'Signing in...');
+      showLog();
+      currentUser = await signIn();
+      document.getElementById('auth-status').className = 'status-bar status-signed-in';
+      document.getElementById('auth-status').textContent = '✅ Signed in as ' + currentUser.username;
+      document.getElementById('btn-signin').disabled = true;
+      log('ok', 'Signed in as ' + currentUser.username);
+      checkEnableUpload();
+    } catch(e) {
+      log('err', 'Sign-in failed: ' + e.message);
+    }
+  }
+
+  // Auto sign-in on page load
+  window.addEventListener('load', async () => {
+    try {
+      await initAuth();
+      const accounts = window._msalInstance ? window._msalInstance.getAllAccounts() : [];
+      if (accounts.length > 0) {
+        currentUser = accounts[0];
+        document.getElementById('auth-status').className = 'status-bar status-signed-in';
+        document.getElementById('auth-status').textContent = '✅ Signed in as ' + currentUser.username;
+        document.getElementById('btn-signin').disabled = true;
+        checkEnableUpload();
+      }
+    } catch(e) {}
+  });
+
+  // ── File handling ─────────────────────────────────────────────────────────
+
+  const dropZone = document.getElementById('drop-zone');
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
+
+  function handleFile(file) {
+    if (!file) return;
+    log('info', 'Reading ' + file.name + '...');
+    showLog();
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'array' });
+        const sheetName = wb.SheetNames.find(n => n.toLowerCase().includes('account') || n.toLowerCase().includes('assign')) || wb.SheetNames[0];
+        const ws = wb.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+
+        // Find header row (contains 'Play ID' or 'play_id')
+        let headerIdx = -1;
+        for (let i = 0; i < Math.min(rows.length, 10); i++) {
+          if (rows[i].some(c => String(c).toLowerCase().replace(/\s/g,'') === 'playid' || String(c).toLowerCase() === 'play id')) {
+            headerIdx = i;
+            break;
+          }
+        }
+        if (headerIdx < 0) throw new Error('Could not find header row with "Play ID" column');
+
+        const headers = rows[headerIdx].map(h => String(h).trim().toLowerCase().replace(/\s+/g,'_'));
+        log('info', 'Headers found: ' + headers.filter(Boolean).join(', '));
+
+        const assignments = [];
+        for (let i = headerIdx + 1; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row.some(v => v !== '' && v !== null && v !== undefined)) continue;
+
+          const r = {};
+          headers.forEach((h, idx) => { r[h] = String(row[idx] || '').trim(); });
+
+          // Skip instruction/example rows
+          if (!r.play_id || r.play_id.startsWith('Use:') || r.play_id.startsWith('*') ||
+              !r.account_id || r.account_id.startsWith('Unique') ||
+              !r.rep_email || !r.rep_email.includes('@')) continue;
+
+          // Derive rep name from email if formula or empty
+          let repName = r.rep_name || '';
+          if (!repName || repName.startsWith('=') || !repName.match(/[a-z]/i)) {
+            repName = r.rep_email.split('@')[0].split('.').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+          }
+
+          assignments.push({
+            play_id: r.play_id,
+            play_name: r.play_name || r.play_id,
+            account_id: r.account_id,
+            account_name: r.account_name,
+            rep_email: r.rep_email.toLowerCase(),
+            rep_name: repName,
+            target_persona: r.target_persona || '',
+            priority: r.priority || 'Medium',
+            icp_notes: r.icp_notes || '',
+            elevator_pitch: r.elevator_pitch || '',
+            response_set_id: r.response_set || r.response_set_id || 'SAAS_STANDARD',
+            active_flag: String(r.active).toUpperCase() !== 'FALSE'
+          });
+        }
+
+        if (assignments.length === 0) throw new Error('No valid data rows found. Check the file has data below the header row.');
+
+        parsedAssignments = assignments;
+        log('ok', 'Parsed ' + assignments.length + ' assignments from ' + sheetName);
+        showPreview(assignments);
+        checkEnableUpload();
+      } catch(e) {
+        log('err', 'Parse error: ' + e.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  // ── Preview ───────────────────────────────────────────────────────────────
+
+  function showPreview(assignments) {
+    // Summary
+    const reps = new Set(assignments.map(a => a.rep_email)).size;
+    const plays = new Set(assignments.map(a => a.play_id)).size;
+    const active = assignments.filter(a => a.active_flag).length;
+    document.getElementById('summary-grid').innerHTML = `
+      <div class="summary-box"><div class="num">${assignments.length}</div><div class="lbl">Accounts</div></div>
+      <div class="summary-box"><div class="num">${reps}</div><div class="lbl">Reps</div></div>
+      <div class="summary-box"><div class="num">${plays}</div><div class="lbl">Plays</div></div>
+      <div class="summary-box"><div class="num">${active}</div><div class="lbl">Active</div></div>
+    `;
+
+    // Table (first 50 rows)
+    const tbody = document.getElementById('preview-body');
+    tbody.innerHTML = '';
+    assignments.slice(0, 50).forEach(a => {
+      const pri = a.priority.toLowerCase();
+      const priClass = pri === 'high' ? 'badge-high' : pri === 'low' ? 'badge-low' : 'badge-medium';
+      tbody.innerHTML += `<tr>
+        <td><strong>${esc(a.account_name)}</strong><br><small style="color:#666">${esc(a.account_id)}</small></td>
+        <td>${esc(a.rep_email)}</td>
+        <td>${esc(a.play_name)}</td>
+        <td><span class="badge ${priClass}">${esc(a.priority)}</span></td>
+        <td>${a.active_flag ? '✅' : '❌'}</td>
+      </tr>`;
+    });
+    if (assignments.length > 50) {
+      tbody.innerHTML += `<tr><td colspan="5" style="text-align:center;color:#666;padding:12px">... and ${assignments.length - 50} more rows</td></tr>`;
+    }
+
+    document.getElementById('preview-card').classList.remove('hidden');
+    document.getElementById('upload-card').classList.remove('hidden');
+  }
+
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // ── Upload ────────────────────────────────────────────────────────────────
+
+  function checkEnableUpload() {
+    const btn = document.getElementById('btn-upload');
+    btn.disabled = !(currentUser && parsedAssignments.length > 0);
+  }
+
+  async function doUpload() {
+    const btn = document.getElementById('btn-upload');
+    btn.disabled = true;
+    btn.textContent = '⏳ Uploading...';
+    try {
+      log('info', 'Connecting to SharePoint...');
+      const payload = { assignments: parsedAssignments };
+      await writeJsonFile('assignments.json', payload);
+      log('ok', `✅ assignments.json uploaded! ${parsedAssignments.length} accounts written to SharePoint.`);
+      log('info', 'Reps can now open the app and see their accounts.');
+      log('info', 'SharePoint path: ChefSaaS/assignments.json');
+      btn.textContent = '✅ Upload Complete';
+      btn.style.background = '#107c10';
+    } catch(e) {
+      log('err', 'Upload failed: ' + e.message);
+      btn.disabled = false;
+      btn.textContent = '⬆️ Retry Upload';
+    }
+  }
+
+  // ── Log ───────────────────────────────────────────────────────────────────
+
+  function showLog() { document.getElementById('log-card').classList.remove('hidden'); }
+
+  function log(type, msg) {
+    showLog();
+    const el = document.getElementById('log');
+    const prefix = { ok: '✓ ', err: '✗ ', info: '→ ', warn: '⚠ ' }[type] || '';
+    el.innerHTML += `<span class="${type}">${prefix}${msg}</span>\n`;
+    el.scrollTop = el.scrollHeight;
+  }
+</script>
+</body>
+</html>
