@@ -487,6 +487,18 @@
         allPlays    = plays    || [];
         totalPoints = points   || 0;
 
+        // If no accounts found, show a diagnostic banner
+        if (repAccounts.length === 0) {
+          const banner = document.createElement('div');
+          banner.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:14px 16px;margin-bottom:12px;font-size:13px;line-height:1.5;';
+          banner.innerHTML = `⚠️ <strong>No accounts found for your email.</strong><br>
+            Your sign-in email is: <strong style="font-family:monospace;background:#f8f8f8;padding:2px 6px;border-radius:4px;">${email}</strong><br>
+            Make sure the <em>Rep Email</em> column in your Excel file uses this exact address, then re-upload via <a href="ingest.html">ingest.html</a>.`;
+          document.getElementById('dashboard-plays-list').before
+            ? document.getElementById('dashboard-points-card').insertAdjacentElement('afterend', banner)
+            : document.getElementById('dashboard-plays-list').parentNode.insertBefore(banner, document.getElementById('dashboard-plays-list'));
+        }
+
         // Fetch latest logs for this rep across all accounts
         const accountIds = repAccounts.map(a => a.account_id);
         latestLogs = await getLatestLogsForRep(email, accountIds);
