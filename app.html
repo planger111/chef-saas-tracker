@@ -537,33 +537,39 @@
       }
 
       const html = allPlays.map(play => {
-        const total      = repAccounts.length;
-        const engaged    = repAccounts.filter(a => !!latestLogs[a.account_id]).length;
-        const interested = repAccounts.filter(a => {
+        // Filter accounts to just this play
+        const playAccounts = repAccounts.filter(a => a.play_id === play.play_id);
+        const targets    = playAccounts.length;
+        const engaged    = playAccounts.filter(a => !!latestLogs[a.account_id]).length;
+        const interested = playAccounts.filter(a => {
           const log = latestLogs[a.account_id];
           return !!(log && log.outcome === 'Interested');
         }).length;
-        const pct        = total > 0 ? Math.round((engaged / total) * 100) : 0;
+        const pct = targets > 0 ? Math.round((engaged / targets) * 100) : 0;
 
         return `
           <div class="play-card" data-play-id="${play.play_id}" style="cursor:pointer;">
             <div class="play-card-header">
               <span class="play-card-name">${play.play_name}</span>
-              <span class="play-card-count">${engaged}/${total} engaged</span>
+              <span class="play-card-count">${pct}% engaged</span>
             </div>
             <div class="progress-bar-track">
               <div class="progress-bar-fill" style="width:${pct}%;"></div>
             </div>
-            <div class="progress-pct">${pct}% engaged</div>
             <div class="funnel-row">
               <div class="funnel-stat">
+                <span class="funnel-num">${targets}</span>
+                <span class="funnel-label">🎯 Targets</span>
+              </div>
+              <div class="funnel-arrow">→</div>
+              <div class="funnel-stat">
                 <span class="funnel-num">${engaged}</span>
-                <span class="funnel-label">Engaged</span>
+                <span class="funnel-label">💬 Engaged</span>
               </div>
               <div class="funnel-arrow">→</div>
               <div class="funnel-stat funnel-won">
                 <span class="funnel-num">${interested}</span>
-                <span class="funnel-label">Interested 🏆</span>
+                <span class="funnel-label">✅ Interested</span>
               </div>
             </div>
           </div>

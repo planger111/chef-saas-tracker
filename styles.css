@@ -978,15 +978,17 @@ tr:hover td {
   margin-top: 12px;
   padding-top: 10px;
   border-top: 1px solid #f0f0f0;
+  gap: 4px;
 }
 .funnel-stat {
   display: flex;
   flex-direction: column;
   align-items: center;
   flex: 1;
+  min-width: 0;
 }
 .funnel-num {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
   color: #0078d4;
   line-height: 1;
@@ -995,14 +997,15 @@ tr:hover td {
 .funnel-label {
   font-size: 11px;
   color: #888;
-  margin-top: 2px;
+  margin-top: 3px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  text-align: center;
+  white-space: nowrap;
 }
 .funnel-arrow {
   color: #ccc;
-  font-size: 16px;
+  font-size: 18px;
   flex-shrink: 0;
-  margin: 0 4px;
+  margin: 0 2px;
+  padding-bottom: 14px;
 }
