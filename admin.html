@@ -45,40 +45,13 @@
           <select id="filter-rep">
             <option value="">All Reps</option>
           </select>
-          <select id="filter-csm">
-            <option value="">All CSMs</option>
-          </select>
           <select id="filter-play">
             <option value="">All Plays</option>
           </select>
           <select id="filter-status">
-            <option value="">All Statuses</option>
-            <option>Not Pitched</option>
-            <option>Pitched - No Interest</option>
-            <option>Pitched - Exploring</option>
-            <option>Pitched - Active Deal</option>
-            <option>Closed Won</option>
-            <option>Closed Lost</option>
-          </select>
-        </div>
-        <div class="filter-row">
-          <select id="filter-blocker">
-            <option value="">All Blockers</option>
-            <option>No urgency</option>
-            <option>Budget constraints</option>
-            <option>Prefer current solution</option>
-            <option>Product gap</option>
-            <option>Messaging unclear</option>
-            <option>Competitive pressure</option>
-          </select>
-          <select id="filter-need">
-            <option value="">All Customer Needs</option>
-            <option>Replace current tooling</option>
-            <option>Reduce operational overhead</option>
-            <option>Improve automation</option>
-            <option>Standardize environments</option>
-            <option>Security / compliance</option>
-            <option>Cloud transformation</option>
+            <option value="">All Outcomes</option>
+            <option>Interested</option>
+            <option>Not Interested</option>
           </select>
           <input type="date" id="filter-start" title="Start date" />
           <input type="date" id="filter-end" title="End date" />
@@ -318,7 +291,6 @@
       const repSel = document.getElementById("filter-rep");
       reps.forEach(r => { const o = document.createElement("option"); o.value = r; o.textContent = r; repSel.appendChild(o); });
 
-      // Reuse filter-play for outcome filter
       const playSel = document.getElementById("filter-play");
       plays.forEach(p => { const o = document.createElement("option"); o.value = p; o.textContent = p; playSel.appendChild(o); });
 
@@ -329,36 +301,34 @@
 
     function getFilters() {
       return {
-        rep_name: document.getElementById("filter-rep").value,
-        play_name: document.getElementById("filter-play").value,
-        outcome: document.getElementById("filter-status").value,
+        rep:       document.getElementById("filter-rep").value,
+        play:      document.getElementById("filter-play").value,
+        outcome:   document.getElementById("filter-status").value,
         startDate: document.getElementById("filter-start").value,
-        endDate: document.getElementById("filter-end").value,
+        endDate:   document.getElementById("filter-end").value,
       };
     }
 
-    async function applyFilters() {
-      const btn = document.getElementById("btn-apply");
-      btn.disabled = true;
-      btn.textContent = "Loading…";
+    function applyFiltersToData(data, filters) {
+      return data.filter(r => {
+        if (filters.rep     && (r.rep_name || r.rep_email) !== filters.rep) return false;
+        if (filters.play    && r.play_name !== filters.play) return false;
+        if (filters.outcome && r.outcome !== filters.outcome) return false;
+        if (filters.startDate && r.submitted_at && r.submitted_at.slice(0,10) < filters.startDate) return false;
+        if (filters.endDate   && r.submitted_at && r.submitted_at.slice(0,10) > filters.endDate) return false;
+        return true;
+      });
+    }
 
-      try {
-        const filters = getFilters();
-        const data = await getMotionLog(filters);
-        renderTable(data);
-      } catch (err) {
-        document.getElementById("results-body").innerHTML =
-          `<tr><td colspan="9" class="no-results" style="color:#d32f2f;">Error: ${escHtml(err.message)}</td></tr>`;
-      } finally {
-        btn.disabled = false;
-        btn.textContent = "Apply Filters";
-      }
+    async function applyFilters() {
+      const filters = getFilters();
+      renderTable(applyFiltersToData(_allData, filters));
     }
 
     document.getElementById("btn-apply").addEventListener("click", applyFilters);
 
     document.getElementById("btn-clear").addEventListener("click", () => {
-      ["filter-rep", "filter-csm", "filter-play", "filter-status", "filter-blocker", "filter-need", "filter-start", "filter-end"].forEach((id) => {
+      ["filter-rep", "filter-play", "filter-status", "filter-start", "filter-end"].forEach(id => {
         document.getElementById(id).value = "";
       });
       renderTable(_allData);
