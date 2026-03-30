@@ -14,11 +14,12 @@
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f4f6f8; color: #1a1a2e; min-height: 100vh; }
     header { background: #0078d4; color: #fff; padding: 18px 24px; }
     header h1 { font-size: 20px; font-weight: 700; }
-    header p { font-size: 13px; opacity: .85; margin-top: 3px; }
-    main { max-width: 800px; margin: 24px auto; padding: 0 16px 48px; display: flex; flex-direction: column; gap: 20px; }
+    header p  { font-size: 13px; opacity: .85; margin-top: 3px; }
+    main { max-width: 860px; margin: 24px auto; padding: 0 16px 60px; display: flex; flex-direction: column; gap: 20px; }
     .card { background: #fff; border-radius: 10px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
-    .card h2 { font-size: 16px; font-weight: 700; margin-bottom: 16px; }
-    .step-num { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #0078d4; color: #fff; font-size: 12px; font-weight: 700; margin-right: 8px; }
+    .card h2 { font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .step-num { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: #0078d4; color: #fff; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .step-num.done { background: #107c10; }
     button { padding: 10px 20px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; transition: background .15s; }
     .btn-primary { background: #0078d4; color: #fff; }
     .btn-primary:hover { background: #005a9e; }
@@ -26,9 +27,10 @@
     .btn-success { background: #107c10; color: #fff; }
     .btn-success:hover { background: #0a5e0a; }
     .btn-success:disabled { background: #ccc; cursor: not-allowed; }
+    .btn-secondary { background: #f4f6f8; color: #333; border: 1px solid #d1d5db; }
+    .btn-secondary:hover { background: #e8eaed; }
     .drop-zone { border: 2px dashed #0078d4; border-radius: 8px; padding: 32px; text-align: center; cursor: pointer; transition: background .15s; }
     .drop-zone:hover, .drop-zone.drag-over { background: #f0f7ff; }
-    .drop-zone p { color: #555; font-size: 14px; margin-top: 8px; }
     #file-input { display: none; }
     .preview-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
     .preview-table th { background: #f0f0f0; padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 1px solid #ddd; }
@@ -39,72 +41,162 @@
     .badge-medium { background: #fff3cd; color: #856404; }
     .badge-low { background: #e8f4fd; color: #0078d4; }
     #log { font-family: monospace; font-size: 13px; background: #1e1e2e; color: #cdd6f4; border-radius: 8px; padding: 16px; max-height: 280px; overflow-y: auto; white-space: pre-wrap; }
-    #log .ok { color: #a6e3a1; }
-    #log .err { color: #f38ba8; }
+    #log .ok   { color: #a6e3a1; }
+    #log .err  { color: #f38ba8; }
     #log .info { color: #89dceb; }
     #log .warn { color: #f9e2af; }
     .status-bar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 8px; font-size: 14px; }
-    .status-signed-in { background: #e8f5e9; color: #107c10; }
+    .status-signed-in  { background: #e8f5e9; color: #107c10; }
     .status-signed-out { background: #fff3cd; color: #856404; }
     .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-top: 8px; }
-    .summary-box { background: #f4f6f8; border-radius: 8px; padding: 12px; text-align: center; }
     .summary-box .num { font-size: 28px; font-weight: 700; color: #0078d4; }
     .summary-box .lbl { font-size: 12px; color: #666; margin-top: 4px; }
+    .summary-box { background: #f4f6f8; border-radius: 8px; padding: 12px; text-align: center; }
     .hidden { display: none; }
+    .form-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .form-row label { font-size: 13px; font-weight: 600; color: #333; }
+    .form-row input, .form-row textarea, .form-row select { width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; font-family: inherit; }
+    .form-row textarea { resize: vertical; min-height: 72px; }
+    .form-row .hint { font-size: 11px; color: #888; }
+    .play-option { padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all .15s; margin-bottom: 8px; }
+    .play-option:hover { border-color: #0078d4; background: #f0f7ff; }
+    .play-option.selected { border-color: #0078d4; background: #f0f7ff; }
+    .play-option .play-option-name { font-weight: 700; font-size: 14px; }
+    .play-option .play-option-meta { font-size: 12px; color: #666; margin-top: 2px; }
+    .goal-btn { flex: 1; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: center; transition: all .15s; background: #fff; }
+    .goal-btn:hover { border-color: #0078d4; }
+    .goal-btn.selected-in  { border-color: #107c10; background: #e8f5e9; }
+    .goal-btn.selected-out { border-color: #d32f2f; background: #fde8e8; }
+    .goal-btn .goal-icon { font-size: 24px; }
+    .goal-btn .goal-label { font-weight: 700; font-size: 13px; margin-top: 6px; }
+    .goal-btn .goal-desc { font-size: 11px; color: #666; margin-top: 3px; }
+    .play-summary-bar { display: flex; gap: 12px; flex-wrap: wrap; padding: 12px 16px; background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-bottom: 16px; font-size: 13px; align-items: flex-start; }
+    .play-summary-bar .psb-item { display: flex; flex-direction: column; }
+    .play-summary-bar .psb-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #5b7fa6; }
+    .play-summary-bar .psb-val { font-weight: 600; color: #1e3a5f; }
   </style>
 </head>
 <body>
 
 <header>
   <h1>🍴 Chef SaaS — Account Ingest Tool</h1>
-  <p>Upload your Excel account list to SharePoint</p>
+  <p>Step through: Sign in → Define play → Upload accounts → Preview → Save to SharePoint</p>
 </header>
 
 <main>
 
   <!-- Step 1: Sign In -->
   <div class="card">
-    <h2><span class="step-num">1</span>Sign In</h2>
+    <h2><span class="step-num" id="sn1">1</span>Sign In</h2>
     <div id="auth-status" class="status-bar status-signed-out">⚠️ Not signed in</div>
     <br>
     <button class="btn-primary" id="btn-signin" onclick="doSignIn()">Sign In with Progress SSO</button>
   </div>
 
-  <!-- Step 2: Upload Excel -->
-  <div class="card">
-    <h2><span class="step-num">2</span>Upload Excel File</h2>
+  <!-- Step 2: Define Play -->
+  <div class="card hidden" id="play-card">
+    <h2><span class="step-num" id="sn2">2</span>Define the Play</h2>
+    <p style="font-size:13px;color:#555;margin-bottom:16px;">Set this once — it applies to all accounts you'll upload in Step 3.</p>
+
+    <div class="form-row">
+      <label>Play Name *</label>
+      <input type="text" id="play-name-input" placeholder='e.g. Chef SaaS, WUG Upgrade' oninput="onPlayNameInput(this.value)" autocomplete="off" />
+      <div class="hint">A short name for this sales play. System auto-generates the ID (e.g. "Chef SaaS" → chef-saas).</div>
+      <div id="play-picker-options" style="margin-top:8px;display:none;"></div>
+    </div>
+
+    <div class="form-row">
+      <label>Play Goal *</label>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button class="goal-btn" id="goal-in" onclick="selectGoal('qualify_in')">
+          <div class="goal-icon">✅</div>
+          <div class="goal-label">Qualify In</div>
+          <div class="goal-desc">Find interested customers</div>
+        </button>
+        <button class="goal-btn" id="goal-out" onclick="selectGoal('qualify_out')">
+          <div class="goal-icon">🚫</div>
+          <div class="goal-label">Qualify Out</div>
+          <div class="goal-desc">Efficiently eliminate non-prospects</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label>Ideal Customer Profile (ICP)</label>
+      <textarea id="play-icp" placeholder="Describe the ideal customer — size, industry, tech stack, pain points…"></textarea>
+    </div>
+
+    <div class="form-row">
+      <label>Target Persona</label>
+      <input type="text" id="play-persona" placeholder='e.g. VP of Engineering, IT Director, DevOps Lead' />
+    </div>
+
+    <div class="form-row">
+      <label>Elevator Pitch</label>
+      <textarea id="play-pitch" placeholder="What should the rep say? Keep it concise — 2–4 sentences reps can memorize."></textarea>
+    </div>
+
+    <button class="btn-primary" id="btn-play-next" onclick="finishPlayStep()" disabled>Next: Upload Accounts →</button>
+  </div>
+
+  <!-- Step 3: Upload Excel -->
+  <div class="card hidden" id="upload-card">
+    <h2><span class="step-num" id="sn3">3</span>Upload Excel File</h2>
+    <div id="play-summary-bar" class="play-summary-bar"></div>
+
+    <div style="margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:#333;">Upload mode</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:2px solid #0078d4;border-radius:8px;background:#f0f7ff;cursor:pointer;">
+          <input type="radio" name="upload-mode" value="merge" checked style="margin-top:2px;accent-color:#0078d4;">
+          <div>
+            <div style="font-weight:700;font-size:13px;">Add to existing play</div>
+            <div style="font-size:12px;color:#555;margin-top:2px;">New accounts are added. Existing accounts (same SFDC ID + rep) are updated. Nothing is removed.</div>
+          </div>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;">
+          <input type="radio" name="upload-mode" value="replace" style="margin-top:2px;accent-color:#0078d4;">
+          <div>
+            <div style="font-weight:700;font-size:13px;">Replace all assignments</div>
+            <div style="font-size:12px;color:#555;margin-top:2px;">⚠️ Removes all existing accounts for this play and replaces with this file.</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
     <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
       <div style="font-size:32px">📂</div>
       <strong>Click to select your Excel file</strong>
-      <p>account-upload-template.xlsx (or any .xlsx with the same columns)</p>
+      <p style="margin-top:8px;color:#555;font-size:13px;">account-upload-template.xlsx (or any .xlsx with the same columns)</p>
+      <p style="margin-top:4px;color:#888;font-size:12px;">Required columns: SFDC Account ID · Account Name · Rep SSO Login · Rep Name</p>
     </div>
     <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+    <div style="margin-top:12px;font-size:12px;color:#888;">
+      <a href="account-upload-template.xlsx" download style="color:#0078d4;">⬇️ Download blank template</a>
+    </div>
   </div>
 
-  <!-- Step 3: Preview -->
+  <!-- Step 4: Preview & Confirm -->
   <div class="card hidden" id="preview-card">
-    <h2><span class="step-num">3</span>Preview</h2>
+    <h2><span class="step-num" id="sn4">4</span>Preview &amp; Upload</h2>
     <div class="summary-grid" id="summary-grid"></div>
-    <div style="overflow-x:auto; margin-top:16px;">
+    <div style="overflow-x:auto;margin-top:16px;">
       <table class="preview-table" id="preview-table">
         <thead><tr>
-          <th>Account</th><th>Rep Email</th><th>Play</th><th>Priority</th><th>Active</th>
+          <th>Account</th><th>Rep SSO Login</th><th>Rep Name</th><th>ARR</th><th>Active</th>
         </tr></thead>
         <tbody id="preview-body"></tbody>
       </table>
     </div>
-  </div>
-
-  <!-- Step 4: Upload -->
-  <div class="card hidden" id="upload-card">
-    <h2><span class="step-num">4</span>Upload to SharePoint</h2>
-    <p style="font-size:14px;color:#555;margin-bottom:16px;">This will <strong>replace</strong> the current assignments.json in SharePoint with the data above.</p>
-    <button class="btn-success" id="btn-upload" onclick="doUpload()" disabled>⬆️ Upload to SharePoint</button>
+    <div style="margin-top:20px;display:flex;gap:10px;align-items:center;">
+      <button class="btn-success" id="btn-upload" onclick="doUpload()" disabled>⬆️ Upload to SharePoint</button>
+      <span style="font-size:13px;color:#555;">This replaces the entire assignments list and updates the play definition.</span>
+    </div>
   </div>
 
   <!-- Log -->
   <div class="card hidden" id="log-card">
-    <h2>Log</h2>
+    <h2>Activity Log</h2>
     <div id="log"></div>
   </div>
 
@@ -112,71 +204,185 @@
 
 <script>
   let parsedAssignments = [];
-  let currentUser = null;
+  let currentUser  = null;
+  let selectedGoal = null;
+  let existingPlays = [];
+  let currentPlayDef = null;
 
-  // ── Auth ──────────────────────────────────────────────────────────────────
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function slugify(name) {
+    return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  function showLog() { document.getElementById('log-card').classList.remove('hidden'); }
+
+  function log(type, msg) {
+    showLog();
+    const el = document.getElementById('log');
+    const prefix = { ok: '✓ ', err: '✗ ', info: '→ ', warn: '⚠ ' }[type] || '';
+    el.innerHTML += `<span class="${type}">${prefix}${esc(msg)}</span>\n`;
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function markStepDone(n) {
+    const el = document.getElementById('sn' + n);
+    if (el) { el.classList.add('done'); el.textContent = '✓'; }
+  }
+
+  // ── Step 1: Auth ──────────────────────────────────────────────────────────
 
   async function doSignIn() {
     try {
       log('info', 'Signing in...');
-      showLog();
       currentUser = await signIn();
-      document.getElementById('auth-status').className = 'status-bar status-signed-in';
-      document.getElementById('auth-status').textContent = '✅ Signed in as ' + currentUser.username;
-      document.getElementById('btn-signin').disabled = true;
-      log('ok', 'Signed in as ' + currentUser.username);
-      checkEnableUpload();
+      onSignedIn();
     } catch(e) {
       log('err', 'Sign-in failed: ' + e.message);
     }
   }
 
-  // Auto sign-in on page load
+  function onSignedIn() {
+    document.getElementById('auth-status').className = 'status-bar status-signed-in';
+    document.getElementById('auth-status').textContent = '✅ Signed in as ' + currentUser.username;
+    document.getElementById('btn-signin').disabled = true;
+    markStepDone(1);
+    document.getElementById('play-card').classList.remove('hidden');
+    loadExistingPlays();
+  }
+
   window.addEventListener('load', async () => {
     try {
       await initAuth();
       const accounts = window._msalInstance ? window._msalInstance.getAllAccounts() : [];
-      if (accounts.length > 0) {
-        currentUser = accounts[0];
-        document.getElementById('auth-status').className = 'status-bar status-signed-in';
-        document.getElementById('auth-status').textContent = '✅ Signed in as ' + currentUser.username;
-        document.getElementById('btn-signin').disabled = true;
-        checkEnableUpload();
-      }
+      if (accounts.length > 0) { currentUser = accounts[0]; onSignedIn(); }
     } catch(e) {}
   });
 
-  // ── File handling ─────────────────────────────────────────────────────────
+  // ── Step 2: Play Definition ────────────────────────────────────────────────
+
+  async function loadExistingPlays() {
+    try {
+      const config = await getPlaysConfig();
+      existingPlays = (config && config.plays) ? config.plays : [];
+      if (existingPlays.length > 0) renderPlayOptions();
+    } catch(e) {
+      log('warn', 'Could not load existing plays (first time setup is fine): ' + e.message);
+    }
+  }
+
+  function renderPlayOptions() {
+    if (existingPlays.length === 0) return;
+    const wrap = document.getElementById('play-picker-options');
+    wrap.style.display = 'block';
+    wrap.innerHTML = '<div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px;">Or pick an existing play to update:</div>';
+    existingPlays.forEach(p => {
+      const goalLabel = p.goal === 'qualify_out' ? '🚫 Qualify Out' : '✅ Qualify In';
+      const div = document.createElement('div');
+      div.className = 'play-option';
+      div.innerHTML = `<div class="play-option-name">${esc(p.play_name)}</div><div class="play-option-meta">${goalLabel} &nbsp;·&nbsp; ID: ${esc(p.play_id)}</div>`;
+      div.addEventListener('click', () => loadExistingPlay(p));
+      wrap.appendChild(div);
+    });
+  }
+
+  function loadExistingPlay(p) {
+    document.getElementById('play-name-input').value = p.play_name;
+    document.getElementById('play-icp').value     = p.icp || '';
+    document.getElementById('play-persona').value = p.target_persona || '';
+    document.getElementById('play-pitch').value   = p.elevator_pitch || '';
+    // Highlight selected option
+    document.querySelectorAll('.play-option').forEach(el => el.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+    if (p.goal) selectGoal(p.goal);
+    validatePlayStep();
+  }
+
+  function onPlayNameInput(val) {
+    // Deselect existing play options when user types
+    document.querySelectorAll('.play-option').forEach(el => el.classList.remove('selected'));
+    validatePlayStep();
+  }
+
+  function selectGoal(goal) {
+    selectedGoal = goal;
+    document.getElementById('goal-in').className  = 'goal-btn' + (goal === 'qualify_in'  ? ' selected-in'  : '');
+    document.getElementById('goal-out').className = 'goal-btn' + (goal === 'qualify_out' ? ' selected-out' : '');
+    validatePlayStep();
+  }
+
+  function validatePlayStep() {
+    const name = document.getElementById('play-name-input').value.trim();
+    document.getElementById('btn-play-next').disabled = !(name && selectedGoal);
+  }
+
+  function finishPlayStep() {
+    const name = document.getElementById('play-name-input').value.trim();
+    if (!name || !selectedGoal) return;
+    const playId = slugify(name);
+    currentPlayDef = {
+      play_id:        playId,
+      play_name:      name,
+      goal:           selectedGoal,
+      icp:            document.getElementById('play-icp').value.trim(),
+      target_persona: document.getElementById('play-persona').value.trim(),
+      elevator_pitch: document.getElementById('play-pitch').value.trim(),
+      active:         true
+    };
+    markStepDone(2);
+    // Show summary bar in step 3
+    const goalLabel = selectedGoal === 'qualify_out' ? '🚫 Qualify Out' : '✅ Qualify In';
+    const goalColor = selectedGoal === 'qualify_out' ? '#d32f2f' : '#107c10';
+    document.getElementById('play-summary-bar').innerHTML = `
+      <div class="psb-item"><span class="psb-lbl">Play</span><span class="psb-val">${esc(name)}</span></div>
+      <div class="psb-item"><span class="psb-lbl">Play ID</span><span class="psb-val" style="font-family:monospace;font-size:12px;">${esc(playId)}</span></div>
+      <div class="psb-item"><span class="psb-lbl">Goal</span><span class="psb-val" style="color:${goalColor};">${goalLabel}</span></div>
+      ${currentPlayDef.target_persona ? `<div class="psb-item"><span class="psb-lbl">Persona</span><span class="psb-val">${esc(currentPlayDef.target_persona)}</span></div>` : ''}
+    `;
+    document.getElementById('upload-card').classList.remove('hidden');
+    document.getElementById('upload-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Step 3: File Handling ─────────────────────────────────────────────────
 
   const dropZone = document.getElementById('drop-zone');
-  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+  dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
   dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
   dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
 
   function handleFile(file) {
     if (!file) return;
     log('info', 'Reading ' + file.name + '...');
-    showLog();
     const reader = new FileReader();
     reader.onload = e => {
       try {
         const wb = XLSX.read(e.target.result, { type: 'array' });
-        const sheetName = wb.SheetNames.find(n => n.toLowerCase().includes('account') || n.toLowerCase().includes('assign')) || wb.SheetNames[0];
+        const sheetName = wb.SheetNames.find(n => /account|assign/i.test(n)) || wb.SheetNames[0];
         const ws = wb.Sheets[sheetName];
         const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
 
-        // Find header row (contains 'Play ID' or 'play_id')
+        // Find header row — look for "Rep SSO Login" or legacy "Rep Email"
         let headerIdx = -1;
         for (let i = 0; i < Math.min(rows.length, 10); i++) {
-          if (rows[i].some(c => String(c).toLowerCase().replace(/\s/g,'') === 'playid' || String(c).toLowerCase() === 'play id')) {
-            headerIdx = i;
-            break;
+          const rowStr = rows[i].map(c => String(c).toLowerCase());
+          if (rowStr.some(c => c.includes('sso') || c.includes('account id') || c.includes('account name'))) {
+            headerIdx = i; break;
           }
         }
-        if (headerIdx < 0) throw new Error('Could not find header row with "Play ID" column');
+        if (headerIdx < 0) throw new Error('Could not find header row. Expected columns like "SFDC Account ID", "Rep SSO Login".');
 
-        const headers = rows[headerIdx].map(h => String(h).trim().replace(/\s*\*$/, '').toLowerCase().replace(/\s+/g,'_'));
-        log('info', 'Headers found: ' + headers.filter(Boolean).join(', '));
+        const headers = rows[headerIdx].map(h =>
+          String(h).trim()
+            .replace(/\s*\*$/, '')      // strip required marker
+            .toLowerCase()
+            .replace(/\s+/g, '_')
+            .replace(/[^a-z0-9_]/g, '')
+        );
+        log('info', 'Headers: ' + headers.filter(Boolean).join(', '));
 
         const assignments = [];
         for (let i = headerIdx + 1; i < rows.length; i++) {
@@ -186,39 +392,48 @@
           const r = {};
           headers.forEach((h, idx) => { r[h] = String(row[idx] || '').trim(); });
 
-          // Skip instruction/example rows
-          if (!r.play_id || r.play_id.startsWith('Use:') || r.play_id.startsWith('*') ||
-              !r.account_id || r.account_id.startsWith('Unique') ||
-              !r.rep_email || !r.rep_email.includes('@')) continue;
+          // Flexible column name mapping
+          const acctId   = r.sfdc_account_id || r.account_id || r.accountid || '';
+          const acctName = r.account_name || r.accountname || '';
+          // rep_sso_login is the match field; fall back to legacy rep_email column
+          const ssoLogin = r.rep_sso_login || r.rep_sso || r.sso_login || r.rep_email || '';
+          const repEmail = r.rep_email_crm || r.rep_email || r.crm_email || '';
+          const repName  = r.rep_name || r.repname || '';
 
-          // Derive rep name from email if formula or empty
-          let repName = r.rep_name || '';
-          if (!repName || repName.startsWith('=') || !repName.match(/[a-z]/i)) {
-            repName = r.rep_email.split('@')[0].split('.').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+          // Skip blank or instruction rows
+          if (!acctId || !acctName || !ssoLogin || !ssoLogin.includes('@')) continue;
+
+          // Auto-derive rep name from SSO login if blank or contains a formula
+          let finalRepName = repName;
+          if (!finalRepName || finalRepName.startsWith('=') || !finalRepName.match(/[a-z]/i)) {
+            finalRepName = ssoLogin.split('@')[0].split('.').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
           }
 
           assignments.push({
-            play_id: r.play_id,
-            play_name: r.play_name || r.play_id,
-            account_id: r.account_id,
-            account_name: r.account_name,
-            rep_email: r.rep_email.toLowerCase(),
-            rep_name: repName,
-            target_persona: r.target_persona || '',
-            priority: r.priority || 'Medium',
-            icp_notes: r.icp_notes || '',
-            elevator_pitch: r.elevator_pitch || '',
-            response_set_id: r.response_set || r.response_set_id || (r.play_id || 'SAAS').replace(/[^a-z0-9]/gi, '_').toUpperCase() + '_STANDARD',
-            active_flag: String(r.active).toUpperCase() !== 'FALSE'
+            play_id:        currentPlayDef.play_id,
+            play_name:      currentPlayDef.play_name,
+            account_id:     acctId,
+            account_name:   acctName,
+            rep_sso_login:  ssoLogin.toLowerCase(),
+            rep_name:       finalRepName,
+            rep_email:      repEmail ? repEmail.toLowerCase() : ssoLogin.toLowerCase(),
+            arr:            r.arr || '',
+            target_persona: currentPlayDef.target_persona || '',
+            icp_notes:      currentPlayDef.icp || '',
+            elevator_pitch: currentPlayDef.elevator_pitch || '',
+            response_set_id: currentPlayDef.play_id.replace(/[^a-z0-9]/gi, '_').toUpperCase() + '_STANDARD',
+            active_flag:    true
           });
         }
 
-        if (assignments.length === 0) throw new Error('No valid data rows found. Check the file has data below the header row.');
+        if (assignments.length === 0) {
+          throw new Error('No valid rows found. Make sure "Rep SSO Login" column has values containing "@".');
+        }
 
         parsedAssignments = assignments;
-        log('ok', 'Parsed ' + assignments.length + ' assignments from ' + sheetName);
+        log('ok', `Parsed ${assignments.length} assignments from "${sheetName}"`);
+        markStepDone(3);
         showPreview(assignments);
-        checkEnableUpload();
       } catch(e) {
         log('err', 'Parse error: ' + e.message);
       }
@@ -226,81 +441,154 @@
     reader.readAsArrayBuffer(file);
   }
 
-  // ── Preview ───────────────────────────────────────────────────────────────
+  // ── Step 4: Preview ───────────────────────────────────────────────────────
 
   function showPreview(assignments) {
-    // Summary
-    const reps = new Set(assignments.map(a => a.rep_email)).size;
-    const plays = new Set(assignments.map(a => a.play_id)).size;
+    const reps   = new Set(assignments.map(a => a.rep_sso_login)).size;
     const active = assignments.filter(a => a.active_flag).length;
     document.getElementById('summary-grid').innerHTML = `
       <div class="summary-box"><div class="num">${assignments.length}</div><div class="lbl">Accounts</div></div>
       <div class="summary-box"><div class="num">${reps}</div><div class="lbl">Reps</div></div>
-      <div class="summary-box"><div class="num">${plays}</div><div class="lbl">Plays</div></div>
       <div class="summary-box"><div class="num">${active}</div><div class="lbl">Active</div></div>
+      <div class="summary-box"><div class="num">${esc(currentPlayDef.play_id)}</div><div class="lbl">Play ID</div></div>
     `;
 
-    // Table (first 50 rows)
     const tbody = document.getElementById('preview-body');
     tbody.innerHTML = '';
-    assignments.slice(0, 50).forEach(a => {
-      const pri = a.priority.toLowerCase();
-      const priClass = pri === 'high' ? 'badge-high' : pri === 'low' ? 'badge-low' : 'badge-medium';
+    assignments.slice(0, 60).forEach(a => {
       tbody.innerHTML += `<tr>
-        <td><strong>${esc(a.account_name)}</strong><br><small style="color:#666">${esc(a.account_id)}</small></td>
-        <td>${esc(a.rep_email)}</td>
-        <td>${esc(a.play_name)}</td>
-        <td><span class="badge ${priClass}">${esc(a.priority)}</span></td>
+        <td><strong>${esc(a.account_name)}</strong><br><small style="color:#888;">${esc(a.account_id)}</small></td>
+        <td style="font-family:monospace;font-size:12px;">${esc(a.rep_sso_login)}</td>
+        <td>${esc(a.rep_name)}</td>
+        <td>${esc(a.arr || '—')}</td>
         <td>${a.active_flag ? '✅' : '❌'}</td>
       </tr>`;
     });
-    if (assignments.length > 50) {
-      tbody.innerHTML += `<tr><td colspan="5" style="text-align:center;color:#666;padding:12px">... and ${assignments.length - 50} more rows</td></tr>`;
+    if (assignments.length > 60) {
+      tbody.innerHTML += `<tr><td colspan="5" style="text-align:center;color:#888;padding:12px;">…and ${assignments.length - 60} more rows</td></tr>`;
     }
 
     document.getElementById('preview-card').classList.remove('hidden');
-    document.getElementById('upload-card').classList.remove('hidden');
+    document.getElementById('btn-upload').disabled = false;
+    document.getElementById('preview-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-  // ── Upload ────────────────────────────────────────────────────────────────
-
-  function checkEnableUpload() {
-    const btn = document.getElementById('btn-upload');
-    btn.disabled = !(currentUser && parsedAssignments.length > 0);
-  }
+  // ── Upload ─────────────────────────────────────────────────────────────────
 
   async function doUpload() {
     const btn = document.getElementById('btn-upload');
-    btn.disabled = true;
+    const mode = document.querySelector('input[name="upload-mode"]:checked')?.value || 'merge';
+    btn.disabled    = true;
     btn.textContent = '⏳ Uploading...';
     try {
-      log('info', 'Connecting to SharePoint...');
-      const payload = { assignments: parsedAssignments };
-      await writeJsonFile('assignments.json', payload);
-      log('ok', `✅ assignments.json uploaded! ${parsedAssignments.length} accounts written to SharePoint.`);
-      log('info', 'Reps can now open the app and see their accounts.');
-      log('info', 'SharePoint path: ChefSaaS/assignments.json');
+      // 1. Build final assignments list
+      log('info', 'Reading current assignments from SharePoint...');
+      let finalAssignments = [];
+
+      if (mode === 'merge') {
+        let existing = [];
+        try {
+          const text = await getFileText(SP_ROOT + '/assignments.json');
+          existing = JSON.parse(text || '{}').assignments || [];
+        } catch(e) {}
+        const otherPlays   = existing.filter(a => a.play_id !== currentPlayDef.play_id);
+        const key          = a => (a.account_id + '|' + (a.rep_sso_login || a.rep_email)).toLowerCase();
+        const newKeys      = new Set(parsedAssignments.map(key));
+        const samePlayKept = existing.filter(a => a.play_id === currentPlayDef.play_id && !newKeys.has(key(a)));
+        finalAssignments   = [...otherPlays, ...samePlayKept, ...parsedAssignments];
+        log('info', `Merge: ${otherPlays.length} other-play rows kept, ${samePlayKept.length} same-play rows preserved, ${parsedAssignments.length} new/updated rows`);
+      } else {
+        // Replace: keep other plays, replace entire current play
+        let existing = [];
+        try {
+          const text = await getFileText(SP_ROOT + '/assignments.json');
+          existing = JSON.parse(text || '{}').assignments || [];
+        } catch(e) {}
+        const otherPlays = existing.filter(a => a.play_id !== currentPlayDef.play_id);
+        finalAssignments = [...otherPlays, ...parsedAssignments];
+        log('warn', `Replace mode: removed all existing ${currentPlayDef.play_name} assignments, replaced with ${parsedAssignments.length} rows`);
+      }
+
+      await writeJsonFile('assignments.json', { assignments: finalAssignments });
+      log('ok', `assignments.json saved — ${finalAssignments.length} total accounts across all plays`);
+
+      // 2. Update plays.json
+      log('info', 'Updating plays.json...');
+      let playsConfig = { plays: [] };
+      try {
+        playsConfig = await getPlaysConfig();
+        if (!playsConfig || !playsConfig.plays) playsConfig = { plays: [] };
+      } catch(e) {}
+      const idx = playsConfig.plays.findIndex(p => p.play_id === currentPlayDef.play_id);
+      if (idx >= 0) playsConfig.plays[idx] = { ...playsConfig.plays[idx], ...currentPlayDef };
+      else playsConfig.plays.push(currentPlayDef);
+      await savePlaysConfig(playsConfig);
+      log('ok', `plays.json saved — play "${currentPlayDef.play_name}" (${currentPlayDef.play_id}) updated`);
+
+      // 3. Seed response-options.json with defaults if this is a new play
+      log('info', 'Checking response options for this play...');
+      const rsId = currentPlayDef.play_id.replace(/[^a-z0-9]/gi, '_').toUpperCase() + '_STANDARD';
+      try {
+        let roConfig = { options: [], form_config: {} };
+        try {
+          const roText = await getFileText(SP_ROOT + '/response-options.json');
+          if (roText) roConfig = JSON.parse(roText);
+        } catch(e) {}
+        roConfig.options = roConfig.options || [];
+
+        const hasInterested    = roConfig.options.some(o => o.response_set_id === rsId && o.outcome_type === 'Interested'     && o.active_flag !== false);
+        const hasNotInterested = roConfig.options.some(o => o.response_set_id === rsId && o.outcome_type === 'Not Interested' && o.active_flag !== false);
+
+        const DEFAULT_INTERESTED = [
+          'Evaluating solutions in this space',
+          'Active budget / funded initiative',
+          'Replacing a current tool',
+          'Executive sponsor engaged',
+          'Strong use case fit',
+        ];
+        const DEFAULT_NOT_INTERESTED = [
+          'No budget / not in current plan',
+          'Already have a solution',
+          'Not the right time — revisit later',
+          'Not the right contact / needs escalation',
+          'No need identified',
+        ];
+
+        let added = 0;
+        if (!hasInterested) {
+          DEFAULT_INTERESTED.forEach((label, i) => {
+            roConfig.options.push({ response_set_id: rsId, outcome_type: 'Interested', reason_label: label, reason_code: '', sort_order: i + 1, active_flag: true });
+            added++;
+          });
+        }
+        if (!hasNotInterested) {
+          DEFAULT_NOT_INTERESTED.forEach((label, i) => {
+            roConfig.options.push({ response_set_id: rsId, outcome_type: 'Not Interested', reason_label: label, reason_code: '', sort_order: i + 1, active_flag: true });
+            added++;
+          });
+        }
+
+        if (added > 0) {
+          await writeJsonFile('response-options.json', roConfig);
+          log('ok', `response-options.json seeded with ${added} default reasons for ${rsId}`);
+        } else {
+          log('info', `Response options already exist for ${rsId} — skipped`);
+        }
+      } catch(e) {
+        log('warn', 'Could not seed response options: ' + e.message);
+      }
+
+      markStepDone(4);
       btn.textContent = '✅ Upload Complete';
       btn.style.background = '#107c10';
+      log('ok', '');
+      log('ok', '🎉 Done! Reps can now open the app and see their accounts.');
+      log('info', 'Files written: Chef SaaS Tracker/ChefSaaS/assignments.json · plays.json');
     } catch(e) {
       log('err', 'Upload failed: ' + e.message);
-      btn.disabled = false;
+      btn.disabled    = false;
       btn.textContent = '⬆️ Retry Upload';
     }
-  }
-
-  // ── Log ───────────────────────────────────────────────────────────────────
-
-  function showLog() { document.getElementById('log-card').classList.remove('hidden'); }
-
-  function log(type, msg) {
-    showLog();
-    const el = document.getElementById('log');
-    const prefix = { ok: '✓ ', err: '✗ ', info: '→ ', warn: '⚠ ' }[type] || '';
-    el.innerHTML += `<span class="${type}">${prefix}${msg}</span>\n`;
-    el.scrollTop = el.scrollHeight;
   }
 </script>
 </body>

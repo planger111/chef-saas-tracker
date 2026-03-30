@@ -248,10 +248,6 @@
             <input type="text" class="form-control" id="field-short-reaction" maxlength="100" placeholder="One-line customer reaction…" />
           </div>
           <div class="form-group">
-            <label class="form-label">Contact Engaged <span style="font-weight:400;color:#888;">(optional)</span></label>
-            <input type="text" class="form-control" id="field-contact-engaged-int" placeholder="Name / title…" />
-          </div>
-          <div class="form-group">
             <label class="form-label">Opportunity ID <span style="font-weight:400;color:#888;">(optional)</span></label>
             <input type="text" class="form-control" id="field-opportunity-id-int" placeholder="e.g. SFDC opportunity ID…" />
           </div>
@@ -266,16 +262,26 @@
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Contact Engaged <span style="font-weight:400;color:#888;">(optional)</span></label>
-            <input type="text" class="form-control" id="field-contact-engaged-ni" placeholder="Name / title…" />
-          </div>
-          <div class="form-group">
             <label class="form-label">Opportunity ID <span style="font-weight:400;color:#888;">(optional)</span></label>
             <input type="text" class="form-control" id="field-opportunity-id-ni" placeholder="e.g. SFDC opportunity ID…" />
           </div>
         </div>
 
         <!-- Always shown on step 2 -->
+        <div class="form-group">
+          <label class="form-label">Contact Level <span style="font-weight:400;color:#888;">(optional)</span></label>
+          <select class="form-control" id="field-contact-level">
+            <option value="">— Select level —</option>
+            <option>Executive</option>
+            <option>Budget Holder</option>
+            <option>Manager</option>
+            <option>Practitioner</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contact Last Name <span style="font-weight:400;color:#888;">(optional)</span></label>
+          <input type="text" class="form-control" id="field-contact-last-name" placeholder="Last name of person you spoke with…" />
+        </div>
         <div class="form-group">
           <label class="form-label">Notes <span style="font-weight:400;color:#888;">(optional)</span></label>
           <textarea class="form-control" id="field-notes" rows="3" placeholder="Any additional context…" style="resize:vertical;"></textarea>
@@ -550,12 +556,11 @@
         if (repAccounts.length === 0) {
           const banner = document.createElement('div');
           banner.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:14px 16px;margin-bottom:12px;font-size:13px;line-height:1.5;';
-          banner.innerHTML = `⚠️ <strong>No accounts found for your email.</strong><br>
-            Your sign-in email is: <strong style="font-family:monospace;background:#f8f8f8;padding:2px 6px;border-radius:4px;">${email}</strong><br>
-            Make sure the <em>Rep Email</em> column in your Excel file uses this exact address, then re-upload via <a href="ingest.html">ingest.html</a>.`;
-          document.getElementById('dashboard-plays-list').before
-            ? document.getElementById('dashboard-points-card').insertAdjacentElement('afterend', banner)
-            : document.getElementById('dashboard-plays-list').parentNode.insertBefore(banner, document.getElementById('dashboard-plays-list'));
+          banner.innerHTML = `⚠️ <strong>No accounts found for your login.</strong><br>
+            Your SSO login is: <strong style="font-family:monospace;background:#f8f8f8;padding:2px 6px;border-radius:4px;">${email}</strong><br>
+            In the upload template, put this exact value in the <em>Rep SSO Login</em> column, then re-upload via <a href="ingest.html">ingest.html</a>.<br>
+            <span style="color:#888;font-size:12px;">Note: Rep SSO Login (e.g. langer@progress.com) may differ from your display email (e.g. Phil.Langer@progress.com).</span>`;
+          document.getElementById('dashboard-points-card').insertAdjacentElement('afterend', banner);
         }
 
         // Fetch latest logs for this rep across all accounts
@@ -608,7 +613,6 @@
       }
 
       const html = allPlays.map(play => {
-        // Filter accounts to just this play
         const playAccounts = repAccounts.filter(a => a.play_id === play.play_id);
         const targets    = playAccounts.length;
         const engaged    = playAccounts.filter(a => !!latestLogs[a.account_id]).length;
@@ -617,12 +621,19 @@
           return !!(log && log.outcome === 'Interested');
         }).length;
         const pct = targets > 0 ? Math.round((engaged / targets) * 100) : 0;
+        const goalLabel = play.goal === 'qualify_out' ? '🚫 Qualify Out' : '✅ Qualify In';
+        const goalColor = play.goal === 'qualify_out' ? '#d32f2f' : '#107c10';
+        const hasInfo   = play.icp || play.target_persona || play.elevator_pitch;
 
         return `
-          <div class="play-card" data-play-id="${play.play_id}" style="cursor:pointer;">
+          <div class="play-card" data-play-id="${escHtml(play.play_id)}" style="cursor:pointer;">
             <div class="play-card-header">
-              <span class="play-card-name">${play.play_name}</span>
-              <span class="play-card-count">${pct}% engaged</span>
+              <span class="play-card-name">${escHtml(play.play_name)}</span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:11px;font-weight:700;color:${goalColor};background:${goalColor}18;padding:2px 8px;border-radius:10px;">${goalLabel}</span>
+                ${hasInfo ? `<button class="play-info-btn" data-play-id="${escHtml(play.play_id)}" onclick="event.stopPropagation();showPlayInfo('${escHtml(play.play_id)}')"
+                  style="background:none;border:1px solid #d1d5db;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;color:#0078d4;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;">ℹ</button>` : ''}
+              </div>
             </div>
             <div class="progress-bar-track">
               <div class="progress-bar-fill" style="width:${pct}%;"></div>
@@ -649,7 +660,6 @@
 
       container.innerHTML = html;
 
-      // Bind click handlers
       container.querySelectorAll('.play-card').forEach(card => {
         card.addEventListener('click', () => {
           const playId = card.dataset.playId;
@@ -664,9 +674,29 @@
     }
 
     function renderScheduleAlert() {
-      // v2: no scheduled pitch date concept — keep the element hidden
       const alertEl = document.getElementById('dashboard-schedule-alert');
       if (alertEl) alertEl.style.display = 'none';
+    }
+
+    function showPlayInfo(playId) {
+      const play = allPlays.find(p => p.play_id === playId);
+      if (!play) return;
+      const goalLabel = play.goal === 'qualify_out' ? '🚫 Qualify Out' : '✅ Qualify In';
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;';
+      overlay.innerHTML = `
+        <div style="background:#fff;border-radius:16px 16px 0 0;padding:24px 20px 36px;width:100%;max-height:80vh;overflow-y:auto;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <strong style="font-size:17px;">${escHtml(play.play_name)}</strong>
+            <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888;line-height:1;">✕</button>
+          </div>
+          <div style="display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:10px;margin-bottom:16px;background:${play.goal==='qualify_out'?'#fde8e8':'#e8f5e9'};color:${play.goal==='qualify_out'?'#c00':'#107c10'};">${goalLabel}</div>
+          ${play.icp ? `<div style="margin-bottom:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Ideal Customer Profile</div><div style="font-size:14px;line-height:1.5;">${escHtml(play.icp)}</div></div>` : ''}
+          ${play.target_persona ? `<div style="margin-bottom:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Target Persona</div><div style="font-size:14px;">${escHtml(play.target_persona)}</div></div>` : ''}
+          ${play.elevator_pitch ? `<div style="margin-bottom:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Elevator Pitch</div><div style="font-size:14px;line-height:1.6;background:#f8faff;border-left:3px solid #0078d4;padding:10px 12px;border-radius:0 6px 6px 0;">${escHtml(play.elevator_pitch)}</div></div>` : ''}
+        </div>`;
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
     }
 
     // ─────────────────────────────────────────────
@@ -821,11 +851,13 @@
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
-      ['field-short-reaction', 'field-contact-engaged-int', 'field-contact-engaged-ni',
+      ['field-short-reaction', 'field-contact-last-name',
        'field-opportunity-id-int', 'field-opportunity-id-ni', 'field-notes'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
+      const clEl = document.getElementById('field-contact-level');
+      if (clEl) clEl.value = '';
 
       goToLogStep(1);
       showScreen('screen-log-form');
@@ -904,9 +936,8 @@
           reason_code:      reasonCode,
           next_step_type:   outcome === 'Interested' ? nextStepType : '',
           timing:           outcome === 'Interested' ? (document.getElementById('field-timing').value || '') : '',
-          contact_engaged:  outcome === 'Interested'
-            ? (document.getElementById('field-contact-engaged-int').value || '')
-            : (document.getElementById('field-contact-engaged-ni').value  || ''),
+          contact_level:    document.getElementById('field-contact-level').value || '',
+          contact_last_name: document.getElementById('field-contact-last-name').value || '',
           opportunity_id:   outcome === 'Interested'
             ? (document.getElementById('field-opportunity-id-int').value || '')
             : (document.getElementById('field-opportunity-id-ni').value  || ''),

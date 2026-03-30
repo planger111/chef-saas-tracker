@@ -2,6 +2,9 @@
 // Assignments read from assignments.json, engagements written to per-play CSV files
 // Only needs Sites.ReadWrite.All (already granted)
 
+// Root folder inside SharePoint Documents — matches the OneDrive-synced local folder
+const SP_ROOT = "Chef SaaS Tracker/ChefSaaS";
+
 let _siteId = null;
 let _driveId = null;
 
@@ -50,27 +53,56 @@ async function getFileText(filePath) {
 }
 
 async function writeJsonFile(filePath, data) {
-  return putFile("ChefSaaS/" + filePath, JSON.stringify(data, null, 2), "application/json");
+  return putFile(SP_ROOT + "/" + filePath, JSON.stringify(data, null, 2), "application/json");
 }
 
 // ─── Assignments ──────────────────────────────────────────────────────────
 
 async function getPlayAssignments(repEmail) {
-  const text = await getFileText("ChefSaaS/assignments.json");
+  const text = await getFileText(SP_ROOT + "/assignments.json");
   if (!text) return [];
   const data = JSON.parse(text);
   const list = (data.assignments || []).filter(a => a.active_flag !== false);
   if (!repEmail) return list;
-  // Try exact match first
-  const matched = list.filter(a => (a.rep_email || "").toLowerCase() === repEmail.toLowerCase());
-  console.log("[ChefSaaS] Signed in as: " + repEmail + " — matched " + matched.length + " accounts");
+  // Match on rep_sso_login first (the actual Azure AD login), then fall back to rep_email
+  const emailLower = repEmail.toLowerCase();
+  let matched = list.filter(a => (a.rep_sso_login || "").toLowerCase() === emailLower);
+  if (matched.length === 0) matched = list.filter(a => (a.rep_email || "").toLowerCase() === emailLower);
+  console.log("[ChefSaaS] SSO login: " + repEmail + " — matched " + matched.length + " accounts (via " + (matched.length > 0 && matched[0].rep_sso_login ? "rep_sso_login" : "rep_email") + ")");
   return matched;
 }
 
 async function getRepAccounts(repEmail) { return getPlayAssignments(repEmail); }
 
+// ─── Plays config (plays.json) ────────────────────────────────────────────
+
+async function getPlaysConfig() {
+  try {
+    const text = await getFileText(SP_ROOT + "/plays.json");
+    if (text) return JSON.parse(text);
+  } catch(e) {}
+  // Fall back to deriving plays from assignments
+  const all = await getPlayAssignments(null);
+  const seen = new Set();
+  const plays = [];
+  all.filter(a => a.play_id).forEach(a => {
+    if (!seen.has(a.play_id)) {
+      seen.add(a.play_id);
+      plays.push({ play_id: a.play_id, play_name: a.play_name || a.play_id, goal: "qualify_in", icp: "", target_persona: "", elevator_pitch: a.elevator_pitch || "", active: true });
+    }
+  });
+  return { plays };
+}
+
+async function savePlaysConfig(config) {
+  await writeJsonFile("plays.json", config);
+}
+
 async function getPlays() {
   try {
+    const config = await getPlaysConfig();
+    if (config && config.plays && config.plays.length > 0) return config.plays.filter(p => p.active !== false);
+    // fallback: derive from assignments
     const all = await getPlayAssignments(null);
     const seen = new Set();
     return all.filter(a => { if (!a.play_id || seen.has(a.play_id)) return false; seen.add(a.play_id); return true; })
@@ -81,7 +113,7 @@ async function getPlays() {
 // ─── Response Options ─────────────────────────────────────────────────────
 
 async function getResponseOptions(responseSetId, outcomeType) {
-  const text = await getFileText("ChefSaaS/response-options.json");
+  const text = await getFileText(SP_ROOT + "/response-options.json");
   if (!text) return [];
   const data = JSON.parse(text);
   return (data.options || [])
@@ -100,7 +132,7 @@ const _DEFAULT_FORM_CONFIG = {
 
 async function getFormConfig() {
   try {
-    const text = await getFileText("ChefSaaS/response-options.json");
+    const text = await getFileText(SP_ROOT + "/response-options.json");
     if (!text) return _DEFAULT_FORM_CONFIG;
     const data = JSON.parse(text);
     return {
@@ -113,7 +145,7 @@ async function getFormConfig() {
 
 async function getFullResponseConfig() {
   try {
-    const text = await getFileText("ChefSaaS/response-options.json");
+    const text = await getFileText(SP_ROOT + "/response-options.json");
     return text ? JSON.parse(text) : { options: [], form_config: _DEFAULT_FORM_CONFIG };
   } catch(e) { return { options: [], form_config: _DEFAULT_FORM_CONFIG }; }
 }
@@ -170,7 +202,7 @@ async function logEngagement(fields) {
   const pts = calculatePoints(fields.outcome, fields.next_step_type);
   const entry = { ...fields, id: Date.now().toString(), submitted_at: new Date().toISOString(), points_earned: pts };
   const playId = (fields.play_id || "engagements").replace(/[^a-z0-9]/gi, "_");
-  const filePath = "ChefSaaS/" + playId + "_engagements.csv";
+  const filePath = SP_ROOT + "/" + playId + "_engagements.csv";
   const existing = await getFileText(filePath);
   const csv = (existing && existing.trim()) ? existing.trimEnd() + "\n" + toCsvRow(entry) : CSV_HEADERS.join(",") + "\n" + toCsvRow(entry);
   await putFile(filePath, csv, "text/csv");
@@ -184,7 +216,7 @@ async function _getAllLogsForRep(repEmail) {
   let allLogs = [];
   for (const play of plays) {
     const playId = play.play_id.replace(/[^a-z0-9]/gi, "_");
-    const text = await getFileText("ChefSaaS/" + playId + "_engagements.csv");
+    const text = await getFileText(SP_ROOT + "/" + playId + "_engagements.csv");
     if (!text) continue;
     const rows = parseCSV(text).filter(r => !repEmail || (r.rep_email || "").toLowerCase() === repEmail.toLowerCase());
     allLogs = allLogs.concat(rows);
@@ -220,7 +252,7 @@ async function getLeaderboard() {
     const repMap = {};
     for (const play of plays) {
       const playId = play.play_id.replace(/[^a-z0-9]/gi, "_");
-      const text = await getFileText("ChefSaaS/" + playId + "_engagements.csv");
+      const text = await getFileText(SP_ROOT + "/" + playId + "_engagements.csv");
       if (!text) continue;
       parseCSV(text).forEach(log => {
         const key = log.rep_email; if (!key) return;
@@ -241,7 +273,7 @@ async function getMotionLog(filters) {
   let allLogs = [];
   for (const play of plays) {
     const playId = play.play_id.replace(/[^a-z0-9]/gi, "_");
-    const text = await getFileText("ChefSaaS/" + playId + "_engagements.csv");
+    const text = await getFileText(SP_ROOT + "/" + playId + "_engagements.csv");
     if (!text) continue;
     allLogs = allLogs.concat(parseCSV(text));
   }

@@ -23,10 +23,10 @@
     <div class="admin-wrapper">
       <!-- Header -->
       <div class="admin-header">
-        <div class="admin-header-title">📊 Admin — Motion Log</div>
+        <div class="admin-header-title" style="cursor:pointer;" onclick="window.location.href='app.html'" title="Go to Rep App">📊 Admin — Motion Log</div>
         <div class="admin-header-right">
           <span id="admin-user-name"></span><br />
-          <a href="#" id="btn-sign-out">Sign out</a> · <a href="index.html">Rep Form</a>
+          <a href="app.html" style="font-weight:600;">🏠 Home</a> · <a href="#" id="btn-sign-out">Sign out</a> · <a href="ingest.html" style="background:#0078d4;color:#fff;padding:3px 10px;border-radius:5px;text-decoration:none;font-weight:600;">⬆️ Upload Accounts</a>
         </div>
       </div>
 
@@ -39,6 +39,9 @@
 
       <!-- Activity Log Tab Panel -->
       <div id="tab-activity-log" class="admin-tab-panel">
+
+      <!-- Play Funnel Summary -->
+      <div id="admin-funnel-wrap" style="margin-bottom:16px;"></div>
 
       <!-- Filter Bar -->
       <div class="filter-bar">
@@ -60,30 +63,6 @@
         <div class="filter-actions">
           <button class="btn btn-primary btn-sm" id="btn-apply" style="flex:1;">Apply Filters</button>
           <button class="btn btn-secondary btn-sm" id="btn-clear" style="flex:0 0 80px;">Clear</button>
-        </div>
-      </div>
-
-      <!-- Summary Row -->
-      <div class="summary-row" id="summary-row">
-        <div class="summary-card">
-          <div class="summary-card-value" id="sum-total">—</div>
-          <div class="summary-card-label">Total Engagements</div>
-        </div>
-        <div class="summary-card orange">
-          <div class="summary-card-value" id="sum-not-pitched">—</div>
-          <div class="summary-card-label">Not Interested</div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-card-value" id="sum-exploring">—</div>
-          <div class="summary-card-label">Interested</div>
-        </div>
-        <div class="summary-card green">
-          <div class="summary-card-value" id="sum-active">—</div>
-          <div class="summary-card-label">Active Reps</div>
-        </div>
-        <div class="summary-card green">
-          <div class="summary-card-value" id="sum-won">—</div>
-          <div class="summary-card-label">Total Points</div>
         </div>
       </div>
 
@@ -285,16 +264,78 @@
         </tr>`).join("");
       }
 
-      updateSummary(data);
       updateInsights(data);
     }
 
-    function updateSummary(data) {
-      document.getElementById("sum-total").textContent = data.length;
-      document.getElementById("sum-not-pitched").textContent = data.filter(r => r.outcome === "Not Interested").length;
-      document.getElementById("sum-exploring").textContent = data.filter(r => r.outcome === "Interested").length;
-      document.getElementById("sum-active").textContent = [...new Set(data.map(r => r.rep_email).filter(Boolean))].length;
-      document.getElementById("sum-won").textContent = data.reduce((s, r) => s + (Number(r.points_earned) || 0), 0);
+    async function renderAdminFunnel(engagements) {
+      const wrap = document.getElementById('admin-funnel-wrap');
+      if (!wrap) return;
+      try {
+        // Load assignments to get total targets per play
+        const allAssignments = await getPlayAssignments(null);
+        const plays = await getPlays();
+
+        // For each play compute targets / engaged / interested
+        const playStats = plays.map(play => {
+          const accts     = allAssignments.filter(a => a.play_id === play.play_id);
+          const targets   = accts.length;
+          const acctIds   = new Set(accts.map(a => a.account_id));
+          const playLogs  = engagements.filter(e => e.play_id === play.play_id && acctIds.has(e.account_id));
+          // Latest log per account
+          const latest = {};
+          playLogs.forEach(e => {
+            const prev = latest[e.account_id];
+            if (!prev || (e.submitted_at || '') > (prev.submitted_at || '')) latest[e.account_id] = e;
+          });
+          const latestArr  = Object.values(latest);
+          const engaged    = latestArr.length;
+          const interested = latestArr.filter(e => e.outcome === 'Interested').length;
+          const pct        = targets > 0 ? Math.round((engaged / targets) * 100) : 0;
+          const goalLabel  = play.goal === 'qualify_out' ? '🚫 Qualify Out' : '✅ Qualify In';
+          const goalColor  = play.goal === 'qualify_out' ? '#d32f2f' : '#107c10';
+          return { play, targets, engaged, interested, pct, goalLabel, goalColor };
+        });
+
+        if (playStats.length === 0) { wrap.innerHTML = ''; return; }
+
+        wrap.innerHTML = playStats.map(s => `
+          <div style="background:#fff;border-radius:10px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-size:15px;font-weight:700;">${escHtml(s.play.play_name)}</span>
+                <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:${s.goalColor}18;color:${s.goalColor};">${s.goalLabel}</span>
+              </div>
+              <span style="font-size:13px;color:#666;">${s.pct}% engaged</span>
+            </div>
+            <div style="background:#f0f0f0;border-radius:6px;height:6px;margin-bottom:14px;">
+              <div style="background:#0078d4;height:6px;border-radius:6px;width:${s.pct}%;transition:width .4s;"></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:0;">
+              <div style="flex:1;text-align:center;">
+                <div style="font-size:26px;font-weight:800;color:#1a1a2e;">${s.targets}</div>
+                <div style="font-size:12px;color:#666;margin-top:2px;">🎯 Targets</div>
+              </div>
+              <div style="color:#bbb;font-size:18px;">→</div>
+              <div style="flex:1;text-align:center;">
+                <div style="font-size:26px;font-weight:800;color:#0078d4;">${s.engaged}</div>
+                <div style="font-size:12px;color:#666;margin-top:2px;">💬 Engaged</div>
+              </div>
+              <div style="color:#bbb;font-size:18px;">→</div>
+              <div style="flex:1;text-align:center;">
+                <div style="font-size:26px;font-weight:800;color:#107c10;">${s.interested}</div>
+                <div style="font-size:12px;color:#666;margin-top:2px;">✅ Interested</div>
+              </div>
+              <div style="color:#bbb;font-size:18px;">→</div>
+              <div style="flex:1;text-align:center;">
+                <div style="font-size:26px;font-weight:800;color:#888;">${s.targets - s.engaged}</div>
+                <div style="font-size:12px;color:#666;margin-top:2px;">⏳ Not Yet</div>
+              </div>
+            </div>
+          </div>`).join('');
+      } catch(e) {
+        console.warn('Funnel render failed:', e.message);
+        wrap.innerHTML = '';
+      }
     }
 
     function topN(data, field, n = 5) {
@@ -331,19 +372,42 @@
       renderInsightList("insight-blocker", topN(data, "next_step_type"));
     }
 
-    function populateFilterDropdowns(data) {
-      const reps  = [...new Set(data.map(r => r.rep_name || r.rep_email).filter(Boolean))].sort();
-      const plays = [...new Set(data.map(r => r.play_name).filter(Boolean))].sort();
+    async function populateFilterDropdowns(data) {
+      // Reps: pull from assignments so ALL assigned reps appear, not just ones with activity
+      let allReps = [];
+      try {
+        const assignments = await getPlayAssignments(null);
+        const seen = new Set();
+        assignments.forEach(a => {
+          const key = a.rep_name || a.rep_sso_login || a.rep_email || '';
+          if (key && !seen.has(key)) { seen.add(key); allReps.push(key); }
+        });
+        allReps.sort();
+      } catch(e) {
+        // Fallback: derive from activity log
+        allReps = [...new Set(data.map(r => r.rep_name || r.rep_email).filter(Boolean))].sort();
+      }
+
+      // Plays: pull from plays.json (all defined plays)
+      let allPlays = [];
+      try {
+        const playsConfig = await getPlaysConfig();
+        allPlays = (playsConfig.plays || []).map(p => p.play_name).filter(Boolean).sort();
+      } catch(e) {
+        allPlays = [...new Set(data.map(r => r.play_name).filter(Boolean))].sort();
+      }
 
       const repSel = document.getElementById("filter-rep");
-      reps.forEach(r => { const o = document.createElement("option"); o.value = r; o.textContent = r; repSel.appendChild(o); });
+      while (repSel.options.length > 1) repSel.remove(1);
+      allReps.forEach(r => { const o = document.createElement("option"); o.value = r; o.textContent = r; repSel.appendChild(o); });
 
       const playSel = document.getElementById("filter-play");
-      plays.forEach(p => { const o = document.createElement("option"); o.value = p; o.textContent = p; playSel.appendChild(o); });
+      while (playSel.options.length > 1) playSel.remove(1);
+      allPlays.forEach(p => { const o = document.createElement("option"); o.value = p; o.textContent = p; playSel.appendChild(o); });
 
       const lbPlaySel = document.getElementById("lb-filter-play");
       while (lbPlaySel.options.length > 1) lbPlaySel.remove(1);
-      plays.forEach(p => { const o = document.createElement("option"); o.value = p; o.textContent = p; lbPlaySel.appendChild(o); });
+      allPlays.forEach(p => { const o = document.createElement("option"); o.value = p; o.textContent = p; lbPlaySel.appendChild(o); });
     }
 
     function getFilters() {
@@ -460,8 +524,9 @@
         showScreen("screen-main");
 
         _allData = await getMotionLog({});
-        populateFilterDropdowns(_allData);
+        await populateFilterDropdowns(_allData);
         renderTable(_allData);
+        renderAdminFunnel(_allData);
       } catch (err) {
         console.error("Admin load error:", err);
         document.getElementById("results-body").innerHTML =
@@ -562,8 +627,10 @@
 
     function updateConfigItem(key, index, value) {
       if (key.startsWith('reason_')) {
-        const [, outcomeRaw, rsId] = key.split('|');
-        const outcomeType = outcomeRaw === 'reason_Interested' ? 'Interested' : 'Not Interested';
+        const parts = key.split('|');
+        const outcomeKey = parts[0];
+        const rsId = parts[1];
+        const outcomeType = outcomeKey.includes('Not') ? 'Not Interested' : 'Interested';
         const reasons = (_currentConfig.options || [])
           .filter(o => o.outcome_type === outcomeType && o.active_flag !== false &&
             (o.response_set_id || 'SAAS_STANDARD').toUpperCase() === (rsId || 'SAAS_STANDARD').toUpperCase())
@@ -578,8 +645,10 @@
     function removeConfigItem(key, index) {
       flushEdits();
       if (key.startsWith('reason_')) {
-        const [, outcomeRaw, rsId] = key.split('|');
-        const outcomeType = outcomeRaw === 'reason_Interested' ? 'Interested' : 'Not Interested';
+        const parts = key.split('|');
+        const outcomeKey = parts[0];
+        const rsId = parts[1];
+        const outcomeType = outcomeKey.includes('Not') ? 'Not Interested' : 'Interested';
         const reasons = (_currentConfig.options || [])
           .filter(o => o.outcome_type === outcomeType && o.active_flag !== false &&
             (o.response_set_id || 'SAAS_STANDARD').toUpperCase() === (rsId || 'SAAS_STANDARD').toUpperCase())
@@ -596,8 +665,10 @@
     function addConfigItem(key) {
       flushEdits();
       if (key.startsWith('reason_')) {
-        const [, outcomeRaw, rsId] = key.split('|');
-        const outcomeType = outcomeRaw === 'reason_Interested' ? 'Interested' : 'Not Interested';
+        const parts = key.split('|');
+        const outcomeKey = parts[0];
+        const rsId = parts[1];
+        const outcomeType = outcomeKey.includes('Not') ? 'Not Interested' : 'Interested';
         const existing = (_currentConfig.options || []).filter(o => o.outcome_type === outcomeType && (o.response_set_id||'SAAS_STANDARD').toUpperCase() === (rsId||'SAAS_STANDARD').toUpperCase());
         _currentConfig.options = _currentConfig.options || [];
         _currentConfig.options.push({ response_set_id: rsId || 'SAAS_STANDARD', outcome_type: outcomeType, reason_label: '', reason_code: '', sort_order: existing.length + 1, active_flag: true });
