@@ -300,10 +300,17 @@
   <!-- ===================== SCREEN: CONFIRM ===================== -->
   <div id="screen-confirm" class="screen">
     <div class="header">
-      <span class="header-title">✅ Submitted!</span>
+      <span class="header-title" id="confirm-header-title">✅ Submitted!</span>
     </div>
 
     <div style="padding:24px;max-width:480px;margin:0 auto;text-align:center;display:flex;flex-direction:column;gap:20px;align-items:center;">
+
+      <!-- All-done banner (hidden unless all targets complete) -->
+      <div id="confirm-all-done-banner" style="display:none;background:linear-gradient(135deg,#0078d4,#107c10);color:#fff;border-radius:12px;padding:20px 24px;width:100%;box-sizing:border-box;">
+        <div style="font-size:36px;margin-bottom:8px;">🎉🏆🎉</div>
+        <div style="font-size:20px;font-weight:800;margin-bottom:6px;">You Did It!</div>
+        <div style="font-size:14px;opacity:0.92;">You've pitched every account on your list.<br>Amazing work — you're a Legend!</div>
+      </div>
 
       <!-- Account name -->
       <div id="confirm-account-name" style="font-size:20px;font-weight:bold;color:#222;"></div>
@@ -312,6 +319,12 @@
       <div class="points-earned-callout">
         <div class="points-earned-number" id="confirm-points-earned">+0 pts</div>
         <div class="points-earned-label">Points Earned</div>
+      </div>
+
+      <!-- Level-up banner (hidden unless levelled up) -->
+      <div id="confirm-levelup-banner" style="display:none;background:#fff8e1;border:2px solid #ffd600;border-radius:10px;padding:14px 20px;width:100%;box-sizing:border-box;">
+        <div style="font-size:22px;margin-bottom:4px;" id="confirm-levelup-emoji"></div>
+        <div style="font-size:15px;font-weight:700;color:#555;" id="confirm-levelup-text"></div>
       </div>
 
       <!-- Level badge -->
@@ -980,7 +993,9 @@
     // ─────────────────────────────────────────────
     function showConfirm() {
       const accountName = currentAccount.account_name || currentAccount.name || currentAccount.account_id;
+      const prevPoints  = totalPoints - lastPointsEarned;
       const level       = getLevel(totalPoints);
+      const prevLevel   = getLevel(prevPoints);
 
       document.getElementById('confirm-account-name').textContent  = accountName;
       document.getElementById('confirm-points-earned').textContent = `+${lastPointsEarned} pts`;
@@ -988,9 +1003,26 @@
       document.getElementById('confirm-level-name').textContent    = level.name;
       document.getElementById('confirm-total-points').textContent  = totalPoints.toLocaleString();
 
-      // Countdown display
+      // Check if ALL accounts for this play are now engaged
+      const playAccounts = repAccounts.filter(a => !currentPlay || a.play_id === currentPlay.play_id);
+      const allEngaged   = playAccounts.length > 0 && playAccounts.every(a => !!latestLogs[a.account_id]);
+      const allDoneBanner = document.getElementById('confirm-all-done-banner');
+      allDoneBanner.style.display = allEngaged ? 'block' : 'none';
+      document.getElementById('confirm-header-title').textContent = allEngaged ? '🏆 Complete!' : '✅ Submitted!';
+
+      // Check for level-up
+      const levelUpBanner = document.getElementById('confirm-levelup-banner');
+      if (level.name !== prevLevel.name) {
+        levelUpBanner.style.display = 'block';
+        document.getElementById('confirm-levelup-emoji').textContent = level.badge;
+        document.getElementById('confirm-levelup-text').textContent  = `Level Up! You're now a ${level.name}!`;
+      } else {
+        levelUpBanner.style.display = 'none';
+      }
+
+      // Countdown back to accounts
       const btn = document.getElementById('btn-back-to-accounts');
-      let secs = 3;
+      let secs = allEngaged ? 5 : 3;
       btn.textContent = `Back to My Accounts (${secs}s)`;
       const interval = setInterval(() => {
         secs--;
@@ -1006,6 +1038,7 @@
 
       showScreen('screen-confirm');
       fireConfetti();
+      if (allEngaged) setTimeout(fireConfetti, 800);
     }
 
     // ─────────────────────────────────────────────
