@@ -789,7 +789,8 @@
         if (logs) Object.assign(latestLogs, logs);
 
         document.getElementById('play-detail-title').textContent = play.play_name;
-        renderAccountList(repAccounts, activeFilter);
+        const playAccounts = repAccounts.filter(a => a.play_id === play.play_id);
+        renderAccountList(playAccounts, activeFilter);
 
         // Sync filter tabs UI
         document.querySelectorAll('.filter-tab').forEach(tab => {
@@ -1168,7 +1169,7 @@
         goToLogStep(currentStep - 1);
       } else if (currentPlay) {
         activeFilter = 'all';
-        renderAccountList(repAccounts, activeFilter);
+        renderAccountList(repAccounts.filter(a => a.play_id === currentPlay.play_id), activeFilter);
         document.querySelectorAll('.filter-tab').forEach(t => {
           t.classList.toggle('active', t.dataset.filter === 'all');
         });
@@ -1201,7 +1202,7 @@
         t.classList.toggle('active', t === tab);
       });
 
-      renderAccountList(repAccounts, activeFilter);
+      renderAccountList(repAccounts.filter(a => !currentPlay || a.play_id === currentPlay.play_id), activeFilter);
     });
 
     // Log form — step 1 → step 2 (validates required fields first)
