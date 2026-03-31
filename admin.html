@@ -659,15 +659,21 @@
       tbody.innerHTML = '<tr><td colspan="6" style="padding:20px; text-align:center;"><div class="spinner"></div></td></tr>';
 
       try {
-        const data = await getLeaderboard(playFilter);
+        const [data, allReps] = await Promise.all([getLeaderboard(playFilter), getAllAssignedReps()]);
         const currentEmail = getCurrentUser()?.email || '';
 
-        if (!data || data.length === 0) {
+        // Merge in assigned reps who have never submitted
+        const seen = new Set((data || []).map(e => e.email.toLowerCase()));
+        const unstarted = allReps
+          .filter(r => !seen.has(r.email.toLowerCase()))
+          .map(r => ({ email: r.email, repName: r.repName, totalPoints: 0, completedAccounts: 0 }));
+        const allData = [...(data || []), ...unstarted];
+
+        if (!allData.length) {
           tbody.innerHTML = '<tr><td colspan="6" style="padding:20px; text-align:center; color:#aaa;">No data found.</td></tr>';
           return;
         }
 
-        // Compute last active date per rep from motion log
         const lastActiveByRep = {};
         (_allData || []).forEach(r => {
           const key = (r.rep_sso_login || r.rep_email || '').toLowerCase();
@@ -684,17 +690,24 @@
         }
 
         const rankEmoji = (i) => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+        const rifTaunts = ['😬','😅','👀','🫣','💀','🙈','😰','🤡'];
 
-        tbody.innerHTML = data.map((rep, i) => {
-          const level = getLevel(rep.totalPoints);
+        tbody.innerHTML = allData.map((rep, i) => {
+          const pts = rep.totalPoints || 0;
+          const noScore = pts === 0;
+          const level = getLevel(pts);
           const isCurrent = rep.email && rep.email.toLowerCase() === currentEmail.toLowerCase();
           const repKey = (rep.email || rep.repName || '').toLowerCase();
           const lastActive = lastActiveByRep[repKey] || '—';
-          return `<tr class="${isCurrent ? 'leaderboard-row current-user' : 'leaderboard-row'}" style="border-bottom:1px solid #f0f0f0; ${isCurrent ? 'background:#fff8e1;' : ''}">
-            <td style="padding:10px 8px; font-size:18px;">${rankEmoji(i)}</td>
+          const rankCell = noScore ? rifTaunts[i % rifTaunts.length] : rankEmoji(i);
+          const levelCell = noScore
+            ? `<span style="color:#e53e3e;font-weight:600;">⚠️ No Score — Likely on the RIF list...</span>`
+            : `${level.badge} ${escHtml(level.name)}`;
+          return `<tr style="border-bottom:1px solid #f0f0f0;${isCurrent ? 'background:#fff8e1;' : ''}${noScore ? 'opacity:0.75;' : ''}">
+            <td style="padding:10px 8px; font-size:18px;">${rankCell}</td>
             <td style="padding:10px 8px; font-weight:600;">${escHtml(rep.repName)}</td>
-            <td style="padding:10px 8px;">${level.badge} ${escHtml(level.name)}</td>
-            <td style="padding:10px 8px; text-align:right; font-weight:700; color:#0078d4;">${rep.totalPoints} pts</td>
+            <td style="padding:10px 8px;">${levelCell}</td>
+            <td style="padding:10px 8px; text-align:right; font-weight:700; color:${noScore ? '#e53e3e' : '#0078d4'};">${pts} pts</td>
             <td style="padding:10px 8px; text-align:right;">${rep.completedAccounts} accounts</td>
             <td style="padding:10px 8px; text-align:right; color:#888;">${fmtLastActive(lastActive)}</td>
           </tr>`;
