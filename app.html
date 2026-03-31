@@ -940,9 +940,8 @@
       btn.disabled    = true;
 
       try {
-        const nextStepType = document.getElementById('field-next-step-type').value || '';
+        const nextStepType = document.getElementById('field-next-step-type')?.value || '';
 
-        // Resolve reason_label + reason_code from whichever dropdown is active
         const reasonSelectId = outcome === 'Interested' ? 'field-interested-reason' : 'field-not-interested-reason';
         const reasonSelect   = document.getElementById(reasonSelectId);
         const selectedOption = reasonSelect ? reasonSelect.options[reasonSelect.selectedIndex] : null;
@@ -953,29 +952,34 @@
         const pitchConfidence   = pitchConfidenceEl ? Number(pitchConfidenceEl.value) : null;
 
         const data = {
-          account_id:       currentAccount.account_id,
-          account_name:     currentAccount.account_name || currentAccount.name || currentAccount.account_id,
-          play_id:          (currentPlay || {}).play_id   || currentAccount.play_id   || '',
-          play_name:        (currentPlay || {}).play_name || currentAccount.play_name || '',
-          rep_email:        currentUser.email,
-          rep_name:         currentUser.name,
-          interaction_type: interactionType,
+          account_id:        currentAccount.account_id,
+          account_name:      currentAccount.account_name || currentAccount.name || currentAccount.account_id,
+          play_id:           (currentPlay || {}).play_id   || currentAccount.play_id   || '',
+          play_name:         (currentPlay || {}).play_name || currentAccount.play_name || '',
+          rep_email:         currentUser.email,
+          rep_name:          currentUser.name,
+          interaction_type:  interactionType,
           outcome,
-          reason_label:     reasonLabel,
-          reason_code:      reasonCode,
-          next_step_type:   outcome === 'Interested' ? nextStepType : '',
-          timing:           outcome === 'Interested' ? (document.getElementById('field-timing').value || '') : '',
-          contact_level:    document.getElementById('field-contact-level').value || '',
-          contact_last_name: document.getElementById('field-contact-last-name').value || '',
-          opportunity_id:   outcome === 'Interested'
-            ? (document.getElementById('field-opportunity-id-int').value || '')
-            : (document.getElementById('field-opportunity-id-ni').value  || ''),
+          reason_label:      reasonLabel,
+          reason_code:       reasonCode,
+          next_step_type:    outcome === 'Interested' ? nextStepType : '',
+          timing:            outcome === 'Interested' ? (document.getElementById('field-timing')?.value || '') : '',
+          contact_level:     document.getElementById('field-contact-level')?.value || '',
+          contact_last_name: document.getElementById('field-contact-last-name')?.value || '',
+          opportunity_id:    outcome === 'Interested'
+            ? (document.getElementById('field-opportunity-id-int')?.value || '')
+            : (document.getElementById('field-opportunity-id-ni')?.value  || ''),
           ...(outcome === 'Interested' && pitchConfidence ? { pitch_confidence: pitchConfidence } : {}),
-          ...(outcome === 'Interested' ? { short_reaction: document.getElementById('field-short-reaction').value || '' } : {}),
-          notes: document.getElementById('field-notes').value || '',
+          ...(outcome === 'Interested' ? { short_reaction: document.getElementById('field-short-reaction')?.value || '' } : {}),
+          notes: document.getElementById('field-notes')?.value || '',
         };
 
-        await logEngagement(data);
+        // Hard 25s timeout — prevents hanging forever if network/token stalls
+        const timeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), 25000)
+        );
+        await Promise.race([logEngagement(data), timeout]);
+
         lastPointsEarned = calculatePoints(outcome, data.next_step_type);
         totalPoints      = (totalPoints || 0) + lastPointsEarned;
         latestLogs[currentAccount.account_id] = { ...data, outcome };
@@ -983,9 +987,13 @@
 
       } catch (err) {
         console.error('Submit error:', err);
+        const msg = err.message === 'timeout'
+          ? '⏱ Submit timed out — check your connection and try again.'
+          : '⚠️ Something went wrong submitting. Please try again.';
+        alert(msg);
+      } finally {
         btn.textContent = 'Submit ✓';
         btn.disabled    = false;
-        alert('⚠️ Something went wrong submitting. Please try again.');
       }
     }
 
