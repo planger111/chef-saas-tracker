@@ -1246,6 +1246,12 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
+      // Trap browser back button inside the app
+      history.pushState(null, '', location.href);
+      window.addEventListener('popstate', () => {
+        history.pushState(null, '', location.href);
+      });
+
       const onboardBtn = document.getElementById('btn-onboarding-done');
       if (onboardBtn) {
         onboardBtn.addEventListener('click', () => {
