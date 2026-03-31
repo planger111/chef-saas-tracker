@@ -590,7 +590,7 @@
         // Render greeting
         const firstName = name ? name.split(' ')[0] : 'there';
         document.getElementById('dashboard-greeting').textContent = `Welcome back, ${firstName} 👋`;
-        document.getElementById('dashboard-user-email').textContent = email;
+        if (document.getElementById('dashboard-user-email')) document.getElementById('dashboard-user-email').textContent = email;
 
         // Render points card
         renderPointsCard(totalPoints);
