@@ -172,7 +172,11 @@
       <div id="tab-config" class="admin-tab-panel" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;">
           <div style="font-size:13px;color:#555;">Edit response options reps see in the engagement form. Each play can have its own reasons. Changes save to SharePoint and take effect immediately.</div>
-          <button onclick="saveConfig()" style="background:#107c10;color:#fff;border:none;padding:9px 20px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;">💾 Save to SharePoint</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button onclick="resetPlayToStandard()" style="background:#fff8e1;color:#856404;border:1px solid #ffe082;padding:9px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;">↩ Reset This Play to Standard</button>
+            <button onclick="resetAllPlaysToStandard()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:9px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;">↩ Reset All Plays to Standard</button>
+            <button onclick="saveConfig()" style="background:#107c10;color:#fff;border:none;padding:9px 20px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;">💾 Save to SharePoint</button>
+          </div>
         </div>
 
         <!-- Play picker for reasons -->
@@ -742,7 +746,7 @@
         await Promise.all([
           writeJsonFile('plays.json',            { plays: [] }),
           writeJsonFile('assignments.json',       { assignments: [] }),
-          writeJsonFile('response-options.json',  { options: [], form_config: {} }),
+          writeJsonFile('response-options.json',  { options: [], form_config: STANDARD_FORM_CONFIG }),
         ]);
         statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
         statusEl.textContent = '✅ All data reset. You can now upload fresh accounts.';
@@ -884,9 +888,44 @@ Let's go! 🚀`;
 
     // ── Response Options Config Tab ────────────────────────────────────────
 
+    const STANDARD_INTERESTED = [
+      'Evaluating solutions in this space',
+      'Active budget / funded initiative',
+      'Replacing a current tool',
+      'Executive sponsor engaged',
+      'Strong use case fit',
+    ];
+    const STANDARD_NOT_INTERESTED = [
+      'No budget / not in current plan',
+      'Already have a solution',
+      'Not the right time — revisit later',
+      'Not the right contact / needs escalation',
+      'No need identified',
+    ];
+    const STANDARD_FORM_CONFIG = {
+      interaction_types: ['Call', 'Email', 'Text', 'In-Person Meeting'],
+      next_step_types:   ['Schedule follow-up', 'Send information', 'Introduce stakeholder', 'Create opportunity', 'Revisit later'],
+      timing_options:    ['Now', 'This month', 'Next quarter', 'Later'],
+    };
+
+    function seedStandardOptionsForPlay(config, rsId) {
+      config.options = (config.options || []).filter(o =>
+        (o.response_set_id || '').toUpperCase() !== rsId.toUpperCase()
+      );
+      STANDARD_INTERESTED.forEach((label, i) => config.options.push({
+        response_set_id: rsId, outcome_type: 'Interested',
+        reason_label: label, reason_code: '', sort_order: i + 1, active_flag: true
+      }));
+      STANDARD_NOT_INTERESTED.forEach((label, i) => config.options.push({
+        response_set_id: rsId, outcome_type: 'Not Interested',
+        reason_label: label, reason_code: '', sort_order: i + 1, active_flag: true
+      }));
+    }
+
     let _currentConfig = null;
     let _allAssignments = null;
     let _selectedResponseSetId = null;
+    let _loadedPlays = [];
 
     async function loadConfigTab() {
       const el = document.getElementById('config-editor');
@@ -894,22 +933,35 @@ Let's go! 🚀`;
       try {
         const [config, playsConfig] = await Promise.all([getFullResponseConfig(), getPlaysConfig()]);
         _currentConfig = config;
-
-        // Build play picker directly from plays.json
-        const plays = (playsConfig.plays || []).filter(p => p.active !== false).map(p => ({
+        _loadedPlays = (playsConfig.plays || []).filter(p => p.active !== false).map(p => ({
           play_id: p.play_id,
           play_name: p.play_name || p.play_id,
           response_set_id: p.play_id.replace(/[^a-z0-9]/gi, '_').toUpperCase() + '_STANDARD'
         }));
 
+        // Auto-seed standard options for any play that has none yet
+        let needsSave = false;
+        _loadedPlays.forEach(p => {
+          const hasAny = (_currentConfig.options || []).some(o =>
+            (o.response_set_id || '').toUpperCase() === p.response_set_id.toUpperCase() && o.active_flag !== false
+          );
+          if (!hasAny) { seedStandardOptionsForPlay(_currentConfig, p.response_set_id); needsSave = true; }
+        });
+        // Seed standard form config if empty
+        if (!_currentConfig.form_config || !Object.keys(_currentConfig.form_config).length) {
+          _currentConfig.form_config = { ...STANDARD_FORM_CONFIG };
+          needsSave = true;
+        }
+        if (needsSave) await saveFullResponseConfig(_currentConfig);
+
         const picker = document.getElementById('config-play-picker');
-        if (plays.length === 0) {
+        if (_loadedPlays.length === 0) {
           picker.innerHTML = '<option value="">No plays found — upload accounts first</option>';
         } else {
-          picker.innerHTML = plays.map(p =>
+          picker.innerHTML = _loadedPlays.map(p =>
             `<option value="${escHtml(p.response_set_id)}" data-play="${escHtml(p.play_name)}">${escHtml(p.play_name)}</option>`
           ).join('');
-          _selectedResponseSetId = plays[0].response_set_id;
+          _selectedResponseSetId = _loadedPlays[0].response_set_id;
           document.getElementById('config-response-set-label').textContent = 'Response set: ' + _selectedResponseSetId;
         }
         renderConfigEditor(_currentConfig);
@@ -1031,6 +1083,37 @@ Let's go! 🚀`;
         const inputs = document.querySelectorAll(`[data-group="${key}"]`);
         if (inputs.length) inputs[inputs.length - 1].focus();
       }, 50);
+    }
+
+    function resetPlayToStandard() {
+      if (!_selectedResponseSetId) return;
+      const playName = (_loadedPlays.find(p => p.response_set_id === _selectedResponseSetId) || {}).play_name || _selectedResponseSetId;
+      if (!confirm(`Reset "${playName}" response options back to the standard defaults?\n\nThis will replace all Interested and Not Interested reasons for this play.`)) return;
+      flushEdits();
+      seedStandardOptionsForPlay(_currentConfig, _selectedResponseSetId);
+      renderConfigEditor(_currentConfig);
+      const statusEl = document.getElementById('config-status');
+      statusEl.style.display = 'block'; statusEl.style.background = '#fff8e1'; statusEl.style.color = '#856404';
+      statusEl.textContent = '↩ Reset to standard — click Save to SharePoint to apply.';
+    }
+
+    async function resetAllPlaysToStandard() {
+      if (!confirm('Reset ALL plays to standard response options?\n\nThis will replace Interested and Not Interested reasons for every play and restore standard form config.')) return;
+      flushEdits();
+      _loadedPlays.forEach(p => seedStandardOptionsForPlay(_currentConfig, p.response_set_id));
+      _currentConfig.form_config = { ...STANDARD_FORM_CONFIG };
+      const statusEl = document.getElementById('config-status');
+      statusEl.style.display = 'block'; statusEl.style.background = '#fff3cd'; statusEl.style.color = '#856404';
+      statusEl.textContent = '⏳ Saving all plays to standard…';
+      try {
+        await saveFullResponseConfig(_currentConfig);
+        statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
+        statusEl.textContent = '✅ All plays reset to standard and saved.';
+        renderConfigEditor(_currentConfig);
+      } catch(e) {
+        statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
+        statusEl.textContent = '✗ Save failed: ' + e.message;
+      }
     }
 
     async function saveConfig() {
