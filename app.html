@@ -1080,8 +1080,13 @@
     async function loadLeaderboard() {
       showScreen('screen-loading');
       try {
-        const data = await getLeaderboard();
-        renderFullLeaderboard(data);
+        const [data, allReps] = await Promise.all([getLeaderboard(), getAllAssignedReps()]);
+        // Pad in reps who are assigned but have never submitted
+        const seen = new Set((data || []).map(e => e.email.toLowerCase()));
+        const unstarted = allReps
+          .filter(r => !seen.has(r.email.toLowerCase()))
+          .map(r => ({ email: r.email, repName: r.repName, totalPoints: 0, completedAccounts: 0 }));
+        renderFullLeaderboard([...(data || []), ...unstarted]);
         showScreen('screen-leaderboard');
       } catch (err) {
         console.error('Leaderboard load error:', err);

@@ -78,6 +78,18 @@ async function writeJsonFile(filePath, data) {
 
 // ─── Assignments ──────────────────────────────────────────────────────────
 
+async function getAllAssignedReps() {
+  const text = await getFileText(SP_ROOT + "/assignments.json");
+  if (!text) return [];
+  const data = JSON.parse(text);
+  const map = {};
+  (data.assignments || []).filter(a => a.active_flag !== false).forEach(a => {
+    const email = (a.rep_sso_login || a.rep_email || '').toLowerCase();
+    if (email && !map[email]) map[email] = { email, repName: a.rep_name || email };
+  });
+  return Object.values(map);
+}
+
 async function getPlayAssignments(repEmail) {
   const text = await getFileText(SP_ROOT + "/assignments.json");
   if (!text) return [];
