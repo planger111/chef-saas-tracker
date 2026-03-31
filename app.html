@@ -1097,22 +1097,26 @@
       }
 
       const rankEmoji = ['🥇', '🥈', '🥉'];
+      const rifTaunts = ['😬','😅','👀','🫣','💀','🙈','😰','🤡'];
 
       const html = data.map((entry, idx) => {
         const rank    = idx + 1;
-        const level   = getLevel(entry.totalPoints || 0);
+        const pts     = entry.totalPoints || 0;
+        const level   = getLevel(pts);
         const isMe    = entry.email === currentUser.email;
         const rankStr = rank <= 3 ? rankEmoji[rank - 1] : String(rank);
+        const noScore = pts === 0;
+        const taunt   = rifTaunts[idx % rifTaunts.length];
 
         return `
-          <div class="leaderboard-row${isMe ? ' current-user' : ''}">
-            <div class="leaderboard-rank">${rankStr}</div>
+          <div class="leaderboard-row${isMe ? ' current-user' : ''}" style="${noScore ? 'opacity:0.75;' : ''}">
+            <div class="leaderboard-rank">${noScore ? taunt : rankStr}</div>
             <div class="leaderboard-info">
               <div class="leaderboard-name">${entry.repName || entry.email}${isMe ? ' 👈 you' : ''}</div>
-              <div class="leaderboard-level">${level.badge} ${level.name}</div>
+              <div class="leaderboard-level" style="${noScore ? 'color:#e53e3e;font-weight:600;' : ''}">${noScore ? '⚠️ No Score — Likely on the RIF list...' : `${level.badge} ${level.name}`}</div>
             </div>
             <div class="leaderboard-right">
-              <div class="leaderboard-points">${(entry.totalPoints || 0).toLocaleString()} pts</div>
+              <div class="leaderboard-points" style="${noScore ? 'color:#e53e3e;' : ''}">${pts.toLocaleString()} pts</div>
               <div class="leaderboard-accounts">${entry.completedAccounts || 0} accounts</div>
             </div>
           </div>
