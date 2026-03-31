@@ -130,6 +130,7 @@
     <div class="header">
       <button class="header-back btn btn-secondary" id="btn-back-to-dashboard">← Back</button>
       <span class="header-title" id="play-detail-title">Play</span>
+      <button id="btn-play-info" onclick="showPlayInfo(currentPlay && currentPlay.play_id)" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:4px 10px;font-size:13px;cursor:pointer;color:#0078d4;font-weight:600;">ℹ Pitch Info</button>
     </div>
 
     <div style="padding:16px;max-width:480px;margin:0 auto;">
@@ -986,6 +987,22 @@
       document.getElementById('confirm-level-emoji').textContent   = level.badge;
       document.getElementById('confirm-level-name').textContent    = level.name;
       document.getElementById('confirm-total-points').textContent  = totalPoints.toLocaleString();
+
+      // Countdown display
+      const btn = document.getElementById('btn-back-to-accounts');
+      let secs = 3;
+      btn.textContent = `Back to My Accounts (${secs}s)`;
+      const interval = setInterval(() => {
+        secs--;
+        if (secs <= 0) {
+          clearInterval(interval);
+          btn.textContent = 'Back to My Accounts';
+          if (currentPlay) loadPlayDetail(currentPlay);
+          else showScreen('screen-dashboard');
+        } else {
+          btn.textContent = `Back to My Accounts (${secs}s)`;
+        }
+      }, 1000);
 
       showScreen('screen-confirm');
       fireConfetti();
