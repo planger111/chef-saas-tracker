@@ -65,7 +65,7 @@
 
       <!-- User greeting -->
       <div class="user-greeting" id="dashboard-greeting"></div>
-      <div style="font-size:11px;color:#999;margin-top:-8px;margin-bottom:8px;" id="dashboard-user-email"></div>
+      <div style="font-size:13px;color:#555;margin-top:-6px;margin-bottom:16px;font-weight:500;" id="dashboard-action-hint">👇 Select a play below to see your accounts and log pitches</div>
 
       <!-- Points card -->
       <div class="points-card" id="dashboard-points-card">
@@ -141,6 +141,8 @@
         <button class="filter-tab" data-filter="interested">Interested</button>
         <button class="filter-tab" data-filter="not-interested">Not Interested</button>
       </div>
+
+      <div style="font-size:13px;color:#0078d4;font-weight:600;padding:8px 2px 4px;">👇 Tap an account to log a pitch</div>
 
       <!-- Account list -->
       <div id="play-account-list">
@@ -609,7 +611,15 @@
     function renderPlayCards(logResults) {
       const container = document.getElementById('dashboard-plays-list');
       if (!allPlays.length) {
-        container.innerHTML = '<div style="text-align:center;color:#999;padding:24px;">No plays assigned yet.</div>';
+        container.innerHTML = '<div style="text-align:center;color:#999;padding:24px;">No plays assigned yet — check back soon.</div>';
+        return;
+      }
+
+      // If only one play, skip the dashboard and go straight to accounts
+      if (allPlays.length === 1) {
+        currentPlay  = allPlays[0];
+        activeFilter = 'all';
+        loadPlayDetail(allPlays[0]);
         return;
       }
 
@@ -627,19 +637,19 @@
         const hasInfo   = play.icp || play.target_persona || play.elevator_pitch;
 
         return `
-          <div class="play-card" data-play-id="${escHtml(play.play_id)}" style="cursor:pointer;">
-            <div class="play-card-header">
-              <span class="play-card-name">${escHtml(play.play_name)}</span>
+          <div class="play-card" data-play-id="${escHtml(play.play_id)}" style="cursor:pointer;border:2px solid #0078d4;border-radius:12px;margin-bottom:12px;overflow:hidden;">
+            <div class="play-card-header" style="padding:14px 16px 8px;">
+              <span class="play-card-name" style="font-size:16px;font-weight:700;">${escHtml(play.play_name)}</span>
               <div style="display:flex;align-items:center;gap:8px;">
                 <span style="font-size:11px;font-weight:700;color:${goalColor};background:${goalColor}18;padding:2px 8px;border-radius:10px;">${goalLabel}</span>
                 ${hasInfo ? `<button class="play-info-btn" data-play-id="${escHtml(play.play_id)}" onclick="event.stopPropagation();showPlayInfo('${escHtml(play.play_id)}')"
                   style="background:none;border:1px solid #d1d5db;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;color:#0078d4;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;">ℹ</button>` : ''}
               </div>
             </div>
-            <div class="progress-bar-track">
+            <div class="progress-bar-track" style="margin:0 16px;">
               <div class="progress-bar-fill" style="width:${pct}%;"></div>
             </div>
-            <div class="funnel-row">
+            <div class="funnel-row" style="padding:8px 16px;">
               <div class="funnel-stat">
                 <span class="funnel-num">${targets}</span>
                 <span class="funnel-label">🎯 Targets</span>
@@ -654,6 +664,9 @@
                 <span class="funnel-num">${interested}</span>
                 <span class="funnel-label">✅ Interested</span>
               </div>
+            </div>
+            <div style="background:#0078d4;color:#fff;text-align:center;padding:10px;font-weight:700;font-size:14px;letter-spacing:0.3px;">
+              👉 Tap to see your accounts &amp; log pitches
             </div>
           </div>
         `;
