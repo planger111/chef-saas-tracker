@@ -35,6 +35,9 @@
         <button class="admin-tab active" data-tab="activity-log" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#0078d4; border-bottom:2px solid #0078d4; margin-bottom:-2px;">📋 Activity Log</button>
         <button class="admin-tab" data-tab="leaderboard" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">🏆 Leaderboard</button>
         <button class="admin-tab" data-tab="config" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">⚙️ Response Options</button>
+        <button class="admin-tab" data-tab="plays" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">🗂️ Plays</button>
+        <button class="admin-tab" data-tab="accounts" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">👥 Accounts</button>
+        <button class="admin-tab" data-tab="invite" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">✉️ Invite</button>
       </div>
 
       <!-- Activity Log Tab Panel -->
@@ -187,8 +190,104 @@
         </div>
       </div><!-- /#tab-config -->
 
-    </div>
-  </div>
+      <!-- ── Plays Management Tab ── -->
+      <div id="tab-plays" class="admin-tab-panel" style="display:none;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+          <div style="font-size:13px;color:#555;">All active sales plays. Export engagement data or delete a play and all its assignments.</div>
+          <button onclick="loadPlaysTab()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:8px 14px;border-radius:6px;font-size:14px;cursor:pointer;">🔄 Refresh</button>
+        </div>
+        <div id="plays-status" style="display:none;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:12px;"></div>
+        <div id="plays-table-wrap" style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+              <tr style="background:#f8f9fa;text-align:left;">
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Play Name</th>
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Play ID</th>
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;text-align:center;">Accounts</th>
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;text-align:center;">Reps</th>
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;text-align:center;">Engagements</th>
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;text-align:center;">Status</th>
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="plays-body">
+              <tr><td colspan="7" style="padding:32px;text-align:center;color:#aaa;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div><!-- /#tab-plays -->
+      <div id="tab-accounts" class="admin-tab-panel" style="display:none;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+          <select id="acct-filter-play" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;">
+            <option value="">All Plays</option>
+          </select>
+          <select id="acct-filter-rep" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;">
+            <option value="">All Reps</option>
+          </select>
+          <input id="acct-search" type="text" placeholder="Search account name…" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;flex:1;min-width:160px;">
+          <button onclick="filterAccounts()" style="background:#0078d4;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">Filter</button>
+          <button onclick="loadAccountsTab()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:8px 14px;border-radius:6px;font-size:14px;cursor:pointer;">🔄 Refresh</button>
+        </div>
+        <div id="acct-summary" style="font-size:13px;color:#555;margin-bottom:10px;"></div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+              <tr style="background:#f8f9fa;text-align:left;">
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Account Name</th>
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">SFDC ID</th>
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Rep</th>
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">SSO Login</th>
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Play</th>
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">ARR</th>
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Active</th>
+              </tr>
+            </thead>
+            <tbody id="acct-body">
+              <tr><td colspan="7" style="padding:32px;text-align:center;color:#aaa;">Click the Accounts tab to load</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div><!-- /#tab-accounts -->
+
+      <!-- ── Invite Tab ── -->
+      <div id="tab-invite" class="admin-tab-panel" style="display:none;">
+        <div style="max-width:680px;">
+          <h3 style="margin:0 0 4px;">Invite Your Reps</h3>
+          <p style="font-size:13px;color:#555;margin:0 0 20px;">Copy the message below and send it to your team to get them started.</p>
+
+          <!-- Editable prize field -->
+          <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <span style="font-size:13px;font-weight:600;white-space:nowrap;">🏆 Prize for top 3:</span>
+            <input id="prize-text" type="text" value="a special prize — TBD by your manager!" style="flex:1;min-width:200px;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;" oninput="rebuildInvite()">
+          </div>
+
+          <!-- Invite preview -->
+          <div id="invite-preview" style="background:#f8faff;border:1px solid #d0e4f7;border-radius:10px;padding:20px 24px;font-size:14px;line-height:1.7;white-space:pre-wrap;font-family:inherit;"></div>
+
+          <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
+            <button onclick="copyInvite()" style="background:#0078d4;color:#fff;border:none;padding:10px 22px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Message</button>
+            <span id="copy-confirm" style="font-size:13px;color:#107c10;align-self:center;display:none;">✓ Copied!</span>
+          </div>
+
+          <!-- Points reference card -->
+          <div style="margin-top:28px;background:#fff;border:1px solid #e9ecef;border-radius:10px;padding:18px 20px;">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#555;margin-bottom:12px;">Points Reference</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;font-size:13px;margin-bottom:16px;">
+              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:#f8f9fa;border-radius:6px;"><span>📞 Not Interested</span><strong style="color:#555;">15 pts</strong></div>
+              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:#f8f9fa;border-radius:6px;"><span>✅ Interested</span><strong style="color:#0078d4;">30 pts</strong></div>
+              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:#f8f9fa;border-radius:6px;"><span>✅ Interested + next step</span><strong style="color:#107c10;">45 pts</strong></div>
+            </div>
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#555;margin-bottom:8px;">Levels</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:13px;">
+              <span style="padding:4px 10px;background:#f0f0f0;border-radius:20px;">🌱 Rookie — 0 pts</span>
+              <span style="padding:4px 10px;background:#f0f0f0;border-radius:20px;">🎯 Pitcher — 50 pts</span>
+              <span style="padding:4px 10px;background:#f0f0f0;border-radius:20px;">⭐ Pro — 150 pts</span>
+              <span style="padding:4px 10px;background:#f0f0f0;border-radius:20px;">🥇 Champion — 300 pts</span>
+              <span style="padding:4px 10px;background:#f0f0f0;border-radius:20px;">🏆 Legend — 500 pts</span>
+            </div>
+          </div>
+        </div>
+      </div><!-- /#tab-invite -->
 
   <!-- Scripts -->
   <script src="msal-browser.js"></script>
@@ -473,6 +572,9 @@
         document.getElementById('tab-' + tab.dataset.tab).style.display = 'block';
         if (tab.dataset.tab === 'leaderboard') loadLeaderboardTab();
         if (tab.dataset.tab === 'config') loadConfigTab();
+        if (tab.dataset.tab === 'plays') loadPlaysTab();
+        if (tab.dataset.tab === 'accounts') loadAccountsTab();
+        if (tab.dataset.tab === 'invite') loadInviteTab();
       });
     });
 
@@ -511,6 +613,226 @@
     document.getElementById('btn-refresh-lb').addEventListener('click', loadLeaderboardTab);
     document.getElementById('lb-filter-play').addEventListener('change', loadLeaderboardTab);
 
+    // ── Plays Management Tab ─────────────────────────────────────────────────
+    async function loadPlaysTab() {
+      const tbody = document.getElementById('plays-body');
+      tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;"><div class="spinner"></div></td></tr>';
+      const statusEl = document.getElementById('plays-status');
+      statusEl.style.display = 'none';
+      try {
+        const [playsConfig, assignmentsText] = await Promise.all([
+          getPlaysConfig(),
+          getFileText(SP_ROOT + '/assignments.json').catch(() => null)
+        ]);
+        const allAssignments = assignmentsText ? (JSON.parse(assignmentsText).assignments || []) : [];
+        const plays = (playsConfig.plays || []);
+
+        // Count engagements per play from _allData (already loaded)
+        const engCountByPlay = {};
+        (_allData || []).forEach(r => { engCountByPlay[r.play_id] = (engCountByPlay[r.play_id] || 0) + 1; });
+
+        if (plays.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;color:#aaa;">No plays found. Upload accounts to create a play.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = plays.map(p => {
+          const accts = allAssignments.filter(a => a.play_id === p.play_id);
+          const reps  = new Set(accts.map(a => a.rep_sso_login || a.rep_email)).size;
+          const engs  = engCountByPlay[p.play_id] || 0;
+          const active = p.active !== false;
+          return `<tr style="border-bottom:1px solid #f0f0f0;">
+            <td style="padding:10px 8px;font-weight:600;">${escHtml(p.play_name)}</td>
+            <td style="padding:10px 8px;font-family:monospace;font-size:12px;color:#888;">${escHtml(p.play_id)}</td>
+            <td style="padding:10px 8px;text-align:center;">${accts.length}</td>
+            <td style="padding:10px 8px;text-align:center;">${reps}</td>
+            <td style="padding:10px 8px;text-align:center;">${engs}</td>
+            <td style="padding:10px 8px;text-align:center;">
+              ${active ? '<span style="color:#107c10;font-weight:600;">Active</span>' : '<span style="color:#999;">Inactive</span>'}
+            </td>
+            <td style="padding:10px 8px;">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button onclick="exportPlayEngagements('${escHtml(p.play_id)}','${escHtml(p.play_name)}')"
+                  style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;">⬇️ Export CSV</button>
+                <button onclick="togglePlayActive('${escHtml(p.play_id)}', ${!active})"
+                  style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;">${active ? '⏸ Deactivate' : '▶ Activate'}</button>
+                <button onclick="deletePlay('${escHtml(p.play_id)}','${escHtml(p.play_name)}')"
+                  style="background:#fff0f0;border:1px solid #f5c6cb;color:#c00;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;">🗑 Delete</button>
+              </div>
+            </td>
+          </tr>`;
+        }).join('');
+      } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="7" style="padding:20px;text-align:center;color:#d32f2f;">Error: ${escHtml(e.message)}</td></tr>`;
+      }
+    }
+
+    async function exportPlayEngagements(playId, playName) {
+      try {
+        const safeId = playId.replace(/[^a-z0-9]/gi, '_');
+        const text = await getFileText(SP_ROOT + '/' + safeId + '_engagements.csv');
+        if (!text || text.trim() === '') { alert('No engagement data found for ' + playName); return; }
+        const blob = new Blob([text], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = safeId + '_engagements.csv';
+        a.click();
+      } catch(e) { alert('Export failed: ' + e.message); }
+    }
+
+    async function togglePlayActive(playId, newActive) {
+      const statusEl = document.getElementById('plays-status');
+      statusEl.style.display = 'block';
+      statusEl.style.background = '#fff3cd'; statusEl.style.color = '#856404';
+      statusEl.textContent = '⏳ Saving…';
+      try {
+        const config = await getPlaysConfig();
+        const play = (config.plays || []).find(p => p.play_id === playId);
+        if (play) play.active = newActive;
+        await savePlaysConfig(config);
+        statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
+        statusEl.textContent = '✅ Saved.';
+        loadPlaysTab();
+      } catch(e) {
+        statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
+        statusEl.textContent = '✗ Failed: ' + e.message;
+      }
+    }
+
+    async function deletePlay(playId, playName) {
+      if (!confirm(`Delete play "${playName}"?\n\nThis will:\n• Remove the play from plays.json\n• Remove all account assignments for this play\n\nEngagement history (CSV) is kept on SharePoint.\n\nThis cannot be undone.`)) return;
+      const statusEl = document.getElementById('plays-status');
+      statusEl.style.display = 'block';
+      statusEl.style.background = '#fff3cd'; statusEl.style.color = '#856404';
+      statusEl.textContent = '⏳ Deleting…';
+      try {
+        const [playsConfig, assignmentsText] = await Promise.all([
+          getPlaysConfig(),
+          getFileText(SP_ROOT + '/assignments.json').catch(() => null)
+        ]);
+        // Remove from plays.json
+        playsConfig.plays = (playsConfig.plays || []).filter(p => p.play_id !== playId);
+        // Remove assignments for this play
+        const allAssignments = assignmentsText ? (JSON.parse(assignmentsText).assignments || []) : [];
+        const filtered = allAssignments.filter(a => a.play_id !== playId);
+        await Promise.all([
+          savePlaysConfig(playsConfig),
+          writeJsonFile('assignments.json', { assignments: filtered })
+        ]);
+        statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
+        statusEl.textContent = `✅ Play "${playName}" deleted. Engagement CSV preserved on SharePoint.`;
+        loadPlaysTab();
+      } catch(e) {
+        statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
+        statusEl.textContent = '✗ Delete failed: ' + e.message;
+      }
+    }
+
+    // ── Accounts Tab ──────────────────────────────────────────────────────────
+    let _allAssignmentsData = [];
+
+    async function loadAccountsTab() {
+      const tbody = document.getElementById('acct-body');
+      tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;"><div class="spinner"></div></td></tr>';
+      try {
+        const text = await getFileText(SP_ROOT + '/assignments.json');
+        _allAssignmentsData = text ? (JSON.parse(text).assignments || []) : [];
+        // Populate play + rep filters
+        const plays = [...new Set(_allAssignmentsData.map(a => a.play_name).filter(Boolean))].sort();
+        const reps  = [...new Set(_allAssignmentsData.map(a => a.rep_name || a.rep_sso_login).filter(Boolean))].sort();
+        const pSel = document.getElementById('acct-filter-play');
+        const rSel = document.getElementById('acct-filter-rep');
+        pSel.innerHTML = '<option value="">All Plays</option>' + plays.map(p => `<option>${escHtml(p)}</option>`).join('');
+        rSel.innerHTML = '<option value="">All Reps</option>'  + reps.map(r => `<option>${escHtml(r)}</option>`).join('');
+        filterAccounts();
+      } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="7" style="padding:20px;text-align:center;color:#d32f2f;">Error loading accounts: ${escHtml(e.message)}</td></tr>`;
+      }
+    }
+
+    function filterAccounts() {
+      const play   = document.getElementById('acct-filter-play').value;
+      const rep    = document.getElementById('acct-filter-rep').value;
+      const search = (document.getElementById('acct-search').value || '').toLowerCase();
+      let rows = _allAssignmentsData;
+      if (play)   rows = rows.filter(a => a.play_name === play);
+      if (rep)    rows = rows.filter(a => (a.rep_name || a.rep_sso_login) === rep);
+      if (search) rows = rows.filter(a => (a.account_name || '').toLowerCase().includes(search));
+      document.getElementById('acct-summary').textContent = `${rows.length} account${rows.length !== 1 ? 's' : ''} shown`;
+      const tbody = document.getElementById('acct-body');
+      if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:#aaa;">No accounts found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(a => `<tr style="border-bottom:1px solid #f0f0f0;">
+        <td style="padding:9px 8px;font-weight:600;">${escHtml(a.account_name)}</td>
+        <td style="padding:9px 8px;font-family:monospace;font-size:12px;color:#888;">${escHtml(a.account_id)}</td>
+        <td style="padding:9px 8px;">${escHtml(a.rep_name || '')}</td>
+        <td style="padding:9px 8px;font-size:12px;color:#555;">${escHtml(a.rep_sso_login || a.rep_email || '')}</td>
+        <td style="padding:9px 8px;">${escHtml(a.play_name || '')}</td>
+        <td style="padding:9px 8px;">${escHtml(a.arr || '')}</td>
+        <td style="padding:9px 8px;">${a.active === 'No' ? '<span style="color:#d32f2f;">No</span>' : '<span style="color:#107c10;">Yes</span>'}</td>
+      </tr>`).join('');
+    }
+
+    // ── Invite Tab ────────────────────────────────────────────────────────────
+    function loadInviteTab() { rebuildInvite(); }
+
+    function rebuildInvite() {
+      const appUrl = window.location.origin + window.location.pathname.replace('admin.html', 'app.html');
+      const prize  = (document.getElementById('prize-text')?.value || 'a special prize — TBD by your manager!').trim();
+      const msg =
+`🏆 Chef SaaS Sales Tracker — You're In!
+
+Hey team,
+
+We're using a new tool to track our Chef SaaS pitches and friendly competition is ON. Log your pitches, earn points, and climb the leaderboard.
+
+👉 Your link: ${appUrl}
+
+📌 BOOKMARK THIS — you'll use it every time you log a pitch.
+   On mobile: tap Share → Add to Home Screen for a one-tap shortcut.
+
+────────────────────────────────
+HOW POINTS WORK
+────────────────────────────────
+Every account you pitch earns you points:
+
+  📞 Not Interested          → 15 pts
+  ✅ Interested              → 30 pts
+  ✅ Interested + next step  → 45 pts
+
+The more you pitch, the higher you climb:
+
+  🌱 Rookie      0 pts
+  🎯 Pitcher    50 pts
+  ⭐ Pro        150 pts
+  🥇 Champion   300 pts
+  🏆 Legend     500 pts
+
+────────────────────────────────
+🎁 PRIZES
+────────────────────────────────
+The TOP 3 reps at the end of the quarter win ${prize}
+
+────────────────────────────────
+
+Log in with your Progress credentials — no new password needed.
+Questions? Reply to this message.
+
+Let's go! 🚀`;
+      document.getElementById('invite-preview').textContent = msg;
+    }
+
+    function copyInvite() {
+      const text = document.getElementById('invite-preview').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const el = document.getElementById('copy-confirm');
+        el.style.display = 'inline';
+        setTimeout(() => el.style.display = 'none', 2500);
+      });
+    }
+
     (async () => {
       try {
         const account = await initAuth();
@@ -545,21 +867,23 @@
       const el = document.getElementById('config-editor');
       el.innerHTML = '<div style="text-align:center;color:#999;padding:32px;">Loading from SharePoint…</div>';
       try {
-        [_currentConfig, _allAssignments] = await Promise.all([getFullResponseConfig(), getPlayAssignments(null)]);
+        const [config, playsConfig] = await Promise.all([getFullResponseConfig(), getPlaysConfig()]);
+        _currentConfig = config;
 
-        // Build play picker: one entry per unique (play_id, response_set_id) combo
-        const seen = new Set();
-        const plays = (_allAssignments || []).reduce((arr, a) => {
-          const k = a.play_id + '|' + (a.response_set_id || 'SAAS_STANDARD');
-          if (!seen.has(k)) { seen.add(k); arr.push({ play_id: a.play_id, play_name: a.play_name || a.play_id, response_set_id: a.response_set_id || 'SAAS_STANDARD' }); }
-          return arr;
-        }, []);
+        // Build play picker directly from plays.json
+        const plays = (playsConfig.plays || []).filter(p => p.active !== false).map(p => ({
+          play_id: p.play_id,
+          play_name: p.play_name || p.play_id,
+          response_set_id: p.play_id.replace(/[^a-z0-9]/gi, '_').toUpperCase() + '_STANDARD'
+        }));
 
         const picker = document.getElementById('config-play-picker');
-        picker.innerHTML = plays.map(p =>
-          `<option value="${escHtml(p.response_set_id)}" data-play="${escHtml(p.play_name)}">${escHtml(p.play_name)}</option>`
-        ).join('');
-        if (plays.length > 0) {
+        if (plays.length === 0) {
+          picker.innerHTML = '<option value="">No plays found — upload accounts first</option>';
+        } else {
+          picker.innerHTML = plays.map(p =>
+            `<option value="${escHtml(p.response_set_id)}" data-play="${escHtml(p.play_name)}">${escHtml(p.play_name)}</option>`
+          ).join('');
           _selectedResponseSetId = plays[0].response_set_id;
           document.getElementById('config-response-set-label').textContent = 'Response set: ' + _selectedResponseSetId;
         }

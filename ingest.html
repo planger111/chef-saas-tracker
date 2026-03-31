@@ -164,15 +164,34 @@
       </div>
     </div>
 
-    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-      <div style="font-size:32px">📂</div>
-      <strong>Click to select your Excel file</strong>
-      <p style="margin-top:8px;color:#555;font-size:13px;">account-upload-template.xlsx (or any .xlsx with the same columns)</p>
-      <p style="margin-top:4px;color:#888;font-size:12px;">Required columns: SFDC Account ID · Account Name · Rep SSO Login · Rep Name</p>
+    <!-- Upload method tabs -->
+    <div style="display:flex;gap:0;margin-bottom:0;border-bottom:2px solid #e5e7eb;">
+      <button id="tab-file-btn" onclick="switchUploadTab('file')" style="padding:8px 18px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:#0078d4;border-bottom:2px solid #0078d4;margin-bottom:-2px;">📂 Upload File</button>
+      <button id="tab-paste-btn" onclick="switchUploadTab('paste')" style="padding:8px 18px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:#666;border-bottom:2px solid transparent;margin-bottom:-2px;">📋 Paste from Excel</button>
     </div>
-    <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
-    <div style="margin-top:12px;font-size:12px;color:#888;">
-      <a href="account-upload-template.xlsx" download style="color:#0078d4;">⬇️ Download blank template</a>
+
+    <!-- File upload panel -->
+    <div id="tab-file-panel" style="margin-top:16px;">
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <div style="font-size:32px">📂</div>
+        <strong>Click to select your Excel file</strong>
+        <p style="margin-top:8px;color:#555;font-size:13px;">account-upload-template.xlsx (or any .xlsx with the same columns)</p>
+        <p style="margin-top:4px;color:#888;font-size:12px;">Required columns: SFDC Account ID · Account Name · Rep SSO Login · Rep Name</p>
+      </div>
+      <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+      <div style="margin-top:12px;font-size:12px;color:#888;">
+        <a href="account-upload-template.xlsx" download style="color:#0078d4;">⬇️ Download blank template</a>
+      </div>
+    </div>
+
+    <!-- Paste panel -->
+    <div id="tab-paste-panel" style="display:none;margin-top:16px;">
+      <p style="font-size:13px;color:#555;margin-bottom:8px;">Copy rows from Excel (including the header row) and paste below. Columns needed: <strong>SFDC Account ID, Account Name, Rep SSO Login, Rep Name</strong>.</p>
+      <textarea id="paste-area" rows="12" placeholder="Paste your Excel rows here…" style="width:100%;padding:10px;border:2px dashed #0078d4;border-radius:8px;font-size:13px;font-family:monospace;box-sizing:border-box;resize:vertical;"></textarea>
+      <div style="margin-top:10px;display:flex;gap:10px;">
+        <button onclick="handlePaste()" style="background:#0078d4;color:#fff;border:none;padding:9px 20px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">Parse Pasted Data</button>
+        <button onclick="document.getElementById('paste-area').value=''" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:9px 16px;border-radius:6px;font-size:14px;cursor:pointer;">Clear</button>
+      </div>
     </div>
   </div>
 
@@ -345,6 +364,78 @@
     `;
     document.getElementById('upload-card').classList.remove('hidden');
     document.getElementById('upload-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ── Step 3: Upload Tab Toggle ─────────────────────────────────────────────
+
+  function switchUploadTab(tab) {
+    const isFile = tab === 'file';
+    document.getElementById('tab-file-panel').style.display  = isFile ? '' : 'none';
+    document.getElementById('tab-paste-panel').style.display = isFile ? 'none' : '';
+    document.getElementById('tab-file-btn').style.color        = isFile ? '#0078d4' : '#666';
+    document.getElementById('tab-file-btn').style.borderBottomColor  = isFile ? '#0078d4' : 'transparent';
+    document.getElementById('tab-paste-btn').style.color       = isFile ? '#666' : '#0078d4';
+    document.getElementById('tab-paste-btn').style.borderBottomColor = isFile ? 'transparent' : '#0078d4';
+  }
+
+  function handlePaste() {
+    const raw = document.getElementById('paste-area').value.trim();
+    if (!raw) { log('warn', 'Nothing pasted.'); return; }
+
+    const rows = raw.split(/\r?\n/).map(line => line.split('\t'));
+
+    // Find header row
+    let headerIdx = -1;
+    for (let i = 0; i < Math.min(rows.length, 5); i++) {
+      const rowStr = rows[i].map(c => String(c).toLowerCase());
+      if (rowStr.some(c => c.includes('sso') || c.includes('account id') || c.includes('account name'))) {
+        headerIdx = i; break;
+      }
+    }
+    if (headerIdx < 0) { log('err', 'Could not find header row. Make sure to include the header row when copying from Excel.'); return; }
+
+    const headers = rows[headerIdx].map(h =>
+      String(h).trim().replace(/\s*\*$/, '').toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+    );
+    log('info', 'Pasted headers: ' + headers.filter(Boolean).join(', '));
+
+    const assignments = [];
+    for (let i = headerIdx + 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (!row.some(v => v !== '')) continue;
+      const r = {};
+      headers.forEach((h, idx) => { r[h] = String(row[idx] || '').trim(); });
+
+      const acctId   = r.sfdc_account_id || r.account_id || r.accountid || '';
+      const acctName = r.account_name || r.accountname || '';
+      const ssoLogin = r.rep_sso_login || r.rep_sso || r.sso_login || r.rep_email || '';
+      const repEmail = r.rep_email_crm || r.rep_email || r.crm_email || '';
+      const repName  = r.rep_name || r.repname || '';
+
+      if (!acctId || !acctName || !ssoLogin || !ssoLogin.includes('@')) continue;
+
+      let finalRepName = repName;
+      if (!finalRepName || finalRepName.startsWith('=') || !finalRepName.match(/[a-z]/i)) {
+        finalRepName = ssoLogin.split('@')[0].split('.').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
+      }
+
+      assignments.push({
+        play_id:       currentPlayDef.play_id,
+        play_name:     currentPlayDef.play_name,
+        account_id:    acctId,
+        account_name:  acctName,
+        rep_sso_login: ssoLogin.toLowerCase(),
+        rep_name:      finalRepName,
+        rep_email:     repEmail ? repEmail.toLowerCase() : ssoLogin.toLowerCase(),
+        arr:           r.arr || '',
+        active:        r.active !== undefined ? r.active : 'Yes',
+      });
+    }
+
+    if (assignments.length === 0) { log('err', 'No valid rows found. Check that SSO Login column contains email addresses.'); return; }
+    log('ok', `Parsed ${assignments.length} accounts from pasted data.`);
+    parsedAssignments = assignments;
+    renderPreview(assignments);
   }
 
   // ── Step 3: File Handling ─────────────────────────────────────────────────
