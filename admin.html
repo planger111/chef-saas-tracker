@@ -26,7 +26,7 @@
         <div class="admin-header-title" style="cursor:pointer;" onclick="window.location.href='app.html'" title="Go to Rep App">📊 Admin — Motion Log</div>
         <div class="admin-header-right">
           <span id="admin-user-name"></span><br />
-          <a href="app.html" style="font-weight:600;">🏠 Home</a> · <a href="#" id="btn-sign-out">Sign out</a> · <a href="ingest.html" style="background:#0078d4;color:#fff;padding:3px 10px;border-radius:5px;text-decoration:none;font-weight:600;">⬆️ Upload Accounts</a>
+          <a href="app.html" style="font-weight:600;">🏠 Home</a> · <a href="#" id="btn-sign-out">Sign out</a> · <a href="ingest.html" style="background:#0078d4;color:#fff;padding:3px 10px;border-radius:5px;text-decoration:none;font-weight:600;">⬆️ Upload Accounts</a> · <button id="btn-export-all" onclick="exportAll()" style="background:#107c10;color:#fff;padding:3px 10px;border-radius:5px;font-weight:600;border:none;cursor:pointer;font-size:13px;">⬇️ Export All</button>
         </div>
       </div>
 
@@ -38,6 +38,9 @@
         <button class="admin-tab" data-tab="plays" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">🗂️ Plays</button>
         <button class="admin-tab" data-tab="accounts" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">👥 Accounts</button>
         <button class="admin-tab" data-tab="invite" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">✉️ Invite</button>
+        <button class="admin-tab" data-tab="health" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">🚦 Health</button>
+        <button class="admin-tab" data-tab="coverage" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">📊 Coverage</button>
+        <button class="admin-tab" data-tab="broadcast" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">📣 Broadcast</button>
       </div>
 
       <!-- Activity Log Tab Panel -->
@@ -135,10 +138,11 @@
                 <th style="padding:10px 8px;">Level</th>
                 <th style="padding:10px 8px; text-align:right;">Points</th>
                 <th style="padding:10px 8px; text-align:right;">Accounts</th>
+                <th style="padding:10px 8px; text-align:right;">Last Active</th>
               </tr>
             </thead>
             <tbody id="leaderboard-body">
-              <tr><td colspan="5" style="padding:20px; text-align:center; color:#aaa;">Click Refresh to load leaderboard</td></tr>
+              <tr><td colspan="6" style="padding:20px; text-align:center; color:#aaa;">Click Refresh to load leaderboard</td></tr>
             </tbody>
           </table>
         </div>
@@ -295,6 +299,67 @@
           </div>
         </div>
       </div><!-- /#tab-invite -->
+
+      <!-- ── Health Check Tab ── -->
+      <div id="tab-health" class="admin-tab-panel" style="display:none;">
+        <div id="health-check-content">
+          <div style="text-align:center;padding:32px;"><div class="spinner"></div></div>
+        </div>
+      </div><!-- /#tab-health -->
+
+      <!-- ── Coverage Report Tab ── -->
+      <div id="tab-coverage" class="admin-tab-panel" style="display:none;">
+        <div id="coverage-content">
+          <div style="text-align:center;padding:32px;"><div class="spinner"></div></div>
+        </div>
+      </div><!-- /#tab-coverage -->
+
+      <!-- ── Broadcast Tab ── -->
+      <div id="tab-broadcast" class="admin-tab-panel" style="display:none;">
+        <div style="max-width:780px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+            <h3 style="margin:0;">📣 Broadcast Update</h3>
+            <button onclick="loadBroadcastTab()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:8px 14px;border-radius:6px;font-size:14px;cursor:pointer;">🔄 Refresh</button>
+          </div>
+
+          <!-- Editable fields -->
+          <div style="background:#f8faff;border:1px solid #d0e4f7;border-radius:10px;padding:18px 20px;margin-bottom:16px;">
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div>
+                <label style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;display:block;margin-bottom:4px;">Subject Line</label>
+                <input id="broadcast-subject" type="text" value="🏆 Chef SaaS Tracker — Mid-Quarter Update" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;box-sizing:border-box;">
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;display:block;margin-bottom:4px;">Opening Message</label>
+                <textarea id="broadcast-opening" rows="2" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;resize:vertical;box-sizing:border-box;">Great work this quarter! Here's where things stand:</textarea>
+              </div>
+              <div>
+                <label style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;display:block;margin-bottom:4px;">Closing Message</label>
+                <textarea id="broadcast-closing" rows="2" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;resize:vertical;box-sizing:border-box;">Keep up the great work. Every pitch counts! 💪</textarea>
+              </div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
+              <button onclick="refreshBroadcastPreview()" style="background:#0078d4;color:#fff;border:none;padding:9px 18px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">🔄 Update Preview</button>
+              <button onclick="copyBroadcastMessage()" style="background:#107c10;color:#fff;border:none;padding:9px 18px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Message</button>
+              <span id="broadcast-copy-confirm" style="font-size:13px;color:#107c10;align-self:center;display:none;">✓ Copied!</span>
+            </div>
+          </div>
+
+          <!-- Live leaderboard preview -->
+          <div style="margin-bottom:16px;">
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:8px;">Live Leaderboard (Top 10)</div>
+            <div id="broadcast-leaderboard-preview" style="background:#fff;border:1px solid #e9ecef;border-radius:8px;overflow:hidden;">
+              <div style="text-align:center;padding:24px;color:#aaa;">Loading…</div>
+            </div>
+          </div>
+
+          <!-- Message preview -->
+          <div>
+            <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:8px;">Message Preview</div>
+            <div id="broadcast-message-preview" style="background:#f8faff;border:1px solid #d0e4f7;border-radius:10px;padding:20px 24px;font-size:14px;line-height:1.7;white-space:pre-wrap;font-family:inherit;min-height:200px;"></div>
+          </div>
+        </div>
+      </div><!-- /#tab-broadcast -->
 
   <!-- Scripts -->
   <script src="msal-browser.js"></script>
@@ -582,21 +647,40 @@
         if (tab.dataset.tab === 'plays') loadPlaysTab();
         if (tab.dataset.tab === 'accounts') loadAccountsTab();
         if (tab.dataset.tab === 'invite') loadInviteTab();
+        if (tab.dataset.tab === 'health') loadHealthTab();
+        if (tab.dataset.tab === 'coverage') loadCoverageTab();
+        if (tab.dataset.tab === 'broadcast') loadBroadcastTab();
       });
     });
 
     async function loadLeaderboardTab() {
       const tbody = document.getElementById('leaderboard-body');
       const playFilter = document.getElementById('lb-filter-play').value || undefined;
-      tbody.innerHTML = '<tr><td colspan="5" style="padding:20px; text-align:center;"><div class="spinner"></div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" style="padding:20px; text-align:center;"><div class="spinner"></div></td></tr>';
 
       try {
         const data = await getLeaderboard(playFilter);
         const currentEmail = getCurrentUser()?.email || '';
 
         if (!data || data.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" style="padding:20px; text-align:center; color:#aaa;">No data found.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" style="padding:20px; text-align:center; color:#aaa;">No data found.</td></tr>';
           return;
+        }
+
+        // Compute last active date per rep from motion log
+        const lastActiveByRep = {};
+        (_allData || []).forEach(r => {
+          const key = (r.rep_sso_login || r.rep_email || '').toLowerCase();
+          if (!key) return;
+          const d = r.submitted_at || '';
+          if (!lastActiveByRep[key] || d > lastActiveByRep[key]) lastActiveByRep[key] = d;
+        });
+
+        function fmtLastActive(dateStr) {
+          if (!dateStr) return '—';
+          try {
+            return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          } catch(e) { return dateStr.slice(0,10) || '—'; }
         }
 
         const rankEmoji = (i) => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
@@ -604,16 +688,19 @@
         tbody.innerHTML = data.map((rep, i) => {
           const level = getLevel(rep.totalPoints);
           const isCurrent = rep.email && rep.email.toLowerCase() === currentEmail.toLowerCase();
+          const repKey = (rep.email || rep.repName || '').toLowerCase();
+          const lastActive = lastActiveByRep[repKey] || '—';
           return `<tr class="${isCurrent ? 'leaderboard-row current-user' : 'leaderboard-row'}" style="border-bottom:1px solid #f0f0f0; ${isCurrent ? 'background:#fff8e1;' : ''}">
             <td style="padding:10px 8px; font-size:18px;">${rankEmoji(i)}</td>
             <td style="padding:10px 8px; font-weight:600;">${escHtml(rep.repName)}</td>
             <td style="padding:10px 8px;">${level.badge} ${escHtml(level.name)}</td>
             <td style="padding:10px 8px; text-align:right; font-weight:700; color:#0078d4;">${rep.totalPoints} pts</td>
             <td style="padding:10px 8px; text-align:right;">${rep.completedAccounts} accounts</td>
+            <td style="padding:10px 8px; text-align:right; color:#888;">${fmtLastActive(lastActive)}</td>
           </tr>`;
         }).join('');
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="5" style="padding:20px; text-align:center; color:#d32f2f;">Error: ${escHtml(err.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="padding:20px; text-align:center; color:#d32f2f;">Error: ${escHtml(err.message)}</td></tr>`;
       }
     }
 
@@ -1142,6 +1229,382 @@ Let's go! 🚀`;
         statusEl.style.background = '#fde8e8';
         statusEl.style.color = '#c00';
         statusEl.textContent = '✗ Save failed: ' + e.message;
+      }
+    }
+    // ── Health Check Tab ──────────────────────────────────────────────────────
+    async function loadHealthTab() {
+      const wrap = document.getElementById('health-check-content');
+      wrap.innerHTML = '<div style="text-align:center;padding:32px;"><div class="spinner"></div><p style="color:#888;margin-top:12px;">Running health checks…</p></div>';
+      try {
+        const appUrl = window.location.origin + window.location.pathname.replace('admin.html', 'app.html');
+        const results = [];
+
+        // 1. IT Admin Consent
+        let consentOk = false;
+        try {
+          await getPlayAssignments(null);
+          consentOk = true;
+        } catch(e) {
+          const msg = (e.message || '').toLowerCase();
+          consentOk = !(msg.includes('401') || msg.includes('403') || msg.includes('unauthorized') || msg.includes('forbidden') || msg.includes('consent'));
+        }
+        results.push({
+          ok: consentOk,
+          label: 'IT Admin Consent',
+          desc: consentOk ? 'Graph API access granted.' : '❌ Admin consent not granted. Ask your IT admin to grant consent at: <a href="https://portal.azure.com" target="_blank">Azure Portal</a> → App Registrations → API Permissions → Grant Admin Consent.'
+        });
+
+        // 2. Plays configured
+        let playsOk = false;
+        try {
+          const pc = await getPlaysConfig();
+          playsOk = (pc.plays || []).filter(p => p.active !== false).length > 0;
+        } catch(e) {}
+        results.push({
+          ok: playsOk,
+          label: 'Plays Configured',
+          desc: playsOk ? 'At least one active play found.' : '❌ No active plays. Go to <a href="ingest.html">Upload Accounts</a> to create a play.'
+        });
+
+        // 3. Accounts uploaded
+        let accountsOk = false;
+        let assignments = [];
+        try {
+          assignments = await getPlayAssignments(null);
+          accountsOk = assignments.length > 0;
+        } catch(e) {}
+        results.push({
+          ok: accountsOk,
+          label: 'Accounts Uploaded',
+          desc: accountsOk ? `${assignments.length} account assignment${assignments.length !== 1 ? 's' : ''} found.` : '❌ No accounts found in assignments.json. Upload accounts via <a href="ingest.html">the ingest tool</a>.'
+        });
+
+        // 4. Response options set
+        let optionsOk = false;
+        try {
+          const ro = await getFullResponseConfig();
+          optionsOk = (ro.options || []).filter(o => o.active_flag !== false).length > 0;
+        } catch(e) {}
+        results.push({
+          ok: optionsOk,
+          label: 'Response Options Configured',
+          desc: optionsOk ? 'Response options are set.' : '❌ No response options found. Go to the ⚙️ Response Options tab to configure them (or upload accounts to auto-seed defaults).'
+        });
+
+        // 5. App URL
+        results.push({
+          ok: true,
+          label: 'App URL',
+          desc: `Share this with reps: <a href="${appUrl}" target="_blank">${appUrl}</a>`
+        });
+
+        const checklistHtml = results.map(r => `
+          <div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;background:#fff;border-radius:8px;border:1px solid ${r.ok ? '#c3e6cb' : '#f5c6cb'};margin-bottom:10px;">
+            <span style="font-size:22px;flex-shrink:0;margin-top:2px;">${r.ok ? '✅' : '❌'}</span>
+            <div>
+              <div style="font-weight:700;font-size:14px;color:${r.ok ? '#155724' : '#721c24'};margin-bottom:3px;">${escHtml(r.label)}</div>
+              <div style="font-size:13px;color:#555;line-height:1.5;">${r.desc}</div>
+            </div>
+          </div>`).join('');
+
+        // Rep Readiness section
+        let readinessHtml = '';
+        if (assignments.length > 0) {
+          const repMap = {};
+          assignments.forEach(a => {
+            const key = a.rep_sso_login || a.rep_email || '';
+            if (!repMap[key]) repMap[key] = { name: a.rep_name || key, sso: key, accounts: 0, engagements: 0 };
+            repMap[key].accounts++;
+          });
+          (_allData || []).forEach(e => {
+            const key = (e.rep_sso_login || e.rep_email || '').toLowerCase();
+            if (repMap[key]) repMap[key].engagements++;
+          });
+          const reps = Object.values(repMap).sort((a, b) => a.engagements - b.engagements);
+          const repRows = reps.map(r => {
+            const hasActivity = r.engagements > 0;
+            return `<tr style="border-bottom:1px solid #f0f0f0;${!hasActivity ? 'background:#fffbeb;' : ''}">
+              <td style="padding:9px 8px;font-weight:600;">${escHtml(r.name)}</td>
+              <td style="padding:9px 8px;font-family:monospace;font-size:12px;color:#888;">${escHtml(r.sso)}</td>
+              <td style="padding:9px 8px;text-align:center;">${r.accounts}</td>
+              <td style="padding:9px 8px;text-align:center;">${r.engagements}</td>
+              <td style="padding:9px 8px;">${hasActivity ? '<span style="color:#107c10;font-weight:600;">✅ Active</span>' : '<span style="color:#f59e0b;font-weight:600;">⚠️ No activity yet</span>'}</td>
+            </tr>`;
+          }).join('');
+          readinessHtml = `
+            <div style="margin-top:28px;">
+              <div style="font-size:14px;font-weight:700;color:#333;margin-bottom:12px;">👥 Rep Readiness</div>
+              <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                  <thead>
+                    <tr style="background:#f8f9fa;text-align:left;">
+                      <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Rep Name</th>
+                      <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">SSO Login</th>
+                      <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;text-align:center;">Accounts Assigned</th>
+                      <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;text-align:center;">Engagements Logged</th>
+                      <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>${repRows}</tbody>
+                </table>
+              </div>
+            </div>`;
+        }
+
+        wrap.innerHTML = `
+          <div style="max-width:760px;">
+            <h3 style="margin:0 0 16px;font-size:16px;color:#333;">System Health Checklist</h3>
+            ${checklistHtml}
+            ${readinessHtml}
+          </div>`;
+      } catch(e) {
+        wrap.innerHTML = `<div style="color:#d32f2f;padding:16px;">Error running health check: ${escHtml(e.message)}</div>`;
+      }
+    }
+
+    // ── Coverage Report Tab ───────────────────────────────────────────────────
+    async function loadCoverageTab() {
+      const wrap = document.getElementById('coverage-content');
+      wrap.innerHTML = '<div style="text-align:center;padding:32px;"><div class="spinner"></div><p style="color:#888;margin-top:12px;">Loading coverage data…</p></div>';
+      try {
+        const [assignments, playsConfig] = await Promise.all([
+          getPlayAssignments(null),
+          getPlaysConfig()
+        ]);
+        const engagements = _allData || [];
+        const plays = (playsConfig.plays || []);
+
+        const engByAccount = {};
+        engagements.forEach(e => {
+          if (!engByAccount[e.account_id]) engByAccount[e.account_id] = [];
+          engByAccount[e.account_id].push(e);
+        });
+
+        const totalAccounts    = assignments.length;
+        const totalReps        = new Set(assignments.map(a => a.rep_sso_login || a.rep_email)).size;
+        const totalEngagements = engagements.length;
+        const touchedAccounts  = assignments.filter(a => (engByAccount[a.account_id] || []).length > 0).length;
+        const overallCoverage  = totalAccounts > 0 ? Math.round((touchedAccounts / totalAccounts) * 100) : 0;
+
+        const summaryHtml = `
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px;">
+            <div style="background:#fff;border-radius:10px;padding:18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+              <div style="font-size:28px;font-weight:800;color:#0078d4;">${totalAccounts}</div>
+              <div style="font-size:12px;color:#666;margin-top:4px;">Total Accounts</div>
+            </div>
+            <div style="background:#fff;border-radius:10px;padding:18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+              <div style="font-size:28px;font-weight:800;color:#0078d4;">${totalReps}</div>
+              <div style="font-size:12px;color:#666;margin-top:4px;">Total Reps</div>
+            </div>
+            <div style="background:#fff;border-radius:10px;padding:18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+              <div style="font-size:28px;font-weight:800;color:#0078d4;">${totalEngagements}</div>
+              <div style="font-size:12px;color:#666;margin-top:4px;">Total Engagements</div>
+            </div>
+            <div style="background:#fff;border-radius:10px;padding:18px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+              <div style="font-size:28px;font-weight:800;color:${overallCoverage >= 75 ? '#107c10' : overallCoverage >= 40 ? '#f59e0b' : '#d32f2f'};">${overallCoverage}%</div>
+              <div style="font-size:12px;color:#666;margin-top:4px;">Overall Coverage</div>
+            </div>
+          </div>`;
+
+        const playRows = plays.map(p => {
+          const playAccts = assignments.filter(a => a.play_id === p.play_id);
+          const playReps  = new Set(playAccts.map(a => a.rep_sso_login || a.rep_email)).size;
+          const playEngs  = engagements.filter(e => e.play_id === p.play_id).length;
+          const touched   = playAccts.filter(a => (engByAccount[a.account_id] || []).some(e => e.play_id === p.play_id)).length;
+          const cov       = playAccts.length > 0 ? Math.round((touched / playAccts.length) * 100) : 0;
+          const covColor  = cov >= 75 ? '#107c10' : cov >= 40 ? '#f59e0b' : '#d32f2f';
+          return `<tr style="border-bottom:1px solid #f0f0f0;">
+            <td style="padding:10px 8px;font-weight:600;">${escHtml(p.play_name)}</td>
+            <td style="padding:10px 8px;text-align:center;">${playAccts.length}</td>
+            <td style="padding:10px 8px;text-align:center;">${touched}</td>
+            <td style="padding:10px 8px;text-align:center;font-weight:700;color:${covColor};">${cov}%</td>
+            <td style="padding:10px 8px;text-align:center;">${playReps}</td>
+            <td style="padding:10px 8px;text-align:center;">${playEngs}</td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="6" style="padding:20px;text-align:center;color:#aaa;">No plays found</td></tr>';
+
+        const playTableHtml = `
+          <div style="margin-bottom:28px;">
+            <div style="font-size:14px;font-weight:700;color:#333;margin-bottom:10px;">📋 Per-Play Breakdown</div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                <thead>
+                  <tr style="background:#f8f9fa;text-align:left;">
+                    <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Play</th>
+                    <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;text-align:center;">Total Accounts</th>
+                    <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;text-align:center;">Accounts Touched</th>
+                    <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;text-align:center;">Coverage %</th>
+                    <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;text-align:center;">Reps</th>
+                    <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;text-align:center;">Engagements</th>
+                  </tr>
+                </thead>
+                <tbody>${playRows}</tbody>
+              </table>
+            </div>
+          </div>`;
+
+        const repMap = {};
+        assignments.forEach(a => {
+          const key  = (a.rep_sso_login || a.rep_email || '').toLowerCase();
+          const pkey = a.play_id || '';
+          const rkey = key + '|' + pkey;
+          if (!repMap[rkey]) repMap[rkey] = { rep: a.rep_name || key, sso: key, play: a.play_name || pkey, accounts: 0, touched: 0, lastActivity: '' };
+          repMap[rkey].accounts++;
+          const acctEngs = (engByAccount[a.account_id] || []).filter(e => e.play_id === pkey);
+          if (acctEngs.length > 0) repMap[rkey].touched++;
+          acctEngs.forEach(e => {
+            if (e.submitted_at > repMap[rkey].lastActivity) repMap[rkey].lastActivity = e.submitted_at;
+          });
+        });
+        const repRows2 = Object.values(repMap).sort((a, b) => (a.touched / (a.accounts || 1)) - (b.touched / (b.accounts || 1))).map(r => {
+          const cov      = r.accounts > 0 ? Math.round((r.touched / r.accounts) * 100) : 0;
+          const covColor = cov >= 75 ? '#107c10' : cov >= 40 ? '#f59e0b' : '#d32f2f';
+          const isZero   = r.touched === 0;
+          const lastAct  = r.lastActivity ? new Date(r.lastActivity).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '—';
+          return `<tr style="border-bottom:1px solid #f0f0f0;${isZero ? 'background:#fffbeb;' : ''}">
+            <td style="padding:9px 8px;font-weight:600;">${escHtml(r.rep)}</td>
+            <td style="padding:9px 8px;">${escHtml(r.play)}</td>
+            <td style="padding:9px 8px;text-align:center;">${r.accounts}</td>
+            <td style="padding:9px 8px;text-align:center;">${r.touched}</td>
+            <td style="padding:9px 8px;text-align:center;font-weight:700;color:${covColor};">${cov}%</td>
+            <td style="padding:9px 8px;text-align:center;color:#888;">${lastAct}</td>
+          </tr>`;
+        }).join('') || '<tr><td colspan="6" style="padding:20px;text-align:center;color:#aaa;">No rep data</td></tr>';
+
+        const repTableHtml = `
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#333;margin-bottom:10px;">👤 Per-Rep Detail <span style="font-size:12px;font-weight:400;color:#f59e0b;">(⚠️ highlighted = zero activity)</span></div>
+            <div style="overflow-x:auto;">
+              <table style="width:100%;border-collapse:collapse;font-size:14px;">
+                <thead>
+                  <tr style="background:#f8f9fa;text-align:left;">
+                    <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Rep</th>
+                    <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Play</th>
+                    <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;text-align:center;">Accounts</th>
+                    <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;text-align:center;">Touched</th>
+                    <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;text-align:center;">Coverage %</th>
+                    <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;text-align:center;">Last Activity</th>
+                  </tr>
+                </thead>
+                <tbody>${repRows2}</tbody>
+              </table>
+            </div>
+          </div>`;
+
+        wrap.innerHTML = summaryHtml + playTableHtml + repTableHtml;
+      } catch(e) {
+        wrap.innerHTML = `<div style="color:#d32f2f;padding:16px;">Error loading coverage: ${escHtml(e.message)}</div>`;
+      }
+    }
+
+    // ── Broadcast Tab ─────────────────────────────────────────────────────────
+    let _broadcastData = [];
+
+    async function loadBroadcastTab() {
+      _broadcastData = [];
+      const lbWrap = document.getElementById('broadcast-leaderboard-preview');
+      lbWrap.innerHTML = '<div style="text-align:center;padding:24px;color:#aaa;"><div class="spinner"></div></div>';
+      try {
+        const data = await getLeaderboard();
+        _broadcastData = data || [];
+        const top10 = data.slice(0, 10);
+        const rankEmoji = (i) => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+        lbWrap.innerHTML = top10.map((rep, i) => {
+          const level = getLevel(rep.totalPoints);
+          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #f0f0f0;">
+            <span style="font-size:18px;width:32px;text-align:center;flex-shrink:0;">${rankEmoji(i)}</span>
+            <div style="flex:1;font-weight:600;">${escHtml(rep.repName)}</div>
+            <span style="font-size:13px;color:#888;">${level.badge} ${escHtml(level.name)}</span>
+            <span style="font-weight:700;color:#0078d4;">${rep.totalPoints} pts</span>
+          </div>`;
+        }).join('') || '<div style="padding:20px;text-align:center;color:#aaa;">No data yet</div>';
+        refreshBroadcastPreview();
+      } catch(e) {
+        lbWrap.innerHTML = `<div style="padding:16px;color:#d32f2f;">Error: ${escHtml(e.message)}</div>`;
+      }
+    }
+
+    function refreshBroadcastPreview() {
+      const subject = document.getElementById('broadcast-subject')?.value || '🏆 Chef SaaS Tracker — Mid-Quarter Update';
+      const opening = document.getElementById('broadcast-opening')?.value || '';
+      const closing = document.getElementById('broadcast-closing')?.value || '';
+      const rankLabels = ['🥇', '🥈', '🥉'];
+      const standings = _broadcastData.slice(0, 10).map((rep, i) => {
+        const level  = getLevel(rep.totalPoints);
+        const prefix = i < 3 ? rankLabels[i] : `  #${i+1}`;
+        return `${prefix} ${rep.repName} — ${rep.totalPoints} pts (${level.name})`;
+      }).join('\n');
+
+      const msg = `${subject}\n\n${opening}\n\nCurrent Standings:\n${standings || '(No data yet)'}\n\n${closing}\n\nKeep pitching! 🚀`;
+      const el = document.getElementById('broadcast-message-preview');
+      if (el) el.textContent = msg;
+    }
+
+    function copyBroadcastMessage() {
+      refreshBroadcastPreview();
+      const text = document.getElementById('broadcast-message-preview')?.textContent || '';
+      navigator.clipboard.writeText(text).then(() => {
+        const el = document.getElementById('broadcast-copy-confirm');
+        if (el) { el.style.display = 'inline'; setTimeout(() => el.style.display = 'none', 2500); }
+      });
+    }
+
+    // ── Export All ────────────────────────────────────────────────────────────
+    async function exportAll() {
+      const btn = document.getElementById('btn-export-all');
+      btn.textContent = '⏳ Exporting…';
+      btn.disabled = true;
+      try {
+        const [assignments, playsConfig] = await Promise.all([
+          getPlayAssignments(null),
+          getPlaysConfig()
+        ]);
+        const plays       = playsConfig.plays || [];
+        const engagements = _allData || [];
+
+        const wb = XLSX.utils.book_new();
+
+        const playsData = plays.map(p => ({
+          play_id:        p.play_id,
+          play_name:      p.play_name,
+          active:         p.active !== false ? 'Yes' : 'No',
+          goal:           p.goal || '',
+          icp:            p.icp || '',
+          target_persona: p.target_persona || ''
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(playsData.length ? playsData : [{}]), 'Plays');
+
+        const acctData = assignments.map(a => ({
+          account_name:  a.account_name,
+          account_id:    a.account_id,
+          rep_name:      a.rep_name,
+          rep_sso_login: a.rep_sso_login || a.rep_email,
+          play_name:     a.play_name,
+          arr:           a.arr,
+          active:        a.active || 'Yes'
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(acctData.length ? acctData : [{}]), 'Accounts');
+
+        const engData = engagements.map(e => ({
+          submitted_at:     e.submitted_at,
+          rep_name:         e.rep_name,
+          account_name:     e.account_name,
+          play_name:        e.play_name,
+          outcome:          e.outcome,
+          reason:           e.reason_label || e.reason || '',
+          interaction_type: e.interaction_type || '',
+          next_step:        e.next_step_type || e.next_step || '',
+          points:           e.points_earned || e.points || ''
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(engData.length ? engData : [{}]), 'Engagements');
+
+        const today = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(wb, `tracker-export-${today}.xlsx`);
+      } catch(e) {
+        alert('Export failed: ' + e.message);
+      } finally {
+        btn.textContent = '⬇️ Export All';
+        btn.disabled = false;
       }
     }
   </script>

@@ -60,6 +60,7 @@
       <button id="btn-sign-out-header" class="btn btn-secondary" style="font-size:12px;padding:4px 10px;">Sign Out</button>
     </div>
 
+    <div id="bookmark-banner-wrap"></div>
     <div style="padding:16px;max-width:480px;margin:0 auto;">
 
       <!-- User greeting -->
@@ -1155,13 +1156,50 @@
     // ─────────────────────────────────────────────
     // INIT
     // ─────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // ONBOARDING + BOOKMARK BANNER
+    // ─────────────────────────────────────────────
+    function showOnboardingIfNeeded() {
+      if (localStorage.getItem('tracker_onboarded')) return;
+      const modal = document.getElementById('onboarding-modal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function showBookmarkBannerIfNeeded() {
+      if (localStorage.getItem('tracker_bookmark_dismissed')) return;
+      const wrap = document.getElementById('bookmark-banner-wrap');
+      if (!wrap) return;
+      wrap.innerHTML = `
+        <div style="background:#fffbeb;border-bottom:1px solid #fcd34d;padding:10px 16px;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span>📌 <strong>Bookmark this page</strong> so you can find it easily!</span>
+          <span style="color:#888;font-size:12px;">On mobile: tap Share → Add to Home Screen</span>
+          <button id="btn-dismiss-bookmark" style="margin-left:auto;background:none;border:none;font-size:18px;cursor:pointer;color:#888;line-height:1;padding:0 4px;">✕</button>
+        </div>`;
+      document.getElementById('btn-dismiss-bookmark').addEventListener('click', () => {
+        localStorage.setItem('tracker_bookmark_dismissed', '1');
+        wrap.innerHTML = '';
+      });
+    }
+
     document.addEventListener('DOMContentLoaded', async () => {
+      // Onboarding modal button
+      const onboardBtn = document.getElementById('btn-onboarding-done');
+      if (onboardBtn) {
+        onboardBtn.addEventListener('click', () => {
+          localStorage.setItem('tracker_onboarded', '1');
+          const modal = document.getElementById('onboarding-modal');
+          if (modal) modal.style.display = 'none';
+        });
+      }
+
       try {
         await initAuth();
         const user = getCurrentUser();
         if (user) {
           currentUser = user;
           await loadDashboard();
+          showOnboardingIfNeeded();
+          showBookmarkBannerIfNeeded();
         } else {
           showScreen('screen-login');
         }
@@ -1172,5 +1210,45 @@
     });
 
   </script>
+
+  <!-- ===================== ONBOARDING MODAL ===================== -->
+  <div id="onboarding-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:20px;max-width:440px;width:100%;padding:32px 28px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:52px;margin-bottom:12px;">🍴</div>
+        <h2 style="margin:0 0 8px;font-size:22px;color:#0078d4;font-weight:800;">Welcome to the Chef SaaS Tracker! 🚀</h2>
+        <p style="margin:0;color:#555;font-size:14px;line-height:1.5;">Log your pitches, earn points, compete with your team.</p>
+      </div>
+
+      <div style="background:#f0f7ff;border-radius:12px;padding:16px 18px;margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#0078d4;margin-bottom:10px;">How Points Work</div>
+        <div style="display:grid;grid-template-columns:1fr auto;gap:6px 12px;align-items:center;font-size:14px;">
+          <span>📞 Not Interested (logged)</span><strong style="text-align:right;color:#555;">15 pts</strong>
+          <span>✅ Interested</span><strong style="text-align:right;color:#0078d4;">30 pts</strong>
+          <span>✅ Interested + next step booked</span><strong style="text-align:right;color:#107c10;">45 pts</strong>
+        </div>
+      </div>
+
+      <div style="background:#f8faff;border-radius:12px;padding:16px 18px;margin-bottom:16px;">
+        <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:10px;">Your Level Journey</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;">
+          <div style="display:flex;justify-content:space-between;"><span>🌱 Rookie</span><span style="color:#888;">0 pts</span></div>
+          <div style="display:flex;justify-content:space-between;"><span>🎯 Pitcher</span><span style="color:#888;">50 pts</span></div>
+          <div style="display:flex;justify-content:space-between;"><span>⭐ Pro</span><span style="color:#888;">150 pts</span></div>
+          <div style="display:flex;justify-content:space-between;"><span>🥇 Champion</span><span style="color:#888;">300 pts</span></div>
+          <div style="display:flex;justify-content:space-between;"><span>🏆 Legend</span><span style="color:#888;">500 pts</span></div>
+        </div>
+      </div>
+
+      <div style="background:#fffbeb;border:2px solid #fcd34d;border-radius:12px;padding:14px 16px;margin-bottom:24px;text-align:center;">
+        <div style="font-size:22px;margin-bottom:4px;">🎁</div>
+        <div style="font-weight:700;font-size:14px;color:#78350f;">Top 3 reps win a special prize!</div>
+        <div style="font-size:12px;color:#92400e;margin-top:2px;">Keep pitching to climb the leaderboard</div>
+      </div>
+
+      <button id="btn-onboarding-done" style="width:100%;padding:16px;background:linear-gradient(135deg,#0078d4,#0056b3);color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;letter-spacing:0.3px;">Let's go! →</button>
+    </div>
+  </div>
+
 </body>
 </html>

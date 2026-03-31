@@ -195,6 +195,9 @@
     </div>
   </div>
 
+  <!-- Warning banner -->
+  <div id="ingest-warnings" style="display:none;background:#fffbeb;border:2px solid #fcd34d;border-radius:8px;padding:12px 16px;margin-bottom:0;font-size:13px;"></div>
+
   <!-- Step 4: Preview & Confirm -->
   <div class="card hidden" id="preview-card">
     <h2><span class="step-num" id="sn4">4</span>Preview &amp; Upload</h2>
@@ -435,7 +438,8 @@
     if (assignments.length === 0) { log('err', 'No valid rows found. Check that SSO Login column contains email addresses.'); return; }
     log('ok', `Parsed ${assignments.length} accounts from pasted data.`);
     parsedAssignments = assignments;
-    renderPreview(assignments);
+    checkForWarnings(assignments);
+    showPreview(assignments);
   }
 
   // ── Step 3: File Handling ─────────────────────────────────────────────────
@@ -523,6 +527,7 @@
 
         parsedAssignments = assignments;
         log('ok', `Parsed ${assignments.length} assignments from "${sheetName}"`);
+        checkForWarnings(assignments);
         markStepDone(3);
         showPreview(assignments);
       } catch(e) {
@@ -533,6 +538,30 @@
   }
 
   // ── Step 4: Preview ───────────────────────────────────────────────────────
+
+  function checkForWarnings(assignments) {
+    const seen = new Set();
+    let dups = 0;
+    let invalidSso = 0;
+    assignments.forEach(a => {
+      const key = ((a.account_id || '') + '|' + (a.rep_sso_login || '')).toLowerCase();
+      if (seen.has(key)) dups++;
+      else seen.add(key);
+      if (!(a.rep_sso_login || '').includes('@')) invalidSso++;
+    });
+    const warns = [];
+    if (dups > 0) warns.push(`⚠️ ${dups} duplicate row${dups > 1 ? 's' : ''} found (same account + rep) — only the last occurrence will be used`);
+    if (invalidSso > 0) warns.push(`⚠️ ${invalidSso} row${invalidSso > 1 ? 's have' : ' has'} an invalid SSO login (missing @)`);
+    const banner = document.getElementById('ingest-warnings');
+    if (!banner) return;
+    if (warns.length > 0) {
+      banner.innerHTML = warns.map(w => `<div style="margin-bottom:4px;">${esc(w)}</div>`).join('');
+      banner.style.display = 'block';
+    } else {
+      banner.innerHTML = '';
+      banner.style.display = 'none';
+    }
+  }
 
   function showPreview(assignments) {
     const reps   = new Set(assignments.map(a => a.rep_sso_login)).size;
