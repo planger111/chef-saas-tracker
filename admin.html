@@ -701,7 +701,7 @@
           const lastActive = lastActiveByRep[repKey] || '—';
           const rankCell = noScore ? rifTaunts[i % rifTaunts.length] : rankEmoji(i);
           const levelCell = noScore
-            ? `<span style="color:#e53e3e;font-weight:600;">⚠️ No Score — Likely on the RIF list...</span>`
+            ? `<span style="color:#e53e3e;font-weight:600;">😶 No Score — Too busy to sell I guess...</span>`
             : `${level.badge} ${escHtml(level.name)}`;
           return `<tr style="border-bottom:1px solid #f0f0f0;${isCurrent ? 'background:#fff8e1;' : ''}${noScore ? 'opacity:0.75;' : ''}">
             <td style="padding:10px 8px; font-size:18px;">${rankCell}</td>
