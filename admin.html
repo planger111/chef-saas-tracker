@@ -194,7 +194,10 @@
       <div id="tab-plays" class="admin-tab-panel" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
           <div style="font-size:13px;color:#555;">All active sales plays. Export engagement data or delete a play and all its assignments.</div>
-          <button onclick="loadPlaysTab()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:8px 14px;border-radius:6px;font-size:14px;cursor:pointer;">🔄 Refresh</button>
+          <div style="display:flex;gap:8px;">
+            <button onclick="loadPlaysTab()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:8px 14px;border-radius:6px;font-size:14px;cursor:pointer;">🔄 Refresh</button>
+            <button onclick="resetAllData()" style="background:#fff0f0;color:#c00;border:1px solid #f5c6cb;padding:8px 14px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">🗑 Reset All Data</button>
+          </div>
         </div>
         <div id="plays-status" style="display:none;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:12px;"></div>
         <div id="plays-table-wrap" style="overflow-x:auto;">
@@ -725,6 +728,28 @@
       } catch(e) {
         statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
         statusEl.textContent = '✗ Delete failed: ' + e.message;
+      }
+    }
+
+    async function resetAllData() {
+      if (!confirm('⚠️ RESET ALL DATA\n\nThis will permanently delete:\n• All plays (plays.json)\n• All account assignments (assignments.json)\n• All response options (response-options.json)\n\nEngagement CSVs on SharePoint are NOT deleted.\n\nAre you sure? This cannot be undone.')) return;
+      if (!confirm('Second confirmation — are you absolutely sure you want to wipe all plays and accounts?')) return;
+      const statusEl = document.getElementById('plays-status');
+      statusEl.style.display = 'block';
+      statusEl.style.background = '#fff3cd'; statusEl.style.color = '#856404';
+      statusEl.textContent = '⏳ Resetting all data…';
+      try {
+        await Promise.all([
+          writeJsonFile('plays.json',            { plays: [] }),
+          writeJsonFile('assignments.json',       { assignments: [] }),
+          writeJsonFile('response-options.json',  { options: [], form_config: {} }),
+        ]);
+        statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
+        statusEl.textContent = '✅ All data reset. You can now upload fresh accounts.';
+        loadPlaysTab();
+      } catch(e) {
+        statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
+        statusEl.textContent = '✗ Reset failed: ' + e.message;
       }
     }
 
