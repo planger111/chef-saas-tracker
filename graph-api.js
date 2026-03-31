@@ -34,11 +34,21 @@ async function getDriveId() {
 async function putFile(filePath, content, contentType) {
   const driveId = await getDriveId();
   const token = await getAccessToken();
-  const resp = await fetch(CONFIG.graphBaseUrl + "/drives/" + driveId + "/root:/" + filePath + ":/content", {
-    method: "PUT", headers: { Authorization: "Bearer " + token, "Content-Type": contentType || "text/plain" }, body: content
-  });
-  if (!resp.ok) { const t = await resp.text(); throw new Error("Upload " + resp.status + ": " + t); }
-  return resp.json();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  try {
+    const resp = await fetch(CONFIG.graphBaseUrl + "/drives/" + driveId + "/root:/" + filePath + ":/content", {
+      method: "PUT", signal: controller.signal,
+      headers: { Authorization: "Bearer " + token, "Content-Type": contentType || "text/plain" }, body: content
+    });
+    if (!resp.ok) { const t = await resp.text(); throw new Error("Upload " + resp.status + ": " + t); }
+    return resp.json();
+  } catch(e) {
+    if (e.name === 'AbortError') throw new Error("Save timed out — check your connection and try again.");
+    throw e;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 async function getFileText(filePath) {

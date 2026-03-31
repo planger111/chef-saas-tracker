@@ -949,7 +949,7 @@
 
         await logEngagement(data);
         lastPointsEarned = calculatePoints(outcome, data.next_step_type);
-        totalPoints      = await getRepPoints(currentUser.email);
+        totalPoints      = (totalPoints || 0) + lastPointsEarned;
         latestLogs[currentAccount.account_id] = { ...data, outcome };
         showConfirm();
 
