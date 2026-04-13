@@ -211,14 +211,14 @@
         <!-- Interested fields -->
         <div id="interested-fields">
           <div class="form-group">
-            <label class="form-label">Interested Reason</label>
-            <select class="form-control" id="field-interested-reason">
+            <label class="form-label">Interested Reason <span style="color:#e53e3e;">*</span></label>
+            <select class="form-control" id="field-interested-reason" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
               <option value="">— Select —</option>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Next Step</label>
-            <select class="form-control" id="field-next-step-type">
+            <label class="form-label">Next Step <span style="color:#e53e3e;">*</span></label>
+            <select class="form-control" id="field-next-step-type" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
               <option value="">— Select —</option>
               <option>Schedule follow-up</option>
               <option>Send information</option>
@@ -229,7 +229,7 @@
           </div>
           <div class="form-group">
             <label class="form-label">Timing</label>
-            <select class="form-control" id="field-timing">
+            <select class="form-control" id="field-timing" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
               <option value="">— Select —</option>
               <option>Now</option>
               <option>This month</option>
@@ -237,58 +237,33 @@
               <option>Later</option>
             </select>
           </div>
-          <div class="form-group">
-            <label class="form-label">Pitch Confidence <span style="font-weight:400;color:#888;">(optional)</span></label>
-            <div class="star-rating-row" id="field-pitch-confidence">
-              <input type="radio" name="pitch-confidence" id="pc1" value="1"><label for="pc1">★</label>
-              <input type="radio" name="pitch-confidence" id="pc2" value="2"><label for="pc2">★</label>
-              <input type="radio" name="pitch-confidence" id="pc3" value="3"><label for="pc3">★</label>
-              <input type="radio" name="pitch-confidence" id="pc4" value="4"><label for="pc4">★</label>
-              <input type="radio" name="pitch-confidence" id="pc5" value="5"><label for="pc5">★</label>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Short Reaction <span style="font-weight:400;color:#888;">(optional)</span></label>
-            <input type="text" class="form-control" id="field-short-reaction" maxlength="100" placeholder="One-line customer reaction…" />
-          </div>
-          <div class="form-group">
-            <label class="form-label">Opportunity ID <span style="font-weight:400;color:#888;">(optional)</span></label>
-            <input type="text" class="form-control" id="field-opportunity-id-int" placeholder="e.g. SFDC opportunity ID…" />
-          </div>
         </div>
 
         <!-- Not Interested fields -->
         <div id="not-interested-fields" style="display:none;">
           <div class="form-group">
-            <label class="form-label">Not Interested Reason</label>
-            <select class="form-control" id="field-not-interested-reason">
+            <label class="form-label">Not Interested Reason <span style="color:#e53e3e;">*</span></label>
+            <select class="form-control" id="field-not-interested-reason" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
               <option value="">— Select —</option>
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Opportunity ID <span style="font-weight:400;color:#888;">(optional)</span></label>
-            <input type="text" class="form-control" id="field-opportunity-id-ni" placeholder="e.g. SFDC opportunity ID…" />
+            <label class="form-label">Revisit Timing <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <select class="form-control" id="field-timing-ni" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>
+              <option>Now</option>
+              <option>This month</option>
+              <option>Next quarter</option>
+              <option>Later</option>
+            </select>
           </div>
         </div>
 
         <!-- Always shown on step 2 -->
         <div class="form-group">
-          <label class="form-label">Contact Level <span style="font-weight:400;color:#888;">(optional)</span></label>
-          <select class="form-control" id="field-contact-level">
-            <option value="">— Select level —</option>
-            <option>Executive</option>
-            <option>Budget Holder</option>
-            <option>Manager</option>
-            <option>Practitioner</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Contact Last Name <span style="font-weight:400;color:#888;">(optional)</span></label>
-          <input type="text" class="form-control" id="field-contact-last-name" placeholder="Last name of person you spoke with…" />
-        </div>
-        <div class="form-group">
           <label class="form-label">Notes <span style="font-weight:400;color:#888;">(optional)</span></label>
-          <textarea class="form-control" id="field-notes" rows="3" placeholder="Any additional context…" style="resize:vertical;"></textarea>
+          <textarea class="form-control" id="field-notes" rows="3" maxlength="120" placeholder="Any additional context…" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;resize:vertical;"></textarea>
+          <div id="notes-char-counter" style="font-size:12px;color:#6b7280;margin-top:4px;text-align:right;">0 / 120 characters</div>
         </div>
 
         <button class="btn btn-primary btn-block" id="btn-submit-engagement" style="margin-top:8px;">Submit ✓</button>
@@ -320,6 +295,9 @@
         <div class="points-earned-number" id="confirm-points-earned">+0 pts</div>
         <div class="points-earned-label">Points Earned</div>
       </div>
+
+      <!-- Qualitative feedback message -->
+      <div id="confirm-feedback-msg" style="display:none;background:#f0f7ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;width:100%;box-sizing:border-box;font-size:15px;font-weight:600;color:#1e40af;text-align:center;"></div>
 
       <!-- Level-up banner (hidden unless levelled up) -->
       <div id="confirm-levelup-banner" style="display:none;background:#fff8e1;border:2px solid #ffd600;border-radius:10px;padding:14px 20px;width:100%;box-sizing:border-box;">
@@ -389,6 +367,7 @@
     let latestLogs     = {};    // {[account_id]: log entry or null}
     let totalPoints    = 0;
     let lastPointsEarned = 0;
+    let lastSubmittedData = null;
     let activeFilter   = 'all'; // 'all' | 'not-started' | 'interested' | 'not-interested'
     let currentStep    = 1;     // current step in log form wizard (1|2)
     const _responseOptionsCache = {};  // keyed by response_set_id
@@ -875,18 +854,14 @@
       // Reset all fields
       document.querySelectorAll('input[name="interaction-type"]').forEach(r => r.checked = false);
       document.querySelectorAll('input[name="outcome"]').forEach(r => r.checked = false);
-      document.querySelectorAll('input[name="pitch-confidence"]').forEach(r => r.checked = false);
-      ['field-not-interested-reason', 'field-interested-reason', 'field-next-step-type', 'field-timing'].forEach(id => {
+      ['field-not-interested-reason', 'field-interested-reason', 'field-next-step-type', 'field-timing', 'field-timing-ni'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
-      ['field-short-reaction', 'field-contact-last-name',
-       'field-opportunity-id-int', 'field-opportunity-id-ni', 'field-notes'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.value = '';
-      });
-      const clEl = document.getElementById('field-contact-level');
-      if (clEl) clEl.value = '';
+      const notesEl = document.getElementById('field-notes');
+      if (notesEl) notesEl.value = '';
+      const counter = document.getElementById('notes-char-counter');
+      if (counter) counter.textContent = '0 / 120 characters';
 
       goToLogStep(1);
       showScreen('screen-log-form');
@@ -942,36 +917,41 @@
       try {
         const nextStepType = document.getElementById('field-next-step-type')?.value || '';
 
+        // Validate required fields by outcome
+        if (outcome === 'Interested') {
+          const intReason = document.getElementById('field-interested-reason')?.value || '';
+          if (!intReason) { alert('Please select an Interested Reason.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
+          if (!nextStepType) { alert('Please select a Next Step.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
+        }
+        if (outcome === 'Not Interested') {
+          const niReason = document.getElementById('field-not-interested-reason')?.value || '';
+          if (!niReason) { alert('Please select a Not Interested Reason.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
+        }
+
         const reasonSelectId = outcome === 'Interested' ? 'field-interested-reason' : 'field-not-interested-reason';
         const reasonSelect   = document.getElementById(reasonSelectId);
         const selectedOption = reasonSelect ? reasonSelect.options[reasonSelect.selectedIndex] : null;
         const reasonLabel    = selectedOption ? (selectedOption.value || '') : '';
         const reasonCode     = selectedOption ? (selectedOption.dataset.reasonCode || '') : '';
 
-        const pitchConfidenceEl = document.querySelector('input[name="pitch-confidence"]:checked');
-        const pitchConfidence   = pitchConfidenceEl ? Number(pitchConfidenceEl.value) : null;
+        const timingVal = outcome === 'Interested'
+          ? (document.getElementById('field-timing')?.value || '')
+          : (document.getElementById('field-timing-ni')?.value || '');
 
         const data = {
-          account_id:        currentAccount.account_id,
-          account_name:      currentAccount.account_name || currentAccount.name || currentAccount.account_id,
-          play_id:           (currentPlay || {}).play_id   || currentAccount.play_id   || '',
-          play_name:         (currentPlay || {}).play_name || currentAccount.play_name || '',
-          rep_email:         currentUser.email,
-          rep_name:          currentUser.name,
-          interaction_type:  interactionType,
+          account_id:       currentAccount.account_id,
+          account_name:     currentAccount.account_name || currentAccount.name || currentAccount.account_id,
+          play_id:          (currentPlay || {}).play_id   || currentAccount.play_id   || '',
+          play_name:        (currentPlay || {}).play_name || currentAccount.play_name || '',
+          rep_email:        currentUser.email,
+          rep_name:         currentUser.name,
+          interaction_type: interactionType,
           outcome,
-          reason_label:      reasonLabel,
-          reason_code:       reasonCode,
-          next_step_type:    outcome === 'Interested' ? nextStepType : '',
-          timing:            outcome === 'Interested' ? (document.getElementById('field-timing')?.value || '') : '',
-          contact_level:     document.getElementById('field-contact-level')?.value || '',
-          contact_last_name: document.getElementById('field-contact-last-name')?.value || '',
-          opportunity_id:    outcome === 'Interested'
-            ? (document.getElementById('field-opportunity-id-int')?.value || '')
-            : (document.getElementById('field-opportunity-id-ni')?.value  || ''),
-          ...(outcome === 'Interested' && pitchConfidence ? { pitch_confidence: pitchConfidence } : {}),
-          ...(outcome === 'Interested' ? { short_reaction: document.getElementById('field-short-reaction')?.value || '' } : {}),
-          notes: document.getElementById('field-notes')?.value || '',
+          reason_label:     reasonLabel,
+          reason_code:      reasonCode,
+          next_step_type:   outcome === 'Interested' ? nextStepType : '',
+          timing:           timingVal,
+          notes:            document.getElementById('field-notes')?.value || '',
         };
 
         // Hard 25s timeout — prevents hanging forever if network/token stalls
@@ -980,9 +960,10 @@
         );
         await Promise.race([logEngagement(data), timeout]);
 
-        lastPointsEarned = calculatePoints(outcome, data.next_step_type);
+        lastPointsEarned = calculatePoints(outcome, data.next_step_type, data);
         totalPoints      = (totalPoints || 0) + lastPointsEarned;
         latestLogs[currentAccount.account_id] = { ...data, outcome };
+        lastSubmittedData = data;
         showConfirm();
 
       } catch (err) {
@@ -994,6 +975,37 @@
       } finally {
         btn.textContent = 'Submit ✓';
         btn.disabled    = false;
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // QUALITATIVE FEEDBACK
+    // ─────────────────────────────────────────────
+    function getQualitativeFeedback(data) {
+      const outcome = data.outcome || '';
+      const nextStep = (data.next_step_type || '').toLowerCase();
+      const reason = (data.reason_label || '').toLowerCase();
+      const notes = (data.notes || '').trim();
+
+      if (outcome === 'Interested') {
+        if (nextStep.includes('schedule follow-up') || nextStep.includes('create opportunity')) {
+          return '🔥 Strong opportunity — clear next step!';
+        }
+        if (reason.includes('active budget') || reason.includes('executive sponsor')) {
+          return '💰 High-value signal — great find!';
+        }
+        if (notes.length > 20) {
+          return '🧠 Good detail captured — this will help the team!';
+        }
+        return '✅ Logged — keep pushing!';
+      } else {
+        if (reason.includes('already have') || reason.includes('already solved')) {
+          return '🧠 Valuable intel captured — good to know the landscape!';
+        }
+        if (notes.length > 20) {
+          return '📋 Good context noted — useful for future outreach!';
+        }
+        return '✔ Logged — move on to the next one!';
       }
     }
 
@@ -1011,6 +1023,12 @@
       document.getElementById('confirm-level-emoji').textContent   = level.badge;
       document.getElementById('confirm-level-name').textContent    = level.name;
       document.getElementById('confirm-total-points').textContent  = totalPoints.toLocaleString();
+
+      const feedbackEl = document.getElementById('confirm-feedback-msg');
+      if (feedbackEl && lastSubmittedData) {
+        feedbackEl.textContent = getQualitativeFeedback(lastSubmittedData);
+        feedbackEl.style.display = 'block';
+      }
 
       // Check if ALL accounts for this play are now engaged
       const playAccounts = repAccounts.filter(a => !currentPlay || a.play_id === currentPlay.play_id);
@@ -1233,6 +1251,10 @@
 
     // Log form — submit engagement (step 2)
     document.getElementById('btn-submit-engagement').addEventListener('click', submitEngagement);
+    document.getElementById('field-notes').addEventListener('input', function() {
+      const counter = document.getElementById('notes-char-counter');
+      if (counter) counter.textContent = this.value.length + ' / 120 characters';
+    });
 
     // ─────────────────────────────────────────────
     // INIT

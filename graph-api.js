@@ -188,15 +188,31 @@ async function saveFullResponseConfig(config) {
 
 // ─── Points ───────────────────────────────────────────────────────────────
 
-function calculatePoints(outcome, nextStepType) {
-  if (outcome === "Not Interested") return 15;
-  if (outcome === "Interested") return nextStepType ? 45 : 30;
-  return 0;
+function calculatePoints(outcome, nextStepType, data) {
+  // Base points
+  let base = 0;
+  if (outcome === 'Not Interested') base = 15;
+  else if (outcome === 'Interested') base = nextStepType ? 45 : 30;
+
+  // Hidden bonus layer
+  let bonus = 0;
+  if (data) {
+    const notes = (data.notes || '').trim();
+    const reasonLabel = (data.reason_label || '').toLowerCase();
+    const nextStep = (data.next_step_type || '').toLowerCase();
+
+    if (notes.length > 20) bonus += 5;
+    if (reasonLabel.includes('active budget') || reasonLabel.includes('executive sponsor')) bonus += 10;
+    if (nextStep.includes('schedule follow-up')) bonus += 10;
+    if (reasonLabel.includes('already have solution') || reasonLabel.includes('already solved')) bonus += 8;
+  }
+
+  return base + bonus;
 }
 
 // ─── CSV helpers ──────────────────────────────────────────────────────────
 
-const CSV_HEADERS = ["id","submitted_at","play_id","play_name","account_id","account_name","rep_email","rep_name","interaction_type","outcome","reason_label","next_step_type","timing","contact_engaged","opportunity_id","pitch_confidence","short_reaction","notes","points_earned"];
+const CSV_HEADERS = ["id","submitted_at","play_id","play_name","account_id","account_name","rep_email","rep_name","interaction_type","outcome","reason_label","reason_code","next_step_type","timing","contact_level","notes","points_earned"];
 
 function csvEscape(val) {
   val = val !== undefined && val !== null ? String(val) : "";
@@ -231,7 +247,7 @@ function parseCSV(text) {
 // ─── Log engagement (append row to play CSV) ──────────────────────────────
 
 async function logEngagement(fields) {
-  const pts = calculatePoints(fields.outcome, fields.next_step_type);
+  const pts = calculatePoints(fields.outcome, fields.next_step_type, fields);
   const entry = { ...fields, id: Date.now().toString(), submitted_at: new Date().toISOString(), points_earned: pts };
   const playId = (fields.play_id || "engagements").replace(/[^a-z0-9]/gi, "_");
   const filePath = SP_ROOT + "/" + playId + "_engagements.csv";
