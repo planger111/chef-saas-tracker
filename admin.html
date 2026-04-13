@@ -962,6 +962,45 @@ Let's go! 🚀`;
       });
     }
 
+    // ── Role-based access control ─────────────────────────────────────────────
+    // owner  : full access — all tabs + destructive actions
+    // manager: read-only — Activity Log, Leaderboard, Coverage, Broadcast, Health
+    const ADMIN_ROLES = {
+      'langer@progress.com':         'owner',
+      'philip.langer@progress.com':  'owner',
+      'kathleen.faria@progress.com': 'manager',
+    };
+    const MANAGER_TABS    = ['activity-log','leaderboard','coverage','broadcast','health'];
+    const OWNER_ONLY_TABS = ['config','plays','accounts','invite'];
+
+    let currentAdminRole = null;
+
+    function applyRoleUI(role) {
+      currentAdminRole = role;
+      // Hide owner-only tabs for managers
+      if (role === 'manager') {
+        OWNER_ONLY_TABS.forEach(tab => {
+          const btn = document.querySelector(`.admin-tab[data-tab="${tab}"]`);
+          if (btn) btn.style.display = 'none';
+        });
+        // Hide destructive buttons
+        ['btn-export-all'].forEach(id => {
+          const el = document.getElementById(id);
+          // keep export for managers — hide upload only
+        });
+        const uploadLink = document.querySelector('a[href="ingest.html"]');
+        if (uploadLink) uploadLink.style.display = 'none';
+      }
+      // Add role badge next to name
+      const nameEl = document.getElementById('admin-user-name');
+      if (nameEl) {
+        const badge = role === 'owner'
+          ? '<span style="margin-left:8px;background:#0078d4;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;">👑 Owner</span>'
+          : '<span style="margin-left:8px;background:#107c10;color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;">📊 Manager</span>';
+        nameEl.insertAdjacentHTML('afterend', badge);
+      }
+    }
+
     (async () => {
       try {
         const account = await initAuth();
@@ -972,6 +1011,22 @@ Let's go! 🚀`;
         const user = getCurrentUser();
         if (user) document.getElementById("admin-user-name").textContent = user.name;
 
+        // Check role
+        const emailLower = (user?.email || '').toLowerCase();
+        const role = ADMIN_ROLES[emailLower];
+        if (!role) {
+          // Not an admin at all — block access
+          document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">
+            <div style="text-align:center;padding:40px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);max-width:400px;">
+              <div style="font-size:48px;margin-bottom:16px;">🚫</div>
+              <h2 style="color:#d32f2f;margin-bottom:8px;">Access Denied</h2>
+              <p style="color:#666;">Your account (<strong>${escHtml(user?.email||'')}</strong>) does not have admin access.</p>
+              <a href="app.html" style="display:inline-block;margin-top:20px;background:#0078d4;color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;">Go to Rep App</a>
+            </div>
+          </div>`;
+          return;
+        }
+        applyRoleUI(role);
         showScreen("screen-main");
 
         _allData = await getMotionLog({});
