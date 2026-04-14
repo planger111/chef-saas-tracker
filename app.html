@@ -599,6 +599,16 @@
         // Render points card
         renderPointsCard(totalPoints);
 
+        // If only one play, skip the dashboard and go straight to it
+        if (allPlays.length === 1) {
+          currentPlay  = allPlays[0];
+          activeFilter = 'all';
+          if (currentUser.oid) registerOID(currentUser.username, currentUser.oid).catch(() => {});
+          logActivity(currentUser, 'login', 'dashboard').catch(() => {});
+          await loadPlayDetail(allPlays[0]);
+          return;
+        }
+
         // Render plays
         renderPlayCards(logResults);
 
@@ -640,14 +650,6 @@
       const container = document.getElementById('dashboard-plays-list');
       if (!allPlays.length) {
         container.innerHTML = '<div style="text-align:center;color:#999;padding:24px;">No plays assigned yet — check back soon.</div>';
-        return;
-      }
-
-      // If only one play, skip the dashboard and go straight to accounts
-      if (allPlays.length === 1) {
-        currentPlay  = allPlays[0];
-        activeFilter = 'all';
-        loadPlayDetail(allPlays[0]);
         return;
       }
 
