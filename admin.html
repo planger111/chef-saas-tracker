@@ -908,10 +908,14 @@
             </td>
             <td style="padding:10px 8px;">
               <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <a href="ingest.html?play=${escHtml(p.play_id)}&mode=config"
+                  style="background:#e8f0fe;border:1px solid #c3d4f7;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;text-decoration:none;color:#1a56db;">✏️ Edit Play</a>
+                <a href="ingest.html?play=${escHtml(p.play_id)}&mode=accounts"
+                  style="background:#e8f5e9;border:1px solid #a7d7a9;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;text-decoration:none;color:#107c10;">➕ Add Targets</a>
                 <button onclick="exportPlayEngagements('${escHtml(p.play_id)}','${escHtml(p.play_name)}')"
-                  style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;">⬇️ Export CSV</button>
+                  style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;">⬇️ Export</button>
                 <button onclick="togglePlayActive('${escHtml(p.play_id)}', ${!active})"
-                  style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;">${active ? '⏸ Deactivate' : '▶ Activate'}</button>
+                  style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;">${active ? '⏸ Pause' : '▶ Activate'}</button>
                 <button onclick="deletePlay('${escHtml(p.play_id)}','${escHtml(p.play_name)}')"
                   style="background:#fff0f0;border:1px solid #f5c6cb;color:#c00;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;">🗑 Delete</button>
               </div>

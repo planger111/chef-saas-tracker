@@ -302,12 +302,20 @@
 
     <div class="wizard-nav">
       <button class="btn-secondary" onclick="goToStep(1)">← Back to Basics</button>
+      <button class="btn-secondary" id="btn-save-config-only" onclick="savePlayConfigOnly()" style="background:#f0f7ff;color:#0078d4;border-color:#b3d4f5;">💾 Save Config Only</button>
       <button class="btn-primary" id="btn-outcomes-next" onclick="goToStep(3)">Continue to Accounts →</button>
     </div>
   </div>
 
   <!-- Step 3: Accounts -->
   <div class="wizard-panel" id="step-3-panel" style="display:none;">
+
+    <!-- Context banner (shown for existing plays) -->
+    <div id="step3-context-banner" style="display:none;background:#f0f7ff;border:1px solid #c3dafe;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;">
+      <strong id="step3-context-title">Adding targets to:</strong>
+      <span id="step3-context-play" style="font-weight:700;color:#1a56db;margin-left:4px;"></span>
+      <span style="color:#6b7280;margin-left:8px;font-size:12px;">· Play config is already saved — only account assignments will be updated.</span>
+    </div>
 
     <!-- Play summary bar -->
     <div class="play-summary-bar" id="play-summary-bar"></div>
@@ -316,14 +324,14 @@
     <div style="font-size:13px;font-weight:600;margin-bottom:4px;color:#333;">Upload mode</div>
     <div class="upload-mode-rows">
       <label class="upload-mode-row safe">
-        <input type="radio" name="upload-mode" value="merge" checked>
+        <input type="radio" name="upload-mode" value="merge" checked onchange="updateStep3Context()">
         <div>
           <span class="mode-title">Add accounts</span>
           <span class="mode-desc">New accounts added, existing updated, nothing removed</span>
         </div>
       </label>
       <label class="upload-mode-row destructive">
-        <input type="radio" name="upload-mode" value="replace">
+        <input type="radio" name="upload-mode" value="replace" onchange="updateStep3Context()">
         <div>
           <span class="mode-title">Replace all</span>
           <span class="mode-desc">⚠ Removes all existing accounts for this play</span>
@@ -413,6 +421,12 @@
   let selectedGoal = null;
   let existingPlays = [];
   let currentPlayDef = null;
+  let _isExistingPlay = false;  // true when editing/adding to an existing play
+
+  // URL params for deep-linking from admin Plays tab
+  const _urlParams  = new URLSearchParams(location.search);
+  const _urlPlayId  = _urlParams.get('play');
+  const _urlMode    = _urlParams.get('mode') || 'full'; // 'full' | 'config' | 'accounts'
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -504,12 +518,12 @@
     });
     currentStep = n;
     if (n === 3) {
-      // Clear any stale log from earlier sessions
       const inner = document.getElementById('upload-status-inner');
       if (inner) inner.innerHTML = '';
       const statusEl = document.getElementById('upload-status');
       if (statusEl) statusEl.style.display = 'none';
       populateSummaryBar();
+      updateStep3Context();
     }
     window.scrollTo(0, 0);
   }
@@ -544,13 +558,14 @@
     }
   }
 
-  function onSignedIn() {
+  async function onSignedIn() {
     document.getElementById('auth-status').className = 'status-bar status-signed-in';
-    document.getElementById('auth-status').textContent = '✅ Signed in as ' + currentUser.username;
+    document.getElementById('auth-status').textContent = '✅ Signed in as ' + (currentUser.username || currentUser.email);
     document.getElementById('btn-signin').disabled = true;
     document.getElementById('wizard-steps').style.display = 'flex';
-    goToStep(1);
-    loadExistingPlays();
+    await loadExistingPlays();
+    deepLinkPlay();
+    if (!_urlPlayId) goToStep(1);
   }
 
   window.addEventListener('load', async () => {
@@ -573,6 +588,93 @@
       if (existingPlays.length > 0) renderPlayOptions();
     } catch(e) {
       console.warn('Could not load existing plays:', e.message);
+    }
+  }
+
+  // Deep-link support: ?play=play_id&mode=accounts|config
+  function deepLinkPlay() {
+    if (!_urlPlayId) return;
+    const p = existingPlays.find(ep => ep.play_id === _urlPlayId);
+    if (!p) {
+      log('warn', `Play "${_urlPlayId}" not found — starting fresh.`);
+      goToStep(1);
+      return;
+    }
+    loadExistingPlay(p, null);
+    _isExistingPlay = true;
+    if (_urlMode === 'accounts') {
+      // Skip config editing — jump straight to accounts step
+      finishPlayStep();  // sets currentPlayDef, calls goToStep(2) internally
+      // Auto-advance past Step 2 to Step 3
+      setTimeout(() => goToStep(3), 0);
+    } else {
+      // Load into Step 1 for config editing, normal flow
+      goToStep(1);
+    }
+  }
+
+  // Update Step 3 context banner based on whether this is an existing play
+  function updateStep3Context() {
+    const banner = document.getElementById('step3-context-banner');
+    const titleEl = document.getElementById('step3-context-title');
+    const playEl  = document.getElementById('step3-context-play');
+    if (_isExistingPlay && currentPlayDef) {
+      banner.style.display = 'block';
+      titleEl.textContent = 'Adding targets to:';
+      playEl.textContent  = currentPlayDef.play_name;
+    } else {
+      banner.style.display = 'none';
+    }
+    // Update upload button label
+    const mode = document.querySelector('input[name="upload-mode"]:checked')?.value || 'merge';
+    const btn  = document.getElementById('btn-upload');
+    if (btn) {
+      if (_isExistingPlay) {
+        btn.textContent = mode === 'replace' ? '↩ Replace Targets' : '➕ Add Targets';
+      } else {
+        btn.textContent = '🚀 Launch Play';
+      }
+    }
+  }
+
+  // Save play config + outcomes without touching assignments
+  async function savePlayConfigOnly() {
+    if (!requireIngestAdmin()) return;
+    const name = document.getElementById('play-name-input').value.trim();
+    if (!name || !selectedGoal) { log('err', 'Play name and goal are required.'); return; }
+
+    const btn = document.getElementById('btn-save-config-only');
+    btn.disabled = true;
+    btn.textContent = '⏳ Saving…';
+
+    const playId = currentPlayDef ? currentPlayDef.play_id : slugify(name);
+    const playDef = {
+      play_id:        playId,
+      play_name:      name,
+      goal:           selectedGoal,
+      icp:            document.getElementById('play-icp').value.trim(),
+      target_persona: document.getElementById('play-persona').value.trim(),
+      elevator_pitch: document.getElementById('play-pitch').value.trim(),
+      active:         true,
+      outcomes:       getOutcomesConfig(),
+    };
+
+    try {
+      let playsConfig = { plays: [] };
+      try { playsConfig = await getPlaysConfig(); if (!playsConfig?.plays) playsConfig = { plays: [] }; } catch(e) {}
+      const idx = playsConfig.plays.findIndex(p => p.play_id === playId);
+      if (idx >= 0) playsConfig.plays[idx] = { ...playsConfig.plays[idx], ...playDef };
+      else playsConfig.plays.push(playDef);
+      await savePlaysConfig(playsConfig);
+      log('ok', `✅ Play config saved: "${name}" (${playId}). No account assignments were changed.`);
+      try { await logActivity(currentUser, 'play_config_saved', `Saved config for play: ${name} (${playId})`); } catch(e) {}
+      btn.textContent = '✅ Config Saved';
+      btn.style.background = '#e8f5e9';
+      btn.style.color = '#107c10';
+    } catch(e) {
+      log('err', 'Save failed: ' + e.message);
+      btn.disabled = false;
+      btn.textContent = '💾 Save Config Only';
     }
   }
 
@@ -599,11 +701,14 @@
     document.querySelectorAll('.play-picker-row').forEach(el => el.classList.remove('selected'));
     if (rowEl) rowEl.classList.add('selected');
     if (p.goal) selectGoal(p.goal);
+    _isExistingPlay = true;
+    currentPlayDef = { ...p };
     validatePlayStep();
   }
 
   function onPlayNameInput(val) {
     document.querySelectorAll('.play-picker-row').forEach(el => el.classList.remove('selected'));
+    _isExistingPlay = false;  // typing a new name = new play
     validatePlayStep();
   }
 
@@ -1143,20 +1248,23 @@
       }
 
       markStepDone(3);
-      btn.textContent    = '✅ Play Launched';
+      const actionLabel = _isExistingPlay
+        ? (document.querySelector('input[name="upload-mode"]:checked')?.value === 'replace' ? 'Targets Replaced' : 'Targets Added')
+        : 'Play Launched';
+      btn.textContent      = `✅ ${actionLabel}`;
       btn.style.background = '#107c10';
       log('ok', '');
-      log('ok', '🎉 Done! Reps can now open the app and see their accounts.');
+      log('ok', `🎉 Done! ${_isExistingPlay ? 'Targets updated.' : 'Reps can now open the app and see their accounts.'}`);
       log('info', 'Files written: Chef SaaS Tracker/ChefSaaS/assignments.json · plays.json');
       try {
-        await logActivity('ingest_upload', `Uploaded ${finalAssignments.length} rows for play: ${currentPlayDef.play_name}`);
+        await logActivity(currentUser, 'ingest_upload', `${actionLabel}: ${finalAssignments.length} total rows for play: ${currentPlayDef.play_name}`);
       } catch(e) {}
     } catch(e) {
       log('err', 'Upload failed: ' + e.message);
       btn.disabled    = false;
-      btn.textContent = '🚀 Retry Launch';
+      btn.textContent = _isExistingPlay ? '↩ Retry' : '🚀 Retry Launch';
       try {
-        await logActivity('ingest_error', `Upload failed for play: ${(currentPlayDef||{}).play_name || 'unknown'} — ${e.message}`);
+        await logActivity(currentUser, 'ingest_error', `Upload failed for play: ${(currentPlayDef||{}).play_name || 'unknown'} — ${e.message}`);
       } catch(e2) {}
     }
   }
