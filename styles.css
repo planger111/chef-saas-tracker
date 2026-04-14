@@ -10,7 +10,6 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   background: #f5f5f5;
   color: #1a1a1a;
-  max-width: 480px;
   margin: 0 auto;
   min-height: 100vh;
 }
@@ -18,7 +17,7 @@ body {
 /* ─── Desktop responsive layout ─── */
 @media (min-width: 768px) {
   body {
-    max-width: 680px;
+    /* no max-width constraint — let dashboard-outer control width */
   }
   .points-card {
     padding: 24px 28px;
@@ -44,7 +43,7 @@ body {
 
 @media (min-width: 1024px) {
   body {
-    max-width: 780px;
+    /* no max-width constraint — let dashboard-outer control width */
   }
 }
 
@@ -1208,3 +1207,374 @@ td.points-col { text-align:right; font-family:monospace; font-weight:700; color:
   }
   .play-card { margin-bottom: 0; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Dashboard Polish — v3
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Dashboard outer container ── */
+.dashboard-outer {
+  padding: 16px;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* ── Rep summary bar ── */
+.rep-summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+}
+.rep-summary-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 140px;
+}
+.rep-summary-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+.rep-summary-level {
+  font-size: 12px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.rep-summary-stats {
+  display: flex;
+  gap: 16px;
+}
+.rep-summary-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+.rss-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0078d4;
+  line-height: 1;
+}
+.rss-label {
+  font-size: 10px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.rep-summary-level-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .rep-summary {
+    gap: 10px;
+    padding: 10px 14px;
+  }
+  .rep-summary-identity { flex: 100%; }
+  .rss-value { font-size: 16px; }
+}
+
+/* ── Points help ── */
+.points-help-details {
+  margin-bottom: 12px;
+}
+.points-help-summary {
+  font-size: 12px;
+  color: #6b7280;
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 0;
+  user-select: none;
+}
+.points-help-summary::-webkit-details-marker { display: none; }
+.points-help-summary:hover { color: #0078d4; }
+
+/* ── Dashboard layout (responsive grid) ── */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 1024px) {
+  .dashboard-layout {
+    grid-template-columns: 60% 1fr;
+    gap: 24px;
+    align-items: start;
+    max-width: none;
+    padding: 0;
+    margin: 0;
+  }
+  .leaderboard-section {
+    position: sticky;
+    top: 64px;
+  }
+}
+
+/* ── Section header row ── */
+.section-header-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+  text-transform: uppercase;
+  padding: 0;
+}
+.section-sub {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* ── Greeting inline bar ── */
+.greeting-inline-bar {
+  display: block;
+  font-size: 14px;
+  color: #374151;
+  margin-bottom: 8px;
+  padding: 0;
+  background: none;
+  border: none;
+}
+.greeting-inline { font-size: 14px; color: #374151; }
+.greeting-stale { display: block; font-size: 12px; color: #b45309; margin-top: 2px; }
+
+/* ── Play cards ── */
+.plays-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 768px) and (max-width: 1023px) {
+  .plays-grid { grid-template-columns: 1fr 1fr; }
+}
+
+.play-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-left: 3px solid #0078d4;
+  border-radius: 10px;
+  padding: 14px 16px 12px;
+  cursor: pointer;
+  transition: box-shadow 0.15s, border-color 0.15s;
+  box-sizing: border-box;
+  box-shadow: none;
+  margin: 0;
+  transform: none;
+}
+.play-card:hover {
+  box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  border-left-color: #005fa3;
+  transform: none;
+}
+.play-card:active {
+  transform: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+}
+.demo-play-card {
+  border-left-color: #d97706;
+}
+
+.play-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.play-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1.3;
+}
+.play-info-btn, .info-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 50%;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px;
+  font-size: 15px !important;
+  cursor: pointer;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: border-color 0.1s, color 0.1s;
+}
+.play-info-btn:hover { border-color: #0078d4; color: #0078d4; }
+
+.play-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.play-pct {
+  font-size: 11px;
+  color: #9ca3af;
+  flex-shrink: 0;
+  min-width: 28px;
+  text-align: right;
+}
+.progress-bar-track {
+  flex: 1;
+  height: 5px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: #0078d4;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  min-width: 0;
+}
+
+.play-metrics-row {
+  display: flex;
+  gap: 0;
+  border-top: 1px solid #f3f4f6;
+  padding-top: 10px;
+}
+.play-metric {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border-right: 1px solid #f3f4f6;
+}
+.play-metric:last-child { border-right: none; }
+.pm-val {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1;
+}
+.pm-lbl {
+  font-size: 10px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.play-metric-highlight .pm-val { color: #107c10; }
+.play-metric-highlight .pm-lbl { color: #107c10; }
+
+/* ── Leaderboard peek ── */
+.leaderboard-peek {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: none;
+  margin: 0;
+}
+.lb-peek-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #f3f4f6;
+}
+.lb-peek-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.lb-peek-link {
+  font-size: 12px;
+  color: #0078d4;
+  text-decoration: none;
+}
+.lb-peek-link:hover { text-decoration: underline; }
+.lb-peek-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-bottom: 1px solid #f9fafb;
+  font-size: 13px;
+}
+.lb-peek-row:last-child { border-bottom: none; }
+.lb-peek-row.current-user {
+  background: #f0f7ff;
+  font-weight: 600;
+}
+.lb-peek-rank {
+  min-width: 22px;
+  font-size: 14px;
+  text-align: center;
+}
+.lb-peek-name {
+  flex: 1;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.lb-peek-pts {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0078d4;
+  white-space: nowrap;
+}
+
+/* ── Bookmark banner ── */
+.bookmark-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: #fafaf8;
+  border-bottom: 1px solid #e9e9e5;
+  font-size: 12px;
+  color: #6b7280;
+}
+.bookmark-banner-text { flex: 1; }
+.bookmark-banner-dismiss {
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #9ca3af;
+  padding: 0 4px;
+  line-height: 1;
+}
+.bookmark-banner-dismiss:hover { color: #374151; }
+
+/* ── Suppress old widgets replaced by rep-summary ── */
+.points-card { display: none !important; }
+.welcome-bar { display: none !important; }

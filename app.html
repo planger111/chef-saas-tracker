@@ -61,40 +61,37 @@
     </div>
 
     <div id="bookmark-banner-wrap"></div>
-    <div style="padding:16px;max-width:480px;margin:0 auto;">
+    <div class="dashboard-outer">
 
-      <!-- Welcome bar -->
-      <div class="welcome-bar" id="welcome-bar">
-        <div class="wb-identity">
-          <span class="wb-name" id="wb-name"></span>
-          <span class="wb-level" id="wb-level"></span>
+      <!-- Rep summary bar — replaces welcome-bar + points-card -->
+      <div class="rep-summary" id="rep-summary">
+        <div class="rep-summary-identity">
+          <span class="rep-summary-name" id="wb-name"></span>
+          <span class="rep-summary-level" id="wb-level"></span>
         </div>
-        <div class="wb-stats">
-          <span class="wb-stat"><strong id="wb-points">0</strong> pts</span>
-          <span class="wb-sep">·</span>
-          <span class="wb-stat"><strong id="wb-plays">0</strong> active plays</span>
-        </div>
-      </div>
-
-      <!-- Points card -->
-      <div class="points-card" id="dashboard-points-card">
-        <div>
-          <div class="points-total" id="dashboard-total-points">0</div>
-          <div class="points-label">Total Points</div>
-        </div>
-        <div style="text-align:right;">
-          <div class="level-badge">
-            <span class="level-emoji" id="dashboard-level-emoji">🌱</span>
-            <span class="level-name" id="dashboard-level-name">Rookie</span>
+        <div class="rep-summary-stats">
+          <div class="rep-summary-stat">
+            <span class="rss-value" id="wb-points">0</span>
+            <span class="rss-label">points</span>
           </div>
+          <div class="rep-summary-stat">
+            <span class="rss-value" id="dashboard-total-points">0</span>
+            <span class="rss-label">total</span>
+          </div>
+          <div class="rep-summary-stat">
+            <span class="rss-value" id="wb-plays">0</span>
+            <span class="rss-label">plays</span>
+          </div>
+        </div>
+        <div class="rep-summary-level-badge">
+          <span id="dashboard-level-emoji">🌱</span>
+          <span id="dashboard-level-name">Rookie</span>
         </div>
       </div>
 
       <!-- Points breakdown -->
-      <details style="margin-bottom:12px;">
-        <summary style="font-size:12px;color:#0078d4;cursor:pointer;font-weight:600;padding:4px 0;list-style:none;display:flex;align-items:center;gap:4px;">
-          ℹ️ How points are earned
-        </summary>
+      <details class="points-help-details">
+        <summary class="points-help-summary">How points are earned</summary>
         <div style="background:#f8faff;border:1px solid #d0e4f7;border-radius:8px;padding:12px 14px;margin-top:6px;font-size:13px;">
           <div style="display:grid;grid-template-columns:1fr auto;gap:6px 16px;align-items:center;">
             <span>📞 Not Interested (logging the conversation)</span><strong style="text-align:right;color:#555;">15 pts</strong>
@@ -123,8 +120,10 @@
             <span class="demo-badge">DEMO MODE</span>
             <span>You don't have any assigned accounts yet. Practice with these demo accounts — your manager will assign real accounts soon.</span>
           </div>
-          <!-- Plays -->
-          <div class="section-label">YOUR PLAYS</div>
+          <div class="section-header-row">
+            <span class="section-label">YOUR PLAYS</span>
+            <span class="section-sub" id="plays-count-sub"></span>
+          </div>
           <div class="plays-grid" id="dashboard-plays-list">
             <div style="text-align:center;color:#999;padding:24px;">Loading plays…</div>
           </div>
@@ -666,30 +665,19 @@
         const hasInfo   = play.icp || play.target_persona || play.elevator_pitch;
 
         return `
-          <div class="play-card" data-play-id="${escHtml(play.play_id)}" style="cursor:pointer;border:2px solid #0078d4;border-radius:12px;margin-bottom:12px;overflow:hidden;">
-            <div class="play-card-header" style="padding:14px 16px 8px;">
-              <span class="play-card-name" style="font-size:16px;font-weight:700;">${escHtml(play.play_name)}</span>
-              <div style="display:flex;align-items:center;gap:8px;">
-                ${hasInfo ? `<button class="play-info-btn" data-play-id="${escHtml(play.play_id)}" onclick="event.stopPropagation();showPlayInfo('${escHtml(play.play_id)}')"
-                  style="background:none;border:1px solid #d1d5db;border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;color:#0078d4;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;">ℹ</button>` : ''}
-              </div>
+          <div class="play-card" data-play-id="${escHtml(play.play_id)}">
+            <div class="play-card-header">
+              <span class="play-card-name">${escHtml(play.play_name)}</span>
+              ${hasInfo ? `<button class="play-info-btn" data-play-id="${escHtml(play.play_id)}" onclick="event.stopPropagation();showPlayInfo('${escHtml(play.play_id)}')">ℹ</button>` : ''}
             </div>
-            <div class="progress-bar-track" style="margin:0 16px;">
-              <div class="progress-bar-fill" style="width:${pct}%;"></div>
+            <div class="play-progress-wrap">
+              <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%;"></div></div>
+              <span class="play-pct">${pct}%</span>
             </div>
-            <div class="funnel-row" style="padding:8px 16px;">
-              <div class="funnel-stat">
-                <span class="funnel-num">${targets}</span>
-                <span class="funnel-label">🎯 Targets</span>
-              </div>
-              <div class="funnel-stat">
-                <span class="funnel-num">${engaged}</span>
-                <span class="funnel-label">💬 Engaged</span>
-              </div>
-              <div class="funnel-stat funnel-won">
-                <span class="funnel-num">${interested}</span>
-                <span class="funnel-label">✅ Interested</span>
-              </div>
+            <div class="play-metrics-row">
+              <div class="play-metric"><span class="pm-val">${targets}</span><span class="pm-lbl">Targets</span></div>
+              <div class="play-metric"><span class="pm-val">${engaged}</span><span class="pm-lbl">Engaged</span></div>
+              <div class="play-metric play-metric-highlight"><span class="pm-val">${interested}</span><span class="pm-lbl">Interested</span></div>
             </div>
           </div>
         `;
@@ -753,13 +741,13 @@
       const rankEmoji = ['🥇', '🥈', '🥉'];
 
       const rowHtml = (entry, rank) => {
-        const level  = getLevel(entry.totalPoints || 0);
-        const isMe   = entry.email === currentUser.email;
+        const level = getLevel(entry.totalPoints || 0);
+        const isMe  = entry.email === currentUser.email;
         return `
-          <div class="leaderboard-peek-row${isMe ? ' current-user' : ''}">
-            <span class="leaderboard-peek-rank">${rank <= 3 ? rankEmoji[rank - 1] : rank}</span>
-            <span class="leaderboard-peek-name">${entry.repName || entry.email}${isMe ? ' (you)' : ''}</span>
-            <span class="leaderboard-peek-pts">${(entry.totalPoints || 0).toLocaleString()} pts</span>
+          <div class="lb-peek-row${isMe ? ' current-user' : ''}">
+            <span class="lb-peek-rank">${rank <= 3 ? rankEmoji[rank - 1] : rank}</span>
+            <span class="lb-peek-name">${entry.repName || entry.email}${isMe ? ' · you' : ''}</span>
+            <span class="lb-peek-pts">${(entry.totalPoints || 0).toLocaleString()}</span>
           </div>
         `;
       };
@@ -772,9 +760,9 @@
       }
 
       container.innerHTML = `
-        <div class="leaderboard-peek-header">
-          Top Reps
-          <a href="#" id="view-full-leaderboard" style="float:right;font-size:13px;color:#0078d4;text-decoration:none;">View Full Leaderboard →</a>
+        <div class="lb-peek-header">
+          <span class="lb-peek-title">Top Reps</span>
+          <a href="#" id="view-full-leaderboard" class="lb-peek-link">Full leaderboard →</a>
         </div>
         ${rows}
       `;
@@ -794,7 +782,8 @@
 
       const hour = new Date().getHours();
       const timeGreet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-      greetEl.innerHTML = `<span class="greeting-text">${timeGreet}, <strong>${user.name.split(' ')[0]}</strong> — let's get to work!</span>`;
+      greetEl.innerHTML = `<span class="greeting-inline">${timeGreet}, <strong>${user.name.split(' ')[0]}</strong></span>`;
+      greetEl.className = 'greeting-inline-bar';
 
       // Staleness check: find oldest uploaded_at across this rep's accounts
       const now = Date.now();
@@ -812,7 +801,6 @@
         }
       }
       if (staleMsg) greetEl.insertAdjacentHTML('beforeend', staleMsg);
-      greetEl.style.display = 'block';
     }
 
     // ─────────────────────────────────────────────
@@ -877,15 +865,12 @@
       const container = document.getElementById('dashboard-plays-list');
       if (!container) return;
       container.innerHTML = demoPlays.map(play => `
-        <div class="play-card demo-play-card" style="cursor:pointer;border:2px solid #d97706;border-radius:12px;margin-bottom:12px;overflow:hidden;" onclick="openDemoPlay('${escHtml(play.play_id)}')">
-          <div class="play-card-header" style="padding:14px 16px 8px;">
-            <span class="play-card-name" style="font-size:16px;font-weight:700;">${escHtml(play.play_name)}</span>
+        <div class="play-card demo-play-card" onclick="openDemoPlay('${escHtml(play.play_id)}')">
+          <div class="play-card-header">
+            <span class="play-card-name">${escHtml(play.play_name)}</span>
           </div>
-          <div class="funnel-row" style="padding:8px 16px;">
-            <div class="funnel-stat">
-              <span class="funnel-num">${play.accounts ? play.accounts.length : 0}</span>
-              <span class="funnel-label">🎯 Practice Accounts</span>
-            </div>
+          <div class="play-metrics-row">
+            <div class="play-metric"><span class="pm-val">${play.accounts ? play.accounts.length : 0}</span><span class="pm-lbl">Practice Accounts</span></div>
           </div>
         </div>
       `).join('');
@@ -1441,10 +1426,9 @@
       const wrap = document.getElementById('bookmark-banner-wrap');
       if (!wrap) return;
       wrap.innerHTML = `
-        <div style="background:#fffbeb;border-bottom:1px solid #fcd34d;padding:10px 16px;font-size:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span>📌 <strong>Bookmark this page</strong> so you can find it easily!</span>
-          <span style="color:#888;font-size:12px;">On mobile: tap Share → Add to Home Screen</span>
-          <button id="btn-dismiss-bookmark" style="margin-left:auto;background:none;border:none;font-size:18px;cursor:pointer;color:#888;line-height:1;padding:0 4px;">✕</button>
+        <div class="bookmark-banner">
+          <span class="bookmark-banner-text">📌 Bookmark this page — on mobile: Share → Add to Home Screen</span>
+          <button id="btn-dismiss-bookmark" class="bookmark-banner-dismiss">✕</button>
         </div>`;
       document.getElementById('btn-dismiss-bookmark').addEventListener('click', () => {
         localStorage.setItem('tracker_bookmark_dismissed', '1');
