@@ -529,6 +529,30 @@
 
       </div><!-- /#tab-snapshots -->
 
+      <!-- Identity Tab (owner only) -->
+      <div id="tab-identity" class="admin-tab-panel" style="display:none;">
+        <div style="max-width:560px;">
+          <p style="font-size:13px;color:#555;margin-bottom:20px;">
+            Upload <code>rep-identity.json</code> to SharePoint so the system can match reps by any of their known email aliases.
+            Once uploaded, reps will be matched automatically regardless of which email was used during account upload.
+          </p>
+
+          <div id="identity-current" style="background:#f8f9fa;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px;">
+            <strong>Current status:</strong> <span id="identity-status-text">Checking…</span>
+            <button onclick="checkIdentityFile()" style="margin-left:12px;background:none;border:none;color:#0078d4;cursor:pointer;font-size:12px;">↻ Refresh</button>
+          </div>
+
+          <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Select rep-identity.json to upload:</label>
+          <input type="file" id="identity-file-input" accept=".json" style="font-size:13px;margin-bottom:12px;">
+          <div id="identity-file-preview" style="display:none;font-size:12px;color:#555;background:#f0f7ff;border:1px solid #c3dafe;border-radius:6px;padding:8px 12px;margin-bottom:12px;"></div>
+          <button onclick="uploadIdentityFile()" id="btn-upload-identity" disabled
+            style="background:#0078d4;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">
+            ⬆️ Upload to SharePoint
+          </button>
+          <div id="identity-upload-status" style="display:none;margin-top:12px;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:600;"></div>
+        </div>
+      </div><!-- /#tab-identity -->
+
   <!-- Scripts -->
   <script src="msal-browser.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
@@ -799,6 +823,7 @@
         if (tab.dataset.tab === 'broadcast') loadBroadcastTab();
         if (tab.dataset.tab === 'activity-log-user') loadActivityLog();
         if (tab.dataset.tab === 'snapshots') loadSnapshotsTab();
+        if (tab.dataset.tab === 'identity') { checkIdentityFile(); }
       });
     });
 
@@ -1207,6 +1232,8 @@ Let's go! 🚀`;
         if (demoTabBtn) demoTabBtn.style.display = '';
         const snapshotsTabBtn = document.getElementById('tab-btn-snapshots');
         if (snapshotsTabBtn) snapshotsTabBtn.style.display = '';
+        const identityTabBtn = document.getElementById('tab-btn-identity');
+        if (identityTabBtn) identityTabBtn.style.display = '';
       }
       // Hide owner-only tabs for managers
       if (role === 'manager') {
@@ -2190,6 +2217,78 @@ Let's go! 🚀`;
     });
 
     // ── Export All ────────────────────────────────────────────────────────────
+    // ── Identity Tab ──────────────────────────────────────────────────────────
+    async function checkIdentityFile() {
+      const statusEl = document.getElementById('identity-status-text');
+      statusEl.textContent = 'Checking…';
+      try {
+        const text = await getFileText(SP_ROOT + '/rep-identity.json').catch(() => null);
+        if (text) {
+          const data = JSON.parse(text);
+          const reps = data.reps || data || [];
+          const count = Array.isArray(reps) ? reps.length : Object.keys(reps).length;
+          statusEl.innerHTML = `<span style="color:#107c10;font-weight:700;">✅ Uploaded</span> — ${count} reps loaded. Alias matching is active.`;
+        } else {
+          statusEl.innerHTML = `<span style="color:#d97706;font-weight:700;">⚠ Not uploaded</span> — reps matched by exact email only (static aliases for Phil active as bridge).`;
+        }
+      } catch(e) {
+        statusEl.innerHTML = `<span style="color:#c00;">✗ Error checking: ${escHtml(e.message)}</span>`;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const fileInput = document.getElementById('identity-file-input');
+      if (fileInput) {
+        fileInput.addEventListener('change', () => {
+          const file = fileInput.files[0];
+          const btn = document.getElementById('btn-upload-identity');
+          const preview = document.getElementById('identity-file-preview');
+          if (!file) { btn.disabled = true; preview.style.display = 'none'; return; }
+          const reader = new FileReader();
+          reader.onload = e => {
+            try {
+              const data = JSON.parse(e.target.result);
+              const reps = data.reps || data || [];
+              const count = Array.isArray(reps) ? reps.length : '?';
+              preview.style.display = 'block';
+              preview.textContent = `✓ Valid JSON — ${count} reps found. Ready to upload.`;
+              btn.disabled = false;
+            } catch(err) {
+              preview.style.display = 'block';
+              preview.textContent = '✗ Invalid JSON: ' + err.message;
+              btn.disabled = true;
+            }
+          };
+          reader.readAsText(file);
+        });
+      }
+    });
+
+    async function uploadIdentityFile() {
+      if (!requireOwner('Upload Identity File')) return;
+      const file = document.getElementById('identity-file-input').files[0];
+      if (!file) return;
+      const statusEl = document.getElementById('identity-upload-status');
+      const btn = document.getElementById('btn-upload-identity');
+      statusEl.style.display = 'block';
+      statusEl.style.background = '#fff3cd'; statusEl.style.color = '#856404';
+      statusEl.textContent = '⏳ Uploading rep-identity.json to SharePoint…';
+      btn.disabled = true;
+      try {
+        const text = await file.text();
+        JSON.parse(text); // validate
+        await putFile(SP_ROOT + '/rep-identity.json', text, 'application/json');
+        statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
+        statusEl.textContent = '✅ rep-identity.json uploaded! Alias matching is now active for all reps.';
+        try { await logActivity(currentUser, 'identity_upload', 'rep-identity.json uploaded'); } catch(e) {}
+        checkIdentityFile();
+      } catch(e) {
+        statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
+        statusEl.textContent = '✗ Upload failed: ' + e.message;
+        btn.disabled = false;
+      }
+    }
+
     async function exportAll() {
       const btn = document.getElementById('btn-export-all');
       btn.textContent = '⏳ Exporting…';

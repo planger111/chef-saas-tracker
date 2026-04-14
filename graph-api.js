@@ -243,14 +243,26 @@ async function getPlayAssignments(repEmail) {
   }
 
   // Tier 3: direct match — try ALL email candidates from the token
+  // plus any static aliases known before rep-identity.json is uploaded
   const user3 = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
   const emailCandidates = (user3?.emails?.length) ? user3.emails : [emailLower];
+
+  // Static alias bridge — covers known multi-email reps until rep-identity.json is live
+  const STATIC_ALIASES = {
+    'langer@progress.com':        ['philip.langer@progress.com','planger@progress.com','phil.langer@progress.com'],
+    'philip.langer@progress.com': ['langer@progress.com','planger@progress.com','phil.langer@progress.com'],
+    'planger@progress.com':       ['langer@progress.com','philip.langer@progress.com','phil.langer@progress.com'],
+    'phil.langer@progress.com':   ['langer@progress.com','philip.langer@progress.com','planger@progress.com'],
+  };
+  const allCandidates = new Set(emailCandidates);
+  emailCandidates.forEach(e => (STATIC_ALIASES[e] || []).forEach(a => allCandidates.add(a)));
+
   let matched = list.filter(a => {
     const repLogin = (a.rep_sso_login || '').toLowerCase();
     const repEmail = (a.rep_email    || '').toLowerCase();
-    return emailCandidates.some(e => e === repLogin || e === repEmail);
+    return [...allCandidates].some(e => e === repLogin || e === repEmail);
   });
-  console.log("[ChefSaaS] Direct match candidates:", emailCandidates, "→", matched.length, "accounts");
+  console.log("[ChefSaaS] Candidates:", [...allCandidates], "→", matched.length, "accounts");
   return matched;
 }
 
