@@ -390,6 +390,7 @@
     let lastSubmittedData = null;
     let activeFilter   = 'all'; // 'all' | 'not-started' | 'interested' | 'not-interested'
     let currentStep    = 1;     // current step in log form wizard (1|2)
+    let _dashboardReady = false; // true once dashboard play cards are rendered
     const _responseOptionsCache = {};  // keyed by response_set_id
 
     // ─────────────────────────────────────────────
@@ -398,6 +399,18 @@
     function escHtml(str) {
       return String(str === null || str === undefined ? '' : str)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Shared account resolver: filters repAccounts by play_id with defensive fallback.
+    // If the play_id filter returns empty but accounts exist, returns ALL repAccounts
+    // (handles play_id mismatch between plays.json and assignments.json).
+    function getPlayAccounts(play) {
+      if (!play) return repAccounts;
+      const byPlayId = repAccounts.filter(a => a.play_id === play.play_id);
+      if (byPlayId.length > 0) return byPlayId;
+      // Fallback: play_id mismatch — show all accounts when this is the only play
+      if (allPlays.length <= 1 && repAccounts.length > 0) return repAccounts;
+      return byPlayId; // empty for genuinely unassigned plays in a multi-play dashboard
     }
 
     // Try play_assignments first (v2); fall back to target_accounts (v1)
@@ -681,7 +694,7 @@
       }
 
       const html = allPlays.map(play => {
-        const playAccounts = repAccounts.filter(a => a.play_id === play.play_id);
+        const playAccounts = getPlayAccounts(play);
         const targets    = playAccounts.length;
         const engaged    = playAccounts.filter(a => !!latestLogs[a.account_id]).length;
         const interested = playAccounts.filter(a => {
@@ -713,6 +726,7 @@
       }).join('');
 
       container.innerHTML = html;
+      _dashboardReady = true;
 
       container.querySelectorAll('.play-card').forEach(card => {
         card.addEventListener('click', () => {
@@ -958,7 +972,7 @@
         }
 
         document.getElementById('play-detail-title').textContent = play.play_name;
-        const playAccounts = repAccounts.filter(a => a.play_id === play.play_id);
+        const playAccounts = getPlayAccounts(play);
         renderAccountList(playAccounts, activeFilter);
 
         // Sync filter tabs UI
@@ -1399,7 +1413,12 @@
 
     // Back: play detail → dashboard
     document.getElementById('btn-back-to-dashboard').addEventListener('click', () => {
-      showScreen('screen-dashboard');
+      if (_dashboardReady) {
+        showScreen('screen-dashboard');
+      } else {
+        // Single-play rep never got a rendered dashboard — reload fully
+        loadDashboard();
+      }
     });
 
     // Back: log form → play detail (step-aware)
@@ -1408,7 +1427,7 @@
         goToLogStep(currentStep - 1);
       } else if (currentPlay) {
         activeFilter = 'all';
-        renderAccountList(repAccounts.filter(a => a.play_id === currentPlay.play_id), activeFilter);
+        renderAccountList(getPlayAccounts(currentPlay), activeFilter);
         document.querySelectorAll('.filter-tab').forEach(t => {
           t.classList.toggle('active', t.dataset.filter === 'all');
         });
@@ -1418,7 +1437,11 @@
 
     // Back: leaderboard → dashboard
     document.getElementById('btn-back-to-dashboard-lb').addEventListener('click', () => {
-      showScreen('screen-dashboard');
+      if (_dashboardReady) {
+        showScreen('screen-dashboard');
+      } else {
+        loadDashboard();
+      }
     });
 
     // Back to accounts (confirm screen)
