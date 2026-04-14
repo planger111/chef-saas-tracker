@@ -146,6 +146,20 @@
     <button class="btn-primary" id="btn-signin" onclick="doSignIn()">Sign In with Progress SSO</button>
   </div>
 
+  <!-- Fast-path play picker (shown when ?mode=accounts but no ?play=) -->
+  <div class="wizard-panel" id="fast-path-picker-panel" style="display:none;">
+    <h3 style="margin:0 0 8px;font-size:18px;">Add Accounts to Existing Play</h3>
+    <p style="font-size:13px;color:#555;margin-bottom:16px;">Select a play, then go directly to the upload step — no wizard required.</p>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:13px;font-weight:600;display:block;margin-bottom:6px;">Select Play</label>
+      <select id="fp-play-select" style="width:100%;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;">
+        <option value="">— choose a play —</option>
+      </select>
+    </div>
+    <div id="fp-play-summary" style="display:none;background:#f0f7ff;border:1px solid #c3dafe;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px;"></div>
+    <button class="btn-primary" id="fp-go-btn" disabled onclick="fastPathGo()">Go to Upload →</button>
+  </div>
+
   <!-- Persistent Wizard Steps Indicator -->
   <div class="wizard-steps" id="wizard-steps" style="display:none;">
     <div class="wizard-step" id="ws-1">
@@ -160,6 +174,11 @@
     <div class="wizard-connector"></div>
     <div class="wizard-step" id="ws-3">
       <span class="ws-num">3</span>
+      <span class="ws-label">Questions</span>
+    </div>
+    <div class="wizard-connector"></div>
+    <div class="wizard-step" id="ws-4">
+      <span class="ws-num">4</span>
       <span class="ws-label">Accounts</span>
     </div>
   </div>
@@ -303,12 +322,49 @@
     <div class="wizard-nav">
       <button class="btn-secondary" onclick="goToStep(1)">← Back to Basics</button>
       <button class="btn-secondary" id="btn-save-config-only" onclick="savePlayConfigOnly()" style="background:#f0f7ff;color:#0078d4;border-color:#b3d4f5;">💾 Save Config Only</button>
-      <button class="btn-primary" id="btn-outcomes-next" onclick="goToStep(3)">Continue to Accounts →</button>
+      <button class="btn-primary" id="btn-outcomes-next" onclick="goToStep(3)">Continue to Questions →</button>
     </div>
   </div>
 
-  <!-- Step 3: Accounts -->
+  <!-- Step 3: Questions -->
   <div class="wizard-panel" id="step-3-panel" style="display:none;">
+    <p class="step-desc">Choose which fields reps see when logging an interaction for this play. Interaction type and outcome are always included.</p>
+
+    <!-- Section A: Standard Fields -->
+    <div style="margin-bottom:24px;">
+      <div class="q-section-header">Standard Fields</div>
+      <div id="boilerplate-questions-list"></div>
+    </div>
+
+    <!-- Section B: Custom Questions -->
+    <div style="margin-bottom:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="q-section-header" style="margin-bottom:0;">Custom Questions</div>
+        <button class="btn-secondary" onclick="addCustomQuestion()" style="padding:6px 12px;font-size:13px;">+ Add Question</button>
+      </div>
+      <div id="custom-questions-list">
+        <div style="font-size:13px;color:#9ca3af;padding:8px 0;" id="cq-empty-msg">No custom questions yet.</div>
+      </div>
+    </div>
+
+    <!-- Preview toggle -->
+    <div style="margin-bottom:16px;">
+      <button class="btn-secondary" onclick="toggleFormPreview()" style="width:100%;font-size:13px;">👁 Preview Rep Form</button>
+      <div id="form-preview" style="display:none;margin-top:10px;border:1px solid #e5e7eb;border-radius:8px;padding:16px;background:#f9fafb;font-size:13px;">
+        <div style="font-weight:700;color:#374151;margin-bottom:8px;">Rep will see these fields:</div>
+        <div id="form-preview-content"></div>
+      </div>
+    </div>
+
+    <div class="wizard-nav">
+      <button class="btn-secondary" onclick="goToStep(2)">← Back to Outcomes</button>
+      <button class="btn-secondary" onclick="savePlayConfigOnly()" style="background:#f0f7ff;color:#0078d4;border-color:#b3d4f5;">💾 Save Config Only</button>
+      <button class="btn-primary" onclick="finishQuestionsStep()">Continue to Accounts →</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Accounts -->
+  <div class="wizard-panel" id="step-4-panel" style="display:none;">
 
     <!-- Context banner (shown for existing plays) -->
     <div id="step3-context-banner" style="display:none;background:#f0f7ff;border:1px solid #c3dafe;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;">
@@ -408,10 +464,10 @@
 
     <!-- Step nav -->
     <div class="wizard-nav" style="margin-top:24px;">
-      <button class="btn-secondary" onclick="goToStep(2)">← Back to Outcomes</button>
+      <button class="btn-secondary" id="step4-back-btn" onclick="handleStep4Back()">← Back to Questions</button>
     </div>
 
-  </div><!-- /#step-3-panel -->
+  </div><!-- /#step-4-panel -->
 
 </main>
 
@@ -505,11 +561,11 @@
   let currentStep = 0;
 
   function goToStep(n) {
-    ['step-1-panel','step-2-panel','step-3-panel'].forEach((id, i) => {
+    ['step-1-panel','step-2-panel','step-3-panel','step-4-panel'].forEach((id, i) => {
       const el = document.getElementById(id);
       if (el) el.style.display = (i + 1 === n) ? 'block' : 'none';
     });
-    [1, 2, 3].forEach(i => {
+    [1, 2, 3, 4].forEach(i => {
       const ws = document.getElementById('ws-' + i);
       if (!ws) return;
       ws.classList.remove('active', 'done');
@@ -518,12 +574,19 @@
     });
     currentStep = n;
     if (n === 3) {
+      renderBoilerplateQuestions();
+    }
+    if (n === 4) {
       const inner = document.getElementById('upload-status-inner');
       if (inner) inner.innerHTML = '';
       const statusEl = document.getElementById('upload-status');
       if (statusEl) statusEl.style.display = 'none';
       populateSummaryBar();
-      updateStep3Context();
+      updateStep4Context();
+      const backBtn = document.getElementById('step4-back-btn');
+      if (backBtn && _urlMode === 'accounts') {
+        backBtn.textContent = '← Back to Admin';
+      }
     }
     window.scrollTo(0, 0);
   }
@@ -562,10 +625,14 @@
     document.getElementById('auth-status').className = 'status-bar status-signed-in';
     document.getElementById('auth-status').textContent = '✅ Signed in as ' + (currentUser.username || currentUser.email);
     document.getElementById('btn-signin').disabled = true;
-    document.getElementById('wizard-steps').style.display = 'flex';
     await loadExistingPlays();
     deepLinkPlay();
-    if (!_urlPlayId) goToStep(1);
+    if (!_urlPlayId && _urlMode !== 'accounts') {
+      document.getElementById('wizard-steps').style.display = 'flex';
+      goToStep(1);
+    } else if (!_urlPlayId) {
+      // fast-path without play: showFastPathPicker() handles display
+    }
   }
 
   window.addEventListener('load', async () => {
@@ -593,39 +660,51 @@
 
   // Deep-link support: ?play=play_id&mode=accounts|config
   function deepLinkPlay() {
+    if (_urlMode === 'accounts' && !_urlPlayId) {
+      showFastPathPicker();
+      return;
+    }
     if (!_urlPlayId) return;
     const p = existingPlays.find(ep => ep.play_id === _urlPlayId);
     if (!p) {
       log('warn', `Play "${_urlPlayId}" not found — starting fresh.`);
+      document.getElementById('wizard-steps').style.display = 'flex';
       goToStep(1);
       return;
     }
     loadExistingPlay(p, null);
     _isExistingPlay = true;
+    document.getElementById('wizard-steps').style.display = 'flex';
     if (_urlMode === 'accounts') {
-      // Skip config editing — jump straight to accounts step
-      finishPlayStep();  // sets currentPlayDef, calls goToStep(2) internally
-      // Auto-advance past Step 2 to Step 3
-      setTimeout(() => goToStep(3), 0);
+      finishPlayStep();
+      setTimeout(() => goToStep(4), 0);
     } else {
-      // Load into Step 1 for config editing, normal flow
       goToStep(1);
     }
   }
 
-  // Update Step 3 context banner based on whether this is an existing play
-  function updateStep3Context() {
+  // Update Step 4 context banner based on whether this is an existing play
+  function updateStep4Context() {
     const banner = document.getElementById('step3-context-banner');
     const titleEl = document.getElementById('step3-context-title');
     const playEl  = document.getElementById('step3-context-play');
     if (_isExistingPlay && currentPlayDef) {
       banner.style.display = 'block';
-      titleEl.textContent = 'Adding targets to:';
-      playEl.textContent  = currentPlayDef.play_name;
+      titleEl.textContent = 'Adding accounts to:';
+      const goalLabel = currentPlayDef.goal === 'qualify_out' ? 'Qualify Out' : 'Qualify In';
+      playEl.innerHTML = `
+        <strong style="color:#1a56db;">${esc(currentPlayDef.play_name)}</strong>
+        <span style="font-family:monospace;font-size:11px;color:#888;margin-left:6px;">${esc(currentPlayDef.play_id)}</span>
+        <span style="color:#6b7280;margin-left:8px;">· Goal: ${goalLabel}</span>
+        <span id="banner-acct-count" style="color:#6b7280;margin-left:8px;">· Loading targets…</span>
+      `;
+      loadPlayAccountCount(currentPlayDef.play_id).then(count => {
+        const el = document.getElementById('banner-acct-count');
+        if (el) el.textContent = `· ${count} existing target${count !== 1 ? 's' : ''}`;
+      });
     } else {
       banner.style.display = 'none';
     }
-    // Update upload button label
     const mode = document.querySelector('input[name="upload-mode"]:checked')?.value || 'merge';
     const btn  = document.getElementById('btn-upload');
     if (btn) {
@@ -634,6 +713,71 @@
       } else {
         btn.textContent = '🚀 Launch Play';
       }
+    }
+  }
+
+  // ── Fast-path: Add Accounts flow ──────────────────────────────────────────
+
+  function showFastPathPicker() {
+    document.getElementById('wizard-steps').style.display = 'none';
+    document.getElementById('fast-path-picker-panel').style.display = 'block';
+    const sel = document.getElementById('fp-play-select');
+    sel.innerHTML = '<option value="">— choose a play —</option>' +
+      existingPlays.map(p => `<option value="${esc(p.play_id)}">${esc(p.play_name)}</option>`).join('');
+    sel.onchange = onFastPathPlaySelect;
+  }
+
+  async function onFastPathPlaySelect() {
+    const playId = document.getElementById('fp-play-select').value;
+    const summaryEl = document.getElementById('fp-play-summary');
+    const goBtn = document.getElementById('fp-go-btn');
+    if (!playId) {
+      summaryEl.style.display = 'none';
+      goBtn.disabled = true;
+      return;
+    }
+    const play = existingPlays.find(p => p.play_id === playId);
+    summaryEl.style.display = 'block';
+    summaryEl.innerHTML = '⏳ Loading…';
+    goBtn.disabled = true;
+    const count = await loadPlayAccountCount(playId);
+    const goalLabel = play.goal === 'qualify_out' ? 'Qualify Out' : 'Qualify In';
+    summaryEl.innerHTML = `
+      <strong>${esc(play.play_name)}</strong>
+      <span style="font-family:monospace;font-size:11px;color:#888;margin-left:8px;">${esc(play.play_id)}</span><br>
+      <span style="color:#555;">Goal: ${goalLabel}</span>
+      <span style="margin-left:12px;color:#555;">${count} existing target${count !== 1 ? 's' : ''}</span>
+    `;
+    goBtn.disabled = false;
+  }
+
+  function fastPathGo() {
+    const playId = document.getElementById('fp-play-select').value;
+    if (!playId) return;
+    const play = existingPlays.find(p => p.play_id === playId);
+    if (!play) return;
+    loadExistingPlay(play, null);
+    _isExistingPlay = true;
+    document.getElementById('fast-path-picker-panel').style.display = 'none';
+    document.getElementById('wizard-steps').style.display = 'flex';
+    finishPlayStep();
+    setTimeout(() => goToStep(4), 0);
+  }
+
+  async function loadPlayAccountCount(playId) {
+    try {
+      const text = await getFileText(SP_ROOT + '/assignments.json');
+      if (!text) return 0;
+      const data = JSON.parse(text);
+      return (data.assignments || []).filter(a => a.play_id === playId).length;
+    } catch(e) { return 0; }
+  }
+
+  function handleStep4Back() {
+    if (_urlMode === 'accounts') {
+      window.location.href = 'admin.html';
+    } else {
+      goToStep(3);
     }
   }
 

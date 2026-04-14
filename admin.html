@@ -55,7 +55,8 @@
         <div class="admin-header-right">
           <span id="admin-user-name" style="font-size:12px;color:#9ca3af;margin-right:8px;"></span>
           <a href="app.html" class="admin-nav-link">Home</a>
-          <a href="ingest.html" class="admin-nav-link admin-nav-btn">Upload Accounts</a>
+          <a href="ingest.html" class="admin-nav-link admin-nav-btn" title="Create a brand new play from scratch">New Play</a>
+          <a href="ingest.html?mode=accounts" class="admin-nav-link admin-nav-btn" title="Add accounts to an existing play" style="background:#e8f0fe;color:#1a56db;border-color:#c3d4f7;">Add Accounts</a>
           <div class="export-dropdown">
             <button class="admin-nav-btn admin-nav-btn-secondary" onclick="toggleExportMenu(this)">Export ▾</button>
             <div class="export-menu" style="display:none;">
@@ -251,6 +252,21 @@
           </div>
         </div>
         <div id="plays-status" style="display:none;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:12px;"></div>
+        <!-- Quick action: Add Accounts -->
+        <div style="background:#f0f7ff;border:1px solid #c3dafe;border-radius:10px;padding:16px 18px;margin-bottom:16px;">
+          <div style="font-size:14px;font-weight:700;color:#1a56db;margin-bottom:6px;">➕ Add Accounts to Existing Play</div>
+          <div style="font-size:13px;color:#555;margin-bottom:12px;">Skip the wizard — select a play and go directly to the accounts upload step.</div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+            <select id="plays-tab-quick-play" onchange="onQuickPlaySelect()" style="flex:1;min-width:200px;padding:8px 12px;border:1px solid #c3dafe;border-radius:6px;font-size:13px;">
+              <option value="">— select a play —</option>
+            </select>
+            <button id="plays-tab-quick-btn" onclick="goAddAccounts()" disabled
+              style="background:#1a56db;color:#fff;border:none;border-radius:6px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;opacity:0.5;">
+              Add Accounts →
+            </button>
+          </div>
+          <div id="quick-play-summary" style="display:none;margin-top:10px;font-size:12px;color:#555;"></div>
+        </div>
         <!-- Danger Zone -->
         <details style="margin-bottom:16px;border:1px solid #fca5a5;border-radius:8px;overflow:hidden;">
           <summary style="padding:10px 14px;background:#fff5f5;color:#b91c1c;font-size:13px;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;">⚠ Danger Zone — Destructive Actions</summary>
@@ -565,6 +581,7 @@
     let _allData = [];
     let _visibleData = [];
     let currentUser = null;
+    let _quickPlays = null;
 
     function getLevel(pts) {
       const levels = [
@@ -895,6 +912,34 @@
     document.getElementById('lb-filter-play').addEventListener('change', loadLeaderboardTab);
 
     // ── Plays Management Tab ─────────────────────────────────────────────────
+
+    function onQuickPlaySelect() {
+      const sel = document.getElementById('plays-tab-quick-play');
+      const btn = document.getElementById('plays-tab-quick-btn');
+      const summaryEl = document.getElementById('quick-play-summary');
+      const playId = sel.value;
+      if (!playId) {
+        btn.disabled = true;
+        btn.style.opacity = '0.5';
+        summaryEl.style.display = 'none';
+        return;
+      }
+      btn.disabled = false;
+      btn.style.opacity = '1';
+      const play = (_quickPlays || []).find(p => p.play_id === playId);
+      if (play) {
+        const goalLabel = play.goal === 'qualify_out' ? 'Qualify Out' : 'Qualify In';
+        summaryEl.style.display = 'block';
+        summaryEl.innerHTML = `<span style="font-family:monospace;">${escHtml(play.play_id)}</span> · Goal: ${goalLabel}`;
+      }
+    }
+
+    function goAddAccounts() {
+      const playId = document.getElementById('plays-tab-quick-play').value;
+      if (!playId) return;
+      window.location.href = `ingest.html?play=${encodeURIComponent(playId)}&mode=accounts`;
+    }
+
     async function loadPlaysTab() {
       const tbody = document.getElementById('plays-body');
       tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;"><div class="spinner"></div></td></tr>';
@@ -907,6 +952,14 @@
         ]);
         const allAssignments = assignmentsText ? (JSON.parse(assignmentsText).assignments || []) : [];
         const plays = (playsConfig.plays || []);
+
+        // Populate quick-action picker
+        _quickPlays = plays;
+        const quickSel = document.getElementById('plays-tab-quick-play');
+        if (quickSel) {
+          quickSel.innerHTML = '<option value="">— select a play —</option>' +
+            plays.map(p => `<option value="${escHtml(p.play_id)}">${escHtml(p.play_name)}</option>`).join('');
+        }
 
         // Count engagements per play from _allData (already loaded)
         const engCountByPlay = {};
