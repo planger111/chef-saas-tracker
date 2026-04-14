@@ -566,6 +566,24 @@
         repAccounts = accounts || [];
         allPlays    = plays    || [];
 
+        // Reconcile allPlays with repAccounts: only show plays the rep is actually assigned to.
+        // Handles play_id mismatches between plays.json and assignments.json.
+        if (repAccounts.length > 0) {
+          const repPlayIds = new Set(repAccounts.map(a => a.play_id).filter(Boolean));
+          if (repPlayIds.size > 0) {
+            const matched = allPlays.filter(p => repPlayIds.has(p.play_id));
+            if (matched.length > 0) {
+              allPlays = matched; // normal case: play_ids align
+            } else {
+              // play_id mismatch — derive play list directly from assignments
+              const seen = new Set();
+              allPlays = repAccounts
+                .filter(a => a.play_id && !seen.has(a.play_id) && seen.add(a.play_id))
+                .map(a => ({ play_id: a.play_id, play_name: a.play_name || a.play_id }));
+            }
+          }
+        }
+
         // No accounts assigned → activate demo mode (still need points for display)
         if (repAccounts.length === 0) {
           const points = await getRepPoints(email);
