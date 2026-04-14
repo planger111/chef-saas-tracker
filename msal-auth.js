@@ -81,10 +81,22 @@ async function getAccessToken() {
 
 function getCurrentUser() {
   if (!_account) return null;
+  const claims = _account.idTokenClaims || {};
+  // Collect every email-like identifier available from the token
+  const allEmails = [
+    _account.username,
+    claims.preferred_username,
+    claims.email,
+    claims.upn,
+    claims.unique_name,
+  ].filter(Boolean).map(e => e.toLowerCase());
+  const uniqueEmails = [...new Set(allEmails)];
+  const primaryEmail = uniqueEmails[0] || '';
   return {
-    name: _account.name || _account.username,
-    email: _account.username,
-    username: _account.username,
-    oid: _account.localAccountId || '',
+    name:     _account.name || primaryEmail,
+    email:    primaryEmail,
+    username: _account.username || primaryEmail,
+    oid:      claims.oid || _account.localAccountId || '',
+    emails:   uniqueEmails,   // all candidates for role lookup
   };
 }

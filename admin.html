@@ -1185,6 +1185,8 @@ Let's go! 🚀`;
       'phil.langer@progress.com':    'owner',
       'kathleen.faria@progress.com': 'manager',
       'kfaria@progress.com':         'manager',
+      'k.faria@progress.com':        'manager',
+      'kathy.faria@progress.com':    'manager',
     };
     const MANAGER_TABS    = ['activity-log','leaderboard','coverage','broadcast','health','config','plays','accounts','invite'];
     const OWNER_ONLY_TABS = [];
@@ -1237,16 +1239,19 @@ Let's go! 🚀`;
         currentUser = user;
         if (user) document.getElementById("admin-user-name").textContent = user.name;
 
-        // Check role
-        const emailLower = (user?.email || '').toLowerCase();
-        const role = ADMIN_ROLES[emailLower];
+        // Check role — try all email candidates from the token
+        const emailCandidates = (user?.emails && user.emails.length)
+          ? user.emails
+          : [(user?.email || '').toLowerCase()];
+        const role = emailCandidates.map(e => ADMIN_ROLES[e]).find(r => r);
         if (!role) {
           // Not an admin at all — block access
           document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">
             <div style="text-align:center;padding:40px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);max-width:400px;">
               <div style="font-size:48px;margin-bottom:16px;">🚫</div>
               <h2 style="color:#d32f2f;margin-bottom:8px;">Access Denied</h2>
-              <p style="color:#666;">Your account (<strong>${escHtml(user?.email||'')}</strong>) does not have admin access.</p>
+              <p style="color:#666;">Your account does not have admin access.</p>
+              <p style="font-size:12px;color:#999;margin-top:8px;">Detected: <strong>${escHtml(emailCandidates.join(', '))}</strong></p>
               <a href="app.html" style="display:inline-block;margin-top:20px;background:#0078d4;color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;">Go to Rep App</a>
             </div>
           </div>`;
