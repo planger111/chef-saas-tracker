@@ -639,17 +639,7 @@
         // Render points card
         renderPointsCard(totalPoints);
 
-        // If only one play, skip the dashboard and go straight to it
-        if (allPlays.length === 1) {
-          currentPlay  = allPlays[0];
-          activeFilter = 'all';
-          if (currentUser.oid) registerOID(currentUser.username, currentUser.oid).catch(() => {});
-          logActivity(currentUser, 'login', 'dashboard').catch(() => {});
-          await loadPlayDetail(allPlays[0]);
-          return;
-        }
-
-        // Render plays
+        // Always render the dashboard first — user must click a play to drill in
         renderPlayCards(logResults);
 
         // Render leaderboard peek
