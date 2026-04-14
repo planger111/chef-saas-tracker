@@ -242,10 +242,15 @@ async function getPlayAssignments(repEmail) {
     console.warn("[ChefSaaS] Identity map lookup failed, falling back:", e.message);
   }
 
-  // Tier 3: direct match on rep_sso_login / rep_email (original behavior)
-  let matched = list.filter(a => (a.rep_sso_login || "").toLowerCase() === emailLower);
-  if (matched.length === 0) matched = list.filter(a => (a.rep_email || "").toLowerCase() === emailLower);
-  console.log("[ChefSaaS] Direct match: " + repEmail + " — " + matched.length + " accounts");
+  // Tier 3: direct match — try ALL email candidates from the token
+  const user3 = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  const emailCandidates = (user3?.emails?.length) ? user3.emails : [emailLower];
+  let matched = list.filter(a => {
+    const repLogin = (a.rep_sso_login || '').toLowerCase();
+    const repEmail = (a.rep_email    || '').toLowerCase();
+    return emailCandidates.some(e => e === repLogin || e === repEmail);
+  });
+  console.log("[ChefSaaS] Direct match candidates:", emailCandidates, "→", matched.length, "accounts");
   return matched;
 }
 
