@@ -557,19 +557,19 @@
         const email = currentUser.email;
         const name  = currentUser.name;
 
-        // Fetch everything in parallel (play_assignments first, falls back to target_accounts)
-        const [accounts, plays, points] = await Promise.all([
+        // Fetch accounts + plays in parallel; fetch logs once after (avoids double CSV download)
+        const [accounts, plays] = await Promise.all([
           loadRepAccounts(email, name),
-          getPlays(),
-          getRepPoints(email)
+          getPlays()
         ]);
 
         repAccounts = accounts || [];
         allPlays    = plays    || [];
-        totalPoints = points   || 0;
 
-        // No accounts assigned → activate demo mode
+        // No accounts assigned → activate demo mode (still need points for display)
         if (repAccounts.length === 0) {
+          const points = await getRepPoints(email);
+          totalPoints = points || 0;
           renderPointsCard(totalPoints);
           const fn = name ? name.split(' ')[0] : 'there';
           const wbN = document.getElementById('wb-name');  if (wbN)  wbN.textContent  = fn;
@@ -581,9 +581,18 @@
           return;
         }
 
-        // Fetch latest logs for this rep across all accounts
+        // Fetch all logs once — derive both points and latest-per-account from same data
+        const allRepLogs = await _getAllLogsForRep(email);
+        totalPoints = allRepLogs.reduce((sum, l) => sum + (Number(l.points_earned) || 0), 0);
+
+        // Build latest log map
+        const latestMap = {};
+        allRepLogs.forEach(log => {
+          const key = log.account_id; if (!key) return;
+          if (!latestMap[key] || log.submitted_at > (latestMap[key].submitted_at || '')) latestMap[key] = log;
+        });
         const accountIds = repAccounts.map(a => a.account_id);
-        latestLogs = await getLatestLogsForRep(email, accountIds);
+        latestLogs = Object.fromEntries(accountIds.map(id => [id, latestMap[id] || null]));
 
         // Build logResults in same shape renderPlayCards expects
         const logResults = allPlays.map(play => ({ play_id: play.play_id, logs: latestLogs }));
@@ -919,14 +928,16 @@
     // ─────────────────────────────────────────────
     // PLAY DETAIL
     // ─────────────────────────────────────────────
-    async function loadPlayDetail(play) {
+    async function loadPlayDetail(play, forceRefresh = false) {
       showScreen('screen-loading');
       try {
-        // Refresh logs for this rep
-        const email = currentUser ? currentUser.email : null;
-        const accountIds = repAccounts.map(a => a.account_id);
-        const logs = await getLatestLogsForRep(email, accountIds);
-        if (logs) Object.assign(latestLogs, logs);
+        // Only re-fetch logs if explicitly refreshing (e.g. after submitting)
+        if (forceRefresh) {
+          const email = currentUser ? currentUser.email : null;
+          const accountIds = repAccounts.map(a => a.account_id);
+          const logs = await getLatestLogsForRep(email, accountIds);
+          if (logs) Object.assign(latestLogs, logs);
+        }
 
         document.getElementById('play-detail-title').textContent = play.play_name;
         const playAccounts = repAccounts.filter(a => a.play_id === play.play_id);
@@ -1230,7 +1241,7 @@
         if (secs <= 0) {
           clearInterval(interval);
           btn.textContent = 'Back to My Accounts';
-          if (currentPlay) loadPlayDetail(currentPlay);
+          if (currentPlay) loadPlayDetail(currentPlay, true);
           else showScreen('screen-dashboard');
         } else {
           btn.textContent = `Back to My Accounts (${secs}s)`;
@@ -1395,7 +1406,7 @@
     // Back to accounts (confirm screen)
     document.getElementById('btn-back-to-accounts').addEventListener('click', () => {
       if (currentPlay) {
-        loadPlayDetail(currentPlay);
+        loadPlayDetail(currentPlay, true);
       } else {
         showScreen('screen-dashboard');
       }

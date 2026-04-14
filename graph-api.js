@@ -453,6 +453,8 @@ async function getRepAccounts(repEmail) { return getPlayAssignments(repEmail); }
 
 // ─── Plays config (plays.json) ────────────────────────────────────────────
 
+let _playsCache = null;
+
 async function getPlaysConfig() {
   try {
     const text = await getFileText(SP_ROOT + "/plays.json");
@@ -472,18 +474,24 @@ async function getPlaysConfig() {
 }
 
 async function savePlaysConfig(config) {
+  _playsCache = null; // invalidate cache on write
   await writeJsonFile("plays.json", config);
 }
 
 async function getPlays() {
+  if (_playsCache) return _playsCache;
   try {
     const config = await getPlaysConfig();
-    if (config && config.plays && config.plays.length > 0) return config.plays.filter(p => p.active !== false);
+    if (config && config.plays && config.plays.length > 0) {
+      _playsCache = config.plays.filter(p => p.active !== false);
+      return _playsCache;
+    }
     // fallback: derive from assignments
     const all = await getPlayAssignments(null);
     const seen = new Set();
-    return all.filter(a => { if (!a.play_id || seen.has(a.play_id)) return false; seen.add(a.play_id); return true; })
+    _playsCache = all.filter(a => { if (!a.play_id || seen.has(a.play_id)) return false; seen.add(a.play_id); return true; })
               .map(a => ({ play_id: a.play_id, play_name: a.play_name || a.play_id }));
+    return _playsCache;
   } catch(e) { return [{ play_id: "chef-saas", play_name: "Chef SaaS" }]; }
 }
 
