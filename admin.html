@@ -8,6 +8,34 @@
   <style>
     body { max-width: 100%; }
     .admin-wrapper { max-width: 1200px; margin: 0 auto; }
+    .admin-action-btn {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 7px;
+      background: #0078d4;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .admin-action-btn:hover { background: #005fa3; }
+    .admin-action-btn-warn { background: #d97706; }
+    .admin-action-btn-warn:hover { background: #b45309; }
+    .admin-action-btn-secondary { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
+    .admin-action-btn-secondary:hover { background: #e5e7eb; }
+    .snapshot-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .snapshot-table th { padding: 7px 10px; background: #f8f9fa; font-weight: 600; color: #374151; text-align: left; border-bottom: 1px solid #e9ecef; }
+    .snapshot-table td { padding: 8px 10px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+    .snapshot-table tr:hover td { background: #f5f8ff; }
+    .snap-type-badge { display: inline-block; padding: 2px 7px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+    .snap-type-manual { background: #dbeafe; color: #1e40af; }
+    .snap-type-pre-reset { background: #fef3c7; color: #92400e; }
+    .snap-type-auto { background: #dcfce7; color: #166534; }
+    .snap-type-unknown { background: #f3f4f6; color: #6b7280; }
   </style>
 </head>
 <body>
@@ -55,6 +83,7 @@
         <button class="admin-tab" data-tab="config">Config</button>
         <button class="admin-tab" data-tab="activity-log-user" id="tab-btn-activity-log-user" style="display:none;">Activity Log</button>
         <button class="admin-tab" data-tab="demo-activity" id="tab-btn-demo-activity" style="display:none;">Demo Activity</button>
+        <button class="admin-tab" data-tab="snapshots" id="tab-btn-snapshots" style="display:none;">Snapshots</button>
       </div>
 
       <!-- Activity Log Tab Panel -->
@@ -217,11 +246,22 @@
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
           <div style="font-size:13px;color:#555;">All active sales plays. Export engagement data or delete a play and all its assignments.</div>
           <div style="display:flex;gap:8px;">
-            <button onclick="loadPlaysTab()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:8px 14px;border-radius:6px;font-size:14px;cursor:pointer;">🔄 Refresh</button>
-            <button onclick="resetAllData()" style="background:#fff0f0;color:#c00;border:1px solid #f5c6cb;padding:8px 14px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">🗑 Reset All Data</button>
+            <button onclick="loadPlaysTab()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:8px 14px;border-radius:6px;font-size:14px;cursor:pointer;">↻ Refresh</button>
           </div>
         </div>
         <div id="plays-status" style="display:none;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:12px;"></div>
+        <!-- Danger Zone -->
+        <details style="margin-bottom:16px;border:1px solid #fca5a5;border-radius:8px;overflow:hidden;">
+          <summary style="padding:10px 14px;background:#fff5f5;color:#b91c1c;font-size:13px;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;">⚠ Danger Zone — Destructive Actions</summary>
+          <div style="padding:14px 16px;background:#fffafa;border-top:1px solid #fca5a5;">
+            <p style="font-size:12px;color:#6b7280;margin:0 0 12px;">These actions are irreversible without a snapshot. A backup is always created automatically before any reset.</p>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button onclick="resetAllData()" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">🔄 Backup + Reset System</button>
+              <button onclick="doUndoLastReset()" style="background:#fff3cd;color:#92400e;border:1px solid #fbbf24;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">↩ Undo Last Reset</button>
+            </div>
+            <p style="font-size:11px;color:#9ca3af;margin:10px 0 0;">Both actions require Owner role + typed confirmation. Go to the Snapshots tab to browse and restore any prior snapshot.</p>
+          </div>
+        </details>
         <div id="plays-table-wrap" style="overflow-x:auto;">
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             <thead>
@@ -445,7 +485,48 @@
         <div id="demo-stats-bar" style="display:none;margin-top:12px;padding:10px 14px;background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;font-size:13px;color:#92400e;">
           <strong id="demo-stats-count">0</strong> demo sessions logged
         </div>
-      </div>
+      </div><!-- /#tab-demo-activity -->
+
+      <!-- Snapshots Tab -->
+      <div id="tab-snapshots" class="admin-tab-panel" style="display:none;">
+
+        <!-- Actions row -->
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center;">
+          <button class="admin-action-btn" onclick="doSaveSnapshot()">💾 Save Snapshot</button>
+          <button class="admin-action-btn admin-action-btn-warn" onclick="doBackupAndReset()">🔄 Backup + Reset System</button>
+          <button class="admin-action-btn admin-action-btn-secondary" onclick="doUndoLastReset()">↩ Undo Last Reset</button>
+          <button class="admin-action-btn admin-action-btn-secondary" onclick="loadSnapshotsTab()">↻ Refresh List</button>
+        </div>
+
+        <!-- Status message -->
+        <div id="snapshot-status" style="display:none;padding:10px 14px;border-radius:8px;margin-bottom:16px;font-size:13px;font-weight:600;"></div>
+
+        <!-- Snapshot list -->
+        <div id="snapshot-list-wrap">
+          <div style="text-align:center;color:#9ca3af;padding:24px;">Click Refresh to load snapshots</div>
+        </div>
+
+        <!-- Restore modal (hidden) -->
+        <div id="restore-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;">
+          <div style="background:#fff;border-radius:12px;padding:24px;max-width:520px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+            <h3 style="margin:0 0 12px;font-size:17px;color:#1a1a2e;">Restore Snapshot</h3>
+            <div id="restore-modal-summary" style="font-size:13px;color:#374151;margin-bottom:16px;line-height:1.6;background:#f8f9fa;border-radius:8px;padding:12px 14px;"></div>
+            <div style="margin-bottom:14px;">
+              <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px;">Restore scope:</label>
+              <select id="restore-scope-sel" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;width:100%;">
+                <option value="full">Full restore (plays, assignments, logs, rep identity)</option>
+                <option value="plays">Plays + assignments only</option>
+                <option value="logs">Activity logs only</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+              <button onclick="closeRestoreModal()" style="padding:8px 16px;border:1px solid #d1d5db;border-radius:6px;background:#f9fafb;font-size:13px;cursor:pointer;">Cancel</button>
+              <button id="restore-confirm-btn" onclick="confirmRestore()" style="padding:8px 18px;border:none;border-radius:6px;background:#d97706;color:#fff;font-size:13px;font-weight:700;cursor:pointer;">Restore</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /#tab-snapshots -->
 
   <!-- Scripts -->
   <script src="msal-browser.js"></script>
@@ -458,6 +539,7 @@
   <script>
     let _allData = [];
     let _visibleData = [];
+    let currentUser = null;
 
     function getLevel(pts) {
       const levels = [
@@ -715,6 +797,7 @@
         if (tab.dataset.tab === 'coverage') loadCoverageTab();
         if (tab.dataset.tab === 'broadcast') loadBroadcastTab();
         if (tab.dataset.tab === 'activity-log-user') loadActivityLog();
+        if (tab.dataset.tab === 'snapshots') loadSnapshotsTab();
       });
     });
 
@@ -900,26 +983,70 @@
       }
     }
 
-    async function resetAllData() {
-      if (!confirm('⚠️ RESET ALL DATA\n\nThis will permanently delete:\n• All plays (plays.json)\n• All account assignments (assignments.json)\n• All response options (response-options.json)\n\nEngagement CSVs on SharePoint are NOT deleted.\n\nAre you sure? This cannot be undone.')) return;
-      if (!confirm('Second confirmation — are you absolutely sure you want to wipe all plays and accounts?')) return;
-      const statusEl = document.getElementById('plays-status');
+    // ── Security guards ───────────────────────────────────────────────────────
+    function requireOwner(actionName) {
+      if (currentAdminRole !== 'owner') {
+        alert(`Access denied. "${actionName}" requires Owner permissions.\nCurrent role: ${currentAdminRole || 'unknown'}`);
+        return false;
+      }
+      return true;
+    }
+
+    function requireTypedConfirmation(word, message) {
+      const input = prompt(`${message}\n\nType ${word} to confirm:`);
+      return (input || '').trim().toUpperCase() === word.toUpperCase();
+    }
+
+    async function backupAndReset() {
+      if (!requireOwner('Backup + Reset System')) return;
+
+      const reason = prompt('Optional: Describe why you are resetting (press OK to continue, Cancel to abort):', '');
+      if (reason === null) return;
+
+      if (!requireTypedConfirmation('RESET',
+        '⚠ DANGER ZONE — This will wipe all plays, assignments, and response options.\nA snapshot will be created first, but live data will be cleared.')) return;
+
+      const statusEl = document.getElementById('snapshot-status') || document.getElementById('plays-status');
+      if (!statusEl) return;
       statusEl.style.display = 'block';
       statusEl.style.background = '#fff3cd'; statusEl.style.color = '#856404';
-      statusEl.textContent = '⏳ Resetting all data…';
+      statusEl.textContent = '⏳ Creating pre-reset snapshot before resetting…';
+
+      let manifest;
       try {
-        await Promise.all([
-          writeJsonFile('plays.json',            { plays: [] }),
-          writeJsonFile('assignments.json',       { assignments: [] }),
-          writeJsonFile('response-options.json',  { options: [], form_config: STANDARD_FORM_CONFIG }),
-        ]);
-        statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
-        statusEl.textContent = '✅ All data reset. You can now upload fresh accounts.';
-        loadPlaysTab();
+        manifest = await createSnapshot({
+          label: reason || 'Pre-reset snapshot',
+          type: 'pre-reset',
+          triggeredBy: currentUser ? currentUser.email : ''
+        });
       } catch(e) {
         statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
-        statusEl.textContent = '✗ Reset failed: ' + e.message;
+        statusEl.textContent = '✗ Snapshot failed — reset aborted. No data was changed. Error: ' + e.message;
+        return;
       }
+
+      statusEl.textContent = `✅ Snapshot ${manifest.snapshot_id} saved (${manifest.files.length} files). Resetting live data…`;
+
+      try {
+        await Promise.all([
+          writeJsonFile('plays.json',           { plays: [] }),
+          writeJsonFile('assignments.json',      { assignments: [] }),
+          writeJsonFile('response-options.json', { options: [], form_config: STANDARD_FORM_CONFIG }),
+        ]);
+        statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
+        statusEl.textContent = `✅ System reset. Snapshot reference: ${manifest.snapshot_id}. Use Snapshots tab to restore if needed.`;
+        try { await logActivity(currentUser, 'backup_reset', 'Backup + Reset: snapshot ' + manifest.snapshot_id); } catch(e) {}
+        if (typeof loadPlaysTab === 'function') loadPlaysTab();
+        if (typeof loadSnapshotsTab === 'function') loadSnapshotsTab();
+      } catch(e) {
+        statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
+        statusEl.textContent = '✗ Reset failed after snapshot: ' + e.message + '. Snapshot is safe: ' + manifest.snapshot_id;
+      }
+    }
+
+    async function resetAllData() {
+      // Redirect old function to new safe version
+      return backupAndReset();
     }
 
     // ── Accounts Tab ──────────────────────────────────────────────────────────
@@ -1033,7 +1160,10 @@ Let's go! 🚀`;
     const ADMIN_ROLES = {
       'langer@progress.com':         'owner',
       'philip.langer@progress.com':  'owner',
+      'planger@progress.com':        'owner',
+      'phil.langer@progress.com':    'owner',
       'kathleen.faria@progress.com': 'manager',
+      'kfaria@progress.com':         'manager',
     };
     const MANAGER_TABS    = ['activity-log','leaderboard','coverage','broadcast','health','config','plays','accounts','invite'];
     const OWNER_ONLY_TABS = [];
@@ -1048,6 +1178,8 @@ Let's go! 🚀`;
         if (alUserTab) alUserTab.style.display = '';
         const demoTabBtn = document.getElementById('tab-btn-demo-activity');
         if (demoTabBtn) demoTabBtn.style.display = '';
+        const snapshotsTabBtn = document.getElementById('tab-btn-snapshots');
+        if (snapshotsTabBtn) snapshotsTabBtn.style.display = '';
       }
       // Hide owner-only tabs for managers
       if (role === 'manager') {
@@ -1081,6 +1213,7 @@ Let's go! 🚀`;
           return;
         }
         const user = getCurrentUser();
+        currentUser = user;
         if (user) document.getElementById("admin-user-name").textContent = user.name;
 
         // Check role
@@ -1748,6 +1881,169 @@ Let's go! 🚀`;
     }
 
     document.getElementById('al-btn-apply').addEventListener('click', loadActivityLog);
+
+    // ── Snapshot Tab ──────────────────────────────────────────────────────────────
+
+    let _pendingRestoreSnapshot = null;
+
+    async function loadSnapshotsTab() {
+      const wrap = document.getElementById('snapshot-list-wrap');
+      if (!wrap) return;
+      wrap.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:24px;">Loading snapshots…</div>';
+
+      const snapshots = await listSnapshots();
+
+      if (!snapshots.length) {
+        wrap.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:32px;">No snapshots found. Use "Save Snapshot" to create your first one.</div>';
+        return;
+      }
+
+      const rows = snapshots.map(s => {
+        const dt = s.timestamp ? new Date(s.timestamp).toLocaleString() : '—';
+        const typeClass = 'snap-type-' + (s.type || 'unknown');
+        const counts = Object.entries(s.record_counts || {})
+          .map(([k, v]) => `${k.replace(/_engagements\.csv|\.json|\.csv/g,'')}: ${v}`)
+          .join(' · ');
+        return `
+          <tr>
+            <td>${escHtml(dt)}</td>
+            <td>${escHtml(s.snapshot_id || '')}</td>
+            <td><span class="snap-type-badge ${escHtml(typeClass)}">${escHtml(s.type || 'unknown')}</span></td>
+            <td>${escHtml(s.label || '—')}</td>
+            <td style="font-size:11px;color:#6b7280;">${escHtml(counts || '—')}</td>
+            <td>
+              <button class="admin-action-btn admin-action-btn-secondary" style="padding:4px 10px;font-size:12px;"
+                onclick="openRestoreModal(${JSON.stringify(JSON.stringify(s))})">Restore</button>
+            </td>
+          </tr>`;
+      }).join('');
+
+      wrap.innerHTML = `
+        <table class="snapshot-table">
+          <thead><tr>
+            <th>Timestamp</th><th>Snapshot ID</th><th>Type</th><th>Label</th><th>Contents</th><th>Action</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    }
+
+    function openRestoreModal(snapshotJson) {
+      const s = JSON.parse(snapshotJson);
+      _pendingRestoreSnapshot = s;
+      const dt = s.timestamp ? new Date(s.timestamp).toLocaleString() : '—';
+      const counts = Object.entries(s.record_counts || {})
+        .map(([k, v]) => `<strong>${k.replace(/_engagements\.csv|\.json|\.csv/g,'')}</strong>: ${v} records`)
+        .join('<br>');
+      document.getElementById('restore-modal-summary').innerHTML =
+        `<strong>${escHtml(s.snapshot_id)}</strong><br>` +
+        `Taken: ${escHtml(dt)}<br>` +
+        `Type: ${escHtml(s.type || '—')}<br>` +
+        (s.label ? `Label: ${escHtml(s.label)}<br>` : '') +
+        `<br><em>Files included:</em><br>${counts || '—'}`;
+      const modal = document.getElementById('restore-modal');
+      modal.style.display = 'flex';
+    }
+
+    function closeRestoreModal() {
+      document.getElementById('restore-modal').style.display = 'none';
+      _pendingRestoreSnapshot = null;
+    }
+
+    async function confirmRestore() {
+      if (!_pendingRestoreSnapshot) return;
+      if (!requireOwner('Restore from Snapshot')) { closeRestoreModal(); return; }
+
+      const scope = document.getElementById('restore-scope-sel').value;
+      const s = _pendingRestoreSnapshot;
+
+      if (!requireTypedConfirmation('RESTORE',
+        `⚠ This will overwrite live data with snapshot:\n${s.snapshot_id}\nScope: ${scope}`)) {
+        closeRestoreModal();
+        return;
+      }
+      closeRestoreModal();
+
+      const statusEl = document.getElementById('snapshot-status');
+      statusEl.style.display = 'block';
+      statusEl.style.background = '#fff3cd'; statusEl.style.color = '#856404';
+      statusEl.textContent = `⏳ Restoring ${s.snapshot_id} (${scope})…`;
+
+      try {
+        const results = await restoreSnapshot(s.snapshot_id, scope);
+        statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
+        statusEl.textContent = `✅ Restored: ${results.restored.join(', ')}` +
+          (results.failed.length ? ` | Failed: ${results.failed.join(', ')}` : '');
+        try { await logActivity(currentUser, 'restore_snapshot', `Restored ${s.snapshot_id} scope=${scope}`); } catch(e) {}
+      } catch(e) {
+        statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
+        statusEl.textContent = '✗ Restore failed: ' + e.message;
+      }
+    }
+
+    async function doSaveSnapshot() {
+      if (!requireOwner('Save Snapshot')) return;
+      const label = prompt('Optional snapshot label (press OK to save, Cancel to abort):', '');
+      if (label === null) return;
+
+      const statusEl = document.getElementById('snapshot-status');
+      statusEl.style.display = 'block';
+      statusEl.style.background = '#fff3cd'; statusEl.style.color = '#856404';
+      statusEl.textContent = '⏳ Saving snapshot…';
+
+      try {
+        const manifest = await createSnapshot({
+          label: label || '',
+          type: 'manual',
+          triggeredBy: currentUser ? currentUser.email : ''
+        });
+        statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
+        statusEl.textContent = `✅ Snapshot saved: ${manifest.snapshot_id} (${manifest.files.length} files)`;
+        try { await logActivity(currentUser, 'save_snapshot', 'Manual snapshot: ' + manifest.snapshot_id); } catch(e) {}
+        loadSnapshotsTab();
+      } catch(e) {
+        statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
+        statusEl.textContent = '✗ Snapshot failed: ' + e.message;
+      }
+    }
+
+    async function doBackupAndReset() {
+      return backupAndReset();
+    }
+
+    async function doUndoLastReset() {
+      if (!requireOwner('Undo Last Reset')) return;
+
+      const statusEl = document.getElementById('snapshot-status');
+      statusEl.style.display = 'block';
+      statusEl.style.background = '#fff3cd'; statusEl.style.color = '#856404';
+      statusEl.textContent = '⏳ Looking for last pre-reset snapshot…';
+
+      try {
+        const snapshot = await getLastPreResetSnapshot();
+        if (!snapshot) {
+          statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
+          statusEl.textContent = '✗ No pre-reset snapshot found. Nothing to undo.';
+          return;
+        }
+        const dt = snapshot.timestamp ? new Date(snapshot.timestamp).toLocaleString() : snapshot.snapshot_id;
+        if (!requireTypedConfirmation('RESTORE',
+          `Undo last reset?\n\nThis will restore snapshot:\n${snapshot.snapshot_id}\nTaken: ${dt}\nLabel: ${snapshot.label || '(none)'}\n\nThis will overwrite current live data.`)) {
+          statusEl.style.background = '#f3f4f6'; statusEl.style.color = '#374151';
+          statusEl.textContent = 'Undo cancelled.';
+          return;
+        }
+        statusEl.textContent = `⏳ Restoring ${snapshot.snapshot_id}…`;
+        const results = await restoreSnapshot(snapshot.snapshot_id, 'full');
+        statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
+        statusEl.textContent = `✅ Undo complete. Restored: ${results.restored.join(', ')}` +
+          (results.failed.length ? ` | Failed: ${results.failed.join(', ')}` : '');
+        try { await logActivity(currentUser, 'undo_reset', 'Undo last reset: restored ' + snapshot.snapshot_id); } catch(e) {}
+      } catch(e) {
+        statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
+        statusEl.textContent = '✗ Undo failed: ' + e.message;
+      }
+    }
+
     document.getElementById('al-btn-clear').addEventListener('click', () => {
       ['al-filter-user', 'al-filter-action', 'al-filter-start', 'al-filter-end'].forEach(id => {
         document.getElementById(id).value = '';

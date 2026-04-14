@@ -442,6 +442,39 @@
     el.scrollTop = el.scrollHeight;
   }
 
+  // ── Security Helpers ──────────────────────────────────────────────────────
+
+  function requireIngestAdmin() {
+    if (!currentUser || !currentUser.email) {
+      log('err', 'Not authenticated. Please sign in first.');
+      return false;
+    }
+    const ADMIN_EMAILS = [
+      'planger@progress.com',
+      'phil.langer@progress.com',
+      'kfaria@progress.com',
+      'kathleen.faria@progress.com'
+    ];
+    const email = (currentUser.email || '').toLowerCase();
+    const isAdmin = ADMIN_EMAILS.some(a => email.includes(a.split('@')[0]));
+    if (!isAdmin) {
+      log('err', `Access denied. Ingest requires admin permissions. Your email: ${currentUser.email}`);
+      return false;
+    }
+    return true;
+  }
+
+  function isValidEmail(val) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+  }
+
+  function sanitizeCell(val) {
+    if (typeof val !== 'string') val = String(val || '');
+    val = val.trim().replace(/^[=+\-@]/, '');
+    val = val.replace(/<[^>]*>/g, '');
+    return val.slice(0, 500);
+  }
+
   // ── Wizard Navigation ──────────────────────────────────────────────────────
 
   let currentStep = 0;
@@ -581,6 +614,7 @@
   }
 
   function finishPlayStep() {
+    if (!requireIngestAdmin()) return;
     const name = document.getElementById('play-name-input').value.trim();
     if (!name || !selectedGoal) return;
     const playId = slugify(name);
@@ -629,6 +663,7 @@
   // ── Step 3: Paste ─────────────────────────────────────────────────────────
 
   function handlePaste() {
+    if (!requireIngestAdmin()) return;
     const raw = document.getElementById('paste-area').value.trim();
     if (!raw) { log('warn', 'Nothing pasted.'); return; }
 
@@ -646,14 +681,36 @@
     const headers = rows[headerIdx].map(h =>
       String(h).trim().replace(/\s*\*$/, '').toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
     );
-    log('info', 'Pasted headers: ' + headers.filter(Boolean).join(', '));
 
-    const assignments = [];
+    const normalizedHeaders = headers.filter(Boolean);
+    const hasAccountId   = normalizedHeaders.some(h => h.includes('account_id') || h.includes('accountid') || h.includes('sfdc'));
+    const hasAccountName = normalizedHeaders.some(h => h.includes('account_name') || h.includes('accountname'));
+    const hasRepEmail    = normalizedHeaders.some(h => h.includes('email') || h.includes('sso'));
+    const missing = [];
+    if (!hasAccountId)   missing.push('SFDC Account ID');
+    if (!hasAccountName) missing.push('Account Name');
+    if (!hasRepEmail)    missing.push('Rep Email');
+    if (missing.length > 0) {
+      log('err', `Missing required columns: ${missing.join(', ')}. Check that your header row uses: SFDC Account ID, Account Name, Rep Email, Rep Name.`);
+      return;
+    }
+
+    const MAX_PASTE_ROWS = 2000;
+    const dataLines = rows.slice(headerIdx + 1).filter(r => r.some(v => v !== ''));
+    if (dataLines.length > MAX_PASTE_ROWS) {
+      log('err', `Too many rows pasted (${dataLines.length}). Maximum is ${MAX_PASTE_ROWS} rows. Split into multiple uploads.`);
+      return;
+    }
+
+    log('info', 'Pasted headers: ' + normalizedHeaders.join(', '));
+
+    let invalidEmailCount = 0;
+    let assignments = [];
     for (let i = headerIdx + 1; i < rows.length; i++) {
       const row = rows[i];
       if (!row.some(v => v !== '')) continue;
       const r = {};
-      headers.forEach((h, idx) => { r[h] = String(row[idx] || '').trim(); });
+      headers.forEach((h, idx) => { r[h] = sanitizeCell(String(row[idx] || '')); });
 
       const acctId   = r.sfdc_account_id || r.account_id || r.accountid || '';
       const acctName = r.account_name || r.accountname || '';
@@ -661,7 +718,8 @@
       const repEmail = r.rep_email_crm || r.rep_email || r.crm_email || '';
       const repName  = r.rep_name || r.repname || '';
 
-      if (!acctId || !acctName || !ssoLogin || !ssoLogin.includes('@')) continue;
+      if (!acctId || !acctName) continue;
+      if (!ssoLogin || !isValidEmail(ssoLogin)) { invalidEmailCount++; continue; }
 
       let finalRepName = repName;
       if (!finalRepName || finalRepName.startsWith('=') || !finalRepName.match(/[a-z]/i)) {
@@ -681,6 +739,20 @@
       });
     }
 
+    if (invalidEmailCount > 0) {
+      log('warn', `${invalidEmailCount} row${invalidEmailCount !== 1 ? 's' : ''} skipped — missing or invalid Rep Email format.`);
+    }
+
+    const batchKeys = new Set();
+    let batchDupes = 0;
+    assignments = assignments.filter(a => {
+      const key = (a.account_id + '|' + a.rep_sso_login).toLowerCase();
+      if (batchKeys.has(key)) { batchDupes++; return false; }
+      batchKeys.add(key);
+      return true;
+    });
+    if (batchDupes > 0) log('warn', `${batchDupes} duplicate account+rep row${batchDupes !== 1 ? 's' : ''} removed from batch.`);
+
     if (assignments.length === 0) { log('err', 'No valid rows found. Check that SSO Login column contains email addresses.'); return; }
     log('ok', `Parsed ${assignments.length} accounts from pasted data.`);
     resolveAssignments(assignments).then(resolved => {
@@ -698,7 +770,14 @@
   dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
 
   function handleFile(file) {
+    if (!requireIngestAdmin()) return;
     if (!file) return;
+    const MAX_FILE_SIZE_MB = 5;
+    const MAX_ROWS = 5000;
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      log('err', `File too large (${(file.size/1024/1024).toFixed(1)}MB). Maximum size is ${MAX_FILE_SIZE_MB}MB.`);
+      return;
+    }
     log('info', 'Reading ' + file.name + '...');
     const reader = new FileReader();
     reader.onload = e => {
@@ -724,15 +803,34 @@
             .replace(/\s+/g, '_')
             .replace(/[^a-z0-9_]/g, '')
         );
-        log('info', 'Headers: ' + headers.filter(Boolean).join(', '));
 
-        const assignments = [];
+        const normalizedHeaders = headers.filter(Boolean);
+        const hasAccountId   = normalizedHeaders.some(h => h.includes('account_id') || h.includes('accountid') || h.includes('sfdc'));
+        const hasAccountName = normalizedHeaders.some(h => h.includes('account_name') || h.includes('accountname'));
+        const hasRepEmail    = normalizedHeaders.some(h => h.includes('email') || h.includes('sso'));
+        const missing = [];
+        if (!hasAccountId)   missing.push('SFDC Account ID');
+        if (!hasAccountName) missing.push('Account Name');
+        if (!hasRepEmail)    missing.push('Rep Email');
+        if (missing.length > 0) {
+          throw new Error(`Missing required columns: ${missing.join(', ')}. Check that your header row uses: SFDC Account ID, Account Name, Rep Email, Rep Name.`);
+        }
+
+        log('info', 'Headers: ' + normalizedHeaders.join(', '));
+
+        const dataRows = rows.slice(headerIdx + 1).filter(r => r.some(v => v !== '' && v !== null && v !== undefined));
+        if (dataRows.length > MAX_ROWS) {
+          throw new Error(`Too many rows (${dataRows.length}). Maximum is ${MAX_ROWS} rows per upload.`);
+        }
+
+        let invalidEmailCount = 0;
+        let assignments = [];
         for (let i = headerIdx + 1; i < rows.length; i++) {
           const row = rows[i];
           if (!row.some(v => v !== '' && v !== null && v !== undefined)) continue;
 
           const r = {};
-          headers.forEach((h, idx) => { r[h] = String(row[idx] || '').trim(); });
+          headers.forEach((h, idx) => { r[h] = sanitizeCell(String(row[idx] || '')); });
 
           const acctId   = r.sfdc_account_id || r.account_id || r.accountid || '';
           const acctName = r.account_name || r.accountname || '';
@@ -740,7 +838,8 @@
           const repEmail = r.rep_email_crm || r.rep_email || r.crm_email || '';
           const repName  = r.rep_name || r.repname || '';
 
-          if (!acctId || !acctName || !ssoLogin || !ssoLogin.includes('@')) continue;
+          if (!acctId || !acctName) continue;
+          if (!ssoLogin || !isValidEmail(ssoLogin)) { invalidEmailCount++; continue; }
 
           let finalRepName = repName;
           if (!finalRepName || finalRepName.startsWith('=') || !finalRepName.match(/[a-z]/i)) {
@@ -763,6 +862,20 @@
             active_flag:     true
           });
         }
+
+        if (invalidEmailCount > 0) {
+          log('warn', `${invalidEmailCount} row${invalidEmailCount !== 1 ? 's' : ''} skipped — missing or invalid Rep Email format.`);
+        }
+
+        const batchKeys = new Set();
+        let batchDupes = 0;
+        assignments = assignments.filter(a => {
+          const key = (a.account_id + '|' + a.rep_sso_login).toLowerCase();
+          if (batchKeys.has(key)) { batchDupes++; return false; }
+          batchKeys.add(key);
+          return true;
+        });
+        if (batchDupes > 0) log('warn', `${batchDupes} duplicate account+rep row${batchDupes !== 1 ? 's' : ''} removed from batch.`);
 
         if (assignments.length === 0) {
           throw new Error('No valid rows found. Make sure "Rep SSO Login" column has values containing "@".');
@@ -910,6 +1023,7 @@
   // ── Upload ─────────────────────────────────────────────────────────────────
 
   async function doUpload() {
+    if (!requireIngestAdmin()) return;
     const btn  = document.getElementById('btn-upload');
     const mode = document.querySelector('input[name="upload-mode"]:checked')?.value || 'merge';
     btn.disabled    = true;
@@ -1020,10 +1134,16 @@
       log('ok', '');
       log('ok', '🎉 Done! Reps can now open the app and see their accounts.');
       log('info', 'Files written: Chef SaaS Tracker/ChefSaaS/assignments.json · plays.json');
+      try {
+        await logActivity('ingest_upload', `Uploaded ${finalAssignments.length} rows for play: ${currentPlayDef.play_name}`);
+      } catch(e) {}
     } catch(e) {
       log('err', 'Upload failed: ' + e.message);
       btn.disabled    = false;
       btn.textContent = '🚀 Retry Launch';
+      try {
+        await logActivity('ingest_error', `Upload failed for play: ${(currentPlayDef||{}).play_name || 'unknown'} — ${e.message}`);
+      } catch(e2) {}
     }
   }
 </script>

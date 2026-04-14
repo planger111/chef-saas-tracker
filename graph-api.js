@@ -118,6 +118,15 @@ async function _graphFetch(path, options = {}) {
   const token = await getAccessToken();
   const url = path.startsWith("http") ? path : (CONFIG.graphBaseUrl + path);
   const resp = await fetch(url, { ...options, headers: { Authorization: "Bearer " + token, "Content-Type": "application/json", ...(options.headers || {}) } });
+  if (resp.status === 401) {
+    // Token rejected by Graph — force a fresh token then retry once
+    _driveId = null; _siteId = null;
+    const freshToken = await getAccessToken();
+    const retry = await fetch(url, { ...options, headers: { Authorization: "Bearer " + freshToken, "Content-Type": "application/json", ...(options.headers || {}) } });
+    if (!retry.ok) { const t = await retry.text(); throw new Error("Graph " + retry.status + ": " + t); }
+    if (retry.status === 204) return null;
+    return retry.json();
+  }
   if (!resp.ok) { const t = await resp.text(); throw new Error("Graph " + resp.status + ": " + t); }
   if (resp.status === 204) return null;
   return resp.json();
@@ -503,4 +512,169 @@ async function getMotionLog(filters) {
     if (filters.outcome)   allLogs = allLogs.filter(r => r.outcome === filters.outcome);
   }
   return allLogs.sort((a, b) => (b.submitted_at || "").localeCompare(a.submitted_at || ""));
+}
+
+// ─── Section 7: Snapshot System ──────────────────────────────────────────────
+
+const SNAPSHOT_ROOT = SP_ROOT + "/snapshots";
+
+async function createSnapshot({ label = '', type = 'manual', triggeredBy = '' } = {}) {
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const ts = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+  const snapshotId = `snapshot-${ts}`;
+  const snapshotPath = SNAPSHOT_ROOT + '/' + snapshotId;
+
+  const manifest = {
+    snapshot_id: snapshotId,
+    timestamp: now.toISOString(),
+    triggered_by: triggeredBy,
+    label: label || '',
+    type: type,
+    files: [],
+    record_counts: {}
+  };
+
+  const coreFiles = [
+    { name: 'plays.json',            path: SP_ROOT + '/plays.json' },
+    { name: 'assignments.json',      path: SP_ROOT + '/assignments.json' },
+    { name: 'response-options.json', path: SP_ROOT + '/response-options.json' },
+    { name: 'rep-identity.json',     path: SP_ROOT + '/rep-identity.json' },
+    { name: 'activity_log.csv',      path: SP_ROOT + '/activity_log.csv' },
+  ];
+
+  for (const f of coreFiles) {
+    try {
+      const content = await getFileText(f.path);
+      if (!content) continue;
+      const ct = f.name.endsWith('.json') ? 'application/json' : 'text/csv';
+      await putFile(snapshotPath + '/' + f.name, content, ct);
+      manifest.files.push(f.name);
+      try {
+        if (f.name.endsWith('.json')) {
+          const parsed = JSON.parse(content);
+          const arrKey = Object.keys(parsed).find(k => Array.isArray(parsed[k]));
+          if (arrKey) manifest.record_counts[f.name] = parsed[arrKey].length;
+        } else {
+          manifest.record_counts[f.name] = Math.max(0, content.trim().split('\n').length - 1);
+        }
+      } catch(e) {}
+    } catch(e) {
+      // File may not exist yet — skip silently
+    }
+  }
+
+  // Per-play engagement CSVs
+  try {
+    const playsText = await getFileText(SP_ROOT + '/plays.json');
+    if (playsText) {
+      const playsData = JSON.parse(playsText);
+      const plays = playsData.plays || [];
+      for (const play of plays) {
+        const playId = (play.play_id || '').replace(/[^a-z0-9]/gi, '_');
+        if (!playId) continue;
+        const engPath = SP_ROOT + '/' + playId + '_engagements.csv';
+        try {
+          const content = await getFileText(engPath);
+          if (content) {
+            const fname = playId + '_engagements.csv';
+            await putFile(snapshotPath + '/' + fname, content, 'text/csv');
+            manifest.files.push(fname);
+            manifest.record_counts[fname] = Math.max(0, content.trim().split('\n').length - 1);
+          }
+        } catch(e) {}
+      }
+    }
+  } catch(e) {}
+
+  await putFile(snapshotPath + '/manifest.json', JSON.stringify(manifest, null, 2), 'application/json');
+
+  return manifest;
+}
+
+async function listSnapshots() {
+  const driveId = await getDriveId();
+  const token = await getAccessToken();
+
+  try {
+    const encodedPath = encodeURIComponent(SNAPSHOT_ROOT);
+    const resp = await fetch(
+      `${CONFIG.graphBaseUrl}/drives/${driveId}/root:/${SNAPSHOT_ROOT}:/children`,
+      { headers: { Authorization: 'Bearer ' + token } }
+    );
+    if (!resp.ok) return [];
+    const data = await resp.json();
+    const folders = (data.value || []).filter(item => item.folder && item.name.startsWith('snapshot-'));
+
+    const manifests = await Promise.all(folders.map(async folder => {
+      try {
+        const text = await getFileText(SNAPSHOT_ROOT + '/' + folder.name + '/manifest.json');
+        return JSON.parse(text);
+      } catch(e) {
+        return {
+          snapshot_id: folder.name,
+          timestamp: '',
+          label: '',
+          type: 'unknown',
+          files: [],
+          record_counts: {}
+        };
+      }
+    }));
+
+    return manifests.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+  } catch(e) {
+    return [];
+  }
+}
+
+async function restoreSnapshot(snapshotId, scope = 'full') {
+  const snapshotPath = SNAPSHOT_ROOT + '/' + snapshotId;
+
+  const scopeFiles = {
+    full:  ['plays.json', 'assignments.json', 'response-options.json', 'rep-identity.json', 'activity_log.csv'],
+    plays: ['plays.json', 'assignments.json', 'response-options.json'],
+    logs:  ['activity_log.csv'],
+  };
+  const filesToRestore = scopeFiles[scope] || scopeFiles.full;
+
+  const results = { restored: [], failed: [], skipped: [] };
+
+  for (const fname of filesToRestore) {
+    try {
+      const content = await getFileText(snapshotPath + '/' + fname);
+      if (!content) { results.skipped.push(fname); continue; }
+      const ct = fname.endsWith('.json') ? 'application/json' : 'text/csv';
+      await putFile(SP_ROOT + '/' + fname, content, ct);
+      results.restored.push(fname);
+    } catch(e) {
+      results.failed.push(fname + ': ' + e.message);
+    }
+  }
+
+  if (scope === 'full') {
+    try {
+      const manifestText = await getFileText(snapshotPath + '/manifest.json');
+      const manifest = JSON.parse(manifestText);
+      const engFiles = (manifest.files || []).filter(f => f.endsWith('_engagements.csv'));
+      for (const fname of engFiles) {
+        try {
+          const content = await getFileText(snapshotPath + '/' + fname);
+          if (content) {
+            await putFile(SP_ROOT + '/' + fname, content, 'text/csv');
+            results.restored.push(fname);
+          }
+        } catch(e) {
+          results.failed.push(fname + ': ' + e.message);
+        }
+      }
+    } catch(e) {}
+  }
+
+  return results;
+}
+
+async function getLastPreResetSnapshot() {
+  const snapshots = await listSnapshots();
+  return snapshots.find(s => s.type === 'pre-reset') || null;
 }
