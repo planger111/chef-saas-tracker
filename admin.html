@@ -2147,7 +2147,8 @@ Let's go! 🚀`;
       } catch(e) { alert('Export failed: ' + e.message); }
     });
 
-    // ── Export All ────────────────────────────────────────────────────────────    async function exportAll() {
+    // ── Export All ────────────────────────────────────────────────────────────
+    async function exportAll() {
       const btn = document.getElementById('btn-export-all');
       btn.textContent = '⏳ Exporting…';
       btn.disabled = true;
