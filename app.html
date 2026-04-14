@@ -563,6 +563,19 @@
     // ─────────────────────────────────────────────
     // DASHBOARD
     // ─────────────────────────────────────────────
+
+    // Re-render the dashboard play cards from current in-memory data (no fetch).
+    // Call this whenever navigating back to the dashboard so counts stay fresh.
+    function showDashboard() {
+      if (_dashboardReady) {
+        renderPlayCards();          // re-render with latest latestLogs
+        renderPointsCard(totalPoints); // re-render points in case submission happened
+        showScreen('screen-dashboard');
+      } else {
+        loadDashboard();            // first time or data not ready — full load
+      }
+    }
+
     async function loadDashboard() {
       showScreen('screen-loading');
       try {
@@ -625,9 +638,6 @@
         const accountIds = repAccounts.map(a => a.account_id);
         latestLogs = Object.fromEntries(accountIds.map(id => [id, latestMap[id] || null]));
 
-        // Build logResults in same shape renderPlayCards expects
-        const logResults = allPlays.map(play => ({ play_id: play.play_id, logs: latestLogs }));
-
         // Populate welcome bar
         const firstName = name ? name.split(' ')[0] : 'there';
         const wbNameEl  = document.getElementById('wb-name');  if (wbNameEl)  wbNameEl.textContent  = firstName;
@@ -640,7 +650,7 @@
         renderPointsCard(totalPoints);
 
         // Always render the dashboard first — user must click a play to drill in
-        renderPlayCards(logResults);
+        renderPlayCards();
 
         // Render leaderboard peek
         const lbData = await getLeaderboard();
@@ -676,7 +686,7 @@
       document.getElementById('dashboard-level-name').textContent   = level.name;
     }
 
-    function renderPlayCards(logResults) {
+    function renderPlayCards() {
       const container = document.getElementById('dashboard-plays-list');
       if (!allPlays.length) {
         container.innerHTML = '<div style="text-align:center;color:#999;padding:24px;">No plays assigned yet — check back soon.</div>';
@@ -1264,7 +1274,7 @@
           clearInterval(interval);
           btn.textContent = 'Back to My Accounts';
           if (currentPlay) loadPlayDetail(currentPlay, true);
-          else showScreen('screen-dashboard');
+          else showDashboard();
         } else {
           btn.textContent = `Back to My Accounts (${secs}s)`;
         }
@@ -1403,12 +1413,7 @@
 
     // Back: play detail → dashboard
     document.getElementById('btn-back-to-dashboard').addEventListener('click', () => {
-      if (_dashboardReady) {
-        showScreen('screen-dashboard');
-      } else {
-        // Single-play rep never got a rendered dashboard — reload fully
-        loadDashboard();
-      }
+      showDashboard();
     });
 
     // Back: log form → play detail (step-aware)
@@ -1427,11 +1432,7 @@
 
     // Back: leaderboard → dashboard
     document.getElementById('btn-back-to-dashboard-lb').addEventListener('click', () => {
-      if (_dashboardReady) {
-        showScreen('screen-dashboard');
-      } else {
-        loadDashboard();
-      }
+      showDashboard();
     });
 
     // Back to accounts (confirm screen)
@@ -1439,7 +1440,7 @@
       if (currentPlay) {
         loadPlayDetail(currentPlay, true);
       } else {
-        showScreen('screen-dashboard');
+        showDashboard();
       }
     });
 
