@@ -4,5 +4,8 @@
       "route": "/*",
       "allowedRoles": ["anonymous"]
     }
-  ]
+  ],
+  "globalHeaders": {
+    "Cache-Control": "no-cache, no-store, must-revalidate"
+  }
 }

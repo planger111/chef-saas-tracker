@@ -1243,15 +1243,18 @@ Let's go! 🚀`;
         const emailCandidates = (user?.emails && user.emails.length)
           ? user.emails
           : [(user?.email || '').toLowerCase()];
+        console.log('[Admin] Email candidates for role check:', emailCandidates);
         const role = emailCandidates.map(e => ADMIN_ROLES[e]).find(r => r);
         if (!role) {
           // Not an admin at all — block access
+          console.warn('[Admin] Access denied. Candidates:', emailCandidates, 'Known roles:', Object.keys(ADMIN_ROLES));
           document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">
             <div style="text-align:center;padding:40px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);max-width:400px;">
               <div style="font-size:48px;margin-bottom:16px;">🚫</div>
               <h2 style="color:#d32f2f;margin-bottom:8px;">Access Denied</h2>
               <p style="color:#666;">Your account does not have admin access.</p>
               <p style="font-size:12px;color:#999;margin-top:8px;">Detected: <strong>${escHtml(emailCandidates.join(', '))}</strong></p>
+              <p style="font-size:11px;color:#bbb;">If this is wrong, send Phil a screenshot of this page.</p>
               <a href="app.html" style="display:inline-block;margin-top:20px;background:#0078d4;color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;">Go to Rep App</a>
             </div>
           </div>`;
