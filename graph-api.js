@@ -1,4 +1,4 @@
-// Chef SaaS Motion Tracker - SharePoint CSV file backend
+// INFRA SalesPlay Tracker - SharePoint CSV file backend
 // Assignments read from assignments.json, engagements written to per-play CSV files
 // Only needs Sites.ReadWrite.All (already granted)
 
@@ -7,6 +7,112 @@ const SP_ROOT = "Chef SaaS Tracker/ChefSaaS";
 
 let _siteId = null;
 let _driveId = null;
+
+// ─── Section 2: Identity ──────────────────────────────────────────────────
+// rep-identity.json lives in SharePoint only — never in the GitHub repo.
+// Schema per rep: { oid, upn, display_name, aliases[], role, active, last_seen }
+
+let _repIdentityMap = null;
+
+async function getRepIdentityMap() {
+  if (_repIdentityMap) return _repIdentityMap;
+  try {
+    const text = await getFileText(SP_ROOT + "/rep-identity.json");
+    if (text) _repIdentityMap = JSON.parse(text);
+  } catch(e) {
+    console.warn("[Identity] Could not load rep-identity.json:", e.message);
+    _repIdentityMap = { reps: [], pending: [] };
+  }
+  return _repIdentityMap;
+}
+
+// Match an email address against all aliases[] in the identity map.
+// Returns the rep entry or null.
+async function resolveRepByEmail(email) {
+  if (!email) return null;
+  const map = await getRepIdentityMap();
+  const lower = email.toLowerCase().trim();
+  return (map.reps || []).find(r => (r.aliases || []).some(a => a.toLowerCase() === lower)) || null;
+}
+
+// Match a display name using last-name-first scoring.
+// Returns { match: repEntry|null, ambiguous: bool, candidates: [] }
+async function resolveRepByName(fullName) {
+  if (!fullName) return { match: null, ambiguous: false, candidates: [] };
+  const map = await getRepIdentityMap();
+  const parts = fullName.trim().toLowerCase().split(/\s+/);
+  const lastName = parts[parts.length - 1];
+  const firstName = parts[0];
+
+  // Step 1: filter to last-name matches
+  const lastMatches = (map.reps || []).filter(r => {
+    const rParts = r.display_name.toLowerCase().split(/\s+/);
+    return rParts[rParts.length - 1] === lastName;
+  });
+  if (lastMatches.length === 0) return { match: null, ambiguous: false, candidates: [] };
+
+  // Step 2: score first name similarity
+  function firstScore(rep) {
+    const rFirst = rep.display_name.toLowerCase().split(/\s+/)[0];
+    if (rFirst === firstName) return 100;
+    if (rFirst.startsWith(firstName) || firstName.startsWith(rFirst)) return 80;
+    if (rFirst.slice(0, 3) === firstName.slice(0, 3)) return 60;
+    return 0;
+  }
+  const scored = lastMatches.map(r => ({ rep: r, score: firstScore(r) })).filter(s => s.score >= 60);
+  if (scored.length === 0) return { match: null, ambiguous: false, candidates: lastMatches };
+  if (scored.length === 1) return { match: scored[0].rep, ambiguous: false, candidates: [] };
+  // Multiple above threshold — ambiguous, admin must pick
+  return { match: null, ambiguous: true, candidates: scored.map(s => s.rep) };
+}
+
+// Write the Entra OID to a rep's identity map entry after first login.
+// Read-check-write to avoid race: only writes if oid is currently empty.
+async function registerOID(upn, oid) {
+  if (!upn || !oid) return;
+  try {
+    const map = await getRepIdentityMap();
+    const rep = (map.reps || []).find(r => (r.aliases || []).some(a => a.toLowerCase() === upn.toLowerCase()));
+    if (!rep) return; // not in map — write to pending[] handled separately
+    if (rep.oid && rep.oid === oid) return; // already registered, no-op
+    rep.oid = oid;
+    rep.last_seen = new Date().toISOString();
+    await writeJsonFile("rep-identity.json", map);
+    _repIdentityMap = map; // update cache
+  } catch(e) {
+    console.warn("[Identity] registerOID failed (non-blocking):", e.message);
+  }
+}
+
+// ─── Section 3: Activity Logging ─────────────────────────────────────────
+// Appends to activity_log.csv in SharePoint. Always non-blocking — never throws.
+
+const ACTIVITY_LOG_HEADERS = ["timestamp","user_email","user_name","action_type","detail"];
+
+async function logActivity(user, actionType, detail) {
+  try {
+    if (!user || !user.username) return;
+    const row = [
+      new Date().toISOString(),
+      user.username,
+      user.name || user.username,
+      actionType || '',
+      detail || ''
+    ].map(v => csvEscape(String(v))).join(',');
+    const filePath = SP_ROOT + "/activity_log.csv";
+    let existing = '';
+    try { existing = await getFileText(filePath) || ''; } catch(e) {}
+    const csv = existing.trim()
+      ? existing.trimEnd() + '\n' + row
+      : ACTIVITY_LOG_HEADERS.join(',') + '\n' + row;
+    await putFile(filePath, csv, 'text/csv');
+  } catch(e) {
+    console.warn("[Activity] logActivity failed (non-blocking):", e.message);
+  }
+}
+
+
+
 
 async function _graphFetch(path, options = {}) {
   const token = await getAccessToken();
@@ -96,11 +202,41 @@ async function getPlayAssignments(repEmail) {
   const data = JSON.parse(text);
   const list = (data.assignments || []).filter(a => a.active_flag !== false);
   if (!repEmail) return list;
-  // Match on rep_sso_login first (the actual Azure AD login), then fall back to rep_email
+
   const emailLower = repEmail.toLowerCase();
+
+  // Tier 1: match by registered OID
+  const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+  if (user && user.oid) {
+    const byOid = list.filter(a => a.rep_oid && a.rep_oid === user.oid);
+    if (byOid.length > 0) {
+      console.log("[ChefSaaS] Matched " + byOid.length + " accounts via OID");
+      return byOid;
+    }
+  }
+
+  // Tier 2: resolve via identity map aliases
+  try {
+    const repEntry = await resolveRepByEmail(emailLower);
+    if (repEntry) {
+      const aliases = (repEntry.aliases || []).map(a => a.toLowerCase());
+      const byAlias = list.filter(a =>
+        aliases.includes((a.rep_sso_login || '').toLowerCase()) ||
+        aliases.includes((a.rep_email || '').toLowerCase())
+      );
+      if (byAlias.length > 0) {
+        console.log("[ChefSaaS] Matched " + byAlias.length + " accounts via identity map for " + repEntry.display_name);
+        return byAlias;
+      }
+    }
+  } catch(e) {
+    console.warn("[ChefSaaS] Identity map lookup failed, falling back:", e.message);
+  }
+
+  // Tier 3: direct match on rep_sso_login / rep_email (original behavior)
   let matched = list.filter(a => (a.rep_sso_login || "").toLowerCase() === emailLower);
   if (matched.length === 0) matched = list.filter(a => (a.rep_email || "").toLowerCase() === emailLower);
-  console.log("[ChefSaaS] SSO login: " + repEmail + " — matched " + matched.length + " accounts (via " + (matched.length > 0 && matched[0].rep_sso_login ? "rep_sso_login" : "rep_email") + ")");
+  console.log("[ChefSaaS] Direct match: " + repEmail + " — " + matched.length + " accounts");
   return matched;
 }
 
@@ -186,7 +322,37 @@ async function saveFullResponseConfig(config) {
   await writeJsonFile("response-options.json", config);
 }
 
-// ─── Points ───────────────────────────────────────────────────────────────
+// ─── Section 5: Scoring ───────────────────────────────────────────────────
+
+// Score notes based on content signals, not character count.
+// Returns bonus points 0–40. Never exposed in UI.
+function scoreNotes(notes) {
+  if (!notes || notes.trim().length < 10) return 0;
+  const text = notes.toLowerCase();
+  let score = 0;
+
+  const competitors = ['ansible','puppet','terraform','servicenow','saltstack','jenkins',
+                       'harness','octopus','github actions','gitlab','azure devops'];
+  const competitorHits = competitors.filter(c => text.includes(c));
+  score += competitorHits.length * 8;
+
+  const budgetSignals = ['budget','funded','approved','allocated','q1','q2','q3','q4','fiscal'];
+  if (budgetSignals.some(s => text.includes(s))) score += 8;
+
+  const stakeholderSignals = ['cto','ciso','vp ','director','executive','sponsor','champion'];
+  if (stakeholderSignals.some(s => text.includes(s))) score += 6;
+
+  const urgencySignals = ['urgent','asap','priority','this quarter','next quarter','eoy'];
+  if (urgencySignals.some(s => text.includes(s))) score += 5;
+
+  const riskSignals = ['concern','risk','blocker','hesitant','pushback','compliance'];
+  if (riskSignals.some(s => text.includes(s))) score += 5;
+
+  // Minimum reward for substantive notes with no detected signals
+  if (score === 0 && notes.trim().length >= 30) score += 2;
+
+  return score;
+}
 
 function calculatePoints(outcome, nextStepType, data) {
   // Base points
@@ -201,9 +367,14 @@ function calculatePoints(outcome, nextStepType, data) {
     const reasonLabel = (data.reason_label || '').toLowerCase();
     const nextStep = (data.next_step_type || '').toLowerCase();
 
-    if (notes.length > 20) bonus += 5;
+    // Notes: intelligence-driven scoring (replaces flat +5 for length)
+    bonus += scoreNotes(notes);
+
+    // Strong interest signals
     if (reasonLabel.includes('active budget') || reasonLabel.includes('executive sponsor')) bonus += 10;
+    // Strong next step
     if (nextStep.includes('schedule follow-up')) bonus += 10;
+    // Competitive intel in reason
     if (reasonLabel.includes('already have solution') || reasonLabel.includes('already solved')) bonus += 8;
   }
 

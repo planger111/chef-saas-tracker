@@ -1,4 +1,4 @@
-// Chef SaaS Motion Tracker — MSAL Authentication (popup flow)
+// INFRA SalesPlay Tracker — MSAL Authentication (popup flow)
 
 let _msalInstance = null;
 let _account = null;
@@ -85,5 +85,6 @@ function getCurrentUser() {
     name: _account.name || _account.username,
     email: _account.username,
     username: _account.username,
+    oid: _account.localAccountId || '',
   };
 }

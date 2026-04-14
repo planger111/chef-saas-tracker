@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security & Privacy — INFRA SalesPlay Tracker</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background:#f5f5f5; color:#374151; margin:0; padding:0; }
+  .sec-header { background:#1a1a2e; color:#fff; padding:14px 28px; display:flex; align-items:center; justify-content:space-between; }
+  .sec-header h1 { font-size:15px; font-weight:700; margin:0; }
+  .sec-nav { display:flex; gap:12px; }
+  .sec-nav a { color:#9ca3af; font-size:13px; text-decoration:none; }
+  .sec-nav a:hover { color:#fff; }
+  .sec-body { max-width:720px; margin:40px auto; padding:0 20px 80px; }
+  .sec-title { font-size:22px; font-weight:700; color:#1a1a2e; margin-bottom:4px; }
+  .sec-subtitle { font-size:14px; color:#6b7280; margin-bottom:32px; }
+  .sec-section { margin-bottom:28px; }
+  .sec-section h2 { font-size:15px; font-weight:700; color:#1a1a2e; border-bottom:1px solid #e9ecef; padding-bottom:6px; margin-bottom:12px; }
+  .sec-section p { font-size:14px; line-height:1.7; margin:0 0 8px; color:#374151; }
+  .sec-section ul { padding-left:20px; font-size:14px; line-height:1.8; color:#374151; }
+  .confidential-banner { background:#fff3cd; border:1px solid #fbbf24; border-radius:8px; padding:12px 16px; font-size:13px; color:#92400e; font-weight:600; margin-bottom:28px; }
+  .sec-footer { text-align:center; font-size:11px; color:#9ca3af; margin-top:48px; padding-top:16px; border-top:1px solid #e9ecef; }
+</style>
+</head>
+<body>
+<div id="auth-gate" style="display:none;position:fixed;inset:0;background:#f5f5f5;z-index:9999;align-items:center;justify-content:center;">
+  <div style="text-align:center;">
+    <p style="font-size:14px;color:#374151;margin-bottom:16px;">Sign in to view this page</p>
+    <button onclick="doSignIn()" style="background:#0078d4;color:#fff;padding:10px 24px;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">Sign In with Microsoft</button>
+  </div>
+</div>
+
+<div id="sec-content" style="display:none;">
+  <div class="sec-header">
+    <h1>INFRA SalesPlay Tracker</h1>
+    <nav class="sec-nav">
+      <a href="app.html">Rep App</a>
+      <a href="admin.html">Admin</a>
+      <a href="#" id="nav-signout">Sign Out</a>
+    </nav>
+  </div>
+  <div class="sec-body">
+    <div class="confidential-banner">🔒 Progress Software Proprietary &amp; Confidential — Internal Use Only</div>
+    <div class="sec-title">Security &amp; Privacy</div>
+    <div class="sec-subtitle">INFRA SalesPlay Tracker · Last reviewed by Phil Langer</div>
+
+    <div class="sec-section">
+      <h2>Authentication</h2>
+      <p>This application requires authentication via Microsoft Entra ID (Azure Active Directory) using your Progress Software account. Only employees with a valid Progress Microsoft 365 identity may access this application.</p>
+      <p>Single Sign-On is enforced. You cannot create a local password or access the app without your Progress SSO credentials.</p>
+    </div>
+
+    <div class="sec-section">
+      <h2>Data Storage</h2>
+      <p>All data is stored in Microsoft SharePoint within the Progress Software Microsoft 365 tenant. No data is stored outside the Progress tenant.</p>
+      <ul>
+        <li>Engagement logs and account assignments are stored in SharePoint document libraries</li>
+        <li>Rep identity data is stored in SharePoint and never committed to any public code repository</li>
+        <li>Activity logs (login/action events) are stored in SharePoint, admin-only access</li>
+      </ul>
+    </div>
+
+    <div class="sec-section">
+      <h2>Access Control</h2>
+      <ul>
+        <li><strong>Reps</strong> — can view their own accounts, log engagements, and see the leaderboard</li>
+        <li><strong>Managers</strong> — can view all engagement data across their team</li>
+        <li><strong>Admins (Owners)</strong> — can configure plays, upload accounts, view activity logs, and manage all data</li>
+      </ul>
+      <p>Admin access requires explicit authorization by Phil Langer. Role assignments are hardcoded in the application and changes require a code deployment.</p>
+    </div>
+
+    <div class="sec-section">
+      <h2>Activity Logging</h2>
+      <p>All user actions — including logins, form submissions, screen views, and demo mode usage — are logged with timestamp, user email, and action type. These logs are accessible only to application admins and are stored in SharePoint.</p>
+    </div>
+
+    <div class="sec-section">
+      <h2>Hosting &amp; Infrastructure</h2>
+      <ul>
+        <li>Hosted on Azure Static Web Apps in the Progress Azure subscription</li>
+        <li>Source code hosted on GitHub (public repo — code only, no data or credentials)</li>
+        <li>No server-side logic — all reads/writes go through Microsoft Graph API using your authenticated session token</li>
+        <li>No third-party analytics, tracking, or external services</li>
+      </ul>
+    </div>
+
+    <div class="sec-section">
+      <h2>Confidentiality</h2>
+      <p>This application and its data are Progress Software proprietary and confidential. Do not share access, screenshots, or data with anyone outside of Progress Software. Do not embed or transmit engagement data to external systems.</p>
+    </div>
+
+    <div class="sec-section">
+      <h2>Contact</h2>
+      <p>For access requests, security questions, or to report an issue, contact <strong>Phil Langer</strong> (INFRA Sales, SVP).</p>
+    </div>
+
+    <div class="sec-footer">INFRA SalesPlay Tracker — Progress Software Proprietary &amp; Confidential · Progress employees only</div>
+  </div>
+</div>
+
+<script src="msal-browser.js"></script>
+<script src="config.js"></script>
+<script src="msal-auth.js"></script>
+<script src="graph-api.js"></script>
+<script>
+(async () => {
+  const user = await initAuth();
+  if (!user) {
+    document.getElementById('auth-gate').style.display = 'flex';
+    return;
+  }
+  document.getElementById('auth-gate').style.display = 'none';
+  document.getElementById('sec-content').style.display = 'block';
+  document.getElementById('nav-signout').onclick = () => signOut();
+})();
+
+async function doSignIn() {
+  await signIn();
+  location.reload();
+}
+</script>
+</body>
+</html>

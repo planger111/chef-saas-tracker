@@ -1,4 +1,4 @@
-// Chef SaaS Motion Tracker — Configuration
+// INFRA SalesPlay Tracker — Configuration
 // Fill in these 3 values after registering your Azure AD app
 // See README.md for step-by-step instructions
 

@@ -1,4 +1,4 @@
-# Chef SaaS Motion Tracker
+# INFRA SalesPlay Tracker
 
 A mobile-first web app for Progress INFRA Sales. Reps log account engagement outcomes from any phone — no app install required. Leadership sees a live dashboard with leaderboard and conversion data.
 
@@ -8,7 +8,7 @@ A mobile-first web app for Progress INFRA Sales. Reps log account engagement out
 
 | Item | Value |
 |------|-------|
-| Azure AD App | `Chef SaaS Motion Tracker` (Client ID: `48db2acc-9dfb-4337-9abb-302c9dfb88fc`) |
+| Azure AD App | `INFRA SalesPlay Tracker` (Client ID: `48db2acc-9dfb-4337-9abb-302c9dfb88fc`) |
 | SharePoint site | `https://progresssoftware.sharepoint.com/sites/INFRASalesLeadership` |
 | Graph permission | `Sites.ReadWrite.All` (admin consent granted) |
 | GitHub repo | `planger111/chef-saas-tracker` (private) |
@@ -49,7 +49,7 @@ This is the right long-term hosting solution. The GitHub Actions workflow is alr
 #### Step 2 — Add redirect URI to Azure AD App (2 min)
 
 1. In Azure portal → **Azure Active Directory** → **App registrations**
-2. Find **Chef SaaS Motion Tracker** (Client ID: `48db2acc-9dfb-4337-9abb-302c9dfb88fc`)
+2. Find **INFRA SalesPlay Tracker** (Client ID: `48db2acc-9dfb-4337-9abb-302c9dfb88fc`)
 3. **Authentication** → under **Single-page application** → **Add URI**
 4. Add the Static Web App URL: `https://infrasalesplaytracker.azurestaticapps.net`
 5. Click **Save**
@@ -123,7 +123,7 @@ One CSV per play. Admin downloads and opens in Excel — no special tooling need
 1. Go to [portal.azure.com](https://portal.azure.com) and sign in with your Progress credentials.
 2. Search **"App registrations"** in the top search bar → click **New registration**.
 3. Fill in:
-   - **Name:** `Chef SaaS Motion Tracker`
+   - **Name:** `INFRA SalesPlay Tracker`
    - **Supported account types:** _Accounts in this organizational directory only_
    - **Redirect URI:** Select **Single-page application (SPA)** → enter the URL where you'll host the app (e.g. `https://progresssoftware.sharepoint.com/sites/SalesOps/SiteAssets/chef-saas-tracker/index.html` or `http://localhost` for testing)
 4. Click **Register**.
@@ -160,7 +160,7 @@ The `sharepointSiteUrl` is the root URL of your SharePoint site — just the sit
 3. Sign in with your Progress account.
 4. Click **"Create All Lists & Seed Data"** — wait for all ✅ confirmations.
 
-This creates 5 SharePoint lists and seeds the initial Chef SaaS play configuration:
+This creates 5 SharePoint lists and seeds the initial INFRA SalesPlay configuration:
 - `sales_plays` — the plays reps can select
 - `form_fields` — the questions for each play
 - `field_options` — the dropdown choices
@@ -272,14 +272,14 @@ In `form_fields`, the `show_when_field` and `show_when_value` columns control wh
 IT needs to grant admin consent for the `Sites.ReadWrite.All` permission in your Azure AD app registration.
 
 **What IT does (30 seconds of work):**
-> Entra ID → App registrations → Chef SaaS Motion Tracker → API permissions → **Grant admin consent for Progress Software**
+> Entra ID → App registrations → INFRA SalesPlay Tracker → API permissions → **Grant admin consent for Progress Software**
 
 **Email/Slack template to send IT:**
 
-> Hi — I've registered an internal Azure AD app called **Chef SaaS Motion Tracker** (Client ID: `48db2acc-9dfb-4337-9abb-302c9dfb88fc`) for a sales tracking tool I'm building for the team. It uses SharePoint lists to store data and needs the `Sites.ReadWrite.All` delegated permission approved.
+> Hi — I've registered an internal Azure AD app called **INFRA SalesPlay Tracker** (Client ID: `48db2acc-9dfb-4337-9abb-302c9dfb88fc`) for a sales tracking tool I'm building for the team. It uses SharePoint lists to store data and needs the `Sites.ReadWrite.All` delegated permission approved.
 >
 > Could someone with admin rights grant consent here:
-> **Entra ID → App registrations → Chef SaaS Motion Tracker → API permissions → Grant admin consent for Progress Software**
+> **Entra ID → App registrations → INFRA SalesPlay Tracker → API permissions → Grant admin consent for Progress Software**
 >
 > A few things worth knowing if there are any concerns:
 > - **Delegated permission only** — the app acts as the logged-in user and can never do more than that user is already allowed to do in SharePoint. It cannot act autonomously or access data when no one is signed in.

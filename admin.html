@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin — Chef SaaS Motion Tracker</title>
+  <title>Admin — INFRA SalesPlay Tracker</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
     body { max-width: 100%; }
@@ -23,24 +23,38 @@
     <div class="admin-wrapper">
       <!-- Header -->
       <div class="admin-header">
-        <div class="admin-header-title" style="cursor:pointer;" onclick="window.location.href='app.html'" title="Go to Rep App">📊 Admin — Motion Log</div>
+        <div class="admin-header-title" style="cursor:pointer;" onclick="window.location.href='app.html'" title="Go to Rep App">INFRA SalesPlay Tracker — Admin</div>
         <div class="admin-header-right">
-          <span id="admin-user-name"></span><br />
-          <a href="app.html" style="font-weight:600;">🏠 Home</a> · <a href="#" id="btn-sign-out">Sign out</a> · <a href="ingest.html" style="background:#0078d4;color:#fff;padding:3px 10px;border-radius:5px;text-decoration:none;font-weight:600;">⬆️ Upload Accounts</a> · <button id="btn-export-all" onclick="exportAll()" style="background:#107c10;color:#fff;padding:3px 10px;border-radius:5px;font-weight:600;border:none;cursor:pointer;font-size:13px;">⬇️ Export All</button>
+          <span id="admin-user-name" style="font-size:12px;color:#9ca3af;margin-right:8px;"></span>
+          <a href="app.html" class="admin-nav-link">Home</a>
+          <a href="ingest.html" class="admin-nav-link admin-nav-btn">Upload Accounts</a>
+          <div class="export-dropdown">
+            <button class="admin-nav-btn admin-nav-btn-secondary" onclick="toggleExportMenu(this)">Export ▾</button>
+            <div class="export-menu" style="display:none;">
+              <button onclick="exportAll();closeExportMenu()">Export All (CSV)</button>
+              <button id="btn-csv-drop" onclick="document.getElementById('btn-csv').click();closeExportMenu()">Export Filtered (CSV)</button>
+              <button id="btn-excel-drop" onclick="document.getElementById('btn-excel').click();closeExportMenu()">Export Filtered (Excel)</button>
+            </div>
+          </div>
+          <a href="#" id="btn-sign-out" class="admin-nav-link">Sign out</a>
+          <!-- Hidden for JS compatibility -->
+          <button id="btn-export-all" style="display:none;"></button>
         </div>
       </div>
 
       <!-- Tab Navigation -->
-      <div class="admin-tabs" style="display:flex; border-bottom:2px solid #e9ecef; margin-bottom:16px;">
-        <button class="admin-tab active" data-tab="activity-log" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#0078d4; border-bottom:2px solid #0078d4; margin-bottom:-2px;">📋 Activity Log</button>
-        <button class="admin-tab" data-tab="leaderboard" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">🏆 Leaderboard</button>
-        <button class="admin-tab" data-tab="config" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">⚙️ Response Options</button>
-        <button class="admin-tab" data-tab="plays" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">🗂️ Plays</button>
-        <button class="admin-tab" data-tab="accounts" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">👥 Accounts</button>
-        <button class="admin-tab" data-tab="invite" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">✉️ Invite</button>
-        <button class="admin-tab" data-tab="health" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">🚦 Health</button>
-        <button class="admin-tab" data-tab="coverage" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">📊 Coverage</button>
-        <button class="admin-tab" data-tab="broadcast" style="padding:10px 18px; border:none; background:none; cursor:pointer; font-size:14px; font-weight:600; color:#666; border-bottom:2px solid transparent; margin-bottom:-2px;">📣 Broadcast</button>
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="activity-log">Activity Log</button>
+        <button class="admin-tab" data-tab="leaderboard">Leaderboard</button>
+        <button class="admin-tab" data-tab="plays">Plays</button>
+        <button class="admin-tab" data-tab="accounts">Accounts</button>
+        <button class="admin-tab" data-tab="coverage">Coverage</button>
+        <button class="admin-tab" data-tab="health">Health</button>
+        <button class="admin-tab" data-tab="broadcast">Broadcast</button>
+        <button class="admin-tab" data-tab="invite">Invite</button>
+        <button class="admin-tab" data-tab="config">Config</button>
+        <button class="admin-tab" data-tab="activity-log-user" id="tab-btn-activity-log-user" style="display:none;">Activity Log</button>
+        <button class="admin-tab" data-tab="demo-activity" id="tab-btn-demo-activity" style="display:none;">Demo Activity</button>
       </div>
 
       <!-- Activity Log Tab Panel -->
@@ -49,39 +63,39 @@
       <!-- Play Funnel Summary -->
       <div id="admin-funnel-wrap" style="margin-bottom:16px;"></div>
 
-      <!-- Filter Bar -->
-      <div class="filter-bar">
-        <div class="filter-row">
-          <select id="filter-rep">
-            <option value="">All Reps</option>
-          </select>
-          <select id="filter-play">
-            <option value="">All Plays</option>
-          </select>
-          <select id="filter-status">
-            <option value="">All Outcomes</option>
-            <option>Interested</option>
-            <option>Not Interested</option>
-          </select>
-          <input type="date" id="filter-start" title="Start date" />
-          <input type="date" id="filter-end" title="End date" />
-        </div>
-        <div class="filter-actions">
-          <button class="btn btn-primary btn-sm" id="btn-apply" style="flex:1;">Apply Filters</button>
-          <button class="btn btn-secondary btn-sm" id="btn-clear" style="flex:0 0 80px;">Clear</button>
-        </div>
-      </div>
-
-      <!-- Export Row -->
-      <div class="export-row">
-        <button class="btn btn-secondary" id="btn-csv">⬇ Export CSV</button>
-        <button class="btn btn-secondary" id="btn-excel">⬇ Export Excel</button>
+      <!-- Unified control bar -->
+      <div class="admin-control-bar">
+        <select id="filter-rep"><option value="">All Reps</option></select>
+        <select id="filter-play"><option value="">All Plays</option></select>
+        <select id="filter-status">
+          <option value="">All Outcomes</option>
+          <option>Interested</option>
+          <option>Not Interested</option>
+        </select>
+        <input type="date" id="filter-start" title="From date" />
+        <input type="date" id="filter-end" title="To date" />
+        <button class="btn btn-primary btn-sm" id="btn-apply">Apply</button>
+        <button class="btn btn-ghost btn-sm" id="btn-clear" title="Clear filters">✕</button>
+        <!-- Keep these hidden for JS compatibility -->
+        <button id="btn-csv" style="display:none;"></button>
+        <button id="btn-excel" style="display:none;"></button>
       </div>
 
       <!-- Table -->
       <div class="table-wrapper" style="margin-top:12px;">
         <table id="results-table">
-          <thead>
+          <colgroup>
+            <col style="width:90px">   <!-- Date -->
+            <col style="width:140px">  <!-- Rep -->
+            <col style="width:160px">  <!-- Account -->
+            <col style="width:120px">  <!-- Play -->
+            <col style="width:110px">  <!-- Outcome -->
+            <col style="width:150px">  <!-- Reason -->
+            <col style="width:120px">  <!-- Next Step -->
+            <col>                      <!-- Notes - auto -->
+            <col style="width:60px">   <!-- Points -->
+          </colgroup>
+          <thead class="sticky-thead">
             <tr>
               <th>Date</th>
               <th>Rep</th>
@@ -327,7 +341,7 @@
             <div style="display:flex;flex-direction:column;gap:12px;">
               <div>
                 <label style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;display:block;margin-bottom:4px;">Subject Line</label>
-                <input id="broadcast-subject" type="text" value="🏆 Chef SaaS Tracker — Mid-Quarter Update" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;box-sizing:border-box;">
+                <input id="broadcast-subject" type="text" value="🏆 INFRA SalesPlay Tracker — Mid-Quarter Update" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;box-sizing:border-box;">
               </div>
               <div>
                 <label style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;display:block;margin-bottom:4px;">Opening Message</label>
@@ -360,6 +374,78 @@
           </div>
         </div>
       </div><!-- /#tab-broadcast -->
+
+      <!-- Activity Log (User Actions) Tab -->
+      <div id="tab-activity-log-user" class="admin-tab-panel" style="display:none;">
+        <div class="admin-control-bar" style="margin-bottom:12px;">
+          <select id="al-filter-user"><option value="">All Users</option></select>
+          <input type="date" id="al-filter-start" title="From date" />
+          <input type="date" id="al-filter-end" title="To date" />
+          <select id="al-filter-action">
+            <option value="">All Actions</option>
+            <option value="login">Login</option>
+            <option value="screen">Screen View</option>
+            <option value="submit">Submission</option>
+            <option value="demo_start">Demo Mode</option>
+          </select>
+          <button class="btn btn-primary btn-sm" id="al-btn-apply">Apply</button>
+          <button class="btn btn-ghost btn-sm" id="al-btn-clear" title="Clear">✕</button>
+          <button class="btn btn-secondary btn-sm" id="al-btn-export">Export CSV</button>
+        </div>
+        <div class="table-wrapper">
+          <table id="activity-log-table">
+            <colgroup>
+              <col style="width:140px"><col style="width:180px"><col style="width:160px"><col style="width:110px"><col>
+            </colgroup>
+            <thead class="sticky-thead">
+              <tr><th>Timestamp</th><th>User Email</th><th>Name</th><th>Action</th><th>Detail</th></tr>
+            </thead>
+            <tbody id="activity-log-body">
+              <tr><td colspan="5" class="no-results">Click Apply to load activity log</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Demo Activity Tab -->
+      <div id="tab-demo-activity" class="admin-tab-panel" style="display:none;">
+        <div class="admin-control-bar" style="margin-bottom:12px;">
+          <select id="demo-filter-user"><option value="">All Users</option></select>
+          <input type="date" id="demo-filter-start" title="From date" />
+          <input type="date" id="demo-filter-end" title="To date" />
+          <button class="btn btn-primary btn-sm" id="demo-btn-apply">Apply</button>
+          <button class="btn btn-ghost btn-sm" id="demo-btn-clear" title="Clear">✕</button>
+          <button class="btn btn-secondary btn-sm" id="demo-btn-export">Export CSV</button>
+        </div>
+        <div class="table-wrapper">
+          <table id="demo-activity-table">
+            <colgroup>
+              <col style="width:140px">
+              <col style="width:180px">
+              <col style="width:160px">
+              <col style="width:140px">
+              <col style="width:120px">
+              <col>
+            </colgroup>
+            <thead class="sticky-thead">
+              <tr>
+                <th>Timestamp</th>
+                <th>Rep Email</th>
+                <th>Rep Name</th>
+                <th>Account</th>
+                <th>Outcome</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="demo-activity-body">
+              <tr><td colspan="6" class="no-results">Click Apply to load demo activity</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="demo-stats-bar" style="display:none;margin-top:12px;padding:10px 14px;background:#fef3c7;border:1px solid #fbbf24;border-radius:8px;font-size:13px;color:#92400e;">
+          <strong id="demo-stats-count">0</strong> demo sessions logged
+        </div>
+      </div>
 
   <!-- Scripts -->
   <script src="msal-browser.js"></script>
@@ -469,40 +555,20 @@
 
         if (playStats.length === 0) { wrap.innerHTML = ''; return; }
 
-        wrap.innerHTML = playStats.map(s => `
-          <div style="background:#fff;border-radius:10px;padding:16px 20px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:12px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
-              <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-size:15px;font-weight:700;">${escHtml(s.play.play_name)}</span>
-                <span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;background:${s.goalColor}18;color:${s.goalColor};">${s.goalLabel}</span>
-              </div>
-              <span style="font-size:13px;color:#666;">${s.pct}% engaged</span>
-            </div>
-            <div style="background:#f0f0f0;border-radius:6px;height:6px;margin-bottom:14px;">
-              <div style="background:#0078d4;height:6px;border-radius:6px;width:${s.pct}%;transition:width .4s;"></div>
-            </div>
-            <div style="display:flex;align-items:center;gap:0;">
-              <div style="flex:1;text-align:center;">
-                <div style="font-size:26px;font-weight:800;color:#1a1a2e;">${s.targets}</div>
-                <div style="font-size:12px;color:#666;margin-top:2px;">🎯 Targets</div>
-              </div>
-              <div style="color:#bbb;font-size:18px;">→</div>
-              <div style="flex:1;text-align:center;">
-                <div style="font-size:26px;font-weight:800;color:#0078d4;">${s.engaged}</div>
-                <div style="font-size:12px;color:#666;margin-top:2px;">💬 Engaged</div>
-              </div>
-              <div style="color:#bbb;font-size:18px;">→</div>
-              <div style="flex:1;text-align:center;">
-                <div style="font-size:26px;font-weight:800;color:#107c10;">${s.interested}</div>
-                <div style="font-size:12px;color:#666;margin-top:2px;">✅ Interested</div>
-              </div>
-              <div style="color:#bbb;font-size:18px;">→</div>
-              <div style="flex:1;text-align:center;">
-                <div style="font-size:26px;font-weight:800;color:#888;">${s.targets - s.engaged}</div>
-                <div style="font-size:12px;color:#666;margin-top:2px;">⏳ Not Yet</div>
-              </div>
-            </div>
-          </div>`).join('');
+        wrap.innerHTML = `<div class="play-summary-table">` + playStats.map(s => `
+          <div class="play-summary-row">
+            <span class="psr-name">${escHtml(s.play.play_name)}</span>
+            <div class="psr-bar-wrap"><div class="psr-bar-fill" style="width:${s.pct}%"></div></div>
+            <span class="psr-pct">${s.pct}%</span>
+            <span class="psr-stat"><strong>${s.targets}</strong> targets</span>
+            <span class="psr-sep">·</span>
+            <span class="psr-stat"><strong>${s.engaged}</strong> engaged</span>
+            <span class="psr-sep">·</span>
+            <span class="psr-stat"><strong>${s.interested}</strong> interested</span>
+            <span class="psr-sep">·</span>
+            <span class="psr-stat"><strong>${s.targets - s.engaged}</strong> not yet</span>
+          </div>
+        `).join('') + `</div>`;
       } catch(e) {
         console.warn('Funnel render failed:', e.message);
         wrap.innerHTML = '';
@@ -634,13 +700,11 @@
       tab.addEventListener('click', () => {
         document.querySelectorAll('.admin-tab').forEach(t => {
           t.classList.remove('active');
-          t.style.color = '#666';
-          t.style.borderBottomColor = 'transparent';
+          t.style.color = '';
+          t.style.borderBottomColor = '';
         });
         document.querySelectorAll('.admin-tab-panel').forEach(p => p.style.display = 'none');
         tab.classList.add('active');
-        tab.style.color = '#0078d4';
-        tab.style.borderBottomColor = '#0078d4';
         document.getElementById('tab-' + tab.dataset.tab).style.display = 'block';
         if (tab.dataset.tab === 'leaderboard') loadLeaderboardTab();
         if (tab.dataset.tab === 'config') loadConfigTab();
@@ -650,6 +714,7 @@
         if (tab.dataset.tab === 'health') loadHealthTab();
         if (tab.dataset.tab === 'coverage') loadCoverageTab();
         if (tab.dataset.tab === 'broadcast') loadBroadcastTab();
+        if (tab.dataset.tab === 'activity-log-user') loadActivityLog();
       });
     });
 
@@ -911,11 +976,11 @@
       const appUrl = window.location.origin + window.location.pathname.replace('admin.html', 'app.html');
       const prize  = (document.getElementById('prize-text')?.value || 'a special prize — TBD by your manager!').trim();
       const msg =
-`🏆 Chef SaaS Sales Tracker — You're In!
+`🏆 INFRA SalesPlay Tracker — You're In!
 
 Hey team,
 
-We're using a new tool to track our Chef SaaS pitches and friendly competition is ON. Log your pitches, earn points, and climb the leaderboard.
+We're using a new tool to track our INFRA SalesPlay initiatives and friendly competition is ON. Log your pitches, earn points, and climb the leaderboard.
 
 👉 Your link: ${appUrl}
 
@@ -977,6 +1042,13 @@ Let's go! 🚀`;
 
     function applyRoleUI(role) {
       currentAdminRole = role;
+      // Show activity-log-user tab only for owner
+      if (role === 'owner') {
+        const alUserTab = document.getElementById('tab-btn-activity-log-user');
+        if (alUserTab) alUserTab.style.display = '';
+        const demoTabBtn = document.getElementById('tab-btn-demo-activity');
+        if (demoTabBtn) demoTabBtn.style.display = '';
+      }
       // Hide owner-only tabs for managers
       if (role === 'manager') {
         OWNER_ONLY_TABS.forEach(tab => {
@@ -1593,7 +1665,7 @@ Let's go! 🚀`;
     }
 
     function refreshBroadcastPreview() {
-      const subject = document.getElementById('broadcast-subject')?.value || '🏆 Chef SaaS Tracker — Mid-Quarter Update';
+      const subject = document.getElementById('broadcast-subject')?.value || '🏆 INFRA SalesPlay Tracker — Mid-Quarter Update';
       const opening = document.getElementById('broadcast-opening')?.value || '';
       const closing = document.getElementById('broadcast-closing')?.value || '';
       const rankLabels = ['🥇', '🥈', '🥉'];
@@ -1617,8 +1689,169 @@ Let's go! 🚀`;
       });
     }
 
-    // ── Export All ────────────────────────────────────────────────────────────
-    async function exportAll() {
+    // ── Export dropdown ──────────────────────────────────────────────────────
+    function toggleExportMenu(btn) {
+      const menu = btn.nextElementSibling;
+      menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    }
+    function closeExportMenu() {
+      document.querySelectorAll('.export-menu').forEach(m => m.style.display = 'none');
+    }
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.export-dropdown')) closeExportMenu();
+    });
+
+    // ── Activity Log (User Actions) Tab ──────────────────────────────────────
+    async function loadActivityLog() {
+      const body = document.getElementById('activity-log-body');
+      body.innerHTML = '<tr><td colspan="5" class="no-results">Loading…</td></tr>';
+      try {
+        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/activity_log.csv');
+        if (!text || !text.trim()) {
+          body.innerHTML = '<tr><td colspan="5" class="no-results">No activity logged yet</td></tr>';
+          return;
+        }
+        const rows = parseCSV(text);
+        const userFilter   = document.getElementById('al-filter-user').value.toLowerCase();
+        const actionFilter = document.getElementById('al-filter-action').value;
+        const startFilter  = document.getElementById('al-filter-start').value;
+        const endFilter    = document.getElementById('al-filter-end').value;
+
+        const filtered = rows.filter(r => {
+          if (userFilter   && !(r.user_email||'').toLowerCase().includes(userFilter)) return false;
+          if (actionFilter && r.action_type !== actionFilter) return false;
+          if (startFilter  && (r.timestamp||'') < startFilter) return false;
+          if (endFilter    && (r.timestamp||'') > endFilter + 'T99') return false;
+          return true;
+        });
+
+        // Populate user filter dropdown
+        const users = [...new Set(rows.map(r => r.user_email).filter(Boolean))].sort();
+        const uf = document.getElementById('al-filter-user');
+        uf.innerHTML = '<option value="">All Users</option>' + users.map(u => `<option value="${escHtml(u)}">${escHtml(u)}</option>`).join('');
+
+        if (!filtered.length) {
+          body.innerHTML = '<tr><td colspan="5" class="no-results">No results match filters</td></tr>';
+          return;
+        }
+        body.innerHTML = filtered.map(r => `
+          <tr>
+            <td>${escHtml((r.timestamp||'').replace('T',' ').slice(0,19))}</td>
+            <td>${escHtml(r.user_email||'')}</td>
+            <td>${escHtml(r.user_name||'')}</td>
+            <td><span class="action-badge action-${escHtml(r.action_type||'')}">${escHtml(r.action_type||'')}</span></td>
+            <td>${escHtml(r.detail||'')}</td>
+          </tr>`).join('');
+      } catch(e) {
+        body.innerHTML = `<tr><td colspan="5" class="no-results">Error loading activity log: ${escHtml(e.message)}</td></tr>`;
+      }
+    }
+
+    document.getElementById('al-btn-apply').addEventListener('click', loadActivityLog);
+    document.getElementById('al-btn-clear').addEventListener('click', () => {
+      ['al-filter-user', 'al-filter-action', 'al-filter-start', 'al-filter-end'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      loadActivityLog();
+    });
+    document.getElementById('al-btn-export').addEventListener('click', () => {
+      const rows = [...document.querySelectorAll('#activity-log-body tr')]
+        .filter(r => !r.querySelector('.no-results'))
+        .map(r => [...r.querySelectorAll('td')].map(td => `"${td.textContent.replace(/"/g,'""')}"`).join(','));
+      if (!rows.length) { alert('No data to export.'); return; }
+      const csv = 'Timestamp,User Email,Name,Action,Detail\n' + rows.join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'activity-log.csv';
+      a.click();
+    });
+
+    // ── Demo Activity Tab ─────────────────────────────────────────────────────
+    async function loadDemoActivity() {
+      const body = document.getElementById('demo-activity-body');
+      const statsBar = document.getElementById('demo-stats-bar');
+      body.innerHTML = '<tr><td colspan="6" class="no-results">Loading…</td></tr>';
+      statsBar.style.display = 'none';
+
+      try {
+        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/demo_log.csv');
+        if (!text || !text.trim()) {
+          body.innerHTML = '<tr><td colspan="6" class="no-results">No demo activity logged yet</td></tr>';
+          return;
+        }
+
+        const rows = parseCSV(text);
+
+        // Populate user dropdown
+        const users = [...new Set(rows.map(r => r.rep_email).filter(Boolean))].sort();
+        const uf = document.getElementById('demo-filter-user');
+        uf.innerHTML = '<option value="">All Users</option>' + users.map(u =>
+          `<option value="${escHtml(u)}">${escHtml(u)}</option>`
+        ).join('');
+
+        // Apply filters
+        const userFilter  = document.getElementById('demo-filter-user').value.toLowerCase();
+        const startFilter = document.getElementById('demo-filter-start').value;
+        const endFilter   = document.getElementById('demo-filter-end').value;
+
+        const filtered = rows.filter(r => {
+          if (userFilter && !(r.rep_email||'').toLowerCase().includes(userFilter)) return false;
+          if (startFilter && (r.timestamp||'') < startFilter) return false;
+          if (endFilter   && (r.timestamp||'') > endFilter + 'T99') return false;
+          return true;
+        });
+
+        if (!filtered.length) {
+          body.innerHTML = '<tr><td colspan="6" class="no-results">No results match filters</td></tr>';
+          return;
+        }
+
+        body.innerHTML = filtered.map(r => `
+          <tr>
+            <td>${escHtml((r.timestamp||'').replace('T',' ').slice(0,19))}</td>
+            <td>${escHtml(r.rep_email||'')}</td>
+            <td>${escHtml(r.rep_name||'')}</td>
+            <td>${escHtml(r.account_name||'')}</td>
+            <td><span class="status-badge badge-default">${escHtml(r.status||'')}</span></td>
+            <td>${escHtml(r.notes||'')}</td>
+          </tr>`).join('');
+
+        // Stats bar
+        document.getElementById('demo-stats-count').textContent = rows.length;
+        statsBar.style.display = 'block';
+
+      } catch(e) {
+        body.innerHTML = `<tr><td colspan="6" class="no-results">Error loading demo log: ${escHtml(e.message)}</td></tr>`;
+      }
+    }
+
+    const demoBtnApply = document.getElementById('demo-btn-apply');
+    if (demoBtnApply) demoBtnApply.addEventListener('click', loadDemoActivity);
+
+    const demoBtnClear = document.getElementById('demo-btn-clear');
+    if (demoBtnClear) demoBtnClear.addEventListener('click', () => {
+      document.getElementById('demo-filter-user').value = '';
+      document.getElementById('demo-filter-start').value = '';
+      document.getElementById('demo-filter-end').value = '';
+      document.getElementById('demo-activity-body').innerHTML = '<tr><td colspan="6" class="no-results">Click Apply to load demo activity</td></tr>';
+      document.getElementById('demo-stats-bar').style.display = 'none';
+    });
+
+    const demoBtnExport = document.getElementById('demo-btn-export');
+    if (demoBtnExport) demoBtnExport.addEventListener('click', async () => {
+      try {
+        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/demo_log.csv');
+        if (!text) { alert('No demo activity to export'); return; }
+        const blob = new Blob([text], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'demo_activity.csv'; a.click();
+        URL.revokeObjectURL(url);
+      } catch(e) { alert('Export failed: ' + e.message); }
+    });
+
+    // ── Export All ────────────────────────────────────────────────────────────    async function exportAll() {
       const btn = document.getElementById('btn-export-all');
       btn.textContent = '⏳ Exporting…';
       btn.disabled = true;
@@ -1676,5 +1909,8 @@ Let's go! 🚀`;
       }
     }
   </script>
+<footer class="security-footer">
+  INFRA SalesPlay Tracker — Progress Software Proprietary &amp; Confidential &nbsp;·&nbsp; Progress employees only &nbsp;<a href="security.html" class="sec-footer-link">Security &amp; Privacy</a>
+</footer>
 </body>
 </html>

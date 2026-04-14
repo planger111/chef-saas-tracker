@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chef SaaS — Account Ingest Tool</title>
+  <title>INFRA SalesPlay Tracker — Account Ingest</title>
   <script src="msal-browser.js"></script>
   <script src="config.js"></script>
   <script src="msal-auth.js"></script>
@@ -29,7 +29,7 @@
     .btn-success:disabled { background: #ccc; cursor: not-allowed; }
     .btn-secondary { background: #f4f6f8; color: #333; border: 1px solid #d1d5db; }
     .btn-secondary:hover { background: #e8eaed; }
-    .drop-zone { border: 2px dashed #0078d4; border-radius: 8px; padding: 32px; text-align: center; cursor: pointer; transition: background .15s; }
+    .drop-zone { border: 2px dashed #0078d4; border-radius: 8px; padding: 16px; text-align: center; cursor: pointer; transition: background .15s; }
     .drop-zone:hover, .drop-zone.drag-over { background: #f0f7ff; }
     #file-input { display: none; }
     .preview-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 12px; }
@@ -40,11 +40,6 @@
     .badge-high { background: #fde8e8; color: #c00; }
     .badge-medium { background: #fff3cd; color: #856404; }
     .badge-low { background: #e8f4fd; color: #0078d4; }
-    #log { font-family: monospace; font-size: 13px; background: #1e1e2e; color: #cdd6f4; border-radius: 8px; padding: 16px; max-height: 280px; overflow-y: auto; white-space: pre-wrap; }
-    #log .ok   { color: #a6e3a1; }
-    #log .err  { color: #f38ba8; }
-    #log .info { color: #89dceb; }
-    #log .warn { color: #f9e2af; }
     .status-bar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 8px; font-size: 14px; }
     .status-signed-in  { background: #e8f5e9; color: #107c10; }
     .status-signed-out { background: #fff3cd; color: #856404; }
@@ -56,171 +51,360 @@
     .form-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
     .form-row label { font-size: 13px; font-weight: 600; color: #333; }
     .form-row input, .form-row textarea, .form-row select { width: 100%; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; font-family: inherit; }
-    .form-row textarea { resize: vertical; min-height: 72px; }
+    .form-row textarea { resize: vertical; }
     .form-row .hint { font-size: 11px; color: #888; }
-    .play-option { padding: 10px 14px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; transition: all .15s; margin-bottom: 8px; }
-    .play-option:hover { border-color: #0078d4; background: #f0f7ff; }
-    .play-option.selected { border-color: #0078d4; background: #f0f7ff; }
-    .play-option .play-option-name { font-weight: 700; font-size: 14px; }
-    .play-option .play-option-meta { font-size: 12px; color: #666; margin-top: 2px; }
-    .goal-btn { flex: 1; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: center; transition: all .15s; background: #fff; }
-    .goal-btn:hover { border-color: #0078d4; }
-    .goal-btn.selected-in  { border-color: #107c10; background: #e8f5e9; }
-    .goal-btn.selected-out { border-color: #d32f2f; background: #fde8e8; }
-    .goal-btn .goal-icon { font-size: 24px; }
-    .goal-btn .goal-label { font-weight: 700; font-size: 13px; margin-top: 6px; }
-    .goal-btn .goal-desc { font-size: 11px; color: #666; margin-top: 3px; }
-    .play-summary-bar { display: flex; gap: 12px; flex-wrap: wrap; padding: 12px 16px; background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-bottom: 16px; font-size: 13px; align-items: flex-start; }
-    .play-summary-bar .psb-item { display: flex; flex-direction: column; }
-    .play-summary-bar .psb-lbl { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #5b7fa6; }
-    .play-summary-bar .psb-val { font-weight: 600; color: #1e3a5f; }
+    .step-desc { font-size: 13px; color: #555; margin-bottom: 16px; }
+
+    /* ── Wizard Steps Indicator ── */
+    .wizard-steps { display: flex; align-items: center; gap: 0; margin: 20px 0 24px; }
+    .wizard-step { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .ws-num { width: 28px; height: 28px; border-radius: 50%; background: #d1d5db; color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .ws-label { font-size: 12px; color: #9ca3af; font-weight: 500; white-space: nowrap; }
+    .wizard-step.active .ws-num { background: #0078d4; }
+    .wizard-step.active .ws-label { color: #0078d4; font-weight: 700; }
+    .wizard-step.done .ws-num { background: #107c10; }
+    .wizard-step.done .ws-label { color: #107c10; }
+    .wizard-connector { flex: 1; height: 2px; background: #e5e7eb; margin: 0 8px; margin-bottom: 16px; }
+    .wizard-panel { background: #fff; border-radius: 10px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    .wizard-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+
+    /* ── Goal Segmented Buttons ── */
+    .goal-seg { display: flex; gap: 0; border: 1px solid #d1d5db; border-radius: 8px; overflow: hidden; margin-top: 4px; }
+    .goal-seg-btn { flex: 1; padding: 9px 12px; border: none; background: #fff; cursor: pointer; font-size: 13px; font-weight: 600; color: #374151; border-right: 1px solid #d1d5db; transition: background .15s; }
+    .goal-seg-btn:last-child { border-right: none; }
+    .goal-seg-btn.selected { background: #0078d4; color: #fff; }
+
+    /* ── Outcome Rows ── */
+    .outcome-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f3f4f6; flex-wrap: wrap; }
+    .outcome-check { display: flex; align-items: center; gap: 8px; cursor: pointer; min-width: 180px; }
+    .outcome-label { font-size: 14px; font-weight: 600; color: #374151; }
+    .outcome-config { display: flex; gap: 6px; }
+    .outcome-cfg-sel { font-size: 12px; padding: 3px 6px; border: 1px solid #d1d5db; border-radius: 4px; color: #555; }
+
+    /* ── Upload Mode ── */
+    .upload-mode-rows { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 16px; }
+    .upload-mode-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 14px; border: 1px solid #d1d5db; border-radius: 8px; cursor: pointer; border-left-width: 3px; }
+    .upload-mode-row.safe { border-left-color: #107c10; }
+    .upload-mode-row.destructive { border-left-color: #d97706; }
+    .upload-mode-row input[type=radio] { margin-top: 2px; }
+    .mode-title { font-size: 13px; font-weight: 700; color: #374151; display: block; }
+    .mode-desc { font-size: 12px; color: #6b7280; margin-top: 2px; display: block; }
+
+    /* ── Upload Tabs ── */
+    .upload-tabs { display: flex; border-bottom: 2px solid #e5e7eb; margin-bottom: 16px; }
+    .upload-tab { padding: 8px 18px; border: none; background: none; cursor: pointer; font-size: 14px; font-weight: 600; color: #6b7280; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .upload-tab.active { color: #0078d4; border-bottom-color: #0078d4; }
+
+    /* ── Validation Bar ── */
+    .validation-bar { display: flex; gap: 8px; flex-wrap: wrap; padding: 10px 14px; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; margin-bottom: 12px; font-size: 13px; }
+    .vb-stat { padding: 3px 10px; border-radius: 12px; font-weight: 600; }
+    .vb-stat.ok { background: #dcfce7; color: #166534; }
+    .vb-stat.warn { background: #fff3cd; color: #856404; }
+    .vb-stat.err { background: #fee2e2; color: #991b1b; }
+    .vb-stat.info { background: #e0f2fe; color: #075985; }
+
+    /* ── Upload Status ── */
+    .upload-status { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px 16px; margin-top: 12px; font-size: 13px; }
+    .upload-status .status-ok   { color: #166534; }
+    .upload-status .status-err  { color: #991b1b; }
+    .upload-status .status-info { color: #374151; }
+    .upload-status .status-warn { color: #856404; }
+
+    /* ── Play Summary Bar ── */
+    .play-summary-bar { display: flex; gap: 16px; flex-wrap: wrap; padding: 10px 16px; background: #f0f7ff; border: 1px solid #bfdbfe; border-radius: 8px; margin-bottom: 16px; font-size: 13px; align-items: center; }
+    .psb-sep { color: #d1d5db; }
+    .psb-val { font-weight: 600; color: #1e3a5f; }
+
+    /* ── Play Picker Compact Rows ── */
+    .play-picker-header { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 6px; letter-spacing: .05em; }
+    .play-picker-row { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; border: 1px solid transparent; }
+    .play-picker-row:hover { background: #f0f7ff; border-color: #bfdbfe; }
+    .play-picker-row.selected { background: #f0f7ff; border-color: #0078d4; }
+    .play-picker-row input[type=radio] { accent-color: #0078d4; }
+    .ppr-name { font-weight: 600; color: #374151; }
+    .ppr-meta { color: #6b7280; margin-left: 4px; }
+
+    /* ── Preview Section (inside step 3) ── */
+    .preview-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+    .preview-section h3 { font-size: 15px; font-weight: 700; margin-bottom: 12px; color: #374151; }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>🍴 Chef SaaS — Account Ingest Tool</h1>
-  <p>Step through: Sign in → Define play → Upload accounts → Preview → Save to SharePoint</p>
+  <h1>INFRA SalesPlay Tracker — Account Ingest</h1>
+  <p>Sign in → Define the play → Configure outcomes → Upload accounts</p>
 </header>
 
 <main>
 
-  <!-- Step 1: Sign In -->
-  <div class="card">
-    <h2><span class="step-num" id="sn1">1</span>Sign In</h2>
+  <!-- Pre-step: Sign In -->
+  <div class="card" id="sign-in-card">
+    <h2><span class="step-num" id="sn-auth">🔑</span> Sign In</h2>
     <div id="auth-status" class="status-bar status-signed-out">⚠️ Not signed in</div>
     <br>
     <button class="btn-primary" id="btn-signin" onclick="doSignIn()">Sign In with Progress SSO</button>
   </div>
 
-  <!-- Step 2: Define Play -->
-  <div class="card hidden" id="play-card">
-    <h2><span class="step-num" id="sn2">2</span>Define the Play</h2>
-    <p style="font-size:13px;color:#555;margin-bottom:16px;">Set this once — it applies to all accounts you'll upload in Step 3.</p>
+  <!-- Persistent Wizard Steps Indicator -->
+  <div class="wizard-steps" id="wizard-steps" style="display:none;">
+    <div class="wizard-step" id="ws-1">
+      <span class="ws-num">1</span>
+      <span class="ws-label">Basics</span>
+    </div>
+    <div class="wizard-connector"></div>
+    <div class="wizard-step" id="ws-2">
+      <span class="ws-num">2</span>
+      <span class="ws-label">Outcomes</span>
+    </div>
+    <div class="wizard-connector"></div>
+    <div class="wizard-step" id="ws-3">
+      <span class="ws-num">3</span>
+      <span class="ws-label">Accounts</span>
+    </div>
+  </div>
+
+  <!-- Step 1: Basics -->
+  <div class="wizard-panel" id="step-1-panel" style="display:none;">
 
     <div class="form-row">
       <label>Play Name *</label>
-      <input type="text" id="play-name-input" placeholder='e.g. Chef SaaS, WUG Upgrade' oninput="onPlayNameInput(this.value)" autocomplete="off" />
-      <div class="hint">A short name for this sales play. System auto-generates the ID (e.g. "Chef SaaS" → chef-saas).</div>
+      <input type="text" id="play-name-input" placeholder="e.g. Chef Infrastructure Upgrade"
+             oninput="onPlayNameInput(this.value)" autocomplete="off" />
+      <div class="hint">A short name for this sales play. System auto-generates the ID (e.g. "Chef Infrastructure Upgrade" → chef-infrastructure-upgrade).</div>
       <div id="play-picker-options" style="margin-top:8px;display:none;"></div>
     </div>
 
     <div class="form-row">
-      <label>Play Goal *</label>
-      <div style="display:flex;gap:10px;margin-top:4px;">
-        <button class="goal-btn" id="goal-in" onclick="selectGoal('qualify_in')">
-          <div class="goal-icon">✅</div>
-          <div class="goal-label">Qualify In</div>
-          <div class="goal-desc">Find interested customers</div>
-        </button>
-        <button class="goal-btn" id="goal-out" onclick="selectGoal('qualify_out')">
-          <div class="goal-icon">🚫</div>
-          <div class="goal-label">Qualify Out</div>
-          <div class="goal-desc">Efficiently eliminate non-prospects</div>
-        </button>
+      <label>Goal *</label>
+      <div class="goal-seg">
+        <button type="button" class="goal-seg-btn" data-goal="qualify_in"  onclick="selectGoalSeg(this)">Feedback</button>
+        <button type="button" class="goal-seg-btn" data-goal="qualify_in"  onclick="selectGoalSeg(this)">Interest</button>
+        <button type="button" class="goal-seg-btn" data-goal="qualify_in"  onclick="selectGoalSeg(this)">Meeting</button>
+        <button type="button" class="goal-seg-btn" data-goal="qualify_out" onclick="selectGoalSeg(this)">Disqualification</button>
+        <button type="button" class="goal-seg-btn" data-goal="qualify_in"  onclick="selectGoalSeg(this)">Expansion</button>
       </div>
     </div>
 
     <div class="form-row">
       <label>Ideal Customer Profile (ICP)</label>
-      <textarea id="play-icp" placeholder="Describe the ideal customer — size, industry, tech stack, pain points…"></textarea>
+      <textarea id="play-icp" rows="3" placeholder="Describe the ideal customer — size, industry, tech stack, pain points…"></textarea>
     </div>
 
     <div class="form-row">
       <label>Target Persona</label>
-      <input type="text" id="play-persona" placeholder='e.g. VP of Engineering, IT Director, DevOps Lead' />
+      <input type="text" id="play-persona" placeholder="e.g. VP of Engineering, IT Director, DevOps Lead" />
     </div>
 
     <div class="form-row">
       <label>Elevator Pitch</label>
-      <textarea id="play-pitch" placeholder="What should the rep say? Keep it concise — 2–4 sentences reps can memorize."></textarea>
+      <textarea id="play-pitch" rows="3" placeholder="What should the rep say? Keep it concise — 2–4 sentences reps can memorize."></textarea>
     </div>
 
-    <button class="btn-primary" id="btn-play-next" onclick="finishPlayStep()" disabled>Next: Upload Accounts →</button>
+    <details style="margin-bottom:16px;">
+      <summary style="font-size:13px;font-weight:600;color:#555;cursor:pointer;user-select:none;">Advanced settings</summary>
+    </details>
+
+    <div style="display:flex;justify-content:flex-end;">
+      <button class="btn-primary" id="btn-play-next" onclick="finishPlayStep()" disabled>Continue to Outcomes →</button>
+    </div>
   </div>
 
-  <!-- Step 3: Upload Excel -->
-  <div class="card hidden" id="upload-card">
-    <h2><span class="step-num" id="sn3">3</span>Upload Excel File</h2>
-    <div id="play-summary-bar" class="play-summary-bar"></div>
+  <!-- Step 2: Outcomes -->
+  <div class="wizard-panel" id="step-2-panel" style="display:none;">
+    <p class="step-desc">Choose which outcomes reps can log for this play. You can customise per-outcome settings below.</p>
 
-    <div style="margin-bottom:16px;">
-      <div style="font-size:13px;font-weight:600;margin-bottom:8px;color:#333;">Upload mode</div>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:2px solid #0078d4;border-radius:8px;background:#f0f7ff;cursor:pointer;">
-          <input type="radio" name="upload-mode" value="merge" checked style="margin-top:2px;accent-color:#0078d4;">
-          <div>
-            <div style="font-weight:700;font-size:13px;">Add to existing play</div>
-            <div style="font-size:12px;color:#555;margin-top:2px;">New accounts are added. Existing accounts (same SFDC ID + rep) are updated. Nothing is removed.</div>
-          </div>
+    <div id="outcomes-list">
+
+      <div class="outcome-row">
+        <label class="outcome-check">
+          <input type="checkbox" class="outcome-cb" data-outcome="Interested" checked>
+          <span class="outcome-label">Interested</span>
         </label>
-        <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;">
-          <input type="radio" name="upload-mode" value="replace" style="margin-top:2px;accent-color:#0078d4;">
-          <div>
-            <div style="font-weight:700;font-size:13px;">Replace all assignments</div>
-            <div style="font-size:12px;color:#555;margin-top:2px;">⚠️ Removes all existing accounts for this play and replaces with this file.</div>
-          </div>
-        </label>
+        <div class="outcome-config" style="display:flex;gap:8px;margin-left:auto;">
+          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
+          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
+          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
+        </div>
       </div>
+
+      <div class="outcome-row">
+        <label class="outcome-check">
+          <input type="checkbox" class="outcome-cb" data-outcome="Not Interested" checked>
+          <span class="outcome-label">Not Interested</span>
+        </label>
+        <div class="outcome-config" style="display:flex;gap:8px;margin-left:auto;">
+          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
+          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
+          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
+        </div>
+      </div>
+
+      <div class="outcome-row">
+        <label class="outcome-check">
+          <input type="checkbox" class="outcome-cb" data-outcome="Meeting Booked" checked>
+          <span class="outcome-label">Meeting Booked</span>
+        </label>
+        <div class="outcome-config" style="display:flex;gap:8px;margin-left:auto;">
+          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
+          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
+          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
+        </div>
+      </div>
+
+      <div class="outcome-row">
+        <label class="outcome-check">
+          <input type="checkbox" class="outcome-cb" data-outcome="Follow-Up Needed" checked>
+          <span class="outcome-label">Follow-Up Needed</span>
+        </label>
+        <div class="outcome-config" style="display:flex;gap:8px;margin-left:auto;">
+          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
+          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
+          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
+        </div>
+      </div>
+
+      <div class="outcome-row">
+        <label class="outcome-check">
+          <input type="checkbox" class="outcome-cb" data-outcome="Feedback Collected" checked>
+          <span class="outcome-label">Feedback Collected</span>
+        </label>
+        <div class="outcome-config" style="display:flex;gap:8px;margin-left:auto;">
+          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
+          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
+          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
+        </div>
+      </div>
+
+      <div class="outcome-row">
+        <label class="outcome-check">
+          <input type="checkbox" class="outcome-cb" data-outcome="No Response">
+          <span class="outcome-label">No Response</span>
+        </label>
+        <div class="outcome-config" style="display:none;gap:8px;margin-left:auto;">
+          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
+          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
+          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
+        </div>
+      </div>
+
+      <div class="outcome-row">
+        <label class="outcome-check">
+          <input type="checkbox" class="outcome-cb" data-outcome="Wrong Contact">
+          <span class="outcome-label">Wrong Contact</span>
+        </label>
+        <div class="outcome-config" style="display:none;gap:8px;margin-left:auto;">
+          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
+          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
+          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
+        </div>
+      </div>
+
+    </div><!-- /#outcomes-list -->
+
+    <div class="wizard-nav">
+      <button class="btn-secondary" onclick="goToStep(1)">← Back to Basics</button>
+      <button class="btn-primary" id="btn-outcomes-next" onclick="goToStep(3)">Continue to Accounts →</button>
+    </div>
+  </div>
+
+  <!-- Step 3: Accounts -->
+  <div class="wizard-panel" id="step-3-panel" style="display:none;">
+
+    <!-- Play summary bar -->
+    <div class="play-summary-bar" id="play-summary-bar"></div>
+
+    <!-- Upload mode -->
+    <div style="font-size:13px;font-weight:600;margin-bottom:4px;color:#333;">Upload mode</div>
+    <div class="upload-mode-rows">
+      <label class="upload-mode-row safe">
+        <input type="radio" name="upload-mode" value="merge" checked>
+        <div>
+          <span class="mode-title">Add accounts</span>
+          <span class="mode-desc">New accounts added, existing updated, nothing removed</span>
+        </div>
+      </label>
+      <label class="upload-mode-row destructive">
+        <input type="radio" name="upload-mode" value="replace">
+        <div>
+          <span class="mode-title">Replace all</span>
+          <span class="mode-desc">⚠ Removes all existing accounts for this play</span>
+        </div>
+      </label>
     </div>
 
-    <!-- Upload method tabs -->
-    <div style="display:flex;gap:0;margin-bottom:0;border-bottom:2px solid #e5e7eb;">
-      <button id="tab-file-btn" onclick="switchUploadTab('file')" style="padding:8px 18px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:#0078d4;border-bottom:2px solid #0078d4;margin-bottom:-2px;">📂 Upload File</button>
-      <button id="tab-paste-btn" onclick="switchUploadTab('paste')" style="padding:8px 18px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:600;color:#666;border-bottom:2px solid transparent;margin-bottom:-2px;">📋 Paste from Excel</button>
+    <!-- Upload tabs -->
+    <div class="upload-tabs">
+      <button class="upload-tab active" id="tab-file-btn" onclick="switchUploadTab('file')">Upload File</button>
+      <button class="upload-tab" id="tab-paste-btn" onclick="switchUploadTab('paste')">Paste from Excel</button>
     </div>
 
     <!-- File upload panel -->
-    <div id="tab-file-panel" style="margin-top:16px;">
+    <div id="tab-file-panel">
       <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-        <div style="font-size:32px">📂</div>
-        <strong>Click to select your Excel file</strong>
-        <p style="margin-top:8px;color:#555;font-size:13px;">account-upload-template.xlsx (or any .xlsx with the same columns)</p>
+        <div style="font-size:28px;">📂</div>
+        <strong>Click to select or drag your Excel file here</strong>
+        <p style="margin-top:6px;color:#555;font-size:13px;">account-upload-template.xlsx (or any .xlsx with the same columns)</p>
         <p style="margin-top:4px;color:#888;font-size:12px;">Required columns: SFDC Account ID · Account Name · Rep SSO Login · Rep Name</p>
+        <div style="margin-top:10px;font-size:12px;">
+          <a href="account-upload-template.xlsx" download style="color:#0078d4;" onclick="event.stopPropagation()">⬇ Download blank template</a>
+        </div>
       </div>
       <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
-      <div style="margin-top:12px;font-size:12px;color:#888;">
-        <a href="account-upload-template.xlsx" download style="color:#0078d4;">⬇️ Download blank template</a>
-      </div>
     </div>
 
     <!-- Paste panel -->
-    <div id="tab-paste-panel" style="display:none;margin-top:16px;">
+    <div id="tab-paste-panel" style="display:none;">
       <p style="font-size:13px;color:#555;margin-bottom:8px;">Copy rows from Excel (including the header row) and paste below. Columns needed: <strong>SFDC Account ID, Account Name, Rep SSO Login, Rep Name</strong>.</p>
-      <textarea id="paste-area" rows="12" placeholder="Paste your Excel rows here…" style="width:100%;padding:10px;border:2px dashed #0078d4;border-radius:8px;font-size:13px;font-family:monospace;box-sizing:border-box;resize:vertical;"></textarea>
+      <textarea id="paste-area" rows="8" placeholder="Paste your Excel rows here…"
+                style="width:100%;padding:10px;border:2px dashed #0078d4;border-radius:8px;font-size:13px;font-family:monospace;resize:vertical;"></textarea>
       <div style="margin-top:10px;display:flex;gap:10px;">
-        <button onclick="handlePaste()" style="background:#0078d4;color:#fff;border:none;padding:9px 20px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">Parse Pasted Data</button>
-        <button onclick="document.getElementById('paste-area').value=''" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:9px 16px;border-radius:6px;font-size:14px;cursor:pointer;">Clear</button>
+        <button class="btn-primary" onclick="handlePaste()">Parse Pasted Data</button>
+        <button class="btn-secondary" onclick="document.getElementById('paste-area').value=''">Clear</button>
       </div>
     </div>
-  </div>
 
-  <!-- Warning banner -->
-  <div id="ingest-warnings" style="display:none;background:#fffbeb;border:2px solid #fcd34d;border-radius:8px;padding:12px 16px;margin-bottom:0;font-size:13px;"></div>
-
-  <!-- Step 4: Preview & Confirm -->
-  <div class="card hidden" id="preview-card">
-    <h2><span class="step-num" id="sn4">4</span>Preview &amp; Upload</h2>
-    <div class="summary-grid" id="summary-grid"></div>
-    <div style="overflow-x:auto;margin-top:16px;">
-      <table class="preview-table" id="preview-table">
-        <thead><tr>
-          <th>Account</th><th>Rep SSO Login</th><th>Rep Name</th><th>ARR</th><th>Active</th>
-        </tr></thead>
-        <tbody id="preview-body"></tbody>
-      </table>
+    <!-- Validation bar (shown after parse) -->
+    <div class="validation-bar" id="validation-bar" style="display:none;margin-top:14px;">
+      <span class="vb-stat ok"   id="vb-total"></span>
+      <span class="vb-stat ok"   id="vb-valid"></span>
+      <span class="vb-stat warn" id="vb-missing"></span>
+      <span class="vb-stat err"  id="vb-dupes"></span>
+      <span class="vb-stat info" id="vb-new"></span>
     </div>
-    <div style="margin-top:20px;display:flex;gap:10px;align-items:center;">
-      <button class="btn-success" id="btn-upload" onclick="doUpload()" disabled>⬆️ Upload to SharePoint</button>
-      <span style="font-size:13px;color:#555;">This replaces the entire assignments list and updates the play definition.</span>
-    </div>
-  </div>
 
-  <!-- Log -->
-  <div class="card hidden" id="log-card">
-    <h2>Activity Log</h2>
-    <div id="log"></div>
-  </div>
+    <!-- Warning banner -->
+    <div id="ingest-warnings" style="display:none;background:#fffbeb;border:2px solid #fcd34d;border-radius:8px;padding:12px 16px;font-size:13px;"></div>
+
+    <!-- Preview & Upload (revealed after parse) -->
+    <div class="preview-section hidden" id="preview-card">
+      <h3>Preview &amp; Upload</h3>
+      <div class="summary-grid" id="summary-grid"></div>
+      <div style="overflow-x:auto;margin-top:16px;">
+        <table class="preview-table" id="preview-table">
+          <thead><tr>
+            <th>Account</th><th>Rep SSO Login</th><th>Rep Name</th><th>ARR</th><th>Active</th>
+          </tr></thead>
+          <tbody id="preview-body"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:20px;display:flex;gap:12px;align-items:center;justify-content:flex-end;">
+        <span style="font-size:13px;color:#555;">Saves the play definition and account list to SharePoint.</span>
+        <button class="btn-success" id="btn-upload" onclick="doUpload()" disabled>🚀 Launch Play</button>
+      </div>
+    </div>
+
+    <!-- Upload status (replaces monospace log) -->
+    <div class="upload-status" id="upload-status" style="display:none;">
+      <div id="upload-status-inner"></div>
+    </div>
+
+    <!-- Step nav -->
+    <div class="wizard-nav" style="margin-top:24px;">
+      <button class="btn-secondary" onclick="goToStep(2)">← Back to Outcomes</button>
+    </div>
+
+  </div><!-- /#step-3-panel -->
 
 </main>
 
@@ -241,30 +425,79 @@
     return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
 
-  function showLog() { document.getElementById('log-card').classList.remove('hidden'); }
+  function markStepDone(n) {
+    const ws = document.getElementById('ws-' + n);
+    if (ws) { ws.classList.add('done'); ws.classList.remove('active'); }
+  }
 
   function log(type, msg) {
-    showLog();
-    const el = document.getElementById('log');
+    const status = document.getElementById('upload-status');
+    if (status) status.style.display = 'block';
+    const el = document.getElementById('upload-status-inner');
+    if (!el) return;
     const prefix = { ok: '✓ ', err: '✗ ', info: '→ ', warn: '⚠ ' }[type] || '';
-    el.innerHTML += `<span class="${type}">${prefix}${esc(msg)}</span>\n`;
+    const div = document.createElement('div');
+    div.className = 'status-' + type;
+    div.textContent = prefix + msg;
+    el.appendChild(div);
     el.scrollTop = el.scrollHeight;
   }
 
-  function markStepDone(n) {
-    const el = document.getElementById('sn' + n);
-    if (el) { el.classList.add('done'); el.textContent = '✓'; }
+  // ── Wizard Navigation ──────────────────────────────────────────────────────
+
+  let currentStep = 0;
+
+  function goToStep(n) {
+    ['step-1-panel','step-2-panel','step-3-panel'].forEach((id, i) => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = (i + 1 === n) ? 'block' : 'none';
+    });
+    [1, 2, 3].forEach(i => {
+      const ws = document.getElementById('ws-' + i);
+      if (!ws) return;
+      ws.classList.remove('active', 'done');
+      if (i < n) ws.classList.add('done');
+      else if (i === n) ws.classList.add('active');
+    });
+    currentStep = n;
+    if (n === 3) {
+      // Clear any stale log from earlier sessions
+      const inner = document.getElementById('upload-status-inner');
+      if (inner) inner.innerHTML = '';
+      const statusEl = document.getElementById('upload-status');
+      if (statusEl) statusEl.style.display = 'none';
+      populateSummaryBar();
+    }
+    window.scrollTo(0, 0);
   }
 
-  // ── Step 1: Auth ──────────────────────────────────────────────────────────
+  function populateSummaryBar() {
+    if (!currentPlayDef) return;
+    const outcomeCount = document.querySelectorAll('.outcome-cb:checked').length;
+    const goalLabel = selectedGoal === 'qualify_out' ? 'Qualify Out' : 'Qualify In';
+    const parts = [
+      `<span class="psb-val">${esc(currentPlayDef.play_name)}</span>`,
+      `<span class="psb-sep">|</span>`,
+      `Goal: <span class="psb-val">${esc(goalLabel)}</span>`,
+    ];
+    if (currentPlayDef.target_persona) {
+      parts.push(`<span class="psb-sep">|</span>`, `Persona: <span class="psb-val">${esc(currentPlayDef.target_persona)}</span>`);
+    }
+    parts.push(`<span class="psb-sep">|</span>`, `<span class="psb-val">${outcomeCount} outcome${outcomeCount !== 1 ? 's' : ''}</span>`);
+    document.getElementById('play-summary-bar').innerHTML = parts.join(' ');
+  }
+
+  // ── Pre-step: Auth ─────────────────────────────────────────────────────────
 
   async function doSignIn() {
+    const authEl = document.getElementById('auth-status');
+    authEl.textContent = '⏳ Signing in…';
     try {
-      log('info', 'Signing in...');
       currentUser = await signIn();
       onSignedIn();
     } catch(e) {
-      log('err', 'Sign-in failed: ' + e.message);
+      authEl.className = 'status-bar status-signed-out';
+      authEl.textContent = '❌ Sign-in failed: ' + e.message;
     }
   }
 
@@ -272,8 +505,8 @@
     document.getElementById('auth-status').className = 'status-bar status-signed-in';
     document.getElementById('auth-status').textContent = '✅ Signed in as ' + currentUser.username;
     document.getElementById('btn-signin').disabled = true;
-    markStepDone(1);
-    document.getElementById('play-card').classList.remove('hidden');
+    document.getElementById('wizard-steps').style.display = 'flex';
+    goToStep(1);
     loadExistingPlays();
   }
 
@@ -285,7 +518,7 @@
     } catch(e) {}
   });
 
-  // ── Step 2: Play Definition ────────────────────────────────────────────────
+  // ── Step 1: Play Definition ────────────────────────────────────────────────
 
   async function loadExistingPlays() {
     try {
@@ -293,7 +526,7 @@
       existingPlays = (config && config.plays) ? config.plays : [];
       if (existingPlays.length > 0) renderPlayOptions();
     } catch(e) {
-      log('warn', 'Could not load existing plays (first time setup is fine): ' + e.message);
+      console.warn('Could not load existing plays:', e.message);
     }
   }
 
@@ -301,39 +534,45 @@
     if (existingPlays.length === 0) return;
     const wrap = document.getElementById('play-picker-options');
     wrap.style.display = 'block';
-    wrap.innerHTML = '<div style="font-size:12px;font-weight:700;color:#888;text-transform:uppercase;margin-bottom:6px;">Or pick an existing play to update:</div>';
+    wrap.innerHTML = '<div class="play-picker-header">Or pick an existing play to update:</div>';
     existingPlays.forEach(p => {
-      const goalLabel = p.goal === 'qualify_out' ? '🚫 Qualify Out' : '✅ Qualify In';
-      const div = document.createElement('div');
-      div.className = 'play-option';
-      div.innerHTML = `<div class="play-option-name">${esc(p.play_name)}</div><div class="play-option-meta">${goalLabel} &nbsp;·&nbsp; ID: ${esc(p.play_id)}</div>`;
-      div.addEventListener('click', () => loadExistingPlay(p));
-      wrap.appendChild(div);
+      const goalLabel = p.goal === 'qualify_out' ? 'Qualify Out' : 'Qualify In';
+      const row = document.createElement('label');
+      row.className = 'play-picker-row';
+      row.innerHTML = `<input type="radio" name="play-picker" value="${esc(p.play_id)}"> <span class="ppr-name">${esc(p.play_name)}</span><span class="ppr-meta">· ${goalLabel}</span>`;
+      row.addEventListener('click', () => loadExistingPlay(p, row));
+      wrap.appendChild(row);
     });
   }
 
-  function loadExistingPlay(p) {
+  function loadExistingPlay(p, rowEl) {
     document.getElementById('play-name-input').value = p.play_name;
     document.getElementById('play-icp').value     = p.icp || '';
     document.getElementById('play-persona').value = p.target_persona || '';
     document.getElementById('play-pitch').value   = p.elevator_pitch || '';
-    // Highlight selected option
-    document.querySelectorAll('.play-option').forEach(el => el.classList.remove('selected'));
-    event.currentTarget.classList.add('selected');
+    document.querySelectorAll('.play-picker-row').forEach(el => el.classList.remove('selected'));
+    if (rowEl) rowEl.classList.add('selected');
     if (p.goal) selectGoal(p.goal);
     validatePlayStep();
   }
 
   function onPlayNameInput(val) {
-    // Deselect existing play options when user types
-    document.querySelectorAll('.play-option').forEach(el => el.classList.remove('selected'));
+    document.querySelectorAll('.play-picker-row').forEach(el => el.classList.remove('selected'));
+    validatePlayStep();
+  }
+
+  function selectGoalSeg(btn) {
+    document.querySelectorAll('.goal-seg-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    selectedGoal = btn.dataset.goal;
     validatePlayStep();
   }
 
   function selectGoal(goal) {
     selectedGoal = goal;
-    document.getElementById('goal-in').className  = 'goal-btn' + (goal === 'qualify_in'  ? ' selected-in'  : '');
-    document.getElementById('goal-out').className = 'goal-btn' + (goal === 'qualify_out' ? ' selected-out' : '');
+    document.querySelectorAll('.goal-seg-btn').forEach(b => b.classList.remove('selected'));
+    const first = document.querySelector(`.goal-seg-btn[data-goal="${goal}"]`);
+    if (first) first.classList.add('selected');
     validatePlayStep();
   }
 
@@ -355,31 +594,40 @@
       elevator_pitch: document.getElementById('play-pitch').value.trim(),
       active:         true
     };
-    markStepDone(2);
-    // Show summary bar in step 3
-    const goalLabel = selectedGoal === 'qualify_out' ? '🚫 Qualify Out' : '✅ Qualify In';
-    const goalColor = selectedGoal === 'qualify_out' ? '#d32f2f' : '#107c10';
-    document.getElementById('play-summary-bar').innerHTML = `
-      <div class="psb-item"><span class="psb-lbl">Play</span><span class="psb-val">${esc(name)}</span></div>
-      <div class="psb-item"><span class="psb-lbl">Play ID</span><span class="psb-val" style="font-family:monospace;font-size:12px;">${esc(playId)}</span></div>
-      <div class="psb-item"><span class="psb-lbl">Goal</span><span class="psb-val" style="color:${goalColor};">${goalLabel}</span></div>
-      ${currentPlayDef.target_persona ? `<div class="psb-item"><span class="psb-lbl">Persona</span><span class="psb-val">${esc(currentPlayDef.target_persona)}</span></div>` : ''}
-    `;
-    document.getElementById('upload-card').classList.remove('hidden');
-    document.getElementById('upload-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    goToStep(2);
   }
+
+  // ── Step 2: Outcomes ───────────────────────────────────────────────────────
+
+  function getOutcomesConfig() {
+    const rows = document.querySelectorAll('.outcome-cb');
+    return Array.from(rows).filter(cb => cb.checked).map(cb => ({
+      label:     cb.dataset.outcome,
+      reason:    cb.closest('.outcome-row').querySelector('[data-field="reason"]').value.split(': ')[1],
+      next_step: cb.closest('.outcome-row').querySelector('[data-field="next_step"]').value.split(': ')[1],
+      notes:     cb.closest('.outcome-row').querySelector('[data-field="notes"]').value.split(': ')[1],
+    }));
+  }
+
+  // Toggle outcome config visibility when checkbox changes
+  document.querySelectorAll('.outcome-cb').forEach(cb => {
+    cb.addEventListener('change', function() {
+      const cfg = this.closest('.outcome-row').querySelector('.outcome-config');
+      if (cfg) cfg.style.display = this.checked ? 'flex' : 'none';
+    });
+  });
 
   // ── Step 3: Upload Tab Toggle ─────────────────────────────────────────────
 
   function switchUploadTab(tab) {
     const isFile = tab === 'file';
-    document.getElementById('tab-file-panel').style.display  = isFile ? '' : 'none';
-    document.getElementById('tab-paste-panel').style.display = isFile ? 'none' : '';
-    document.getElementById('tab-file-btn').style.color        = isFile ? '#0078d4' : '#666';
-    document.getElementById('tab-file-btn').style.borderBottomColor  = isFile ? '#0078d4' : 'transparent';
-    document.getElementById('tab-paste-btn').style.color       = isFile ? '#666' : '#0078d4';
-    document.getElementById('tab-paste-btn').style.borderBottomColor = isFile ? 'transparent' : '#0078d4';
+    document.getElementById('tab-file-panel').style.display  = isFile ? 'block' : 'none';
+    document.getElementById('tab-paste-panel').style.display = isFile ? 'none'  : 'block';
+    document.getElementById('tab-file-btn').classList.toggle('active',  isFile);
+    document.getElementById('tab-paste-btn').classList.toggle('active', !isFile);
   }
+
+  // ── Step 3: Paste ─────────────────────────────────────────────────────────
 
   function handlePaste() {
     const raw = document.getElementById('paste-area').value.trim();
@@ -387,7 +635,6 @@
 
     const rows = raw.split(/\r?\n/).map(line => line.split('\t'));
 
-    // Find header row
     let headerIdx = -1;
     for (let i = 0; i < Math.min(rows.length, 5); i++) {
       const rowStr = rows[i].map(c => String(c).toLowerCase());
@@ -437,9 +684,11 @@
 
     if (assignments.length === 0) { log('err', 'No valid rows found. Check that SSO Login column contains email addresses.'); return; }
     log('ok', `Parsed ${assignments.length} accounts from pasted data.`);
-    parsedAssignments = assignments;
-    checkForWarnings(assignments);
-    showPreview(assignments);
+    resolveAssignments(assignments).then(resolved => {
+      parsedAssignments = resolved;
+      checkForWarnings(resolved);
+      showPreview(resolved);
+    });
   }
 
   // ── Step 3: File Handling ─────────────────────────────────────────────────
@@ -460,7 +709,6 @@
         const ws = wb.Sheets[sheetName];
         const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
 
-        // Find header row — look for "Rep SSO Login" or legacy "Rep Email"
         let headerIdx = -1;
         for (let i = 0; i < Math.min(rows.length, 10); i++) {
           const rowStr = rows[i].map(c => String(c).toLowerCase());
@@ -472,7 +720,7 @@
 
         const headers = rows[headerIdx].map(h =>
           String(h).trim()
-            .replace(/\s*\*$/, '')      // strip required marker
+            .replace(/\s*\*$/, '')
             .toLowerCase()
             .replace(/\s+/g, '_')
             .replace(/[^a-z0-9_]/g, '')
@@ -487,37 +735,33 @@
           const r = {};
           headers.forEach((h, idx) => { r[h] = String(row[idx] || '').trim(); });
 
-          // Flexible column name mapping
           const acctId   = r.sfdc_account_id || r.account_id || r.accountid || '';
           const acctName = r.account_name || r.accountname || '';
-          // rep_sso_login is the match field; fall back to legacy rep_email column
           const ssoLogin = r.rep_sso_login || r.rep_sso || r.sso_login || r.rep_email || '';
           const repEmail = r.rep_email_crm || r.rep_email || r.crm_email || '';
           const repName  = r.rep_name || r.repname || '';
 
-          // Skip blank or instruction rows
           if (!acctId || !acctName || !ssoLogin || !ssoLogin.includes('@')) continue;
 
-          // Auto-derive rep name from SSO login if blank or contains a formula
           let finalRepName = repName;
           if (!finalRepName || finalRepName.startsWith('=') || !finalRepName.match(/[a-z]/i)) {
             finalRepName = ssoLogin.split('@')[0].split('.').map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(' ');
           }
 
           assignments.push({
-            play_id:        currentPlayDef.play_id,
-            play_name:      currentPlayDef.play_name,
-            account_id:     acctId,
-            account_name:   acctName,
-            rep_sso_login:  ssoLogin.toLowerCase(),
-            rep_name:       finalRepName,
-            rep_email:      repEmail ? repEmail.toLowerCase() : ssoLogin.toLowerCase(),
-            arr:            r.arr || '',
-            target_persona: currentPlayDef.target_persona || '',
-            icp_notes:      currentPlayDef.icp || '',
-            elevator_pitch: currentPlayDef.elevator_pitch || '',
+            play_id:         currentPlayDef.play_id,
+            play_name:       currentPlayDef.play_name,
+            account_id:      acctId,
+            account_name:    acctName,
+            rep_sso_login:   ssoLogin.toLowerCase(),
+            rep_name:        finalRepName,
+            rep_email:       repEmail ? repEmail.toLowerCase() : ssoLogin.toLowerCase(),
+            arr:             r.arr || '',
+            target_persona:  currentPlayDef.target_persona || '',
+            icp_notes:       currentPlayDef.icp || '',
+            elevator_pitch:  currentPlayDef.elevator_pitch || '',
             response_set_id: currentPlayDef.play_id.replace(/[^a-z0-9]/gi, '_').toUpperCase() + '_STANDARD',
-            active_flag:    true
+            active_flag:     true
           });
         }
 
@@ -525,11 +769,12 @@
           throw new Error('No valid rows found. Make sure "Rep SSO Login" column has values containing "@".');
         }
 
-        parsedAssignments = assignments;
         log('ok', `Parsed ${assignments.length} assignments from "${sheetName}"`);
-        checkForWarnings(assignments);
-        markStepDone(3);
-        showPreview(assignments);
+        resolveAssignments(assignments).then(resolved => {
+          parsedAssignments = resolved;
+          checkForWarnings(resolved);
+          showPreview(resolved);
+        });
       } catch(e) {
         log('err', 'Parse error: ' + e.message);
       }
@@ -537,12 +782,81 @@
     reader.readAsArrayBuffer(file);
   }
 
-  // ── Step 4: Preview ───────────────────────────────────────────────────────
+  // ── Step 3: Identity Resolution ──────────────────────────────────────────
+
+  let _identityMap = null;
+
+  async function resolveAssignments(assignments) {
+    try {
+      if (!_identityMap) _identityMap = await getRepIdentityMap();
+    } catch(e) {
+      log('warn', 'Identity map unavailable — rep resolution skipped');
+      return assignments;
+    }
+    if (!_identityMap || !_identityMap.reps) return assignments;
+
+    let resolved = 0, unresolved = 0;
+    const result = assignments.map(a => {
+      // Try by email/alias first
+      const emailKey = (a.rep_sso_login || a.rep_email || '').toLowerCase();
+      let rep = emailKey ? resolveRepByEmail(emailKey, _identityMap) : null;
+
+      // Fallback: try by name
+      if (!rep && a.rep_name) rep = resolveRepByName(a.rep_name, _identityMap);
+
+      if (rep) {
+        resolved++;
+        return {
+          ...a,
+          rep_sso_login: rep.upn || a.rep_sso_login,
+          rep_name:      rep.display_name || a.rep_name,
+          rep_oid:       rep.oid || '',
+        };
+      } else {
+        unresolved++;
+        return a;
+      }
+    });
+
+    if (resolved > 0)   log('ok',   `Identity resolved: ${resolved} rep${resolved !== 1 ? 's' : ''} matched to identity map`);
+    if (unresolved > 0) log('warn', `${unresolved} row${unresolved !== 1 ? 's' : ''} could not be matched — verify rep email or name`);
+    return result;
+  }
+
+  // ── Step 3: Validation Bar ────────────────────────────────────────────────
+
+  function updateValidationBar(assignments) {
+    const seen = new Set();
+    let dupes = 0, missingRep = 0, valid = 0;
+
+    assignments.forEach(a => {
+      const key = ((a.account_id || '') + '|' + (a.rep_sso_login || '')).toLowerCase();
+      if (seen.has(key)) dupes++;
+      else seen.add(key);
+      if (!(a.rep_sso_login || '').includes('@')) missingRep++;
+      else if (a.account_id && a.account_name) valid++;
+    });
+
+    document.getElementById('vb-total').textContent = `${assignments.length} total`;
+    document.getElementById('vb-valid').textContent = `${valid} valid`;
+
+    const missingEl = document.getElementById('vb-missing');
+    missingEl.textContent    = missingRep > 0 ? `${missingRep} missing rep` : '';
+    missingEl.style.display  = missingRep > 0 ? '' : 'none';
+
+    const dupesEl = document.getElementById('vb-dupes');
+    dupesEl.textContent   = dupes > 0 ? `${dupes} dupes` : '';
+    dupesEl.style.display = dupes > 0 ? '' : 'none';
+
+    document.getElementById('vb-new').style.display = 'none';
+    document.getElementById('validation-bar').style.display = 'flex';
+  }
+
+  // ── Step 3: Warnings & Preview ────────────────────────────────────────────
 
   function checkForWarnings(assignments) {
     const seen = new Set();
-    let dups = 0;
-    let invalidSso = 0;
+    let dups = 0, invalidSso = 0;
     assignments.forEach(a => {
       const key = ((a.account_id || '') + '|' + (a.rep_sso_login || '')).toLowerCase();
       if (seen.has(key)) dups++;
@@ -550,7 +864,7 @@
       if (!(a.rep_sso_login || '').includes('@')) invalidSso++;
     });
     const warns = [];
-    if (dups > 0) warns.push(`⚠️ ${dups} duplicate row${dups > 1 ? 's' : ''} found (same account + rep) — only the last occurrence will be used`);
+    if (dups > 0)       warns.push(`⚠️ ${dups} duplicate row${dups > 1 ? 's' : ''} found (same account + rep) — only the last occurrence will be used`);
     if (invalidSso > 0) warns.push(`⚠️ ${invalidSso} row${invalidSso > 1 ? 's have' : ' has'} an invalid SSO login (missing @)`);
     const banner = document.getElementById('ingest-warnings');
     if (!banner) return;
@@ -561,6 +875,7 @@
       banner.innerHTML = '';
       banner.style.display = 'none';
     }
+    updateValidationBar(assignments);
   }
 
   function showPreview(assignments) {
@@ -596,57 +911,59 @@
   // ── Upload ─────────────────────────────────────────────────────────────────
 
   async function doUpload() {
-    const btn = document.getElementById('btn-upload');
+    const btn  = document.getElementById('btn-upload');
     const mode = document.querySelector('input[name="upload-mode"]:checked')?.value || 'merge';
     btn.disabled    = true;
-    btn.textContent = '⏳ Uploading...';
+    btn.textContent = '⏳ Uploading…';
+
     try {
-      // 1. Build final assignments list
-      log('info', 'Reading current assignments from SharePoint...');
+      // Read existing assignments once
+      log('info', 'Reading current assignments from SharePoint…');
+      let existingData = {};
+      try {
+        const text = await getFileText(SP_ROOT + '/assignments.json');
+        if (text) existingData = JSON.parse(text);
+      } catch(e) {}
+      const existingAssignments = existingData.assignments || [];
+
       let finalAssignments = [];
+      const key = a => (a.account_id + '|' + (a.rep_sso_login || a.rep_email)).toLowerCase();
 
       if (mode === 'merge') {
-        let existing = [];
-        try {
-          const text = await getFileText(SP_ROOT + '/assignments.json');
-          existing = JSON.parse(text || '{}').assignments || [];
-        } catch(e) {}
-        const otherPlays   = existing.filter(a => a.play_id !== currentPlayDef.play_id);
-        const key          = a => (a.account_id + '|' + (a.rep_sso_login || a.rep_email)).toLowerCase();
+        const otherPlays   = existingAssignments.filter(a => a.play_id !== currentPlayDef.play_id);
         const newKeys      = new Set(parsedAssignments.map(key));
-        const samePlayKept = existing.filter(a => a.play_id === currentPlayDef.play_id && !newKeys.has(key(a)));
+        const samePlayKept = existingAssignments.filter(a => a.play_id === currentPlayDef.play_id && !newKeys.has(key(a)));
         finalAssignments   = [...otherPlays, ...samePlayKept, ...parsedAssignments];
         log('info', `Merge: ${otherPlays.length} other-play rows kept, ${samePlayKept.length} same-play rows preserved, ${parsedAssignments.length} new/updated rows`);
       } else {
-        // Replace: keep other plays, replace entire current play
-        let existing = [];
-        try {
-          const text = await getFileText(SP_ROOT + '/assignments.json');
-          existing = JSON.parse(text || '{}').assignments || [];
-        } catch(e) {}
-        const otherPlays = existing.filter(a => a.play_id !== currentPlayDef.play_id);
+        const otherPlays = existingAssignments.filter(a => a.play_id !== currentPlayDef.play_id);
         finalAssignments = [...otherPlays, ...parsedAssignments];
         log('warn', `Replace mode: removed all existing ${currentPlayDef.play_name} assignments, replaced with ${parsedAssignments.length} rows`);
       }
 
-      await writeJsonFile('assignments.json', { assignments: finalAssignments });
+      await writeJsonFile('assignments.json', {
+        ...existingData,
+        assignments:  finalAssignments,
+        uploaded_at:  new Date().toISOString()
+      });
       log('ok', `assignments.json saved — ${finalAssignments.length} total accounts across all plays`);
 
-      // 2. Update plays.json
-      log('info', 'Updating plays.json...');
+      // 2. Update plays.json — include outcomes config
+      log('info', 'Updating plays.json…');
       let playsConfig = { plays: [] };
       try {
         playsConfig = await getPlaysConfig();
         if (!playsConfig || !playsConfig.plays) playsConfig = { plays: [] };
       } catch(e) {}
+      const playWithOutcomes = { ...currentPlayDef, outcomes: getOutcomesConfig() };
       const idx = playsConfig.plays.findIndex(p => p.play_id === currentPlayDef.play_id);
-      if (idx >= 0) playsConfig.plays[idx] = { ...playsConfig.plays[idx], ...currentPlayDef };
-      else playsConfig.plays.push(currentPlayDef);
+      if (idx >= 0) playsConfig.plays[idx] = { ...playsConfig.plays[idx], ...playWithOutcomes };
+      else playsConfig.plays.push(playWithOutcomes);
       await savePlaysConfig(playsConfig);
       log('ok', `plays.json saved — play "${currentPlayDef.play_name}" (${currentPlayDef.play_id}) updated`);
 
       // 3. Seed response-options.json with defaults if this is a new play
-      log('info', 'Checking response options for this play...');
+      log('info', 'Checking response options for this play…');
       const rsId = currentPlayDef.play_id.replace(/[^a-z0-9]/gi, '_').toUpperCase() + '_STANDARD';
       try {
         let roConfig = { options: [], form_config: {} };
@@ -698,8 +1015,8 @@
         log('warn', 'Could not seed response options: ' + e.message);
       }
 
-      markStepDone(4);
-      btn.textContent = '✅ Upload Complete';
+      markStepDone(3);
+      btn.textContent    = '✅ Play Launched';
       btn.style.background = '#107c10';
       log('ok', '');
       log('ok', '🎉 Done! Reps can now open the app and see their accounts.');
@@ -707,7 +1024,7 @@
     } catch(e) {
       log('err', 'Upload failed: ' + e.message);
       btn.disabled    = false;
-      btn.textContent = '⬆️ Retry Upload';
+      btn.textContent = '🚀 Retry Launch';
     }
   }
 </script>

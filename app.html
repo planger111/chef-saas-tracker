@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>Chef SaaS Motion Tracker</title>
+  <title>INFRA SalesPlay Tracker</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
     /* v2 log-form step indicator */
@@ -44,7 +44,7 @@
   <div id="screen-login" class="screen">
     <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:32px;text-align:center;gap:16px;">
       <div style="font-size:56px;">🍴</div>
-      <h1 style="color:#0078d4;font-weight:bold;margin:0;">Chef SaaS Motion Tracker</h1>
+      <h1 style="color:#0078d4;font-weight:bold;margin:0;">INFRA SalesPlay Tracker</h1>
       <p style="margin:0;color:#555;font-size:15px;">Sales Play Tracker</p>
       <div style="height:16px;"></div>
       <button id="btn-sign-in" class="btn btn-primary btn-block">Sign In with Microsoft</button>
@@ -56,16 +56,25 @@
   <div id="screen-dashboard" class="screen">
     <!-- Header -->
     <div class="header">
-      <span class="header-title">Chef SaaS Tracker</span>
-      <button id="btn-sign-out-header" class="btn btn-secondary" style="font-size:12px;padding:4px 10px;">Sign Out</button>
+      <span class="header-title">INFRA SalesPlay Tracker</span>
+      <a href="#" id="btn-sign-out-header" class="signout-link">Sign out</a>
     </div>
 
     <div id="bookmark-banner-wrap"></div>
     <div style="padding:16px;max-width:480px;margin:0 auto;">
 
-      <!-- User greeting -->
-      <div class="user-greeting" id="dashboard-greeting"></div>
-      <div style="font-size:13px;color:#555;margin-top:-6px;margin-bottom:16px;font-weight:500;" id="dashboard-action-hint">👇 Select a play below to see your accounts and log pitches</div>
+      <!-- Welcome bar -->
+      <div class="welcome-bar" id="welcome-bar">
+        <div class="wb-identity">
+          <span class="wb-name" id="wb-name"></span>
+          <span class="wb-level" id="wb-level"></span>
+        </div>
+        <div class="wb-stats">
+          <span class="wb-stat"><strong id="wb-points">0</strong> pts</span>
+          <span class="wb-sep">·</span>
+          <span class="wb-stat"><strong id="wb-plays">0</strong> active plays</span>
+        </div>
+      </div>
 
       <!-- Points card -->
       <div class="points-card" id="dashboard-points-card">
@@ -105,16 +114,28 @@
       <!-- Schedule alert (hidden by default) -->
       <div class="schedule-alert" id="dashboard-schedule-alert" style="display:none;"></div>
 
-      <!-- Plays -->
-      <div class="section-label">YOUR PLAYS</div>
-      <div id="dashboard-plays-list">
-        <div style="text-align:center;color:#999;padding:24px;">Loading plays…</div>
-      </div>
-
-      <!-- Leaderboard peek -->
-      <div class="section-label">LEADERBOARD</div>
-      <div class="leaderboard-peek" id="dashboard-leaderboard-peek">
-        <div style="text-align:center;color:#999;padding:16px;">Loading…</div>
+      <div class="dashboard-layout">
+        <div class="plays-section">
+          <!-- Greeting bar -->
+          <div id="greeting-bar"></div>
+          <!-- Demo banner -->
+          <div id="demo-banner" class="demo-banner" style="display:none;">
+            <span class="demo-badge">DEMO MODE</span>
+            <span>You don't have any assigned accounts yet. Practice with these demo accounts — your manager will assign real accounts soon.</span>
+          </div>
+          <!-- Plays -->
+          <div class="section-label">YOUR PLAYS</div>
+          <div class="plays-grid" id="dashboard-plays-list">
+            <div style="text-align:center;color:#999;padding:24px;">Loading plays…</div>
+          </div>
+        </div>
+        <div class="leaderboard-section">
+          <!-- Leaderboard peek -->
+          <div class="section-label">LEADERBOARD</div>
+          <div class="leaderboard-peek" id="dashboard-leaderboard-peek">
+            <div style="text-align:center;color:#999;padding:16px;">Loading…</div>
+          </div>
+        </div>
       </div>
 
       <!-- Sign out link -->
@@ -548,15 +569,17 @@
         allPlays    = plays    || [];
         totalPoints = points   || 0;
 
-        // If no accounts found, show a diagnostic banner
+        // No accounts assigned → activate demo mode
         if (repAccounts.length === 0) {
-          const banner = document.createElement('div');
-          banner.style.cssText = 'background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:14px 16px;margin-bottom:12px;font-size:13px;line-height:1.5;';
-          banner.innerHTML = `⚠️ <strong>No accounts found for your login.</strong><br>
-            Your SSO login is: <strong style="font-family:monospace;background:#f8f8f8;padding:2px 6px;border-radius:4px;">${email}</strong><br>
-            In the upload template, put this exact value in the <em>Rep SSO Login</em> column, then re-upload via <a href="ingest.html">ingest.html</a>.<br>
-            <span style="color:#888;font-size:12px;">Note: Rep SSO Login (e.g. langer@progress.com) may differ from your display email (e.g. Phil.Langer@progress.com).</span>`;
-          document.getElementById('dashboard-points-card').insertAdjacentElement('afterend', banner);
+          renderPointsCard(totalPoints);
+          const fn = name ? name.split(' ')[0] : 'there';
+          const wbN = document.getElementById('wb-name');  if (wbN)  wbN.textContent  = fn;
+          const wbLv = document.getElementById('wb-level'); if (wbLv) wbLv.textContent = `${getLevel(totalPoints).badge} ${getLevel(totalPoints).name}`;
+          showScreen('screen-dashboard');
+          await showDemoMode();
+          if (currentUser.oid) registerOID(currentUser.username, currentUser.oid).catch(() => {});
+          logActivity(currentUser, 'login', 'dashboard').catch(() => {});
+          return;
         }
 
         // Fetch latest logs for this rep across all accounts
@@ -566,10 +589,13 @@
         // Build logResults in same shape renderPlayCards expects
         const logResults = allPlays.map(play => ({ play_id: play.play_id, logs: latestLogs }));
 
-        // Render greeting
+        // Populate welcome bar
         const firstName = name ? name.split(' ')[0] : 'there';
-        document.getElementById('dashboard-greeting').textContent = `Welcome back, ${firstName} 👋`;
-        if (document.getElementById('dashboard-user-email')) document.getElementById('dashboard-user-email').textContent = email;
+        const wbNameEl  = document.getElementById('wb-name');  if (wbNameEl)  wbNameEl.textContent  = firstName;
+        const wbLvl = getLevel(totalPoints);
+        const wbLevelEl = document.getElementById('wb-level'); if (wbLevelEl) wbLevelEl.textContent = `${wbLvl.badge} ${wbLvl.name}`;
+        const wbPtsEl   = document.getElementById('wb-points'); if (wbPtsEl)   wbPtsEl.textContent   = totalPoints.toLocaleString();
+        const wbPlaysEl = document.getElementById('wb-plays');  if (wbPlaysEl) wbPlaysEl.textContent = allPlays.length;
 
         // Render points card
         renderPointsCard(totalPoints);
@@ -582,6 +608,16 @@
         renderLeaderboardPeek(lbData);
 
         showScreen('screen-dashboard');
+
+        // Background: register OID silently after dashboard is shown (non-blocking)
+        if (currentUser.oid) {
+          registerOID(currentUser.username, currentUser.oid).catch(() => {});
+        }
+        // Background: log this login event (non-blocking)
+        logActivity(currentUser, 'login', 'dashboard').catch(() => {});
+
+        // Show login greeting with staleness check (non-blocking)
+        try { showLoginGreeting(currentUser, allPlays, repAccounts); } catch(e) {}
 
       } catch (err) {
         console.error('Dashboard load error:', err);
@@ -634,9 +670,8 @@
             <div class="play-card-header" style="padding:14px 16px 8px;">
               <span class="play-card-name" style="font-size:16px;font-weight:700;">${escHtml(play.play_name)}</span>
               <div style="display:flex;align-items:center;gap:8px;">
-                <span style="font-size:11px;font-weight:700;color:${goalColor};background:${goalColor}18;padding:2px 8px;border-radius:10px;">${goalLabel}</span>
                 ${hasInfo ? `<button class="play-info-btn" data-play-id="${escHtml(play.play_id)}" onclick="event.stopPropagation();showPlayInfo('${escHtml(play.play_id)}')"
-                  style="background:none;border:1px solid #d1d5db;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;color:#0078d4;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;">ℹ</button>` : ''}
+                  style="background:none;border:1px solid #d1d5db;border-radius:50%;width:36px;height:36px;font-size:16px;cursor:pointer;color:#0078d4;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;">ℹ</button>` : ''}
               </div>
             </div>
             <div class="progress-bar-track" style="margin:0 16px;">
@@ -647,19 +682,14 @@
                 <span class="funnel-num">${targets}</span>
                 <span class="funnel-label">🎯 Targets</span>
               </div>
-              <div class="funnel-arrow">→</div>
               <div class="funnel-stat">
                 <span class="funnel-num">${engaged}</span>
                 <span class="funnel-label">💬 Engaged</span>
               </div>
-              <div class="funnel-arrow">→</div>
               <div class="funnel-stat funnel-won">
                 <span class="funnel-num">${interested}</span>
                 <span class="funnel-label">✅ Interested</span>
               </div>
-            </div>
-            <div style="background:#0078d4;color:#fff;text-align:center;padding:10px;font-weight:700;font-size:14px;letter-spacing:0.3px;">
-              👉 Tap to see your accounts &amp; log pitches
             </div>
           </div>
         `;
@@ -753,6 +783,130 @@
         e.preventDefault();
         loadLeaderboard();
       });
+    }
+
+    // ─────────────────────────────────────────────
+    // FEATURE 1: LOGIN GREETING + STALENESS
+    // ─────────────────────────────────────────────
+    function showLoginGreeting(user, plays, assignments) {
+      const greetEl = document.getElementById('greeting-bar');
+      if (!greetEl) return;
+
+      const hour = new Date().getHours();
+      const timeGreet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+      greetEl.innerHTML = `<span class="greeting-text">${timeGreet}, <strong>${user.name.split(' ')[0]}</strong> — let's get to work!</span>`;
+
+      // Staleness check: find oldest uploaded_at across this rep's accounts
+      const now = Date.now();
+      let staleMsg = '';
+      if (assignments && assignments.length > 0) {
+        const dates = assignments
+          .map(a => a.uploaded_at ? new Date(a.uploaded_at).getTime() : 0)
+          .filter(d => d > 0);
+        if (dates.length > 0) {
+          const oldest = Math.min(...dates);
+          const daysSince = Math.floor((now - oldest) / (1000 * 60 * 60 * 24));
+          if (daysSince > 30) {
+            staleMsg = `<span class="greeting-stale">⚠ Account list last updated ${daysSince} days ago — ask your manager to refresh.</span>`;
+          }
+        }
+      }
+      if (staleMsg) greetEl.insertAdjacentHTML('beforeend', staleMsg);
+      greetEl.style.display = 'block';
+    }
+
+    // ─────────────────────────────────────────────
+    // FEATURE 2: DEMO MODE
+    // ─────────────────────────────────────────────
+    const DEMO_FALLBACK = {
+      plays: [{
+        play_id: 'demo_play_001',
+        play_name: 'Practice Play — Chef Infrastructure',
+        qualify_in: 'interested',
+        qualify_out: 'not_interested',
+        target_persona: 'IT Director',
+        icp: 'Mid-market tech companies',
+        elevator_pitch: 'Chef automates infrastructure compliance at scale.',
+        accounts: [
+          { account_id: 'DEMO001', account_name: 'Acme Corp (Demo)',  rep_sso_login: 'demo', rep_name: 'Demo Rep', arr: '0', active: 'Yes' },
+          { account_id: 'DEMO002', account_name: 'Widget Co (Demo)',  rep_sso_login: 'demo', rep_name: 'Demo Rep', arr: '0', active: 'Yes' },
+          { account_id: 'DEMO003', account_name: 'Globex Inc (Demo)', rep_sso_login: 'demo', rep_name: 'Demo Rep', arr: '0', active: 'Yes' },
+        ]
+      }]
+    };
+
+    async function showDemoMode() {
+      const banner = document.getElementById('demo-banner');
+      if (banner) banner.style.display = 'flex';
+
+      let demoData = DEMO_FALLBACK;
+      try {
+        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/demo-accounts.json');
+        if (text) {
+          const json = JSON.parse(text);
+          if (json && json.plays) demoData = json;
+        }
+      } catch(e) { /* use fallback */ }
+
+      window._demoMode = true;
+      window._demoData = demoData;
+      renderDemoPlayCards(demoData.plays);
+
+      try { await logActivity(currentUser, 'demo_start', 'No accounts assigned — demo mode activated'); } catch(e) {}
+    }
+
+    async function appendToDemoLog(row) {
+      const headers = 'timestamp,rep_email,rep_name,play_id,play_name,account_id,account_name,status,notes,points';
+      const line = [
+        row.timestamp || new Date().toISOString(),
+        row.rep_email || '', row.rep_name || '',
+        row.play_id || '', row.play_name || '',
+        row.account_id || '', row.account_name || '',
+        row.outcome || row.status || '',
+        (row.notes || '').replace(/,/g, ''),
+        row.points || 0
+      ].join(',');
+      try {
+        const existing = await getFileText('Chef SaaS Tracker/ChefSaaS/demo_log.csv') || '';
+        const content  = existing ? existing + '\n' + line : headers + '\n' + line;
+        await putFile('Chef SaaS Tracker/ChefSaaS/demo_log.csv', content, 'text/csv');
+      } catch(e) { console.warn('Demo log write failed', e); }
+    }
+
+    function renderDemoPlayCards(demoPlays) {
+      const container = document.getElementById('dashboard-plays-list');
+      if (!container) return;
+      container.innerHTML = demoPlays.map(play => `
+        <div class="play-card demo-play-card" style="cursor:pointer;border:2px solid #d97706;border-radius:12px;margin-bottom:12px;overflow:hidden;" onclick="openDemoPlay('${escHtml(play.play_id)}')">
+          <div class="play-card-header" style="padding:14px 16px 8px;">
+            <span class="play-card-name" style="font-size:16px;font-weight:700;">${escHtml(play.play_name)}</span>
+          </div>
+          <div class="funnel-row" style="padding:8px 16px;">
+            <div class="funnel-stat">
+              <span class="funnel-num">${play.accounts ? play.accounts.length : 0}</span>
+              <span class="funnel-label">🎯 Practice Accounts</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openDemoPlay(playId) {
+      const demoData = window._demoData || DEMO_FALLBACK;
+      const play = demoData.plays.find(p => p.play_id === playId);
+      if (!play) return;
+
+      // Populate repAccounts with demo accounts for this play
+      repAccounts = (play.accounts || []).map(a => ({ ...a, play_id: play.play_id, play_name: play.play_name }));
+      currentPlay  = { play_id: play.play_id, play_name: play.play_name };
+      activeFilter = 'all';
+
+      document.getElementById('play-detail-title').textContent = play.play_name;
+      renderAccountList(repAccounts, 'all');
+      document.querySelectorAll('.filter-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.filter === 'all');
+      });
+      showScreen('screen-play-detail');
     }
 
     // ─────────────────────────────────────────────
@@ -958,6 +1112,19 @@
         const timeout = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('timeout')), 25000)
         );
+
+        // Demo mode: write to demo_log.csv instead of real motion_log
+        if (window._demoMode) {
+          try { await appendToDemoLog(data); } catch(e) { console.warn('Demo log write failed', e); }
+          lastPointsEarned = 0;
+          latestLogs[currentAccount.account_id] = { ...data, outcome };
+          lastSubmittedData = data;
+          showConfirm();
+          btn.textContent = 'Submit ✓';
+          btn.disabled    = false;
+          return;
+        }
+
         await Promise.race([logEngagement(data), timeout]);
 
         lastPointsEarned = calculatePoints(outcome, data.next_step_type, data);
@@ -1183,7 +1350,8 @@
     });
 
     // Sign out (header button)
-    document.getElementById('btn-sign-out-header').addEventListener('click', async () => {
+    document.getElementById('btn-sign-out-header').addEventListener('click', async (e) => {
+      e.preventDefault();
       await signOut();
     });
 
@@ -1324,7 +1492,7 @@
       <div style="overflow-y:auto;padding:32px 28px 16px;flex:1;">
         <div style="text-align:center;margin-bottom:20px;">
           <div style="font-size:48px;margin-bottom:10px;">🍴</div>
-          <h2 style="margin:0 0 8px;font-size:21px;color:#0078d4;font-weight:800;">Welcome to the Chef SaaS Tracker! 🚀</h2>
+          <h2 style="margin:0 0 8px;font-size:21px;color:#0078d4;font-weight:800;">Welcome to the INFRA SalesPlay Tracker! 🚀</h2>
           <p style="margin:0;color:#555;font-size:14px;line-height:1.5;">Log your pitches, earn points, compete with your team.</p>
         </div>
         <div style="background:#f0f7ff;border-radius:12px;padding:14px 16px;margin-bottom:12px;">
@@ -1357,5 +1525,8 @@
     </div>
   </div>
 
+<footer class="security-footer">
+  INFRA SalesPlay Tracker — Progress Software Proprietary &amp; Confidential &nbsp;·&nbsp; Progress employees only &nbsp;<a href="security.html" class="sec-footer-link">Security &amp; Privacy</a>
+</footer>
 </body>
 </html>

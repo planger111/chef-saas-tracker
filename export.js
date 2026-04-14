@@ -1,4 +1,4 @@
-// Chef SaaS Motion Tracker — Export Functions
+// INFRA SalesPlay Tracker — Export Functions
 
 const EXPORT_COLUMNS = [
   "submitted_at",
