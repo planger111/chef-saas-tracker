@@ -201,9 +201,7 @@
       <textarea id="play-pitch" rows="3" placeholder="What should the rep say? Keep it concise — 2–4 sentences reps can memorize."></textarea>
     </div>
 
-    <details style="margin-bottom:16px;">
-      <summary style="font-size:13px;font-weight:600;color:#555;cursor:pointer;user-select:none;">Advanced settings</summary>
-    </details>
+
 
     <div style="display:flex;justify-content:flex-end;">
       <button class="btn-primary" id="btn-play-next" onclick="finishPlayStep()" disabled>Continue to Outcomes →</button>
@@ -345,7 +343,7 @@
         <div style="font-size:28px;">📂</div>
         <strong>Click to select or drag your Excel file here</strong>
         <p style="margin-top:6px;color:#555;font-size:13px;">account-upload-template.xlsx (or any .xlsx with the same columns)</p>
-        <p style="margin-top:4px;color:#888;font-size:12px;">Required columns: SFDC Account ID · Account Name · Rep SSO Login · Rep Name</p>
+        <p style="margin-top:4px;color:#888;font-size:12px;">Required columns: SFDC Account ID · Account Name · Rep Email · Rep Name</p>
         <div style="margin-top:10px;font-size:12px;">
           <a href="account-upload-template.xlsx" download style="color:#0078d4;" onclick="event.stopPropagation()">⬇ Download blank template</a>
         </div>
@@ -355,7 +353,8 @@
 
     <!-- Paste panel -->
     <div id="tab-paste-panel" style="display:none;">
-      <p style="font-size:13px;color:#555;margin-bottom:8px;">Copy rows from Excel (including the header row) and paste below. Columns needed: <strong>SFDC Account ID, Account Name, Rep SSO Login, Rep Name</strong>.</p>
+      <p style="font-size:13px;color:#555;margin-bottom:8px;">Copy rows from Excel (including the header row) and paste below.</p>
+      <p style="font-size:12px;color:#888;margin-bottom:8px;">Required columns: <strong>SFDC Account ID, Account Name, Rep Email, Rep Name</strong>. Rep Email should be the rep's official Progress work email — the system will automatically match aliases.</p>
       <textarea id="paste-area" rows="8" placeholder="Paste your Excel rows here…"
                 style="width:100%;padding:10px;border:2px dashed #0078d4;border-radius:8px;font-size:13px;font-family:monospace;resize:vertical;"></textarea>
       <div style="margin-top:10px;display:flex;gap:10px;">
@@ -638,7 +637,7 @@
     let headerIdx = -1;
     for (let i = 0; i < Math.min(rows.length, 5); i++) {
       const rowStr = rows[i].map(c => String(c).toLowerCase());
-      if (rowStr.some(c => c.includes('sso') || c.includes('account id') || c.includes('account name'))) {
+      if (rowStr.some(c => c.includes('sso') || c.includes('email') || c.includes('account id') || c.includes('account name'))) {
         headerIdx = i; break;
       }
     }
@@ -712,11 +711,11 @@
         let headerIdx = -1;
         for (let i = 0; i < Math.min(rows.length, 10); i++) {
           const rowStr = rows[i].map(c => String(c).toLowerCase());
-          if (rowStr.some(c => c.includes('sso') || c.includes('account id') || c.includes('account name'))) {
+          if (rowStr.some(c => c.includes('sso') || c.includes('email') || c.includes('account id') || c.includes('account name'))) {
             headerIdx = i; break;
           }
         }
-        if (headerIdx < 0) throw new Error('Could not find header row. Expected columns like "SFDC Account ID", "Rep SSO Login".');
+        if (headerIdx < 0) throw new Error('Could not find header row. Expected columns like "SFDC Account ID", "Rep Email".');
 
         const headers = rows[headerIdx].map(h =>
           String(h).trim()
