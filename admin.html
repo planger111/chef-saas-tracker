@@ -1244,7 +1244,16 @@ Let's go! 🚀`;
           ? user.emails
           : [(user?.email || '').toLowerCase()];
         console.log('[Admin] Email candidates for role check:', emailCandidates);
-        const role = emailCandidates.map(e => ADMIN_ROLES[e]).find(r => r);
+        // Primary lookup: exact email match
+        let role = emailCandidates.map(e => ADMIN_ROLES[e]).find(r => r);
+        // Fallback: name-based match for known managers (covers UPN edge cases)
+        if (!role && user?.name) {
+          const nameLower = user.name.toLowerCase();
+          const isProgressEmail = emailCandidates.some(e => e.endsWith('@progress.com'));
+          if (isProgressEmail && (nameLower.includes('faria') || nameLower.includes('kathleen'))) {
+            role = 'manager';
+          }
+        }
         if (!role) {
           // Not an admin at all — block access
           console.warn('[Admin] Access denied. Candidates:', emailCandidates, 'Known roles:', Object.keys(ADMIN_ROLES));
