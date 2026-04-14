@@ -668,8 +668,8 @@
           <div class="play-card" data-play-id="${escHtml(play.play_id)}">
             <div class="play-card-header">
               <span class="play-card-name">${escHtml(play.play_name)}</span>
-              ${hasInfo ? `<button class="play-info-btn" data-play-id="${escHtml(play.play_id)}" onclick="event.stopPropagation();showPlayInfo('${escHtml(play.play_id)}')">ℹ</button>` : ''}
             </div>
+            ${hasInfo ? `<button class="play-info-link" onclick="event.stopPropagation();showPlayInfo('${escHtml(play.play_id)}')">ⓘ Play Info</button>` : ''}
             <div class="play-progress-wrap">
               <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%;"></div></div>
               <span class="play-pct">${pct}%</span>
@@ -706,19 +706,39 @@
     function showPlayInfo(playId) {
       const play = allPlays.find(p => p.play_id === playId);
       if (!play) return;
+
+      // Compute live stats from rep data
+      const playAccts  = repAccounts.filter(a => a.play_id === playId);
+      const targets    = playAccts.length;
+      const engaged    = playAccts.filter(a => latestLogs[a.account_id]).length;
+      const interested = playAccts.filter(a => {
+        const log = latestLogs[a.account_id];
+        return !!(log && log.outcome === 'Interested');
+      }).length;
+
       const goalLabel = play.goal === 'qualify_out' ? '🚫 Qualify Out' : '✅ Qualify In';
+      const goalCls   = play.goal === 'qualify_out' ? 'pi-goal-out' : 'pi-goal-in';
+
+      const statsHtml = targets > 0 ? `
+        <div class="pi-stats-row">
+          <div class="pi-stat"><span class="pi-stat-val">${targets}</span><span class="pi-stat-lbl">Targets</span></div>
+          <div class="pi-stat"><span class="pi-stat-val">${engaged}</span><span class="pi-stat-lbl">Engaged</span></div>
+          <div class="pi-stat"><span class="pi-stat-val">${interested}</span><span class="pi-stat-lbl">Interested</span></div>
+        </div>` : '';
+
       const overlay = document.createElement('div');
-      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;';
+      overlay.className = 'play-info-overlay';
       overlay.innerHTML = `
-        <div style="background:#fff;border-radius:16px 16px 0 0;padding:24px 20px 36px;width:100%;max-height:80vh;overflow-y:auto;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-            <strong style="font-size:17px;">${escHtml(play.play_name)}</strong>
-            <button onclick="this.closest('[style*=fixed]').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#888;line-height:1;">✕</button>
+        <div class="play-info-sheet">
+          <div class="pi-header">
+            <strong class="pi-title">${escHtml(play.play_name)}</strong>
+            <button class="pi-close" onclick="this.closest('.play-info-overlay').remove()">✕</button>
           </div>
-          <div style="display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:10px;margin-bottom:16px;background:${play.goal==='qualify_out'?'#fde8e8':'#e8f5e9'};color:${play.goal==='qualify_out'?'#c00':'#107c10'};">${goalLabel}</div>
-          ${play.icp ? `<div style="margin-bottom:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Ideal Customer Profile</div><div style="font-size:14px;line-height:1.5;">${escHtml(play.icp)}</div></div>` : ''}
-          ${play.target_persona ? `<div style="margin-bottom:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Target Persona</div><div style="font-size:14px;">${escHtml(play.target_persona)}</div></div>` : ''}
-          ${play.elevator_pitch ? `<div style="margin-bottom:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#888;margin-bottom:4px;">Elevator Pitch</div><div style="font-size:14px;line-height:1.6;background:#f8faff;border-left:3px solid #0078d4;padding:10px 12px;border-radius:0 6px 6px 0;">${escHtml(play.elevator_pitch)}</div></div>` : ''}
+          <div class="${goalCls} pi-goal-badge">${goalLabel}</div>
+          ${statsHtml}
+          ${play.icp           ? `<div class="pi-field"><div class="pi-label">Ideal Customer Profile</div><div class="pi-value">${escHtml(play.icp)}</div></div>` : ''}
+          ${play.target_persona ? `<div class="pi-field"><div class="pi-label">Target Persona</div><div class="pi-value">${escHtml(play.target_persona)}</div></div>` : ''}
+          ${play.elevator_pitch ? `<div class="pi-field"><div class="pi-label">Elevator Pitch</div><div class="pi-pitch">${escHtml(play.elevator_pitch)}</div></div>` : ''}
         </div>`;
       document.body.appendChild(overlay);
       overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
