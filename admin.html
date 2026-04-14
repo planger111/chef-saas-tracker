@@ -84,6 +84,7 @@
         <button class="admin-tab" data-tab="activity-log-user" id="tab-btn-activity-log-user" style="display:none;">Activity Log</button>
         <button class="admin-tab" data-tab="demo-activity" id="tab-btn-demo-activity" style="display:none;">Demo Activity</button>
         <button class="admin-tab" data-tab="snapshots" id="tab-btn-snapshots" style="display:none;">Snapshots</button>
+        <button class="admin-tab" data-tab="identity" id="tab-btn-identity" style="display:none;">Identity</button>
       </div>
 
       <!-- Activity Log Tab Panel -->
@@ -1004,12 +1005,22 @@
       if (reason === null) return;
 
       if (!requireTypedConfirmation('RESET',
-        '⚠ DANGER ZONE — This will wipe all plays, assignments, and response options.\nA snapshot will be created first, but live data will be cleared.')) return;
+        '⚠ DANGER ZONE — This will wipe ALL plays, assignments, engagement logs, and response options.\nA snapshot will be created first, but all live data will be cleared.')) return;
 
       const statusEl = document.getElementById('snapshot-status') || document.getElementById('plays-status');
       if (!statusEl) return;
       statusEl.style.display = 'block';
       statusEl.style.background = '#fff3cd'; statusEl.style.color = '#856404';
+      statusEl.textContent = '⏳ Reading current plays before snapshot…';
+
+      // Collect play IDs so we can clear their engagement CSVs after reset
+      let existingPlayIds = [];
+      try {
+        const playsText = await getFileText(SP_ROOT + '/plays.json').catch(() => null);
+        const playsData = playsText ? JSON.parse(playsText) : {};
+        existingPlayIds = (playsData.plays || []).map(p => p.play_id).filter(Boolean);
+      } catch(e) { /* non-fatal — we'll still reset what we can */ }
+
       statusEl.textContent = '⏳ Creating pre-reset snapshot before resetting…';
 
       let manifest;
@@ -1025,17 +1036,27 @@
         return;
       }
 
-      statusEl.textContent = `✅ Snapshot ${manifest.snapshot_id} saved (${manifest.files.length} files). Resetting live data…`;
+      statusEl.textContent = `✅ Snapshot ${manifest.snapshot_id} saved. Resetting all live data…`;
 
       try {
-        await Promise.all([
+        const engagementHeaders = 'id,submitted_at,play_id,play_name,account_id,account_name,rep_email,rep_name,interaction_type,outcome,reason_label,reason_code,next_step_type,timing,contact_level,notes,points_earned';
+        const activityHeaders   = 'timestamp,user_email,user_name,action_type,detail';
+
+        const clearOps = [
           writeJsonFile('plays.json',           { plays: [] }),
           writeJsonFile('assignments.json',      { assignments: [] }),
           writeJsonFile('response-options.json', { options: [], form_config: STANDARD_FORM_CONFIG }),
-        ]);
+          putFile(SP_ROOT + '/activity_log.csv', activityHeaders, 'text/csv'),
+          ...existingPlayIds.map(pid =>
+            putFile(SP_ROOT + '/' + pid.replace(/[^a-z0-9]/gi,'_') + '_engagements.csv', engagementHeaders, 'text/csv')
+          ),
+        ];
+        await Promise.all(clearOps);
+
+        const cleared = 3 + 1 + existingPlayIds.length;
         statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
-        statusEl.textContent = `✅ System reset. Snapshot reference: ${manifest.snapshot_id}. Use Snapshots tab to restore if needed.`;
-        try { await logActivity(currentUser, 'backup_reset', 'Backup + Reset: snapshot ' + manifest.snapshot_id); } catch(e) {}
+        statusEl.textContent = `✅ System fully reset (${cleared} files cleared). Snapshot: ${manifest.snapshot_id}. Use Snapshots tab to restore if needed.`;
+        try { await logActivity(currentUser, 'backup_reset', `Full reset: snapshot ${manifest.snapshot_id}, ${existingPlayIds.length} engagement log(s) cleared`); } catch(e) {}
         if (typeof loadPlaysTab === 'function') loadPlaysTab();
         if (typeof loadSnapshotsTab === 'function') loadSnapshotsTab();
       } catch(e) {
