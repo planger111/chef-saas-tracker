@@ -781,6 +781,175 @@
     }
   }
 
+  // ── Step 3: Questions Config ──────────────────────────────────────────────
+
+  const BOILERPLATE_QUESTIONS = [
+    { id: 'notes',          label: 'Notes',           desc: 'Free-text notes from the rep (shown at end of form)',        default: true  },
+    { id: 'next_step',      label: 'Next Step',       desc: 'Next action dropdown (shown when outcome is Interested)',    default: true  },
+    { id: 'timing',         label: 'Timing',           desc: 'Follow-up timeline selector (shown when Interested)',       default: true  },
+    { id: 'revisit_timing', label: 'Revisit Timing',  desc: 'Revisit timeline (shown when outcome is Not Interested)',    default: true  },
+  ];
+
+  let _customQIdCounter = 0;
+
+  function renderBoilerplateQuestions() {
+    const container = document.getElementById('boilerplate-questions-list');
+    if (!container) return;
+    const enabled = (currentPlayDef && currentPlayDef.questions && currentPlayDef.questions.boilerplate) || null;
+    container.innerHTML = BOILERPLATE_QUESTIONS.map(q => {
+      const checked = enabled ? enabled.includes(q.id) : q.default;
+      return `
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:8px;cursor:pointer;background:#fff;">
+          <input type="checkbox" class="bq-cb" data-id="${esc(q.id)}" ${checked ? 'checked' : ''}
+                 style="margin-top:2px;width:16px;height:16px;accent-color:#0078d4;flex-shrink:0;">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:#111;">${esc(q.label)}</div>
+            <div style="font-size:12px;color:#6b7280;margin-top:2px;">${esc(q.desc)}</div>
+          </div>
+        </label>`;
+    }).join('');
+  }
+
+  function addCustomQuestion() {
+    _customQIdCounter++;
+    const qid = 'cq_' + _customQIdCounter;
+    const emptyMsg = document.getElementById('cq-empty-msg');
+    if (emptyMsg) emptyMsg.style.display = 'none';
+    const container = document.getElementById('custom-questions-list');
+    const card = document.createElement('div');
+    card.className = 'cq-card';
+    card.dataset.qid = qid;
+    card.style.cssText = 'border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;margin-bottom:10px;background:#fff;';
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:700;color:#374151;">Custom Question</div>
+        <button onclick="removeCustomQuestion('${esc(qid)}')" style="background:none;border:none;color:#ef4444;font-size:20px;cursor:pointer;line-height:1;padding:0 4px;">×</button>
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Question Label</label>
+        <input type="text" class="cq-label" placeholder="e.g. Which product did you pitch?"
+               style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;box-sizing:border-box;">
+      </div>
+      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+        <div style="flex:1;min-width:140px;">
+          <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Type</label>
+          <select class="cq-type" onchange="onCustomQuestionTypeChange(this)"
+                  style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
+            <option value="text">Short text</option>
+            <option value="yesno">Yes / No</option>
+            <option value="dropdown">Dropdown options</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;padding-bottom:2px;">
+          <label style="font-size:12px;font-weight:600;">Required</label>
+          <input type="checkbox" class="cq-required" style="width:16px;height:16px;accent-color:#0078d4;">
+        </div>
+      </div>
+      <div class="cq-options-wrap" style="display:none;margin-top:10px;">
+        <label style="font-size:12px;font-weight:600;display:block;margin-bottom:4px;">Options <span style="font-weight:400;color:#9ca3af;">(one per line)</span></label>
+        <textarea class="cq-options" rows="3" placeholder="Option A&#10;Option B&#10;Option C"
+                  style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>`;
+    container.appendChild(card);
+  }
+
+  function removeCustomQuestion(qid) {
+    const card = document.querySelector(`.cq-card[data-qid="${qid}"]`);
+    if (card) card.remove();
+    const emptyMsg = document.getElementById('cq-empty-msg');
+    if (emptyMsg) emptyMsg.style.display = document.querySelectorAll('.cq-card').length === 0 ? 'block' : 'none';
+  }
+
+  function onCustomQuestionTypeChange(sel) {
+    const card = sel.closest('.cq-card');
+    if (!card) return;
+    const optionsWrap = card.querySelector('.cq-options-wrap');
+    if (optionsWrap) optionsWrap.style.display = sel.value === 'dropdown' ? 'block' : 'none';
+  }
+
+  function getQuestionsConfig() {
+    const boilerplate = Array.from(document.querySelectorAll('.bq-cb:checked')).map(cb => cb.dataset.id);
+    const custom = Array.from(document.querySelectorAll('.cq-card')).map(card => {
+      const label = (card.querySelector('.cq-label')?.value || '').trim();
+      const type  = card.querySelector('.cq-type')?.value || 'text';
+      const required = card.querySelector('.cq-required')?.checked || false;
+      const optionsText = card.querySelector('.cq-options')?.value || '';
+      const options = type === 'dropdown' ? optionsText.split('\n').map(s => s.trim()).filter(Boolean) : [];
+      return label ? { id: card.dataset.qid, label, type, required, options } : null;
+    }).filter(Boolean);
+    return { boilerplate, custom };
+  }
+
+  function finishQuestionsStep() {
+    if (!requireIngestAdmin()) return;
+    if (!currentPlayDef) { log('err', 'No play defined. Go back to Step 1.'); return; }
+    currentPlayDef.questions = getQuestionsConfig();
+    goToStep(4);
+  }
+
+  function toggleFormPreview() {
+    const preview = document.getElementById('form-preview');
+    if (!preview) return;
+    if (preview.style.display === 'none') {
+      buildFormPreview();
+      preview.style.display = 'block';
+    } else {
+      preview.style.display = 'none';
+    }
+  }
+
+  function buildFormPreview() {
+    const content = document.getElementById('form-preview-content');
+    if (!content) return;
+    const config = getQuestionsConfig();
+    const bqMap = Object.fromEntries(BOILERPLATE_QUESTIONS.map(q => [q.id, q]));
+    const rows = [];
+    rows.push(`<div style="padding:8px 0;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;"><strong>Interaction Type</strong><span style="font-size:11px;color:#6b7280;">radio · always shown</span></div>`);
+    rows.push(`<div style="padding:8px 0;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;"><strong>Outcome</strong><span style="font-size:11px;color:#6b7280;">radio · always shown</span></div>`);
+    config.boilerplate.forEach(id => {
+      const q = bqMap[id];
+      if (!q) return;
+      rows.push(`<div style="padding:8px 0;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;"><strong>${esc(q.label)}</strong><span style="font-size:11px;color:#6b7280;">standard field</span></div>`);
+    });
+    config.custom.forEach(q => {
+      const typeLabel = { text: 'text input', yesno: 'Yes/No', dropdown: 'dropdown' }[q.type] || q.type;
+      const reqMark = q.required ? ' <span style="color:#ef4444;font-size:11px;">required</span>' : '';
+      rows.push(`<div style="padding:8px 0;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;"><strong>${esc(q.label)}</strong>${reqMark}<span style="font-size:11px;color:#6b7280;">${typeLabel}</span></div>`);
+    });
+    content.innerHTML = rows.length > 0 ? rows.join('') : '<div style="color:#9ca3af;font-size:13px;">No fields configured yet.</div>';
+  }
+
+  function loadQuestionsFromPlay(p) {
+    if (!p || !p.questions) {
+      renderBoilerplateQuestions();
+      return;
+    }
+    // renderBoilerplateQuestions reads currentPlayDef.questions — it's already set by caller
+    renderBoilerplateQuestions();
+    // Clear existing custom questions
+    document.querySelectorAll('.cq-card').forEach(c => c.remove());
+    const emptyMsg = document.getElementById('cq-empty-msg');
+    if (emptyMsg) emptyMsg.style.display = 'block';
+    // Restore saved custom questions
+    (p.questions.custom || []).forEach(cq => {
+      addCustomQuestion();
+      const cards = document.querySelectorAll('.cq-card');
+      const card = cards[cards.length - 1];
+      if (!card) return;
+      const labelInput = card.querySelector('.cq-label');
+      if (labelInput) labelInput.value = cq.label || '';
+      const typeSelect = card.querySelector('.cq-type');
+      if (typeSelect) { typeSelect.value = cq.type || 'text'; onCustomQuestionTypeChange(typeSelect); }
+      const reqCb = card.querySelector('.cq-required');
+      if (reqCb) reqCb.checked = !!cq.required;
+      if (cq.type === 'dropdown') {
+        const optionsArea = card.querySelector('.cq-options');
+        if (optionsArea) optionsArea.value = (cq.options || []).join('\n');
+      }
+      if (emptyMsg) emptyMsg.style.display = 'none';
+    });
+  }
+
   // Save play config + outcomes without touching assignments
   async function savePlayConfigOnly() {
     if (!requireIngestAdmin()) return;
@@ -801,6 +970,7 @@
       elevator_pitch: document.getElementById('play-pitch').value.trim(),
       active:         true,
       outcomes:       getOutcomesConfig(),
+      questions:      currentPlayDef?.questions || getQuestionsConfig(),
     };
 
     try {
@@ -847,6 +1017,7 @@
     if (p.goal) selectGoal(p.goal);
     _isExistingPlay = true;
     currentPlayDef = { ...p };
+    loadQuestionsFromPlay(currentPlayDef);
     validatePlayStep();
   }
 
@@ -1331,7 +1502,7 @@
         playsConfig = await getPlaysConfig();
         if (!playsConfig || !playsConfig.plays) playsConfig = { plays: [] };
       } catch(e) {}
-      const playWithOutcomes = { ...currentPlayDef, outcomes: getOutcomesConfig() };
+      const playWithOutcomes = { ...currentPlayDef, outcomes: getOutcomesConfig(), questions: currentPlayDef.questions || getQuestionsConfig() };
       const idx = playsConfig.plays.findIndex(p => p.play_id === currentPlayDef.play_id);
       if (idx >= 0) playsConfig.plays[idx] = { ...playsConfig.plays[idx], ...playWithOutcomes };
       else playsConfig.plays.push(playWithOutcomes);

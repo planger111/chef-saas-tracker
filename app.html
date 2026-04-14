@@ -280,11 +280,14 @@
         </div>
 
         <!-- Always shown on step 2 -->
-        <div class="form-group">
+        <div class="form-group" id="notes-field-group">
           <label class="form-label">Notes <span style="font-weight:400;color:#888;">(optional)</span></label>
           <textarea class="form-control" id="field-notes" rows="3" maxlength="120" placeholder="Any additional context…" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;resize:vertical;"></textarea>
           <div id="notes-char-counter" style="font-size:12px;color:#6b7280;margin-top:4px;text-align:right;">0 / 120 characters</div>
         </div>
+
+        <!-- Custom questions (populated per-play from play.questions.custom) -->
+        <div id="custom-questions-container"></div>
 
         <button class="btn btn-primary btn-block" id="btn-submit-engagement" style="margin-top:8px;">Submit ✓</button>
       </div>
@@ -1070,6 +1073,9 @@
       goToLogStep(1);
       showScreen('screen-log-form');
 
+      // Apply per-play question config (show/hide boilerplate fields, render custom questions)
+      applyPlayQuestions(play);
+
       // Load all form options from SharePoint (cached after first call)
       renderInteractionTypes();
       renderNextStepOptions();
@@ -1078,6 +1084,63 @@
         document.getElementById('field-interested-reason').innerHTML     = buildReasonOptions(interested);
         document.getElementById('field-not-interested-reason').innerHTML = buildReasonOptions(notInterested);
       });
+    }
+
+    // Apply per-play question config: show/hide boilerplate fields, render custom questions
+    function applyPlayQuestions(play) {
+      const q = play && play.questions;
+      const boilerplate = q ? (q.boilerplate || []) : ['notes', 'next_step', 'timing', 'revisit_timing'];
+
+      // Boilerplate field visibility
+      const notesGroup = document.getElementById('notes-field-group');
+      if (notesGroup) notesGroup.style.display = boilerplate.includes('notes') ? 'block' : 'none';
+
+      // next_step and timing live inside #interested-fields — show/hide individually
+      const nextStepGroup = document.getElementById('field-next-step-type')?.closest('.form-group');
+      if (nextStepGroup) nextStepGroup.style.display = boilerplate.includes('next_step') ? 'block' : 'none';
+      const timingGroup = document.getElementById('field-timing')?.closest('.form-group');
+      if (timingGroup) timingGroup.style.display = boilerplate.includes('timing') ? 'block' : 'none';
+
+      // revisit_timing lives inside #not-interested-fields
+      const revisitGroup = document.getElementById('field-timing-ni')?.closest('.form-group');
+      if (revisitGroup) revisitGroup.style.display = boilerplate.includes('revisit_timing') ? 'block' : 'none';
+
+      // Render custom questions
+      const container = document.getElementById('custom-questions-container');
+      if (!container) return;
+      const customQs = q ? (q.custom || []) : [];
+      if (customQs.length === 0) { container.innerHTML = ''; return; }
+      container.innerHTML = customQs.map(cq => {
+        const reqMark = cq.required ? ' <span style="color:#d32f2f;">*</span>' : '';
+        if (cq.type === 'yesno') {
+          return `<div class="form-group" data-custom-qid="${escHtml(cq.id)}">
+            <label class="form-label">${escHtml(cq.label)}${reqMark}</label>
+            <div style="display:flex;gap:10px;margin-top:6px;">
+              <label style="display:flex;align-items:center;gap:8px;font-size:15px;cursor:pointer;padding:10px 16px;border:1px solid #d1d5db;border-radius:8px;flex:1;">
+                <input type="radio" name="cq_${escHtml(cq.id)}" value="Yes" style="width:16px;height:16px;accent-color:#0078d4;"> Yes
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:15px;cursor:pointer;padding:10px 16px;border:1px solid #d1d5db;border-radius:8px;flex:1;">
+                <input type="radio" name="cq_${escHtml(cq.id)}" value="No" style="width:16px;height:16px;accent-color:#0078d4;"> No
+              </label>
+            </div>
+          </div>`;
+        }
+        if (cq.type === 'dropdown') {
+          const opts = (cq.options || []).map(o => `<option value="${escHtml(o)}">${escHtml(o)}</option>`).join('');
+          return `<div class="form-group" data-custom-qid="${escHtml(cq.id)}">
+            <label class="form-label">${escHtml(cq.label)}${reqMark}</label>
+            <select class="form-control" id="cq_${escHtml(cq.id)}" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>${opts}
+            </select>
+          </div>`;
+        }
+        // text default
+        return `<div class="form-group" data-custom-qid="${escHtml(cq.id)}">
+          <label class="form-label">${escHtml(cq.label)}${reqMark}</label>
+          <input type="text" class="form-control" id="cq_${escHtml(cq.id)}"
+                 style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;">
+        </div>`;
+      }).join('');
     }
 
     function goToLogStep(step) {
@@ -1107,6 +1170,37 @@
     // ─────────────────────────────────────────────
     // SUBMIT — log real customer interaction
     // ─────────────────────────────────────────────
+
+    function collectCustomAnswers() {
+      const answers = {};
+      document.querySelectorAll('#custom-questions-container [data-custom-qid]').forEach(group => {
+        const qid = group.dataset.customQid;
+        const radio = group.querySelector(`input[name="cq_${qid}"]:checked`);
+        if (radio) { answers[qid] = radio.value; return; }
+        const sel = group.querySelector(`#cq_${qid}`);
+        if (sel) { answers[qid] = sel.value; return; }
+        const inp = group.querySelector(`input[type="text"]`);
+        if (inp) { answers[qid] = inp.value; }
+      });
+      return Object.keys(answers).length > 0 ? JSON.stringify(answers) : '';
+    }
+
+    function validateCustomAnswers() {
+      if (!currentPlay || !currentPlay.questions) return null;
+      for (const cq of (currentPlay.questions.custom || [])) {
+        if (!cq.required) continue;
+        const group = document.querySelector(`[data-custom-qid="${cq.id}"]`);
+        if (!group) continue;
+        if (cq.type === 'yesno') {
+          if (!group.querySelector(`input[name="cq_${cq.id}"]:checked`)) return `Please answer: "${cq.label}"`;
+        } else {
+          const el = group.querySelector(`#cq_${cq.id}`);
+          if (!el || !el.value.trim()) return `Please fill in: "${cq.label}"`;
+        }
+      }
+      return null;
+    }
+
     async function submitEngagement() {
       const interactionType = document.querySelector('input[name="interaction-type"]:checked')?.value;
       const outcome         = document.querySelector('input[name="outcome"]:checked')?.value;
@@ -1121,18 +1215,21 @@
       try {
         const nextStepType = document.getElementById('field-next-step-type')?.value || '';
 
-        // Validate required fields by outcome
+        // Validate required fields by outcome (skip if field was hidden by play config)
+        const bq = currentPlay?.questions?.boilerplate || ['notes', 'next_step', 'timing', 'revisit_timing'];
         if (outcome === 'Interested') {
           const intReason = document.getElementById('field-interested-reason')?.value || '';
           if (!intReason) { alert('Please select an Interested Reason.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
-          if (!nextStepType) { alert('Please select a Next Step.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
+          if (bq.includes('next_step') && !nextStepType) { alert('Please select a Next Step.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
         }
         if (outcome === 'Not Interested') {
           const niReason = document.getElementById('field-not-interested-reason')?.value || '';
           if (!niReason) { alert('Please select a Not Interested Reason.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
         }
 
-        const reasonSelectId = outcome === 'Interested' ? 'field-interested-reason' : 'field-not-interested-reason';
+        // Validate required custom questions
+        const missingCustom = validateCustomAnswers();
+        if (missingCustom) { alert(missingCustom); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
         const reasonSelect   = document.getElementById(reasonSelectId);
         const selectedOption = reasonSelect ? reasonSelect.options[reasonSelect.selectedIndex] : null;
         const reasonLabel    = selectedOption ? (selectedOption.value || '') : '';
@@ -1156,6 +1253,7 @@
           next_step_type:   outcome === 'Interested' ? nextStepType : '',
           timing:           timingVal,
           notes:            document.getElementById('field-notes')?.value || '',
+          extra_json:       collectCustomAnswers(),
         };
 
         // Hard 25s timeout — prevents hanging forever if network/token stalls
