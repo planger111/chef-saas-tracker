@@ -445,20 +445,31 @@
   // ── Security Helpers ──────────────────────────────────────────────────────
 
   function requireIngestAdmin() {
-    if (!currentUser || !currentUser.email) {
+    if (!currentUser) {
       log('err', 'Not authenticated. Please sign in first.');
       return false;
     }
     const ADMIN_EMAILS = [
       'planger@progress.com',
+      'philip.langer@progress.com',
+      'langer@progress.com',
       'phil.langer@progress.com',
       'kfaria@progress.com',
-      'kathleen.faria@progress.com'
+      'kathleen.faria@progress.com',
+      'k.faria@progress.com',
+      'kathy.faria@progress.com',
     ];
-    const email = (currentUser.email || '').toLowerCase();
-    const isAdmin = ADMIN_EMAILS.some(a => email.includes(a.split('@')[0]));
-    if (!isAdmin) {
-      log('err', `Access denied. Ingest requires admin permissions. Your email: ${currentUser.email}`);
+    // Check all email candidates from token
+    const candidates = currentUser.emails || [(currentUser.email || currentUser.username || '').toLowerCase()];
+    const emailMatch = candidates.some(e => ADMIN_EMAILS.includes(e.toLowerCase()));
+    // Name-based fallback: known admins by display name + @progress.com domain
+    const isProgressEmail = candidates.some(e => e.endsWith('@progress.com'));
+    const nameLower = (currentUser.name || '').toLowerCase();
+    const nameMatch = isProgressEmail && (
+      nameLower.includes('langer') || nameLower.includes('faria') || nameLower.includes('kathleen')
+    );
+    if (!emailMatch && !nameMatch) {
+      log('err', `Access denied. Ingest requires admin permissions. Detected: ${candidates.join(', ')}`);
       return false;
     }
     return true;
@@ -546,7 +557,10 @@
     try {
       await initAuth();
       const accounts = window._msalInstance ? window._msalInstance.getAllAccounts() : [];
-      if (accounts.length > 0) { currentUser = accounts[0]; onSignedIn(); }
+      if (accounts.length > 0) {
+        currentUser = getCurrentUser() || accounts[0];
+        onSignedIn();
+      }
     } catch(e) {}
   });
 
