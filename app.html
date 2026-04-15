@@ -1202,6 +1202,7 @@
     }
 
     async function submitEngagement() {
+      console.log("PATCH LIVE v4 - deployed app.html");
       const interactionType = document.querySelector('input[name="interaction-type"]:checked')?.value;
       const outcome         = document.querySelector('input[name="outcome"]:checked')?.value;
 
@@ -1230,10 +1231,18 @@
         // Validate required custom questions
         const missingCustom = validateCustomAnswers();
         if (missingCustom) { alert(missingCustom); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
-        const reasonSelect   = document.getElementById(reasonSelectId);
-        const selectedOption = reasonSelect ? reasonSelect.options[reasonSelect.selectedIndex] : null;
-        const reasonLabel    = selectedOption ? (selectedOption.value || '') : '';
-        const reasonCode     = selectedOption ? (selectedOption.dataset.reasonCode || '') : '';
+
+        // Derive reason select from outcome — fixed IDs, no intermediate variable needed
+        const reasonSelect =
+          outcome === 'Interested'
+            ? document.getElementById('field-interested-reason')
+            : outcome === 'Not Interested'
+              ? document.getElementById('field-not-interested-reason')
+              : null;
+
+        const selectedOption = reasonSelect?.options?.[reasonSelect.selectedIndex];
+        const reasonLabel    = selectedOption?.text  || '';
+        const reasonCode     = reasonSelect?.value   || '';
 
         const timingVal = outcome === 'Interested'
           ? (document.getElementById('field-timing')?.value || '')
