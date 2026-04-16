@@ -583,6 +583,17 @@
     let currentUser = null;
     let _quickPlays = null;
 
+    const GOAL_LABELS = {
+      feedback:        'Track Feedback',
+      interest:        'Track Interest',
+      meeting:         'Book Meeting',
+      disqualification:'Disqualify / Rule Out',
+      expansion:       'Drive Expansion',
+      qualify_in:      'Track Interest',
+      qualify_out:     'Disqualify / Rule Out',
+    };
+    function getGoalLabel(goal) { return GOAL_LABELS[goal] || goal || ''; }
+
     function getLevel(pts) {
       const levels = [
         { name: 'Legend',   badge: '🏆', min: 500 },
@@ -672,8 +683,8 @@
           const engaged    = latestArr.length;
           const interested = latestArr.filter(e => e.outcome === 'Interested').length;
           const pct        = targets > 0 ? Math.round((engaged / targets) * 100) : 0;
-          const goalLabel  = play.goal === 'qualify_out' ? '🚫 Qualify Out' : '✅ Qualify In';
-          const goalColor  = play.goal === 'qualify_out' ? '#d32f2f' : '#107c10';
+          const goalLabel  = getGoalLabel(play.goal);
+          const goalColor  = play.goal === 'disqualification' || play.goal === 'qualify_out' ? '#d32f2f' : '#107c10';
           return { play, targets, engaged, interested, pct, goalLabel, goalColor };
         });
 
@@ -928,7 +939,7 @@
       btn.style.opacity = '1';
       const play = (_quickPlays || []).find(p => p.play_id === playId);
       if (play) {
-        const goalLabel = play.goal === 'qualify_out' ? 'Qualify Out' : 'Qualify In';
+        const goalLabel = getGoalLabel(play.goal);
         summaryEl.style.display = 'block';
         summaryEl.innerHTML = `<span style="font-family:monospace;">${escHtml(play.play_id)}</span> · Goal: ${goalLabel}`;
       }

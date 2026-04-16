@@ -383,6 +383,20 @@
     }
 
     // ─────────────────────────────────────────────
+    // GOAL LABELS
+    // ─────────────────────────────────────────────
+    const GOAL_LABELS = {
+      feedback:        'Track Feedback',
+      interest:        'Track Interest',
+      meeting:         'Book Meeting',
+      disqualification:'Disqualify / Rule Out',
+      expansion:       'Drive Expansion',
+      qualify_in:      'Track Interest',
+      qualify_out:     'Disqualify / Rule Out',
+    };
+    function getGoalLabel(goal) { return GOAL_LABELS[goal] || goal || ''; }
+
+    // ─────────────────────────────────────────────
     // STATE
     // ─────────────────────────────────────────────
     let currentUser    = null;  // {name, email}
@@ -708,8 +722,8 @@
           return !!(log && log.outcome === 'Interested');
         }).length;
         const pct = targets > 0 ? Math.round((engaged / targets) * 100) : 0;
-        const goalLabel = play.goal === 'qualify_out' ? '🚫 Qualify Out' : '✅ Qualify In';
-        const goalColor = play.goal === 'qualify_out' ? '#d32f2f' : '#107c10';
+        const goalLabel = getGoalLabel(play.goal);
+        const goalColor = play.goal === 'disqualification' || play.goal === 'qualify_out' ? '#d32f2f' : '#107c10';
         const hasInfo   = play.icp || play.target_persona || play.elevator_pitch;
 
         return `
@@ -717,6 +731,7 @@
             <div class="play-card-header">
               <span class="play-card-name">${escHtml(play.play_name)}</span>
             </div>
+            ${goalLabel ? `<div style="font-size:12px;color:${goalColor};font-weight:600;margin:2px 0 6px 0;">Goal: ${escHtml(goalLabel)}</div>` : ''}
             ${hasInfo ? `<button class="play-info-link" onclick="event.stopPropagation();showPlayInfo('${escHtml(play.play_id)}')">ⓘ Play Info</button>` : ''}
             <div class="play-progress-wrap">
               <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%;"></div></div>
@@ -765,8 +780,8 @@
         return !!(log && log.outcome === 'Interested');
       }).length;
 
-      const goalLabel = play.goal === 'qualify_out' ? '🚫 Qualify Out' : '✅ Qualify In';
-      const goalCls   = play.goal === 'qualify_out' ? 'pi-goal-out' : 'pi-goal-in';
+      const goalLabel = getGoalLabel(play.goal);
+      const goalCls   = play.goal === 'disqualification' || play.goal === 'qualify_out' ? 'pi-goal-out' : 'pi-goal-in';
 
       const statsHtml = targets > 0 ? `
         <div class="pi-stats-row">
@@ -783,7 +798,7 @@
             <strong class="pi-title">${escHtml(play.play_name)}</strong>
             <button class="pi-close" onclick="this.closest('.play-info-overlay').remove()">✕</button>
           </div>
-          <div class="${goalCls} pi-goal-badge">${goalLabel}</div>
+          <div class="${goalCls} pi-goal-badge">${goalLabel ? 'Goal: ' + escHtml(goalLabel) : ''}</div>
           ${statsHtml}
           ${play.icp           ? `<div class="pi-field"><div class="pi-label">Ideal Customer Profile</div><div class="pi-value">${escHtml(play.icp)}</div></div>` : ''}
           ${play.target_persona ? `<div class="pi-field"><div class="pi-label">Target Persona</div><div class="pi-value">${escHtml(play.target_persona)}</div></div>` : ''}

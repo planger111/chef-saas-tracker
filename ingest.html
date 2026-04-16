@@ -197,11 +197,11 @@
     <div class="form-row">
       <label>Goal *</label>
       <div class="goal-seg">
-        <button type="button" class="goal-seg-btn" data-goal="qualify_in"  onclick="selectGoalSeg(this)">Feedback</button>
-        <button type="button" class="goal-seg-btn" data-goal="qualify_in"  onclick="selectGoalSeg(this)">Interest</button>
-        <button type="button" class="goal-seg-btn" data-goal="qualify_in"  onclick="selectGoalSeg(this)">Meeting</button>
-        <button type="button" class="goal-seg-btn" data-goal="qualify_out" onclick="selectGoalSeg(this)">Disqualification</button>
-        <button type="button" class="goal-seg-btn" data-goal="qualify_in"  onclick="selectGoalSeg(this)">Expansion</button>
+        <button type="button" class="goal-seg-btn" data-goal="feedback"        onclick="selectGoalSeg(this)">Feedback</button>
+        <button type="button" class="goal-seg-btn" data-goal="interest"        onclick="selectGoalSeg(this)">Interest</button>
+        <button type="button" class="goal-seg-btn" data-goal="meeting"         onclick="selectGoalSeg(this)">Meeting</button>
+        <button type="button" class="goal-seg-btn" data-goal="disqualification" onclick="selectGoalSeg(this)">Disqualification</button>
+        <button type="button" class="goal-seg-btn" data-goal="expansion"       onclick="selectGoalSeg(this)">Expansion</button>
       </div>
     </div>
 
@@ -479,6 +479,18 @@
   let currentPlayDef = null;
   let _isExistingPlay = false;  // true when editing/adding to an existing play
 
+  const GOAL_LABELS = {
+    feedback:        'Track Feedback',
+    interest:        'Track Interest',
+    meeting:         'Book Meeting',
+    disqualification:'Disqualify / Rule Out',
+    expansion:       'Drive Expansion',
+    // legacy values — backward compat
+    qualify_in:      'Track Interest',
+    qualify_out:     'Disqualify / Rule Out',
+  };
+  function getGoalLabel(goal) { return GOAL_LABELS[goal] || goal || ''; }
+
   // URL params for deep-linking from admin Plays tab
   const _urlParams  = new URLSearchParams(location.search);
   const _urlPlayId  = _urlParams.get('play');
@@ -594,7 +606,7 @@
   function populateSummaryBar() {
     if (!currentPlayDef) return;
     const outcomeCount = document.querySelectorAll('.outcome-cb:checked').length;
-    const goalLabel = selectedGoal === 'qualify_out' ? 'Qualify Out' : 'Qualify In';
+    const goalLabel = getGoalLabel(selectedGoal);
     const parts = [
       `<span class="psb-val">${esc(currentPlayDef.play_name)}</span>`,
       `<span class="psb-sep">|</span>`,
@@ -691,7 +703,7 @@
     if (_isExistingPlay && currentPlayDef) {
       banner.style.display = 'block';
       titleEl.textContent = 'Adding accounts to:';
-      const goalLabel = currentPlayDef.goal === 'qualify_out' ? 'Qualify Out' : 'Qualify In';
+      const goalLabel = getGoalLabel(currentPlayDef.goal);
       playEl.innerHTML = `
         <strong style="color:#1a56db;">${esc(currentPlayDef.play_name)}</strong>
         <span style="font-family:monospace;font-size:11px;color:#888;margin-left:6px;">${esc(currentPlayDef.play_id)}</span>
@@ -741,7 +753,7 @@
     summaryEl.innerHTML = '⏳ Loading…';
     goBtn.disabled = true;
     const count = await loadPlayAccountCount(playId);
-    const goalLabel = play.goal === 'qualify_out' ? 'Qualify Out' : 'Qualify In';
+    const goalLabel = getGoalLabel(play.goal);
     summaryEl.innerHTML = `
       <strong>${esc(play.play_name)}</strong>
       <span style="font-family:monospace;font-size:11px;color:#888;margin-left:8px;">${esc(play.play_id)}</span><br>
@@ -998,9 +1010,8 @@
     wrap.style.display = 'block';
     wrap.innerHTML = '<div class="play-picker-header">Or pick an existing play to update:</div>';
     existingPlays.forEach(p => {
-      const goalLabel = p.goal === 'qualify_out' ? 'Qualify Out' : 'Qualify In';
+      const goalLabel = getGoalLabel(p.goal);
       const row = document.createElement('label');
-      row.className = 'play-picker-row';
       row.innerHTML = `<input type="radio" name="play-picker" value="${esc(p.play_id)}"> <span class="ppr-name">${esc(p.play_name)}</span><span class="ppr-meta">· ${goalLabel}</span>`;
       row.addEventListener('click', () => loadExistingPlay(p, row));
       wrap.appendChild(row);
@@ -1035,10 +1046,13 @@
   }
 
   function selectGoal(goal) {
-    selectedGoal = goal;
+    // Map legacy qualify_in/qualify_out to semantic values
+    const legacyMap = { qualify_in: 'interest', qualify_out: 'disqualification' };
+    const canonical = legacyMap[goal] || goal;
+    selectedGoal = canonical;
     document.querySelectorAll('.goal-seg-btn').forEach(b => b.classList.remove('selected'));
-    const first = document.querySelector(`.goal-seg-btn[data-goal="${goal}"]`);
-    if (first) first.classList.add('selected');
+    const btn = document.querySelector(`.goal-seg-btn[data-goal="${canonical}"]`);
+    if (btn) btn.classList.add('selected');
     validatePlayStep();
   }
 
