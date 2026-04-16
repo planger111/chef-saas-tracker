@@ -66,29 +66,30 @@
     <div id="bookmark-banner-wrap"></div>
     <div class="dashboard-outer">
 
-      <!-- Rep summary bar — replaces welcome-bar + points-card -->
-      <div class="rep-summary" id="rep-summary">
-        <div class="rep-summary-identity">
-          <span class="rep-summary-name" id="wb-name"></span>
-          <span class="rep-summary-level" id="wb-level"></span>
-        </div>
-        <div class="rep-summary-stats">
-          <div class="rep-summary-stat">
-            <span class="rss-value" id="wb-points">0</span>
-            <span class="rss-label">points</span>
+      <!-- Rep hero card -->
+      <div class="rep-hero" id="rep-summary">
+        <div class="rep-hero-top">
+          <div class="rep-hero-identity">
+            <span class="rep-hero-greeting">👋 <strong id="wb-name">…</strong></span>
+            <span class="rep-hero-tier" id="wb-level"></span>
           </div>
-          <div class="rep-summary-stat">
-            <span class="rss-value" id="dashboard-total-points">0</span>
-            <span class="rss-label">total</span>
-          </div>
-          <div class="rep-summary-stat">
-            <span class="rss-value" id="wb-plays">0</span>
-            <span class="rss-label">plays</span>
+          <div class="rep-hero-score">
+            <span class="rep-hero-pts" id="dashboard-total-points">0</span>
+            <span class="rep-hero-pts-unit">pts</span>
           </div>
         </div>
-        <div class="rep-summary-level-badge">
-          <span id="dashboard-level-emoji">🌱</span>
-          <span id="dashboard-level-name">Rookie</span>
+        <div class="rep-hero-level-row">
+          <div class="rep-hero-badge">
+            <span id="dashboard-level-emoji">🌱</span>
+            <span id="dashboard-level-name">Rookie</span>
+          </div>
+          <span class="rep-hero-plays-sub"><span id="wb-plays">0</span> active plays</span>
+        </div>
+        <div class="rep-hero-progress">
+          <div class="rep-hero-bar-track">
+            <div class="rep-hero-bar-fill" id="rep-hero-level-bar" style="width:0%"></div>
+          </div>
+          <span class="rep-hero-bar-label" id="rep-hero-level-label">…</span>
         </div>
       </div>
 
@@ -701,9 +702,32 @@
 
     function renderPointsCard(pts) {
       const level = getLevel(pts);
+      const THRESHOLDS = [
+        { name: 'Rookie',   badge: '🌱', min: 0   },
+        { name: 'Pitcher',  badge: '⚾', min: 50  },
+        { name: 'Pro',      badge: '🎯', min: 150 },
+        { name: 'Champion', badge: '🏆', min: 300 },
+        { name: 'Legend',   badge: '⭐', min: 500 },
+      ];
+      const idx  = THRESHOLDS.findIndex(l => l.name === level.name);
+      const next = THRESHOLDS[idx + 1];
+
       document.getElementById('dashboard-total-points').textContent = pts.toLocaleString();
       document.getElementById('dashboard-level-emoji').textContent  = level.badge;
       document.getElementById('dashboard-level-name').textContent   = level.name;
+
+      const barEl   = document.getElementById('rep-hero-level-bar');
+      const labelEl = document.getElementById('rep-hero-level-label');
+      if (barEl && labelEl) {
+        if (next) {
+          const pct = Math.min(100, Math.round(((pts - level.min) / (next.min - level.min)) * 100));
+          barEl.style.width = pct + '%';
+          labelEl.textContent = `${(next.min - pts).toLocaleString()} pts to ${next.name} ${next.badge}`;
+        } else {
+          barEl.style.width = '100%';
+          labelEl.textContent = 'Maximum level — Legend! ⭐';
+        }
+      }
     }
 
     function renderPlayCards() {
@@ -713,34 +737,57 @@
         return;
       }
 
+      const GOAL_ICONS = {
+        feedback: '📋', interest: '✅', meeting: '📅',
+        disqualification: '🚫', expansion: '🚀',
+        qualify_in: '✅', qualify_out: '🚫'
+      };
+
       const html = allPlays.map(play => {
-        const playAccounts = getPlayAccounts(play);
-        const targets    = playAccounts.length;
-        const engaged    = playAccounts.filter(a => !!latestLogs[a.account_id]).length;
-        const interested = playAccounts.filter(a => {
+        const playAccounts  = getPlayAccounts(play);
+        const targets       = playAccounts.length;
+        const engaged       = playAccounts.filter(a => !!latestLogs[a.account_id]).length;
+        const interested    = playAccounts.filter(a => {
           const log = latestLogs[a.account_id];
           return !!(log && log.outcome === 'Interested');
         }).length;
-        const pct = targets > 0 ? Math.round((engaged / targets) * 100) : 0;
-        const goalLabel = getGoalLabel(play.goal);
-        const goalColor = play.goal === 'disqualification' || play.goal === 'qualify_out' ? '#d32f2f' : '#107c10';
-        const hasInfo   = play.icp || play.target_persona || play.elevator_pitch;
+        const notInterested = playAccounts.filter(a => {
+          const log = latestLogs[a.account_id];
+          return !!(log && log.outcome === 'Not Interested');
+        }).length;
+
+        const pct        = targets > 0 ? Math.round((engaged / targets) * 100) : 0;
+        const goalLabel  = getGoalLabel(play.goal);
+        const goalIcon   = GOAL_ICONS[play.goal] || '🎯';
+        const isDisqual  = play.goal === 'disqualification' || play.goal === 'qualify_out';
+        const goalCls    = isDisqual ? 'play-goal-tag-out' : 'play-goal-tag-in';
+        const barColor   = pct === 100 ? '#107c10' : '#0078d4';
+        const hasInfo    = play.icp || play.target_persona || play.elevator_pitch;
+
+        const summaryLine = targets > 0
+          ? `${engaged} of ${targets} account${targets !== 1 ? 's' : ''} engaged · ${pct}%`
+          : 'No accounts assigned';
+
+        const parts = [];
+        if (engaged > 0) parts.push(`${engaged} Engaged`);
+        if (interested > 0)    parts.push(`${interested} Interested 🏆`);
+        if (notInterested > 0) parts.push(`${notInterested} Not Interested`);
+        const metricsText = parts.join(' → ') || (targets > 0 ? 'No activity yet' : '');
 
         return `
           <div class="play-card" data-play-id="${escHtml(play.play_id)}">
-            <div class="play-card-header">
-              <span class="play-card-name">${escHtml(play.play_name)}</span>
+            <div class="play-card-top">
+              <div class="play-card-name">${escHtml(play.play_name)}</div>
+              ${goalLabel ? `<span class="play-goal-tag ${goalCls}">${goalIcon} Goal — ${escHtml(goalLabel)}</span>` : ''}
             </div>
-            ${goalLabel ? `<div style="font-size:12px;color:${goalColor};font-weight:600;margin:2px 0 6px 0;">Goal: ${escHtml(goalLabel)}</div>` : ''}
-            ${hasInfo ? `<button class="play-info-link" onclick="event.stopPropagation();showPlayInfo('${escHtml(play.play_id)}')">ⓘ Play Info</button>` : ''}
+            <div class="play-card-summary">${escHtml(summaryLine)}</div>
             <div class="play-progress-wrap">
-              <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%;"></div></div>
-              <span class="play-pct">${pct}%</span>
+              <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%;background:${barColor};"></div></div>
+              <span class="play-pct" style="${pct === 100 ? 'color:#107c10;font-weight:700;' : ''}">${pct}%</span>
             </div>
-            <div class="play-metrics-row">
-              <div class="play-metric"><span class="pm-val">${targets}</span><span class="pm-lbl">Targets</span></div>
-              <div class="play-metric"><span class="pm-val">${engaged}</span><span class="pm-lbl">Engaged</span></div>
-              <div class="play-metric play-metric-highlight"><span class="pm-val">${interested}</span><span class="pm-lbl">Interested</span></div>
+            <div class="play-card-bottom">
+              <span class="play-card-metrics">${escHtml(metricsText)}</span>
+              ${hasInfo ? `<button class="play-info-link" onclick="event.stopPropagation();showPlayInfo('${escHtml(play.play_id)}')">ⓘ Info</button>` : ''}
             </div>
           </div>
         `;
@@ -780,8 +827,11 @@
         return !!(log && log.outcome === 'Interested');
       }).length;
 
-      const goalLabel = getGoalLabel(play.goal);
-      const goalCls   = play.goal === 'disqualification' || play.goal === 'qualify_out' ? 'pi-goal-out' : 'pi-goal-in';
+      const goalLabel  = getGoalLabel(play.goal);
+      const isDisqual  = play.goal === 'disqualification' || play.goal === 'qualify_out';
+      const goalTagCls = isDisqual ? 'pi-goal-out' : 'pi-goal-in';
+      const GOAL_ICONS = { feedback:'📋', interest:'✅', meeting:'📅', disqualification:'🚫', expansion:'🚀', qualify_in:'✅', qualify_out:'🚫' };
+      const goalIcon   = GOAL_ICONS[play.goal] || '🎯';
 
       const statsHtml = targets > 0 ? `
         <div class="pi-stats-row">
@@ -798,7 +848,7 @@
             <strong class="pi-title">${escHtml(play.play_name)}</strong>
             <button class="pi-close" onclick="this.closest('.play-info-overlay').remove()">✕</button>
           </div>
-          <div class="${goalCls} pi-goal-badge">${goalLabel ? 'Goal: ' + escHtml(goalLabel) : ''}</div>
+          ${goalLabel ? `<div class="pi-goal-badge ${goalTagCls}">${goalIcon} Goal — ${escHtml(goalLabel)}</div>` : ''}
           ${statsHtml}
           ${play.icp           ? `<div class="pi-field"><div class="pi-label">Ideal Customer Profile</div><div class="pi-value">${escHtml(play.icp)}</div></div>` : ''}
           ${play.target_persona ? `<div class="pi-field"><div class="pi-label">Target Persona</div><div class="pi-value">${escHtml(play.target_persona)}</div></div>` : ''}

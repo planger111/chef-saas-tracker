@@ -1692,3 +1692,224 @@ td.points-col { text-align:right; font-family:monospace; font-weight:700; color:
 /* ── Suppress old widgets replaced by rep-summary ── */
 .points-card { display: none !important; }
 .welcome-bar { display: none !important; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   REP HERO CARD
+   ═══════════════════════════════════════════════════════════════════════════ */
+.rep-hero {
+  background: linear-gradient(135deg, #0d2137 0%, #1a3a5c 55%, #0078d4 100%);
+  color: #fff;
+  border-radius: 14px;
+  padding: 20px 20px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 24px rgba(0,120,212,.28);
+}
+.rep-hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.rep-hero-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.rep-hero-greeting {
+  font-size: 15px;
+  color: rgba(255,255,255,.82);
+  font-weight: 400;
+}
+.rep-hero-greeting strong {
+  color: #fff;
+  font-weight: 700;
+}
+.rep-hero-tier {
+  font-size: 11px;
+  color: rgba(255,255,255,.65);
+  background: rgba(255,255,255,.12);
+  padding: 2px 9px;
+  border-radius: 10px;
+  display: inline-block;
+  width: fit-content;
+}
+.rep-hero-score {
+  text-align: right;
+  line-height: 1;
+}
+.rep-hero-pts {
+  display: block;
+  font-size: 46px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1;
+  letter-spacing: -1.5px;
+}
+.rep-hero-pts-unit {
+  font-size: 13px;
+  color: rgba(255,255,255,.6);
+}
+.rep-hero-level-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.rep-hero-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+.rep-hero-plays-sub {
+  font-size: 12px;
+  color: rgba(255,255,255,.55);
+}
+.rep-hero-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rep-hero-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,.18);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.rep-hero-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4dd0e1, #81d4fa);
+  border-radius: 3px;
+  transition: width 0.7s cubic-bezier(.4,0,.2,1);
+  min-width: 0;
+}
+.rep-hero-bar-label {
+  font-size: 11px;
+  color: rgba(255,255,255,.55);
+  white-space: nowrap;
+  min-width: 120px;
+  text-align: right;
+}
+@media (max-width: 480px) {
+  .rep-hero { padding: 16px 16px 14px; }
+  .rep-hero-pts { font-size: 36px; }
+  .rep-hero-bar-label { min-width: 80px; font-size: 10px; }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   PLAY CARDS (rich version)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.play-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-left: 4px solid #0078d4;
+  border-radius: 12px;
+  padding: 16px 16px 14px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.15s ease;
+  box-sizing: border-box;
+}
+.play-card:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,.10);
+  transform: translateY(-2px);
+  border-left-color: #005fa3;
+}
+.play-card:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 6px rgba(0,0,0,.07);
+}
+.demo-play-card { border-left-color: #d97706; }
+
+.play-card-top {
+  margin-bottom: 8px;
+}
+.play-card-name {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1.25;
+  margin-bottom: 7px;
+}
+.play-goal-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+  letter-spacing: 0.02em;
+}
+.play-goal-tag-in  { background: #e8f5e9; color: #107c10; }
+.play-goal-tag-out { background: #fde8e8; color: #c00; }
+
+.play-card-summary {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+/* Progress bar — thicker, more visible */
+.play-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.progress-bar-track {
+  flex: 1;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: #0078d4;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  min-width: 0;
+}
+.play-pct {
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3af;
+  flex-shrink: 0;
+  min-width: 32px;
+  text-align: right;
+}
+
+/* Play card bottom row */
+.play-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-top: 1px solid #f3f4f6;
+  padding-top: 10px;
+}
+.play-card-metrics {
+  font-size: 12px;
+  color: #6b7280;
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* Keep old .play-metrics-row / .play-metric for any legacy usage */
+.play-metrics-row { display: none; }
+.play-card-header { margin-bottom: 6px; }
+
+/* ── Play Info Modal — goal badge ── */
+.pi-goal-badge {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 13px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+}
+.pi-goal-in  { background: #e8f5e9; color: #107c10; }
+.pi-goal-out { background: #fde8e8; color: #c00; }
