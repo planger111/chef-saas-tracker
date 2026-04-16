@@ -489,6 +489,7 @@
   let existingPlays = [];
   let currentPlayDef = null;
   let _isExistingPlay = false;  // true when editing/adding to an existing play
+  let _originalPlayId = null;  // locked play_id when editing; null for new plays
 
   const GOAL_LABELS = {
     feedback:        'Track Feedback',
@@ -1038,6 +1039,7 @@
     if (rowEl) rowEl.classList.add('selected');
     if (p.goal) selectGoal(p.goal);
     _isExistingPlay = true;
+    _originalPlayId = p.play_id;  // lock the ID — renaming never changes this
     currentPlayDef = { ...p };
     loadQuestionsFromPlay(currentPlayDef);
     validatePlayStep();
@@ -1045,7 +1047,7 @@
 
   function onPlayNameInput(val) {
     document.querySelectorAll('.play-picker-row').forEach(el => el.classList.remove('selected'));
-    _isExistingPlay = false;  // typing a new name = new play
+    if (!_originalPlayId) _isExistingPlay = false;  // only treat as new if not editing existing
     validatePlayStep();
   }
 
@@ -1076,15 +1078,16 @@
     if (!requireIngestAdmin()) return;
     const name = document.getElementById('play-name-input').value.trim();
     if (!name || !selectedGoal) return;
-    const playId = slugify(name);
+    const playId = (_isExistingPlay && _originalPlayId) ? _originalPlayId : slugify(name);
     currentPlayDef = {
+      ...(currentPlayDef || {}),
       play_id:        playId,
       play_name:      name,
       goal:           selectedGoal,
       icp:            document.getElementById('play-icp').value.trim(),
       target_persona: document.getElementById('play-persona').value.trim(),
       elevator_pitch: document.getElementById('play-pitch').value.trim(),
-      active:         true
+      active:         currentPlayDef?.active ?? true
     };
     goToStep(2);
   }
