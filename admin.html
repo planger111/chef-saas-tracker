@@ -36,11 +36,52 @@
     .snap-type-pre-reset { background: #fef3c7; color: #92400e; }
     .snap-type-auto { background: #dcfce7; color: #166534; }
     .snap-type-unknown { background: #f3f4f6; color: #6b7280; }
+
+    /* ── Toast notification stack ──────────────────────────────────── */
+    #toast-stack {
+      position: fixed; top: 18px; right: 18px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 8px;
+      pointer-events: none; max-width: 360px;
+    }
+    .toast {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 14px; border-radius: 10px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.18);
+      font-size: 13px; line-height: 1.4; pointer-events: all;
+      opacity: 0; transform: translateX(110%);
+      transition: opacity 0.22s ease, transform 0.22s ease;
+    }
+    .toast.show { opacity: 1; transform: translateX(0); }
+    .toast.hide { opacity: 0; transform: translateX(110%); }
+    .toast-icon { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+    .toast-body { flex: 1; min-width: 0; }
+    .toast-title { font-weight: 700; margin-bottom: 2px; }
+    .toast-msg { opacity: 0.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .toast-close { background: none; border: none; cursor: pointer; opacity: 0.45;
+                   font-size: 15px; padding: 0; margin-left: 4px; flex-shrink: 0; line-height: 1; }
+    .toast-close:hover { opacity: 1; }
+    .toast-success { background: #e8f5e9; color: #155724; border: 1px solid #b7dfbb; }
+    .toast-warning { background: #fff8e1; color: #7a4f00; border: 1px solid #ffe082; }
+    .toast-error   { background: #fde8e8; color: #7b1010; border: 1px solid #f5c2c7; }
+    .toast-info    { background: #e7f3ff; color: #0d3a70; border: 1px solid #b3d4f8; }
+    /* Polling status indicator */
+    #poll-indicator {
+      position: fixed; bottom: 14px; right: 18px; z-index: 9998;
+      font-size: 11px; color: #9ca3af; display: flex; align-items: center; gap: 5px;
+    }
+    #poll-dot { width: 7px; height: 7px; border-radius: 50%; background: #9ca3af; transition: background 0.4s; }
+    #poll-dot.active { background: #22c55e; }
   </style>
 </head>
 <body>
 
-  <div id="screen-loading" class="screen active" style="max-width:480px; margin:0 auto;">
+  <!-- Toast notification stack — fixed top-right, always on top -->
+  <div id="toast-stack"></div>
+  <!-- Polling heartbeat indicator — bottom-right -->
+  <div id="poll-indicator">
+    <div id="poll-dot"></div>
+    <span id="poll-label">live</span>
+  </div>
     <div style="padding-top:120px; text-align:center;">
       <div class="spinner"></div>
       <p class="loading-text">Loading…</p>
@@ -1465,6 +1506,10 @@ Let's go! 🚀`;
         applyRoleUI(role);
         showScreen("screen-main");
 
+        // Start browser notification permission request + polling (owner + managers)
+        requestNotifPermission();
+        startAlertPolling();
+
         _allData = await getMotionLog({});
         await populateFilterDropdowns(_allData);
         renderTable(_allData);
@@ -2747,6 +2792,230 @@ Let's go! 🚀`;
         btn.disabled = false;
       }
     }
+
+    // ══════════════════════════════════════════════════════════════════
+    // BROWSER NOTIFICATIONS + POLLING SYSTEM (admin-only)
+    // ══════════════════════════════════════════════════════════════════
+    //
+    // Architecture:
+    //   startAlertPolling()  → called once after admin auth completes
+    //   pollForNewEvents()   → runs every POLL_INTERVAL_MS (45 s)
+    //                          reads activity_log.csv + identity_log.csv
+    //   processActivityRow() → decides if a row is alert-worthy
+    //   processIdentityRow() → same for identity events
+    //   showToast()          → in-app toast (top-right stack)
+    //   sendBrowserNotif()   → Notification API, graceful if denied
+    //
+    // Deduplication:
+    //   localStorage key 'chef_poll_activity_ts' and 'chef_poll_identity_ts'
+    //   store the ISO timestamp of the latest row seen on the last poll.
+    //   Only rows NEWER than that timestamp are processed.
+    //   On FIRST poll we set the baseline but fire NO notifications —
+    //   this prevents alerting on all historical events at startup.
+    // ══════════════════════════════════════════════════════════════════
+
+    const POLL_INTERVAL_MS    = 45_000;   // 45 seconds
+    const TS_KEY_ACTIVITY     = 'chef_poll_activity_ts';
+    const TS_KEY_IDENTITY     = 'chef_poll_identity_ts';
+    const NOTIF_DEDUP_KEY     = 'chef_notif_fired';   // JSON set of row IDs already notified
+
+    let _pollTimer            = null;
+    let _notifEnabled         = false;    // true once permission granted
+    let _dedupFired           = null;     // Set of "<ts>|<type>" keys
+
+    // ── Browser Notification helpers ──────────────────────────────────
+
+    async function requestNotifPermission() {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'granted') { _notifEnabled = true; return; }
+      if (Notification.permission === 'denied')  return;
+      try {
+        const result = await Notification.requestPermission();
+        _notifEnabled = result === 'granted';
+      } catch(e) { /* some browsers don't support the promise form */ }
+    }
+
+    function sendBrowserNotif(title, body, tag) {
+      if (!_notifEnabled || !('Notification' in window)) return;
+      try {
+        // tag deduplicates notifications with the same key at the OS level
+        const n = new Notification(title, {
+          body,
+          icon: '/favicon.ico',
+          tag:  tag || title,
+          requireInteraction: false,
+        });
+        setTimeout(() => n.close(), 10_000);
+      } catch(e) { /* silently ignore — e.g. permission revoked mid-session */ }
+    }
+
+    // ── Toast helpers ─────────────────────────────────────────────────
+
+    function showToast(title, msg, type = 'info', duration = 7000) {
+      const stack = document.getElementById('toast-stack');
+      if (!stack) return;
+      const icons = { success:'✅', warning:'⚠️', error:'🔴', info:'🔔' };
+      const el = document.createElement('div');
+      el.className = `toast toast-${type}`;
+      el.innerHTML =
+        `<span class="toast-icon">${icons[type] || '🔔'}</span>` +
+        `<div class="toast-body">` +
+          `<div class="toast-title">${escHtml(title)}</div>` +
+          (msg ? `<div class="toast-msg" title="${escHtml(msg)}">${escHtml(msg)}</div>` : '') +
+        `</div>` +
+        `<button class="toast-close" onclick="this.closest('.toast').remove()">✕</button>`;
+      stack.appendChild(el);
+      requestAnimationFrame(() => el.classList.add('show'));
+      if (duration > 0) {
+        setTimeout(() => {
+          el.classList.replace('show', 'hide');
+          setTimeout(() => el.remove(), 320);
+        }, duration);
+      }
+    }
+
+    // ── Deduplication helpers ─────────────────────────────────────────
+
+    function _loadDedup() {
+      if (_dedupFired) return _dedupFired;
+      try {
+        const saved = JSON.parse(localStorage.getItem(NOTIF_DEDUP_KEY) || '[]');
+        _dedupFired = new Set(saved);
+      } catch(e) { _dedupFired = new Set(); }
+      return _dedupFired;
+    }
+
+    function _markFired(key) {
+      const set = _loadDedup();
+      set.add(key);
+      // Trim to most recent 500 entries so localStorage doesn't grow unbounded
+      if (set.size > 500) {
+        const arr = [...set];
+        arr.splice(0, arr.length - 400);
+        _dedupFired = new Set(arr);
+      }
+      try { localStorage.setItem(NOTIF_DEDUP_KEY, JSON.stringify([..._dedupFired])); } catch(e) {}
+    }
+
+    function _alreadyFired(key) { return _loadDedup().has(key); }
+
+    // ── Event processors ──────────────────────────────────────────────
+
+    // High-value outcomes that warrant an immediate notification
+    const HIGH_VALUE_OUTCOMES = new Set([
+      'interested', 'active deal', 'active_deal', 'closed won', 'closed_won',
+      'meeting booked', 'meeting_booked',
+    ]);
+
+    function _isHighValue(detail = '') {
+      const d = detail.toLowerCase();
+      return [...HIGH_VALUE_OUTCOMES].some(v => d.startsWith(v));
+    }
+
+    function processActivityRow(row, firstRun) {
+      if (firstRun) return; // baseline run — set timestamp only, fire nothing
+      const key = `act|${row.timestamp}|${row.user_email}`;
+      if (_alreadyFired(key)) return;
+      _markFired(key);
+
+      const rep    = row.user_name || row.user_email || 'Rep';
+      const detail = row.detail || '';
+
+      if (row.action_type === 'engagement' && _isHighValue(detail)) {
+        const title = detail.toLowerCase().startsWith('interested')
+          ? `🏆 Interested: ${rep}`
+          : detail.toLowerCase().includes('closed')
+            ? `🎉 Closed Won: ${rep}`
+            : `⭐ High-Value: ${rep}`;
+        showToast(title, detail, 'success');
+        sendBrowserNotif(title, `${rep}: ${detail}`, key);
+      }
+
+      if (row.action_type === 'demo_start') {
+        const msg = `${rep} signed in but has no assigned accounts`;
+        showToast('Rep in Demo Mode', msg, 'warning', 9000);
+        sendBrowserNotif('⚠️ Rep in Demo Mode', msg, key);
+      }
+    }
+
+    function processIdentityRow(row, firstRun) {
+      if (firstRun) return;
+      const key = `id|${row.timestamp}|${row.raw_identity}`;
+      if (_alreadyFired(key)) return;
+      _markFired(key);
+
+      if (row.event_type === 'identity_mismatch') {
+        const rep  = row.rep_display_name || row.raw_identity || 'Unknown rep';
+        const raw  = row.raw_identity || '?';
+        const msg  = `Rep access mismatch: ${raw} had no matching assignments`;
+        showToast(`Identity Mismatch — ${rep}`, msg, 'warning', 12000);
+        sendBrowserNotif('⚠️ Rep Access Mismatch', msg, key);
+      }
+    }
+
+    // ── Polling core ──────────────────────────────────────────────────
+
+    function _setPollingState(active) {
+      const dot   = document.getElementById('poll-dot');
+      const label = document.getElementById('poll-label');
+      if (dot)   { dot.classList.toggle('active', active); }
+      if (label) { label.textContent = active ? 'checking…' : 'live'; }
+      if (active) setTimeout(() => _setPollingState(false), 1200);
+    }
+
+    async function _pollCSV(path, tsKey, processFn) {
+      const text = await getFileText(path).catch(() => null);
+      if (!text || !text.trim()) return;
+
+      const rows     = parseCSV(text);
+      const lastTs   = localStorage.getItem(tsKey) || '';
+      const firstRun = !lastTs;
+
+      // Find rows strictly newer than the last-seen timestamp
+      const newRows = firstRun
+        ? rows  // on first run, we still need to set the baseline from all rows
+        : rows.filter(r => (r.timestamp || '') > lastTs);
+
+      if (newRows.length === 0) return;
+
+      // Update the stored baseline to the newest row in this batch
+      const maxTs = newRows.reduce((m, r) => (r.timestamp || '') > m ? (r.timestamp || '') : m, lastTs);
+      localStorage.setItem(tsKey, maxTs);
+
+      // Process (firstRun flag suppresses actual notifications)
+      newRows.forEach(r => processFn(r, firstRun));
+    }
+
+    async function pollForNewEvents() {
+      if (document.visibilityState === 'hidden') return; // skip while tab hidden
+      _setPollingState(true);
+      try {
+        await Promise.all([
+          _pollCSV(
+            'Chef SaaS Tracker/ChefSaaS/activity_log.csv',
+            TS_KEY_ACTIVITY,
+            processActivityRow
+          ),
+          _pollCSV(
+            'Chef SaaS Tracker/ChefSaaS/identity_log.csv',
+            TS_KEY_IDENTITY,
+            processIdentityRow
+          ),
+        ]);
+      } catch(e) {
+        console.warn('[Poll] pollForNewEvents error (non-blocking):', e.message);
+      }
+    }
+
+    function startAlertPolling() {
+      if (_pollTimer) clearInterval(_pollTimer);
+      // First poll immediately (sets baseline; no notifications fired)
+      pollForNewEvents();
+      // Then poll on interval
+      _pollTimer = setInterval(pollForNewEvents, POLL_INTERVAL_MS);
+      console.log(`[Poll] Alert polling started — ${POLL_INTERVAL_MS / 1000}s interval`);
+    }
+
   </script>
 <footer class="security-footer">
   INFRA SalesPlay Tracker — Progress Software Proprietary &amp; Confidential &nbsp;·&nbsp; Progress employees only &nbsp;<a href="security.html" class="sec-footer-link">Security &amp; Privacy</a>

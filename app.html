@@ -1409,6 +1409,12 @@
         lastSubmittedData = data;
         showConfirm();
 
+        // Fire-and-forget: log engagement to activity_log.csv so admin polling
+        // can detect high-value outcomes in near-real-time.
+        logActivity(currentUser, 'engagement',
+          `${outcome} — ${data.account_name} (${data.play_name})`
+        ).catch(() => {});
+
       } catch (err) {
         console.error('Submit error:', err);
         const msg = err.message === 'timeout'
