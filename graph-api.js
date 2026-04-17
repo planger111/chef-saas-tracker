@@ -406,16 +406,59 @@ async function fetchGraphUserProfile() {
   return _graphUserProfile;
 }
 
+// ─── Email Lookup table (from "EMAIL LookUP for SSO.xlsx") ────────────────
+// This file is the authoritative rep identity map maintained by the admin.
+// Each entry has { primary_email, upn (optional), name, notes }.
+// We fetch it once and cache it for the session.
+//
+// Format: /email-lookup.json — a static asset deployed with the app.
+// Generated from the Excel file in Data Dump/ by running the gen script.
+
+let _emailLookup = null;            // null = not yet loaded; [] = loaded (possibly empty)
+let _emailLookupMap = null;         // Map<lowercase-email, entry> — both primary + upn keys
+
+async function loadEmailLookup() {
+  if (_emailLookup !== null) return _emailLookup;
+  try {
+    const res = await fetch('/email-lookup.json');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    _emailLookup = await res.json();
+
+    // Build a fast lookup map: every known email variant → entry
+    _emailLookupMap = new Map();
+    for (const entry of _emailLookup) {
+      if (entry.primary_email) _emailLookupMap.set(entry.primary_email.toLowerCase().trim(), entry);
+      if (entry.upn)           _emailLookupMap.set(entry.upn.toLowerCase().trim(), entry);
+    }
+    console.log(`[Identity] email-lookup.json loaded: ${_emailLookup.length} reps`);
+  } catch(e) {
+    console.warn('[Identity] email-lookup.json not available (falling back to STATIC_ALIASES):', e.message);
+    _emailLookup = [];
+    _emailLookupMap = new Map();
+  }
+  return _emailLookup;
+}
+
+// Given any known email string, resolve the matching entry from the lookup table.
+// Returns the entry object ({ name, primary_email, upn, notes }) or null.
+function _lookupRepEntry(emailLower) {
+  if (!_emailLookupMap) return null;
+  return _emailLookupMap.get(emailLower) || null;
+}
+
 // ─── Canonical email candidate builder ────────────────────────────────────
 // Returns a Set of all lowercase, trimmed email-like identities for the
 // signed-in rep. Every matching function should use this as the single
 // source of truth for "who is this person?"
 //
 // Resolution layers (highest to lowest confidence):
+//   0. email-lookup.json (authoritative Excel-derived identity map)
+//      — for each token/Graph email, look up the row and add BOTH the
+//        primary_email AND the upn so either form matches assignments
 //   1. Graph /me: mail, userPrincipalName, otherMails
 //   2. MSAL token claims: preferred_username, email, upn, unique_name, username
 //   3. rep-identity.json aliases (SharePoint-hosted, admin-managed)
-//   4. STATIC_ALIASES hardcoded map (covers 93+ known Progress alias pairs)
+//   4. STATIC_ALIASES hardcoded map (legacy fallback; now superseded by layer 0)
 
 async function getEmailCandidates(primaryEmail) {
   const candidates = new Set();
@@ -438,7 +481,23 @@ async function getEmailCandidates(primaryEmail) {
     (profile.otherMails || []).forEach(add);
   } catch(e) {}
 
-  // Layer 3: rep-identity.json aliases
+  // Layer 0 (applied after layers 1+2 so we have the full token picture):
+  // Resolve every known candidate against the authoritative email-lookup table.
+  // If any candidate matches a row (by primary_email OR upn), add BOTH values
+  // so the rep can be found regardless of which form is in the assignment spreadsheet.
+  try {
+    await loadEmailLookup();
+    const snapshot0 = [...candidates];
+    for (const e of snapshot0) {
+      const entry = _lookupRepEntry(e);
+      if (entry) {
+        if (entry.primary_email) add(entry.primary_email);
+        if (entry.upn)           add(entry.upn);
+      }
+    }
+  } catch(e) {}
+
+  // Layer 3: rep-identity.json aliases (SharePoint-managed overrides)
   try {
     const seed = primaryEmail || [...candidates][0];
     if (seed) {
@@ -447,9 +506,10 @@ async function getEmailCandidates(primaryEmail) {
     }
   } catch(e) {}
 
-  // Layer 4: STATIC_ALIASES expansion — run over snapshot so new entries also expand
-  const snapshot = [...candidates];
-  snapshot.forEach(e => (STATIC_ALIASES[e] || []).forEach(add));
+  // Layer 4: STATIC_ALIASES expansion (legacy fallback — kept for backward compat
+  // in case a rep isn't in email-lookup.json yet)
+  const snapshot4 = [...candidates];
+  snapshot4.forEach(e => (STATIC_ALIASES[e] || []).forEach(add));
 
   return candidates;
 }

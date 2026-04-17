@@ -1,0 +1,559 @@
+[
+  {
+    "name": "Micah Klesel",
+    "primary_email": "micah.klesel@progress.com",
+    "notes": "Account Manager, Senior",
+    "upn": "klesel@progress.com"
+  },
+  {
+    "name": "Rich Capparelli",
+    "primary_email": "richard.capparelli@progress.com",
+    "notes": "Account Manager, Senior",
+    "upn": "capparel@progress.com"
+  },
+  {
+    "name": "Robert Wosneski",
+    "primary_email": "robert.wosneski@progress.com",
+    "notes": "Account Manager, Senior",
+    "upn": "wosneski@progress.com"
+  },
+  {
+    "name": "D\u2019Andria Alston-Popovic",
+    "primary_email": "dandria.alston-popovic@progress.com",
+    "notes": "Customer Success Manager",
+    "upn": "dpopovic@progress.com"
+  },
+  {
+    "name": "Fatemah Shirzad",
+    "primary_email": "fatemah.shirzad@progress.com",
+    "notes": "Customer Success Manager, Senior",
+    "upn": "shirzad@progress.com"
+  },
+  {
+    "name": "Jakub Krzyzak",
+    "primary_email": "jakub.krzyzak@progress.com",
+    "notes": "Customer Success Manager, Senior",
+    "upn": "krzyzak@progress.com"
+  },
+  {
+    "name": "Joshua Roberts",
+    "primary_email": "joshua.roberts@progress.com",
+    "notes": "Customer Success Manager, Senior (account disabled)",
+    "upn": "jorobert@progress.com"
+  },
+  {
+    "name": "Matt Gould",
+    "primary_email": "matt.gould@progress.com",
+    "notes": "Customer Success Manager, Senior",
+    "upn": "gould@progress.com"
+  },
+  {
+    "name": "Robert Comrie",
+    "primary_email": "rob.comrie@progress.com",
+    "notes": "Customer Success Manager, Senior",
+    "upn": "comrie@progress.com"
+  },
+  {
+    "name": "Ryan Lemlein",
+    "primary_email": "ryan.lemlein@progress.com",
+    "notes": "Customer Success Manager",
+    "upn": "lemlein@progress.com"
+  },
+  {
+    "name": "Stinson Fernandes",
+    "primary_email": "stinson.fernandes@progress.com",
+    "notes": "Manager, Inside Sales",
+    "upn": "stinsonf@progress.com"
+  },
+  {
+    "name": "Souvik Mukherjee",
+    "primary_email": "souvik.mukherjee@progress.com",
+    "notes": "Manager, Inside Sales",
+    "upn": "somukher@progress.com"
+  },
+  {
+    "name": "Preeti Kumari",
+    "primary_email": "preeti.kumari2@progress.com",
+    "notes": "Manager, Business Generation",
+    "upn": "prkumari@progress.com"
+  },
+  {
+    "name": "Prakash Prabhu",
+    "primary_email": "prakash.prabhu@progress.com",
+    "notes": "Inside Account Manager, Senior",
+    "upn": "pprabhu@progress.com"
+  },
+  {
+    "name": "Sampath Acharya K",
+    "primary_email": "sampath.acharyak@progress.com",
+    "notes": "Inside Account Manager, Senior",
+    "upn": "sak@progress.com"
+  },
+  {
+    "name": "Adam Weir",
+    "primary_email": "adam.weir@progress.com",
+    "notes": "Renewal Account Manager",
+    "upn": "adweir@progress.com"
+  },
+  {
+    "name": "Edward Coyde",
+    "primary_email": "ed.coyde@progress.com",
+    "notes": "Single mailbox only"
+  },
+  {
+    "name": "Joshua Sands",
+    "primary_email": "joshua.sands@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "sands@progress.com"
+  },
+  {
+    "name": "Kerry Lafferty",
+    "primary_email": "kerry.lafferty@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "lafferty@progress.com"
+  },
+  {
+    "name": "Timothy Octon",
+    "primary_email": "tim.octon@progress.com",
+    "notes": "Account Manager, Senior",
+    "upn": "octon@progress.com"
+  },
+  {
+    "name": "Ana Valeva",
+    "primary_email": "ana.valeva@progress.com",
+    "notes": "Renewal Account Manager",
+    "upn": "valeva@progress.com"
+  },
+  {
+    "name": "Friedrich Scharz",
+    "primary_email": "friedrich.scharz@progress.com",
+    "notes": "Renewal Account Manager",
+    "upn": "scharz@progress.com"
+  },
+  {
+    "name": "Georgiana Beblein",
+    "primary_email": "georgiana.beblein@progress.com",
+    "notes": "Inside Account Manager, Senior",
+    "upn": "gbeblein@progress.com"
+  },
+  {
+    "name": "Zhaneta Radeva",
+    "primary_email": "zhaneta.radeva@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "zradeva@progress.com"
+  },
+  {
+    "name": "Zlatomir Kolev",
+    "primary_email": "zlatomir.kolev@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "zkolev@progress.com"
+  },
+  {
+    "name": "Dimitar Kachorev",
+    "primary_email": "dimitar.kachorev@progress.com",
+    "notes": "Inside Account Manager, Senior",
+    "upn": "kachorev@progress.com"
+  },
+  {
+    "name": "Nicolo Cacciamano",
+    "primary_email": "nicolo.cacciamano@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "cacciama@progress.com"
+  },
+  {
+    "name": "Plamena Angelova",
+    "primary_email": "plamena.angelova@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "plaangel@progress.com"
+  },
+  {
+    "name": "Todor Genov",
+    "primary_email": "todor.genov@progress.com",
+    "notes": "Inside Account Manager, Senior",
+    "upn": "genov@progress.com"
+  },
+  {
+    "name": "Vyara Lulcheva",
+    "primary_email": "vyara.lulcheva@progress.com",
+    "notes": "Inside Account Manager, Associate",
+    "upn": "lulcheva@progress.com"
+  },
+  {
+    "name": "Zdravko Dinev",
+    "primary_email": "zdravko.dinev@progress.com",
+    "notes": "Inside Account Manager, Senior",
+    "upn": "zdinev@progress.com"
+  },
+  {
+    "name": "Filip Gieci",
+    "primary_email": "filip.gieci@progress.com",
+    "notes": "Partner Account Manager, Senior",
+    "upn": "gieci@progress.com"
+  },
+  {
+    "name": "Jakub Andrzejewski",
+    "primary_email": "jakub.andrzejewski@progress.com",
+    "notes": "Account Manager, Senior",
+    "upn": "jandrzej@progress.com"
+  },
+  {
+    "name": "Lukas Rauscher",
+    "primary_email": "lukas.rauscher@progress.com",
+    "notes": "Partner Account Manager, Senior",
+    "upn": "lrausche@progress.com"
+  },
+  {
+    "name": "Marek Machalek",
+    "primary_email": "marek.machalek@progress.com",
+    "notes": "Partner Account Manager, Senior",
+    "upn": "mmachale@progress.com"
+  },
+  {
+    "name": "Pavla Sehnalova",
+    "primary_email": "pavla.sehnalova@progress.com",
+    "notes": "Partner Account Manager",
+    "upn": "psehnalo@progress.com"
+  },
+  {
+    "name": "Vojta Martinek",
+    "primary_email": "vojtech.martinek@progress.com",
+    "notes": "Partner Account Manager",
+    "upn": "martinek@progress.com"
+  },
+  {
+    "name": "Arjun S P",
+    "primary_email": "arjun.sp@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "arjunsp@progress.com"
+  },
+  {
+    "name": "Ashneeja MP",
+    "primary_email": "ashneeja.mp@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "ashnmp@progress.com"
+  },
+  {
+    "name": "Jyoti Tiwari",
+    "primary_email": "jyoti.tiwari@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "jtiwari@progress.com"
+  },
+  {
+    "name": "Mohammed Muheeb",
+    "primary_email": "mohammed.muheeb@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "mmuheeb@progress.com"
+  },
+  {
+    "name": "Neha Katare",
+    "primary_email": "neha.katare@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "nkatare@progress.com"
+  },
+  {
+    "name": "Sourav Das",
+    "primary_email": "sourav.das@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "souravda@progress.com"
+  },
+  {
+    "name": "Aakansha Nishu",
+    "primary_email": "aakansha.nishu@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "aakansha@progress.com"
+  },
+  {
+    "name": "Apathi Akhil Chowdary",
+    "primary_email": "apathiakhil.chowdary@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "achowdar@progress.com"
+  },
+  {
+    "name": "Arka Ganguly",
+    "primary_email": "arka.ganguly@progress.com",
+    "notes": "Inside Account Manager, Senior",
+    "upn": "aganguly@progress.com"
+  },
+  {
+    "name": "Varshaa Balamurugan",
+    "primary_email": "varshaa.balamurugan@progress.com",
+    "notes": "Lead, Business Generation",
+    "upn": "balamuru@progress.com"
+  },
+  {
+    "name": "Manusha P",
+    "primary_email": "manusha.p@progress.com",
+    "notes": "Business Generation Rep, Associate",
+    "upn": "manusha@progress.com"
+  },
+  {
+    "name": "Anushree Mulimani",
+    "primary_email": "anushree.mulimani@progress.com",
+    "notes": "Sales Coordinator",
+    "upn": "anumu@progress.com"
+  },
+  {
+    "name": "Keerthana S",
+    "primary_email": "keerthana.s@progress.com",
+    "notes": "Sales Coordinator",
+    "upn": "keerths@progress.com"
+  },
+  {
+    "name": "Mona Grace R",
+    "primary_email": "mona.gracer@progress.com",
+    "notes": "Intern / Coop",
+    "upn": "gracer@progress.com"
+  },
+  {
+    "name": "Riya Mary Cleetus",
+    "primary_email": "riyamary.cleetus@progress.com",
+    "notes": "Sales Coordinator",
+    "upn": "rcleetus@progress.com"
+  },
+  {
+    "name": "Rudra Trivedi",
+    "primary_email": "rudrabhavin.trivedi@progress.com",
+    "notes": "Intern / Coop",
+    "upn": "trivedi@progress.com"
+  },
+  {
+    "name": "Shyam Kumar N Y",
+    "primary_email": "shyamkumar.ny@progress.com",
+    "notes": "Quoting Specialist",
+    "upn": "skumary@progress.com"
+  },
+  {
+    "name": "Anusha Seethepalli",
+    "primary_email": "anusha.seethepalli@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "aseethe@progress.com"
+  },
+  {
+    "name": "Jyoti Sharma",
+    "primary_email": "jyoti.sharma@progress.com",
+    "notes": "Business Generation Representative",
+    "upn": "jysharma@progress.com"
+  },
+  {
+    "name": "Mehul Dukhande",
+    "primary_email": "mehul.dukhande@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "mdukhand@progress.com"
+  },
+  {
+    "name": "Rahul Honawad",
+    "primary_email": "rahul.honawad@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "rhonawad@progress.com"
+  },
+  {
+    "name": "Simanta Saha",
+    "primary_email": "simanta.saha@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "sisaha@progress.com"
+  },
+  {
+    "name": "Subashini Nagappan",
+    "primary_email": "subashini.nagappan@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "snagappa@progress.com"
+  },
+  {
+    "name": "Anirudh V",
+    "primary_email": "anirudh.v@progress.com",
+    "notes": "Business Generation Rep, Senior",
+    "upn": "anirudhv@progress.com"
+  },
+  {
+    "name": "J Abhiram Varma",
+    "primary_email": "j.abhiram.varma@progress.com",
+    "notes": "Business Generation Rep, Associate",
+    "upn": "jvarma@progress.com"
+  },
+  {
+    "name": "Mohammed Assadi Abdul Khader",
+    "primary_email": "assadi.khader@progress.com",
+    "notes": "Business Generation Rep, Associate",
+    "upn": "mabdul@progress.com"
+  },
+  {
+    "name": "P N Koushal Kaarthiek",
+    "primary_email": "pnkoushal.kaarthiek@progress.com",
+    "notes": "Intern / Coop",
+    "upn": "pkaarthi@progress.com"
+  },
+  {
+    "name": "Carrie Yuan",
+    "primary_email": "carrie.yuan@progress.com",
+    "notes": "Account Manager, Senior",
+    "upn": "yuan@progress.com"
+  },
+  {
+    "name": "Amardeep Singh",
+    "primary_email": "amardeep.singh@progress.com",
+    "notes": "Account Manager, Senior",
+    "upn": "amarsing@progress.com"
+  },
+  {
+    "name": "Phil Langer",
+    "primary_email": "philip.langer@progress.com",
+    "notes": "SVP, Sales",
+    "upn": "langer@progress.com"
+  },
+  {
+    "name": "Mae Witcher",
+    "primary_email": "mae.witcher@progress.com",
+    "notes": "Account Manager, Senior",
+    "upn": "witcher@progress.com"
+  },
+  {
+    "name": "Isha Chaudhary",
+    "primary_email": "isha.chaudhary@progress.com",
+    "notes": "Director, Sales",
+    "upn": "ichaudha@progress.com"
+  },
+  {
+    "name": "Jaro Stusak",
+    "primary_email": "jaro.stusak@progress.com",
+    "notes": "Director, Sales",
+    "upn": "jstusak@progress.com"
+  },
+  {
+    "name": "Shawn Bergsma",
+    "primary_email": "shawn.bergsma@progress.com",
+    "notes": "Director, Sales",
+    "upn": "bergsma@progress.com"
+  },
+  {
+    "name": "Joe Kuderer",
+    "primary_email": "joseph.kuderer@progress.com",
+    "notes": "Senior Manager, Customer Success",
+    "upn": "kuderer@progress.com"
+  },
+  {
+    "name": "Stephen McGowan",
+    "primary_email": "stephen.mcgowan@progress.com",
+    "notes": "Director, Sales",
+    "upn": "mcgowan@progress.com"
+  },
+  {
+    "name": "Kathleen Faria",
+    "primary_email": "kathleen.faria@progress.com",
+    "notes": "Sales Operations Specialist",
+    "upn": "faria@progress.com"
+  },
+  {
+    "name": "Courtney Franke",
+    "primary_email": "courtney.franke@progress.com",
+    "notes": "Partner Account Manager, Principal",
+    "upn": "cfranke@progress.com"
+  },
+  {
+    "name": "Mihail Hristov",
+    "primary_email": "mihail.hristov@progress.com",
+    "notes": "Manager, Inside Sales",
+    "upn": "mihhrist@progress.com"
+  },
+  {
+    "name": "Desislava Nikolova",
+    "primary_email": "desislava.nikolova@progress.com",
+    "notes": "Manager, Inside Sales",
+    "upn": "denikolo@progress.com"
+  },
+  {
+    "name": "Jiri Mazal",
+    "primary_email": "jiri.mazal@progress.com",
+    "notes": "Sales Manager, CEE",
+    "upn": "jmazal@progress.com"
+  },
+  {
+    "name": "Tom Schwarz",
+    "primary_email": "thomas.schwarz@progress.com",
+    "notes": "Relevant internal contact (single mailbox)",
+    "upn": "schwarz@progress.com"
+  },
+  {
+    "name": "Vanya Laszlo",
+    "primary_email": "laszlo.vanya@progress.com",
+    "notes": "Partner Account Manager, Senior",
+    "upn": "lvanya@progress.com"
+  },
+  {
+    "name": "Alisha Wilson",
+    "primary_email": "alisha.wilson@progress.com",
+    "notes": "Account Manager, Senior",
+    "upn": "awilson@progress.com"
+  },
+  {
+    "name": "Christopher Guerrero",
+    "primary_email": "christopher.guerrero@progress.com",
+    "notes": "Account Manager, Senior",
+    "upn": "chguerre@progress.com"
+  },
+  {
+    "name": "Lauren Dipresso",
+    "primary_email": "lauren.dipresso@progress.com",
+    "notes": "Account Manager, Senior",
+    "upn": "ldipress@progress.com"
+  },
+  {
+    "name": "Ayush Sahay",
+    "primary_email": "ayush.sahay@progress.com",
+    "notes": "Inside Account Manager, Senior",
+    "upn": "asahay@progress.com"
+  },
+  {
+    "name": "Sathish George",
+    "primary_email": "sathish.george@progress.com",
+    "notes": "Inside Account Manager, Principal",
+    "upn": "sageorge@progress.com"
+  },
+  {
+    "name": "Vivek Bolde",
+    "primary_email": "vivek.bolde@progress.com",
+    "notes": "Inside Account Manager, Senior",
+    "upn": "bvivek@progress.com"
+  },
+  {
+    "name": "David Coronado",
+    "primary_email": "david.coronado@progress.com",
+    "notes": "Account Manager, Senior",
+    "upn": "coronado@progress.com"
+  },
+  {
+    "name": "Martina Kostadinova Tsinova",
+    "primary_email": "martina.kostadinova.tsinova@progress.com",
+    "notes": "Relevant internal contact",
+    "upn": "martina.kostadinova.tsinova@progress.com"
+  },
+  {
+    "name": "Ludmila Mihaylovitch",
+    "primary_email": "ludmila.mihaylovitch@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "lmihaylo@progress.com"
+  },
+  {
+    "name": "Mohammad Sameer",
+    "primary_email": "mohammad.sameer@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "msameer@progress.com"
+  },
+  {
+    "name": "Vijetha P",
+    "primary_email": "vijetha.p@progress.com",
+    "notes": "Inside Account Manager",
+    "upn": "vijetp@progress.com"
+  },
+  {
+    "name": "Shylesh K B",
+    "primary_email": "shylesh.kb@progress.com",
+    "notes": "Business Generation Representative, Associate",
+    "upn": "shylkb@progress.com"
+  },
+  {
+    "name": "Sophiya Shaheen",
+    "primary_email": "sophiya.shaheen@progress.com",
+    "notes": "Business Generation Representative, Associate",
+    "upn": "sshahe@progress.com"
+  }
+]

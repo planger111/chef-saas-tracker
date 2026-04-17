@@ -604,9 +604,10 @@
         const email = currentUser.email;
         const name  = currentUser.name;
 
-        // Warm the Graph /me profile cache in parallel — non-blocking,
-        // ensures fetchGraphUserProfile() is cached before getEmailCandidates() runs.
+        // Warm the Graph /me profile cache and email-lookup table in parallel — non-blocking,
+        // ensures both are cached before getEmailCandidates() runs during assignment matching.
         fetchGraphUserProfile().catch(() => {});
+        loadEmailLookup().catch(() => {});
 
         // Fetch accounts + plays in parallel; fetch logs once after (avoids double CSV download)
         const [accounts, plays] = await Promise.all([
