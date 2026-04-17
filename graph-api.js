@@ -372,11 +372,21 @@ async function _graphFetch(path, options = {}) {
     _driveId = null; _siteId = null;
     const freshToken = await getAccessToken();
     const retry = await fetch(url, { ...options, headers: { Authorization: "Bearer " + freshToken, "Content-Type": "application/json", ...(options.headers || {}) } });
-    if (!retry.ok) { const t = await retry.text(); throw new Error("Graph " + retry.status + ": " + t); }
+    if (!retry.ok) {
+      const t = await retry.text();
+      const err = new Error("Graph " + retry.status + ": " + t);
+      if (retry.status === 403) { err.isSharePointAccessDenied = true; err.failingEndpoint = url; }
+      throw err;
+    }
     if (retry.status === 204) return null;
     return retry.json();
   }
-  if (!resp.ok) { const t = await resp.text(); throw new Error("Graph " + resp.status + ": " + t); }
+  if (!resp.ok) {
+    const t = await resp.text();
+    const err = new Error("Graph " + resp.status + ": " + t);
+    if (resp.status === 403) { err.isSharePointAccessDenied = true; err.failingEndpoint = url; }
+    throw err;
+  }
   if (resp.status === 204) return null;
   return resp.json();
 }
