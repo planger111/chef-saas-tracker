@@ -128,6 +128,7 @@
         <button class="admin-tab" data-tab="snapshots" id="tab-btn-snapshots" style="display:none;">Snapshots</button>
         <button class="admin-tab" data-tab="identity" id="tab-btn-identity" style="display:none;">Identity</button>
         <button class="admin-tab" data-tab="access-log" id="tab-btn-access-log" style="display:none;">Access Log</button>
+        <button class="admin-tab" data-tab="corrections" id="tab-btn-corrections" style="display:none;">Corrections</button>
       </div>
 
       <!-- Activity Log Tab Panel -->
@@ -349,6 +350,9 @@
             <option value="">All Reps</option>
           </select>
           <input id="acct-search" type="text" placeholder="Search account name…" style="padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;flex:1;min-width:160px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;white-space:nowrap;">
+            <input type="checkbox" id="acct-show-inactive" onchange="filterAccounts()"> Show Inactive
+          </label>
           <button onclick="filterAccounts()" style="background:#0078d4;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">Filter</button>
           <button onclick="loadAccountsTab()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:8px 14px;border-radius:6px;font-size:14px;cursor:pointer;">🔄 Refresh</button>
         </div>
@@ -363,11 +367,12 @@
                 <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">SSO Login</th>
                 <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Play</th>
                 <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">ARR</th>
-                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Active</th>
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Status</th>
+                <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Actions</th>
               </tr>
             </thead>
             <tbody id="acct-body">
-              <tr><td colspan="7" style="padding:32px;text-align:center;color:#aaa;">Click the Accounts tab to load</td></tr>
+              <tr><td colspan="8" style="padding:32px;text-align:center;color:#aaa;">Click the Accounts tab to load</td></tr>
             </tbody>
           </table>
         </div>
@@ -706,7 +711,64 @@
           </table>
         </div>
       </div><!-- /#tab-access-log -->
-  <script src="msal-browser.js"></script>
+
+      <!-- ── Corrections Tab ── -->
+      <div id="tab-corrections" class="admin-tab-panel" style="display:none;">
+        <h3 style="margin:0 0 4px;">Assignment Corrections Log</h3>
+        <p style="font-size:13px;color:#555;margin:0 0 16px;">Full audit trail of all reassignments, deactivations, and reactivations. Use the Accounts tab to make corrections.</p>
+        <button onclick="loadCorrectionsLog()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:7px 14px;border-radius:6px;font-size:13px;cursor:pointer;margin-bottom:16px;">🔄 Refresh</button>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+              <tr style="background:#f8f9fa;text-align:left;">
+                <th style="padding:9px 8px;border-bottom:2px solid #e9ecef;">Timestamp</th>
+                <th style="padding:9px 8px;border-bottom:2px solid #e9ecef;">Admin</th>
+                <th style="padding:9px 8px;border-bottom:2px solid #e9ecef;">Account</th>
+                <th style="padding:9px 8px;border-bottom:2px solid #e9ecef;">Play</th>
+                <th style="padding:9px 8px;border-bottom:2px solid #e9ecef;">Old Rep</th>
+                <th style="padding:9px 8px;border-bottom:2px solid #e9ecef;">New Rep</th>
+                <th style="padding:9px 8px;border-bottom:2px solid #e9ecef;">Action</th>
+                <th style="padding:9px 8px;border-bottom:2px solid #e9ecef;">Notes</th>
+              </tr>
+            </thead>
+            <tbody id="corr-log-body">
+              <tr><td colspan="8" style="padding:24px;text-align:center;color:#aaa;">Click Corrections tab to load.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div><!-- /#tab-corrections -->
+
+      <!-- ── Assignment Correction Modal ── -->
+      <div id="correction-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:12px;padding:28px 32px;max-width:520px;width:95%;box-shadow:0 8px 32px rgba(0,0,0,.22);position:relative;">
+          <button onclick="closeCorrectionModal()" style="position:absolute;top:14px;right:18px;background:none;border:none;font-size:22px;cursor:pointer;color:#888;">×</button>
+          <h3 style="margin:0 0 4px;font-size:17px;">Edit Assignment</h3>
+          <p style="font-size:12px;color:#888;margin:0 0 18px;">Changes are logged. Motion logs are never modified.</p>
+
+          <div style="background:#f8f9fa;border-radius:8px;padding:12px 14px;margin-bottom:18px;font-size:13px;line-height:1.7;">
+            <div><strong>Account:</strong> <span id="corr-account-name"></span> <span style="color:#aaa;font-size:11px;" id="corr-account-id"></span></div>
+            <div><strong>Play:</strong> <span id="corr-play-name"></span></div>
+            <div><strong>Current Rep:</strong> <span id="corr-current-rep"></span></div>
+            <div><strong>Status:</strong> <span id="corr-status"></span></div>
+          </div>
+
+          <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Reassign to Rep</label>
+          <select id="corr-rep-picker" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;margin-bottom:14px;">
+            <option value="">Loading reps…</option>
+          </select>
+
+          <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Notes (optional)</label>
+          <input id="corr-notes" type="text" placeholder="e.g. corrected upload error" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;margin-bottom:18px;box-sizing:border-box;">
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button id="corr-btn-save" onclick="saveReassignment()" style="background:#0078d4;color:#fff;border:none;padding:9px 20px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">Save Reassignment</button>
+            <button id="corr-btn-deactivate" onclick="deactivateAssignment()" style="background:#d32f2f;color:#fff;border:none;padding:9px 16px;border-radius:6px;font-size:13px;cursor:pointer;">Deactivate</button>
+            <button id="corr-btn-reactivate" onclick="reactivateAssignment()" style="background:#107c10;color:#fff;border:none;padding:9px 16px;border-radius:6px;font-size:13px;cursor:pointer;display:none;">Reactivate</button>
+            <button onclick="closeCorrectionModal()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:9px 16px;border-radius:6px;font-size:13px;cursor:pointer;margin-left:auto;">Cancel</button>
+          </div>
+          <div id="corr-msg" style="margin-top:12px;font-size:13px;min-height:18px;color:#d32f2f;"></div>
+        </div>
+      </div><!-- /#correction-modal -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <script src="config.js"></script>
   <script src="msal-auth.js"></script>
@@ -989,6 +1051,7 @@
         if (tab.dataset.tab === 'snapshots') loadSnapshotsTab();
         if (tab.dataset.tab === 'identity') { checkIdentityFile(); checkEmailLookupStatus(); }
         if (tab.dataset.tab === 'access-log') loadAccessLog();
+        if (tab.dataset.tab === 'corrections') loadCorrectionsLog();
       });
     });
 
@@ -1302,14 +1365,15 @@
 
     // ── Accounts Tab ──────────────────────────────────────────────────────────
     let _allAssignmentsData = [];
+    let _filteredRows = [];   // last filtered set — used by correction modal
 
     async function loadAccountsTab() {
       const tbody = document.getElementById('acct-body');
-      tbody.innerHTML = '<tr><td colspan="7" style="padding:32px;text-align:center;"><div class="spinner"></div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="8" style="padding:32px;text-align:center;"><div class="spinner"></div></td></tr>';
       try {
         const text = await getFileText(SP_ROOT + '/assignments.json');
         _allAssignmentsData = text ? (JSON.parse(text).assignments || []) : [];
-        // Populate play + rep filters
+        // Populate play + rep filters (include inactive rows in filter options)
         const plays = [...new Set(_allAssignmentsData.map(a => a.play_name).filter(Boolean))].sort();
         const reps  = [...new Set(_allAssignmentsData.map(a => a.rep_name || a.rep_sso_login).filter(Boolean))].sort();
         const pSel = document.getElementById('acct-filter-play');
@@ -1318,33 +1382,222 @@
         rSel.innerHTML = '<option value="">All Reps</option>'  + reps.map(r => `<option>${escHtml(r)}</option>`).join('');
         filterAccounts();
       } catch(e) {
-        tbody.innerHTML = `<tr><td colspan="7" style="padding:20px;text-align:center;color:#d32f2f;">Error loading accounts: ${escHtml(e.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="padding:20px;text-align:center;color:#d32f2f;">Error loading accounts: ${escHtml(e.message)}</td></tr>`;
       }
     }
 
     function filterAccounts() {
-      const play   = document.getElementById('acct-filter-play').value;
-      const rep    = document.getElementById('acct-filter-rep').value;
-      const search = (document.getElementById('acct-search').value || '').toLowerCase();
+      const play        = document.getElementById('acct-filter-play').value;
+      const rep         = document.getElementById('acct-filter-rep').value;
+      const search      = (document.getElementById('acct-search').value || '').toLowerCase();
+      const showInactive = document.getElementById('acct-show-inactive')?.checked || false;
       let rows = _allAssignmentsData;
+      if (!showInactive) rows = rows.filter(a => a.active_flag !== false && a.is_active !== false);
       if (play)   rows = rows.filter(a => a.play_name === play);
       if (rep)    rows = rows.filter(a => (a.rep_name || a.rep_sso_login) === rep);
       if (search) rows = rows.filter(a => (a.account_name || '').toLowerCase().includes(search));
+      _filteredRows = rows;
       document.getElementById('acct-summary').textContent = `${rows.length} account${rows.length !== 1 ? 's' : ''} shown`;
       const tbody = document.getElementById('acct-body');
       if (rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="padding:20px;text-align:center;color:#aaa;">No accounts found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="padding:20px;text-align:center;color:#aaa;">No accounts found.</td></tr>';
         return;
       }
-      tbody.innerHTML = rows.map(a => `<tr style="border-bottom:1px solid #f0f0f0;">
-        <td style="padding:9px 8px;font-weight:600;">${escHtml(a.account_name)}</td>
-        <td style="padding:9px 8px;font-family:monospace;font-size:12px;color:#888;">${escHtml(a.account_id)}</td>
-        <td style="padding:9px 8px;">${escHtml(a.rep_name || '')}</td>
-        <td style="padding:9px 8px;font-size:12px;color:#555;">${escHtml(a.rep_sso_login || a.rep_email || '')}</td>
-        <td style="padding:9px 8px;">${escHtml(a.play_name || '')}</td>
-        <td style="padding:9px 8px;">${escHtml(a.arr || '')}</td>
-        <td style="padding:9px 8px;">${a.active === 'No' ? '<span style="color:#d32f2f;">No</span>' : '<span style="color:#107c10;">Yes</span>'}</td>
-      </tr>`).join('');
+      tbody.innerHTML = rows.map((a, i) => {
+        const isInactive = a.active_flag === false || a.is_active === false;
+        const rowStyle = isInactive ? 'background:#fff8f8;color:#aaa;' : '';
+        const statusBadge = isInactive
+          ? '<span style="background:#fde8e8;color:#d32f2f;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;">Inactive</span>'
+          : '<span style="background:#e8f5e9;color:#107c10;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;">Active</span>';
+        const updatedNote = a.updated_at
+          ? `<div style="font-size:10px;color:#aaa;margin-top:2px;">Updated ${a.updated_at.slice(0,10)}</div>` : '';
+        return `<tr style="border-bottom:1px solid #f0f0f0;${rowStyle}">
+          <td style="padding:9px 8px;font-weight:600;">${escHtml(a.account_name)}</td>
+          <td style="padding:9px 8px;font-family:monospace;font-size:12px;color:#888;">${escHtml(a.account_id)}</td>
+          <td style="padding:9px 8px;">${escHtml(a.rep_name || '')}</td>
+          <td style="padding:9px 8px;font-size:12px;color:#555;">${escHtml(a.rep_sso_login || a.rep_email || '')}</td>
+          <td style="padding:9px 8px;">${escHtml(a.play_name || '')}</td>
+          <td style="padding:9px 8px;">${escHtml(a.arr || '')}</td>
+          <td style="padding:9px 8px;">${statusBadge}${updatedNote}</td>
+          <td style="padding:9px 8px;">
+            <button onclick="openCorrectionModal(${i})" style="background:#0078d4;color:#fff;border:none;padding:5px 12px;border-radius:5px;font-size:12px;cursor:pointer;">Edit</button>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    // ── Assignment Correction Modal ───────────────────────────────────────────
+    let _correctionTarget = null;
+
+    async function _loadRepPickerOptions() {
+      try {
+        const lookup = await loadEmailLookup();
+        if (lookup && lookup.length > 0) {
+          return lookup
+            .map(r => ({ email: (r.primary_email || r.upn || '').toLowerCase().trim(), name: r.name || r.primary_email || '' }))
+            .filter(r => r.email);
+        }
+      } catch(e) {}
+      const reps = await getAllAssignedReps();
+      return reps.map(r => ({ email: r.email, name: r.repName || r.email }));
+    }
+
+    async function openCorrectionModal(rowIdx) {
+      const a = _filteredRows[rowIdx];
+      if (!a) return;
+      _correctionTarget = a;
+      const isInactive = a.active_flag === false || a.is_active === false;
+      document.getElementById('corr-account-name').textContent = a.account_name || '(unknown)';
+      document.getElementById('corr-account-id').textContent   = a.account_id   || '';
+      document.getElementById('corr-play-name').textContent    = a.play_name    || '';
+      document.getElementById('corr-current-rep').textContent  = a.rep_name ? `${a.rep_name} <${a.rep_sso_login || a.rep_email || ''}>` : (a.rep_sso_login || a.rep_email || '');
+      document.getElementById('corr-status').textContent       = isInactive ? '⛔ Inactive' : '✅ Active';
+      document.getElementById('corr-notes').value              = '';
+      const msgEl = document.getElementById('corr-msg');
+      msgEl.textContent = ''; msgEl.style.color = '#d32f2f';
+      document.getElementById('corr-btn-deactivate').style.display = isInactive ? 'none' : '';
+      document.getElementById('corr-btn-reactivate').style.display = isInactive ? '' : 'none';
+      document.getElementById('corr-btn-save').disabled = false;
+      // Load rep picker async
+      const sel = document.getElementById('corr-rep-picker');
+      sel.innerHTML = '<option value="">Loading reps…</option>';
+      document.getElementById('correction-modal').style.display = 'flex';
+      try {
+        const opts = await _loadRepPickerOptions();
+        const currentEmail = (a.rep_sso_login || a.rep_email || '').toLowerCase().trim();
+        sel.innerHTML = opts.map(r =>
+          `<option value="${escHtml(r.email)}"${r.email === currentEmail ? ' selected' : ''}>${escHtml(r.name)} &lt;${escHtml(r.email)}&gt;</option>`
+        ).join('');
+        if (!sel.value) {
+          sel.insertAdjacentHTML('afterbegin', `<option value="${escHtml(currentEmail)}" selected>${escHtml(currentEmail)} (current)</option>`);
+        }
+      } catch(e) {
+        sel.innerHTML = `<option value="${escHtml((a.rep_sso_login||a.rep_email||''))}">${escHtml(a.rep_sso_login||a.rep_email||'(unknown)')}</option>`;
+      }
+    }
+
+    function closeCorrectionModal() {
+      document.getElementById('correction-modal').style.display = 'none';
+      _correctionTarget = null;
+    }
+
+    async function saveReassignment() {
+      const a = _correctionTarget;
+      if (!a) return;
+      const sel      = document.getElementById('corr-rep-picker');
+      const newEmail = (sel.value || '').trim().toLowerCase();
+      const notes    = document.getElementById('corr-notes').value.trim();
+      const msgEl    = document.getElementById('corr-msg');
+      const saveBtn  = document.getElementById('corr-btn-save');
+      if (!newEmail) { msgEl.textContent = 'Please select a rep.'; return; }
+      const oldEmail = (a.rep_sso_login || a.rep_email || '').toLowerCase().trim();
+      if (newEmail === oldEmail) { msgEl.textContent = 'No change — same rep selected.'; return; }
+      const newRepName = (sel.options[sel.selectedIndex]?.text || newEmail).split('<')[0].trim();
+      saveBtn.disabled = true; msgEl.textContent = 'Saving…'; msgEl.style.color = '#555';
+      try {
+        const admin = getCurrentUser ? getCurrentUser() : {};
+        await updateAssignment(a.account_id, a.play_id, {
+          rep_email: newEmail, rep_sso_login: newEmail, rep_name: newRepName,
+        }, admin.email || '', admin.name || '');
+        logAssignmentCorrection({
+          adminEmail: admin.email||'', adminName: admin.name||'',
+          accountId: a.account_id, accountName: a.account_name,
+          playId: a.play_id, playName: a.play_name,
+          oldRepEmail: oldEmail, newRepEmail: newEmail,
+          actionType: 'reassign', notes,
+        }).catch(() => {});
+        msgEl.style.color = '#107c10';
+        msgEl.textContent = '✅ Reassigned successfully. Refreshing…';
+        setTimeout(() => { closeCorrectionModal(); loadAccountsTab(); }, 900);
+      } catch(e) {
+        msgEl.style.color = '#d32f2f';
+        msgEl.textContent = 'Error: ' + e.message;
+        saveBtn.disabled = false;
+      }
+    }
+
+    async function deactivateAssignment() {
+      const a = _correctionTarget;
+      if (!a) return;
+      if (!confirm(`Deactivate this assignment?\n\nAccount: ${a.account_name}\nRep: ${a.rep_name || a.rep_email}\n\nThe account will be hidden from the rep's dashboard. Motion logs are NOT affected. You can reactivate it later.`)) return;
+      const notes = document.getElementById('corr-notes').value.trim();
+      const msgEl = document.getElementById('corr-msg');
+      const btn   = document.getElementById('corr-btn-deactivate');
+      btn.disabled = true; msgEl.textContent = 'Saving…'; msgEl.style.color = '#555';
+      try {
+        const admin = getCurrentUser ? getCurrentUser() : {};
+        await updateAssignment(a.account_id, a.play_id, { active_flag: false, is_active: false }, admin.email||'', admin.name||'');
+        logAssignmentCorrection({
+          adminEmail: admin.email||'', adminName: admin.name||'',
+          accountId: a.account_id, accountName: a.account_name,
+          playId: a.play_id, playName: a.play_name,
+          oldRepEmail: a.rep_sso_login||a.rep_email||'', newRepEmail: '',
+          actionType: 'deactivate', notes,
+        }).catch(() => {});
+        msgEl.style.color = '#107c10';
+        msgEl.textContent = '✅ Deactivated. Refreshing…';
+        setTimeout(() => { closeCorrectionModal(); loadAccountsTab(); }, 900);
+      } catch(e) {
+        msgEl.style.color = '#d32f2f';
+        msgEl.textContent = 'Error: ' + e.message;
+        btn.disabled = false;
+      }
+    }
+
+    async function reactivateAssignment() {
+      const a = _correctionTarget;
+      if (!a) return;
+      const notes = document.getElementById('corr-notes').value.trim();
+      const msgEl = document.getElementById('corr-msg');
+      const btn   = document.getElementById('corr-btn-reactivate');
+      btn.disabled = true; msgEl.textContent = 'Saving…'; msgEl.style.color = '#555';
+      try {
+        const admin = getCurrentUser ? getCurrentUser() : {};
+        await updateAssignment(a.account_id, a.play_id, { active_flag: true, is_active: true }, admin.email||'', admin.name||'');
+        logAssignmentCorrection({
+          adminEmail: admin.email||'', adminName: admin.name||'',
+          accountId: a.account_id, accountName: a.account_name,
+          playId: a.play_id, playName: a.play_name,
+          oldRepEmail: a.rep_sso_login||a.rep_email||'', newRepEmail: a.rep_sso_login||a.rep_email||'',
+          actionType: 'reactivate', notes,
+        }).catch(() => {});
+        msgEl.style.color = '#107c10';
+        msgEl.textContent = '✅ Reactivated. Refreshing…';
+        setTimeout(() => { closeCorrectionModal(); loadAccountsTab(); }, 900);
+      } catch(e) {
+        msgEl.style.color = '#d32f2f';
+        msgEl.textContent = 'Error: ' + e.message;
+        btn.disabled = false;
+      }
+    }
+
+    async function loadCorrectionsLog() {
+      const tbody = document.getElementById('corr-log-body');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;"><div class="spinner"></div></td></tr>';
+      try {
+        const rows = await getAssignmentCorrectionsLog();
+        if (rows.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" style="padding:20px;text-align:center;color:#aaa;">No corrections logged yet.</td></tr>';
+          return;
+        }
+        const actionColors = { reassign: '#0078d4', deactivate: '#d32f2f', reactivate: '#107c10' };
+        tbody.innerHTML = rows.slice().reverse().map(r => {
+          const color = actionColors[r.action_type] || '#888';
+          return `<tr style="border-bottom:1px solid #f0f0f0;">
+            <td style="padding:8px;font-size:12px;color:#888;">${escHtml((r.timestamp||'').replace('T',' ').slice(0,19))}</td>
+            <td style="padding:8px;font-size:12px;">${escHtml(r.admin_name||r.admin_email||'')}</td>
+            <td style="padding:8px;font-weight:600;">${escHtml(r.account_name||'')}</td>
+            <td style="padding:8px;font-size:12px;">${escHtml(r.play_name||'')}</td>
+            <td style="padding:8px;font-size:12px;color:#555;">${escHtml(r.old_rep_email||'')}</td>
+            <td style="padding:8px;font-size:12px;color:#555;">${escHtml(r.new_rep_email||'')}</td>
+            <td style="padding:8px;"><span style="background:${color};color:#fff;font-size:11px;padding:2px 8px;border-radius:10px;">${escHtml(r.action_type||'')}</span></td>
+            <td style="padding:8px;font-size:12px;color:#888;">${escHtml(r.notes||'')}</td>
+          </tr>`;
+        }).join('');
+      } catch(e) {
+        tbody.innerHTML = `<tr><td colspan="8" style="padding:20px;text-align:center;color:#d32f2f;">Error: ${escHtml(e.message)}</td></tr>`;
+      }
     }
 
     // ── Invite Tab ────────────────────────────────────────────────────────────
@@ -1437,6 +1690,8 @@ Let's go! 🚀`;
         if (identityTabBtn) identityTabBtn.style.display = '';
         const accessLogTabBtn = document.getElementById('tab-btn-access-log');
         if (accessLogTabBtn) accessLogTabBtn.style.display = '';
+        const correctionsTabBtn = document.getElementById('tab-btn-corrections');
+        if (correctionsTabBtn) correctionsTabBtn.style.display = '';
       }
       // Hide owner-only tabs for managers
       if (role === 'manager') {

@@ -304,6 +304,78 @@ async function logActivity(user, actionType, detail) {
   }
 }
 
+// ─── Section 3a: Assignment Corrections ──────────────────────────────────
+// updateAssignment()        — finds a row by account_id+play_id, applies changes, writes back.
+// logAssignmentCorrection() — appends one row to assignment_corrections_log.csv (fire-and-forget).
+// getAssignmentCorrectionsLog() — reads the full corrections audit log.
+
+const CORRECTION_LOG_PATH = SP_ROOT + '/assignment_corrections_log.csv';
+const CORRECTION_LOG_HEADERS = [
+  'timestamp', 'admin_email', 'admin_name',
+  'account_id', 'account_name', 'play_id', 'play_name',
+  'old_rep_email', 'new_rep_email', 'action_type', 'notes',
+];
+
+async function updateAssignment(accountId, playId, changes, adminEmail, adminName) {
+  const text = await getFileText(SP_ROOT + '/assignments.json');
+  if (!text) throw new Error('assignments.json not found');
+  const data = JSON.parse(text);
+  const rows = data.assignments || [];
+  const idx = rows.findIndex(a => a.account_id === accountId && a.play_id === playId);
+  if (idx === -1) throw new Error('Assignment not found: ' + accountId + ' / ' + playId);
+  rows[idx] = {
+    ...rows[idx],
+    ...changes,
+    updated_at: new Date().toISOString(),
+    updated_by: adminEmail || '',
+  };
+  data.assignments = rows;
+  await putFile(SP_ROOT + '/assignments.json', JSON.stringify(data, null, 2), 'application/json');
+  return rows[idx];
+}
+
+async function logAssignmentCorrection({
+  adminEmail = '', adminName = '',
+  accountId = '', accountName = '',
+  playId = '', playName = '',
+  oldRepEmail = '', newRepEmail = '',
+  actionType = '', notes = '',
+} = {}) {
+  try {
+    const row = [
+      new Date().toISOString(), adminEmail, adminName,
+      accountId, accountName, playId, playName,
+      oldRepEmail, newRepEmail, actionType, notes,
+    ].map(v => csvEscape(String(v))).join(',');
+    let existing = '';
+    try { existing = await getFileText(CORRECTION_LOG_PATH) || ''; } catch(e) {}
+    const csv = existing.trim()
+      ? existing.trimEnd() + '\n' + row
+      : CORRECTION_LOG_HEADERS.join(',') + '\n' + row;
+    await putFile(CORRECTION_LOG_PATH, csv, 'text/csv');
+  } catch(e) {
+    console.warn('[CorrectionLog] Failed (non-blocking):', e.message);
+  }
+}
+
+async function getAssignmentCorrectionsLog() {
+  try {
+    const text = await getFileText(CORRECTION_LOG_PATH);
+    if (!text) return [];
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) return [];
+    const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
+    return lines.slice(1).map(line => {
+      const vals = line.match(/("(?:[^"]|"")*"|[^,]*)/g) || [];
+      const obj = {};
+      headers.forEach((h, i) => {
+        obj[h] = (vals[i] || '').replace(/^"|"$/g, '').replace(/""/g, '"').trim();
+      });
+      return obj;
+    });
+  } catch(e) { return []; }
+}
+
 // ─── Section 3b: Identity Event Logging ──────────────────────────────────
 // Separate CSV from activity_log. Records every login attempt, identity
 // resolution result, and assignment mismatch. Always fire-and-forget.
