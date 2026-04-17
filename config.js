@@ -12,5 +12,8 @@ const CONFIG = {
 
   // Leave these as-is
   graphBaseUrl: "https://graph.microsoft.com/v1.0",
-  scopes: ["https://graph.microsoft.com/Sites.ReadWrite.All"],
+  scopes: [
+    "https://graph.microsoft.com/Sites.ReadWrite.All",
+    "https://graph.microsoft.com/User.Read",   // needed for /me profile enrichment in identity matching
+  ],
 };

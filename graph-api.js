@@ -384,6 +384,76 @@ async function writeJsonFile(filePath, data) {
   return putFile(SP_ROOT + "/" + filePath, JSON.stringify(data, null, 2), "application/json");
 }
 
+// ─── Section: Rep Identity Enrichment ─────────────────────────────────────
+// Fetches /me from Microsoft Graph to get the rep's primary mail attribute.
+// This fills the gap where the MSAL token only carries the UPN/preferred_username
+// but the spreadsheet was uploaded with the primary mail (or vice-versa).
+//
+// Gracefully returns {} on any failure — callers treat missing fields as absent.
+
+let _graphUserProfile = null;
+
+async function fetchGraphUserProfile() {
+  if (_graphUserProfile !== null) return _graphUserProfile;
+  try {
+    const data = await _graphFetch('/me?$select=mail,userPrincipalName,otherMails,displayName');
+    _graphUserProfile = data || {};
+    console.log('[Identity] /me profile:', _graphUserProfile.mail, '/', _graphUserProfile.userPrincipalName);
+  } catch(e) {
+    console.warn('[Identity] /me fetch failed (non-critical, falling back to token claims):', e.message);
+    _graphUserProfile = {};
+  }
+  return _graphUserProfile;
+}
+
+// ─── Canonical email candidate builder ────────────────────────────────────
+// Returns a Set of all lowercase, trimmed email-like identities for the
+// signed-in rep. Every matching function should use this as the single
+// source of truth for "who is this person?"
+//
+// Resolution layers (highest to lowest confidence):
+//   1. Graph /me: mail, userPrincipalName, otherMails
+//   2. MSAL token claims: preferred_username, email, upn, unique_name, username
+//   3. rep-identity.json aliases (SharePoint-hosted, admin-managed)
+//   4. STATIC_ALIASES hardcoded map (covers 93+ known Progress alias pairs)
+
+async function getEmailCandidates(primaryEmail) {
+  const candidates = new Set();
+  const add = v => { if (v && typeof v === 'string') candidates.add(v.toLowerCase().trim()); };
+
+  // Seed from primaryEmail argument
+  if (primaryEmail) add(primaryEmail);
+
+  // Layer 1: MSAL token claims (synchronous)
+  try {
+    const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
+    if (user?.emails?.length) user.emails.forEach(add);
+  } catch(e) {}
+
+  // Layer 2: Graph /me profile (async, cached after first call)
+  try {
+    const profile = await fetchGraphUserProfile();
+    add(profile.mail);
+    add(profile.userPrincipalName);
+    (profile.otherMails || []).forEach(add);
+  } catch(e) {}
+
+  // Layer 3: rep-identity.json aliases
+  try {
+    const seed = primaryEmail || [...candidates][0];
+    if (seed) {
+      const repEntry = await resolveRepByEmail(seed);
+      if (repEntry) (repEntry.aliases || []).forEach(add);
+    }
+  } catch(e) {}
+
+  // Layer 4: STATIC_ALIASES expansion — run over snapshot so new entries also expand
+  const snapshot = [...candidates];
+  snapshot.forEach(e => (STATIC_ALIASES[e] || []).forEach(add));
+
+  return candidates;
+}
+
 // ─── Assignments ──────────────────────────────────────────────────────────
 
 async function getAllAssignedReps() {
@@ -435,20 +505,15 @@ async function getPlayAssignments(repEmail) {
     console.warn("[ChefSaaS] Identity map lookup failed, falling back:", e.message);
   }
 
-  // Tier 3: direct match — try ALL email candidates from the token + static aliases
-  const user3 = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
-  const emailCandidates = (user3?.emails?.length) ? user3.emails : [emailLower];
+  // Tier 3: direct match using enriched candidate set (token + Graph /me + identity map + STATIC_ALIASES)
+  const allCandidates = await getEmailCandidates(emailLower);
 
-  // Static alias map — all 93 reps, built from rep-identity.json (each email → sibling aliases)
-  const allCandidates = new Set(emailCandidates);
-  emailCandidates.forEach(e => (STATIC_ALIASES[e] || []).forEach(a => allCandidates.add(a)));
-
-  let matched = list.filter(a => {
-    const repLogin = (a.rep_sso_login || '').toLowerCase();
-    const repEmail = (a.rep_email    || '').toLowerCase();
+  const matched = list.filter(a => {
+    const repLogin = (a.rep_sso_login || '').toLowerCase().trim();
+    const repEmail  = (a.rep_email    || '').toLowerCase().trim();
     return [...allCandidates].some(e => e === repLogin || e === repEmail);
   });
-  console.log("[ChefSaaS] Candidates:", [...allCandidates], "→", matched.length, "accounts");
+  console.log('[ChefSaaS] Candidates:', [...allCandidates], '→', matched.length, 'accounts');
   return matched;
 }
 
@@ -651,22 +716,10 @@ async function logEngagement(fields) {
 // ─── Read engagements ─────────────────────────────────────────────────────
 
 async function _getAllLogsForRep(repEmail) {
-  // Build full set of email candidates — same alias resolution as getPlayAssignments
+  // Build full candidate set using the same resolver as getPlayAssignments()
   let emailCandidates = null;
   if (repEmail) {
-    const emailLower = repEmail.toLowerCase();
-    const candidates = new Set([emailLower]);
-    // Tier A: token email variants
-    const user = typeof getCurrentUser === 'function' ? getCurrentUser() : null;
-    if (user?.emails?.length) user.emails.forEach(e => candidates.add(e));
-    // Tier B: STATIC_ALIASES
-    [...candidates].forEach(e => (STATIC_ALIASES[e] || []).forEach(a => candidates.add(a)));
-    // Tier C: rep-identity.json aliases
-    try {
-      const repEntry = await resolveRepByEmail(emailLower);
-      if (repEntry) (repEntry.aliases || []).forEach(a => candidates.add(a.toLowerCase()));
-    } catch(e) {}
-    emailCandidates = [...candidates];
+    emailCandidates = [...(await getEmailCandidates(repEmail.toLowerCase()))];
   }
 
   const plays = await getPlays();

@@ -119,10 +119,10 @@
         <div class="plays-section">
           <!-- Greeting bar -->
           <div id="greeting-bar"></div>
-          <!-- Demo banner -->
+          <!-- Demo banner — also shown when no assignment match found -->
           <div id="demo-banner" class="demo-banner" style="display:none;">
             <span class="demo-badge">DEMO MODE</span>
-            <span>You don't have any assigned accounts yet. Practice with these demo accounts — your manager will assign real accounts soon.</span>
+            <span id="demo-banner-msg">You don't have any assigned accounts yet. Practice with these demo accounts — your manager will assign real accounts soon.</span>
           </div>
           <div class="section-header-row">
             <span class="section-label">YOUR PLAYS</span>
@@ -604,6 +604,10 @@
         const email = currentUser.email;
         const name  = currentUser.name;
 
+        // Warm the Graph /me profile cache in parallel — non-blocking,
+        // ensures fetchGraphUserProfile() is cached before getEmailCandidates() runs.
+        fetchGraphUserProfile().catch(() => {});
+
         // Fetch accounts + plays in parallel; fetch logs once after (avoids double CSV download)
         const [accounts, plays] = await Promise.all([
           loadRepAccounts(email, name),
@@ -959,7 +963,18 @@
 
     async function showDemoMode() {
       const banner = document.getElementById('demo-banner');
-      if (banner) banner.style.display = 'flex';
+      if (banner) {
+        banner.style.display = 'flex';
+        // Show the identity the app is matching against so reps/admins can quickly
+        // diagnose email mismatches between the token and the assignment spreadsheet.
+        const msgEl = document.getElementById('demo-banner-msg');
+        if (msgEl && currentUser?.email) {
+          msgEl.innerHTML =
+            `No assigned accounts found for <strong>${escHtml(currentUser.email)}</strong>. ` +
+            `Practice with these demo accounts. ` +
+            `If your real accounts are missing, contact Infra Sales leadership and share the identity above.`;
+        }
+      }
 
       let demoData = DEMO_FALLBACK;
       try {
