@@ -769,6 +769,7 @@
           <div id="corr-msg" style="margin-top:12px;font-size:13px;min-height:18px;color:#d32f2f;"></div>
         </div>
       </div><!-- /#correction-modal -->
+  <script src="msal-browser.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <script src="config.js"></script>
   <script src="msal-auth.js"></script>
@@ -1718,6 +1719,21 @@ Let's go! 🚀`;
     }
 
     (async () => {
+      // ── Startup guard: verify MSAL library loaded before doing anything ──
+      if (typeof msal === 'undefined' || typeof msal.PublicClientApplication === 'undefined') {
+        document.body.innerHTML = `
+          <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;flex-direction:column;gap:16px;color:#d32f2f;">
+            <div style="font-size:48px;">⚠️</div>
+            <h2 style="margin:0;">Authentication library failed to load</h2>
+            <p style="color:#555;max-width:420px;text-align:center;margin:0;">
+              The MSAL authentication library (msal-browser.js) did not load correctly.
+              Check your network connection and reload the page. If the problem persists,
+              contact Infra Sales leadership.
+            </p>
+            <button onclick="location.reload()" style="background:#0078d4;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:15px;cursor:pointer;">Reload</button>
+          </div>`;
+        return;
+      }
       try {
         const account = await initAuth();
         if (!account) {
