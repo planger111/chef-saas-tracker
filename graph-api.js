@@ -409,33 +409,104 @@ async function fetchGraphUserProfile() {
 // ─── Email Lookup table (from "EMAIL LookUP for SSO.xlsx") ────────────────
 // This file is the authoritative rep identity map maintained by the admin.
 // Each entry has { primary_email, upn (optional), name, notes }.
-// We fetch it once and cache it for the session.
 //
-// Format: /email-lookup.json — a static asset deployed with the app.
-// Generated from the Excel file in Data Dump/ by running the gen script.
+// Storage hierarchy (in priority order):
+//   1. SharePoint: Chef SaaS Tracker/ChefSaaS/email-lookup.json
+//      → Admin uploads this via the Identity tab. Updates take effect within
+//        24 hours for all reps without any code redeploy.
+//   2. localStorage cache (TTL: 24 hours)
+//      → Avoids a SharePoint round-trip on every page load.
+//   3. Static /email-lookup.json (deployed with the app)
+//      → Always-available fallback. Updated only via redeploy.
+//
+// Admin tools: clearEmailLookupCache() / refreshEmailLookup() (exposed globally).
 
-let _emailLookup = null;            // null = not yet loaded; [] = loaded (possibly empty)
-let _emailLookupMap = null;         // Map<lowercase-email, entry> — both primary + upn keys
+const EMAIL_LOOKUP_CACHE_KEY = 'chef_email_lookup_v1';
+const EMAIL_LOOKUP_TS_KEY    = 'chef_email_lookup_ts_v1';
+const EMAIL_LOOKUP_TTL_MS    = 24 * 60 * 60 * 1000; // 24 hours
+
+let _emailLookup    = null;  // null = not yet loaded; [] = loaded (possibly empty)
+let _emailLookupMap = null;  // Map<lowercase-email, entry>
+
+function _buildEmailLookupMap(lookup) {
+  const map = new Map();
+  for (const entry of lookup) {
+    if (entry.primary_email) map.set(entry.primary_email.toLowerCase().trim(), entry);
+    if (entry.upn)           map.set(entry.upn.toLowerCase().trim(), entry);
+  }
+  return map;
+}
+
+// Clear the localStorage cache so the next loadEmailLookup() fetches fresh data.
+// Called by the admin UI after uploading a new file.
+function clearEmailLookupCache() {
+  try {
+    localStorage.removeItem(EMAIL_LOOKUP_CACHE_KEY);
+    localStorage.removeItem(EMAIL_LOOKUP_TS_KEY);
+  } catch(e) {}
+  _emailLookup = null;
+  _emailLookupMap = null;
+  console.log('[Identity] Email lookup cache cleared — next load will fetch from SharePoint');
+}
+
+// Force a fresh fetch from SharePoint, bypassing the cache.
+async function refreshEmailLookup() {
+  clearEmailLookupCache();
+  return loadEmailLookup();
+}
 
 async function loadEmailLookup() {
+  // Return cached in-memory copy immediately if available this session
   if (_emailLookup !== null) return _emailLookup;
-  try {
-    const res = await fetch('/email-lookup.json');
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    _emailLookup = await res.json();
 
-    // Build a fast lookup map: every known email variant → entry
-    _emailLookupMap = new Map();
-    for (const entry of _emailLookup) {
-      if (entry.primary_email) _emailLookupMap.set(entry.primary_email.toLowerCase().trim(), entry);
-      if (entry.upn)           _emailLookupMap.set(entry.upn.toLowerCase().trim(), entry);
+  // ── Check localStorage cache (24h TTL) ───────────────────────────────────
+  try {
+    const cached = localStorage.getItem(EMAIL_LOOKUP_CACHE_KEY);
+    const ts     = localStorage.getItem(EMAIL_LOOKUP_TS_KEY);
+    if (cached && ts) {
+      const ageMs = Date.now() - new Date(ts).getTime();
+      if (ageMs < EMAIL_LOOKUP_TTL_MS) {
+        _emailLookup    = JSON.parse(cached);
+        _emailLookupMap = _buildEmailLookupMap(_emailLookup);
+        console.log(`[Identity] email-lookup from localStorage cache (${Math.round(ageMs / 60000)}m old, ${_emailLookup.length} reps)`);
+        return _emailLookup;
+      }
+      console.log('[Identity] email-lookup cache expired — fetching fresh');
     }
-    console.log(`[Identity] email-lookup.json loaded: ${_emailLookup.length} reps`);
+  } catch(e) { /* corrupt cache — proceed to fetch */ }
+
+  // ── Tier 1: SharePoint (updateable without code redeploy) ────────────────
+  let loaded = null;
+  let source = null;
+  try {
+    const text = await getFileText(SP_ROOT + '/email-lookup.json');
+    if (text) { loaded = JSON.parse(text); source = 'SharePoint'; }
   } catch(e) {
-    console.warn('[Identity] email-lookup.json not available (falling back to STATIC_ALIASES):', e.message);
-    _emailLookup = [];
-    _emailLookupMap = new Map();
+    console.warn('[Identity] SharePoint email-lookup.json not found — will try static fallback:', e.message);
   }
+
+  // ── Tier 2: Static asset (deployed with the app) ─────────────────────────
+  if (!loaded) {
+    try {
+      const res = await fetch('/email-lookup.json');
+      if (res.ok) { loaded = await res.json(); source = 'static (deploy)'; }
+    } catch(e) {
+      console.warn('[Identity] Static email-lookup.json not available:', e.message);
+    }
+  }
+
+  _emailLookup    = loaded || [];
+  _emailLookupMap = _buildEmailLookupMap(_emailLookup);
+
+  // ── Store in localStorage cache ───────────────────────────────────────────
+  if (_emailLookup.length > 0) {
+    try {
+      localStorage.setItem(EMAIL_LOOKUP_CACHE_KEY, JSON.stringify(_emailLookup));
+      localStorage.setItem(EMAIL_LOOKUP_TS_KEY, new Date().toISOString());
+    } catch(e) { /* localStorage full or blocked — non-fatal */ }
+  }
+
+  console.log(`[Identity] email-lookup loaded from ${source || 'nowhere'}: ${_emailLookup.length} reps`);
   return _emailLookup;
 }
 

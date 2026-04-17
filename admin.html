@@ -547,9 +547,12 @@
 
       <!-- Identity Tab (owner only) -->
       <div id="tab-identity" class="admin-tab-panel" style="display:none;">
-        <div style="max-width:560px;">
-          <p style="font-size:13px;color:#555;margin-bottom:20px;">
-            Upload <code>rep-identity.json</code> to SharePoint so the system can match reps by any of their known email aliases.
+        <div style="max-width:620px;">
+
+          <!-- Section 1: rep-identity.json (alias overrides) -->
+          <h3 style="margin:0 0 8px;font-size:15px;color:#1a1a2e;">Rep Alias Overrides (rep-identity.json)</h3>
+          <p style="font-size:13px;color:#555;margin-bottom:16px;">
+            Upload <code>rep-identity.json</code> to SharePoint to manually override alias matching for specific reps.
             Once uploaded, reps will be matched automatically regardless of which email was used during account upload.
           </p>
 
@@ -566,6 +569,44 @@
             ⬆️ Upload to SharePoint
           </button>
           <div id="identity-upload-status" style="display:none;margin-top:12px;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:600;"></div>
+
+          <!-- Section 2: Email Lookup Map (authoritative) -->
+          <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0 20px;">
+          <h3 style="margin:0 0 8px;font-size:15px;color:#1a1a2e;">📧 Email Lookup Map — Authoritative Identity Source</h3>
+          <p style="font-size:13px;color:#555;margin-bottom:8px;">
+            This is the <strong>primary</strong> rep identity map. It comes from the
+            <em>EMAIL LookUP for SSO.xlsx</em> file and contains each rep's
+            <strong>Primary Email</strong> and <strong>UPN / Alias</strong>.
+            The app uses both columns to match a signed-in rep to their assignment accounts.
+          </p>
+          <p style="font-size:13px;color:#555;margin-bottom:16px;">
+            Upload an updated Excel file here whenever the org roster changes.
+            The app caches identity data for <strong>24 hours</strong> — updates are picked
+            up automatically on the next cache expiry without any code redeploy.
+          </p>
+
+          <!-- Cache / SharePoint status -->
+          <div id="email-lookup-status-box" style="background:#f8f9fa;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px;">
+            <strong>Current status:</strong> <span id="email-lookup-status-text">Checking…</span>
+            <button onclick="checkEmailLookupStatus()" style="margin-left:12px;background:none;border:none;color:#0078d4;cursor:pointer;font-size:12px;">↻ Check</button>
+            <button onclick="adminForceRefreshEmailLookup()" style="margin-left:8px;background:none;border:none;color:#6b7280;cursor:pointer;font-size:12px;" title="Clears the 24-hour cache and re-fetches from SharePoint immediately">🔄 Force Refresh</button>
+          </div>
+
+          <!-- Excel upload -->
+          <label style="display:block;font-size:13px;font-weight:600;margin-bottom:4px;">Upload updated Excel identity map:</label>
+          <p style="font-size:12px;color:#6b7280;margin:0 0 10px;">
+            Select the <em>EMAIL LookUP for SSO.xlsx</em> file (or any .xlsx with the same column layout:
+            Name · Primary Email · UPN / Alias · Notes).
+            The app will parse it and publish <code>email-lookup.json</code> to SharePoint automatically.
+          </p>
+          <input type="file" id="email-lookup-file-input" accept=".xlsx,.xls" style="font-size:13px;margin-bottom:10px;">
+          <div id="email-lookup-preview" style="display:none;font-size:12px;color:#555;background:#f0f7ff;border:1px solid #c3dafe;border-radius:6px;padding:8px 12px;margin-bottom:12px;"></div>
+          <button onclick="uploadEmailLookupExcel()" id="btn-upload-email-lookup" disabled
+            style="background:#107c10;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">
+            ⬆️ Parse & Publish to SharePoint
+          </button>
+          <div id="email-lookup-upload-status" style="display:none;margin-top:12px;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:600;"></div>
+
         </div>
       </div><!-- /#tab-identity -->
 
@@ -851,7 +892,7 @@
         if (tab.dataset.tab === 'broadcast') loadBroadcastTab();
         if (tab.dataset.tab === 'activity-log-user') loadActivityLog();
         if (tab.dataset.tab === 'snapshots') loadSnapshotsTab();
-        if (tab.dataset.tab === 'identity') { checkIdentityFile(); }
+        if (tab.dataset.tab === 'identity') { checkIdentityFile(); checkEmailLookupStatus(); }
       });
     });
 
@@ -2352,6 +2393,144 @@ Let's go! 🚀`;
         btn.disabled = false;
       }
     }
+
+    // ── Email Lookup Map (authoritative identity source) ───────────────────
+
+    async function checkEmailLookupStatus() {
+      const statusEl = document.getElementById('email-lookup-status-text');
+      if (!statusEl) return;
+      statusEl.textContent = 'Checking…';
+
+      // Check localStorage cache
+      let cacheInfo = '';
+      try {
+        const ts = localStorage.getItem('chef_email_lookup_ts_v1');
+        const cached = localStorage.getItem('chef_email_lookup_v1');
+        if (ts && cached) {
+          const ageMs = Date.now() - new Date(ts).getTime();
+          const ageMin = Math.round(ageMs / 60000);
+          const count = JSON.parse(cached).length;
+          const expiresIn = Math.round((24 * 60 - ageMin));
+          cacheInfo = ` | Cache: ${count} reps, ${ageMin < 60 ? ageMin + 'm' : Math.round(ageMin/60) + 'h'} old, expires in ~${expiresIn > 0 ? expiresIn + 'm' : 'now'}`;
+        } else {
+          cacheInfo = ' | No cache — will fetch on next rep sign-in';
+        }
+      } catch(e) {}
+
+      // Check SharePoint
+      try {
+        const text = await getFileText(SP_ROOT + '/email-lookup.json').catch(() => null);
+        if (text) {
+          const data = JSON.parse(text);
+          statusEl.innerHTML = `<span style="color:#107c10;font-weight:700;">✅ SharePoint copy found</span> — ${data.length} reps${escHtml(cacheInfo)}`;
+        } else {
+          statusEl.innerHTML = `<span style="color:#d97706;font-weight:700;">⚠ Not on SharePoint</span> — using static fallback (deployed copy)${escHtml(cacheInfo)}`;
+        }
+      } catch(e) {
+        statusEl.innerHTML = `<span style="color:#c00;">✗ Error: ${escHtml(e.message)}</span>${escHtml(cacheInfo)}`;
+      }
+    }
+
+    async function adminForceRefreshEmailLookup() {
+      const statusEl = document.getElementById('email-lookup-status-text');
+      if (statusEl) statusEl.textContent = '🔄 Clearing cache and re-fetching…';
+      try {
+        await refreshEmailLookup();
+        await checkEmailLookupStatus();
+      } catch(e) {
+        if (statusEl) statusEl.textContent = '✗ Refresh failed: ' + e.message;
+      }
+    }
+
+    // Parse the Excel identity map, convert to JSON, upload to SharePoint, clear cache.
+    async function uploadEmailLookupExcel() {
+      if (!requireOwner('Upload Email Lookup Map')) return;
+      const file = document.getElementById('email-lookup-file-input').files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById('email-lookup-upload-status');
+      const btn = document.getElementById('btn-upload-email-lookup');
+      statusEl.style.display = 'block';
+      statusEl.style.background = '#fff3cd'; statusEl.style.color = '#856404';
+      statusEl.textContent = '⏳ Parsing Excel file…';
+      btn.disabled = true;
+
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+
+        // Find the right sheet — prefer "EMAIL and UPN Alias Rep", else first sheet
+        const targetSheet = workbook.SheetNames.find(n => n.toLowerCase().includes('email') && n.toLowerCase().includes('upn'))
+                         || workbook.SheetNames[0];
+        const ws = workbook.Sheets[targetSheet];
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+
+        // Normalize column names — handle variations in header capitalization/spacing
+        const normalize = s => String(s || '').toLowerCase().replace(/[\s/()_-]+/g, '');
+        const entries = [];
+        for (const row of rows) {
+          const keys = Object.keys(row);
+          const findCol = (...terms) => keys.find(k => terms.every(t => normalize(k).includes(t)));
+          const nameCol    = findCol('name');
+          const emailCol   = findCol('primary', 'email') || findCol('email');
+          const upnCol     = findCol('upn') || findCol('alias');
+          const notesCol   = findCol('note') || findCol('role') || findCol('title');
+
+          const primary = String(row[emailCol] || '').trim().toLowerCase();
+          if (!primary || !primary.includes('@')) continue; // skip blank/invalid rows
+
+          const upnRaw = String(row[upnCol] || '').trim();
+          const upn = (upnRaw && upnRaw !== '—' && upnRaw !== '-' && upnRaw.includes('@'))
+            ? upnRaw.toLowerCase() : null;
+
+          const entry = {
+            name:          String(row[nameCol] || '').trim(),
+            primary_email: primary,
+            notes:         String(row[notesCol] || '').trim(),
+          };
+          if (upn) entry.upn = upn;
+          entries.push(entry);
+        }
+
+        if (entries.length === 0) {
+          throw new Error('No valid rows found. Check that the file has "Primary Email" and "UPN / Alias" columns.');
+        }
+
+        statusEl.textContent = `⏳ Parsed ${entries.length} reps — uploading to SharePoint…`;
+
+        const json = JSON.stringify(entries, null, 2);
+        await putFile(SP_ROOT + '/email-lookup.json', json, 'application/json');
+
+        // Clear cache so the new file is picked up immediately
+        clearEmailLookupCache();
+
+        statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
+        statusEl.textContent = `✅ ${entries.length} reps published to SharePoint. Cache cleared — reps will use the new identity map immediately.`;
+
+        try { await logActivity(currentUser, 'email_lookup_upload', `email-lookup.json updated (${entries.length} reps)`); } catch(e) {}
+        checkEmailLookupStatus();
+      } catch(e) {
+        statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
+        statusEl.textContent = '✗ Failed: ' + e.message;
+        btn.disabled = false;
+      }
+    }
+
+    // Wire up the Excel file input → preview + enable button
+    document.addEventListener('DOMContentLoaded', () => {
+      const xlInput = document.getElementById('email-lookup-file-input');
+      if (xlInput) {
+        xlInput.addEventListener('change', () => {
+          const file = xlInput.files[0];
+          const btn = document.getElementById('btn-upload-email-lookup');
+          const preview = document.getElementById('email-lookup-preview');
+          if (!file) { btn.disabled = true; preview.style.display = 'none'; return; }
+          preview.style.display = 'block';
+          preview.textContent = `✓ Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB) — click Parse & Publish to upload`;
+          btn.disabled = false;
+        });
+      }
+    });
 
     async function exportAll() {
       const btn = document.getElementById('btn-export-all');
