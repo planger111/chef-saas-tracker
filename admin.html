@@ -86,6 +86,7 @@
         <button class="admin-tab" data-tab="demo-activity" id="tab-btn-demo-activity" style="display:none;">Demo Activity</button>
         <button class="admin-tab" data-tab="snapshots" id="tab-btn-snapshots" style="display:none;">Snapshots</button>
         <button class="admin-tab" data-tab="identity" id="tab-btn-identity" style="display:none;">Identity</button>
+        <button class="admin-tab" data-tab="access-log" id="tab-btn-access-log" style="display:none;">Access Log</button>
       </div>
 
       <!-- Activity Log Tab Panel -->
@@ -610,7 +611,60 @@
         </div>
       </div><!-- /#tab-identity -->
 
-  <!-- Scripts -->
+      <!-- Access Log Tab (owner only) -->
+      <div id="tab-access-log" class="admin-tab-panel" style="display:none;">
+        <div style="margin-bottom:12px;">
+          <p style="font-size:13px;color:#555;margin:0 0 10px;">
+            Logs every login attempt, identity resolution, and assignment mismatch.
+            <strong>identity_mismatch</strong> rows mean a rep signed in successfully but no accounts were found —
+            check the candidate identities column to debug.
+          </p>
+          <div class="admin-control-bar">
+            <select id="acl-filter-event">
+              <option value="">All Events</option>
+              <option value="login_attempt">login_attempt</option>
+              <option value="login_success">login_success</option>
+              <option value="identity_mismatch">identity_mismatch ⚠</option>
+            </select>
+            <input type="text" id="acl-filter-rep" placeholder="Filter by rep email…" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;min-width:200px;">
+            <input type="date" id="acl-filter-start" title="From date">
+            <input type="date" id="acl-filter-end" title="To date">
+            <button class="btn btn-primary btn-sm" onclick="loadAccessLog()">Load / Apply</button>
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('acl-filter-event').value='';document.getElementById('acl-filter-rep').value='';document.getElementById('acl-filter-start').value='';document.getElementById('acl-filter-end').value='';loadAccessLog();">✕ Clear</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAccessLog()">Export CSV</button>
+          </div>
+          <div id="acl-summary-bar" style="display:none;margin:8px 0 0;padding:8px 12px;background:#fef3c7;border:1px solid #fbbf24;border-radius:6px;font-size:13px;color:#92400e;"></div>
+        </div>
+        <div class="table-wrapper">
+          <table id="access-log-table" style="font-size:12px;">
+            <colgroup>
+              <col style="width:140px"><!-- timestamp -->
+              <col style="width:105px"><!-- event_type -->
+              <col style="width:140px"><!-- rep_display_name -->
+              <col style="width:175px"><!-- raw_identity -->
+              <col style="width:175px"><!-- resolved_identity -->
+              <col style="width:90px"> <!-- match_type -->
+              <col style="width:50px"> <!-- count -->
+              <col>                    <!-- candidates / notes -->
+            </colgroup>
+            <thead class="sticky-thead">
+              <tr>
+                <th>Timestamp</th>
+                <th>Event</th>
+                <th>Rep Name</th>
+                <th>Raw Identity</th>
+                <th>Resolved Identity</th>
+                <th>Match Type</th>
+                <th>Accts</th>
+                <th>Candidates / Notes</th>
+              </tr>
+            </thead>
+            <tbody id="access-log-body">
+              <tr><td colspan="8" class="no-results">Click "Load / Apply" to load the identity log</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div><!-- /#tab-access-log -->
   <script src="msal-browser.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <script src="config.js"></script>
@@ -893,6 +947,7 @@
         if (tab.dataset.tab === 'activity-log-user') loadActivityLog();
         if (tab.dataset.tab === 'snapshots') loadSnapshotsTab();
         if (tab.dataset.tab === 'identity') { checkIdentityFile(); checkEmailLookupStatus(); }
+        if (tab.dataset.tab === 'access-log') loadAccessLog();
       });
     });
 
@@ -1339,6 +1394,8 @@ Let's go! 🚀`;
         if (snapshotsTabBtn) snapshotsTabBtn.style.display = '';
         const identityTabBtn = document.getElementById('tab-btn-identity');
         if (identityTabBtn) identityTabBtn.style.display = '';
+        const accessLogTabBtn = document.getElementById('tab-btn-access-log');
+        if (accessLogTabBtn) accessLogTabBtn.style.display = '';
       }
       // Hide owner-only tabs for managers
       if (role === 'manager') {
@@ -2055,6 +2112,107 @@ Let's go! 🚀`;
     }
 
     document.getElementById('al-btn-apply').addEventListener('click', loadActivityLog);
+
+    // ── Access Log Tab (identity_log.csv) ─────────────────────────────────────
+
+    let _accessLogRows = [];   // last-loaded rows, kept for export
+
+    const EVENT_COLORS = {
+      login_success:      { bg: '#e8f5e9', color: '#107c10', badge: '✅' },
+      login_attempt:      { bg: '#eff6ff', color: '#1d4ed8', badge: '🔐' },
+      identity_mismatch:  { bg: '#fef3c7', color: '#92400e', badge: '⚠️' },
+      identity_match:     { bg: '#e8f5e9', color: '#107c10', badge: '✅' },
+    };
+
+    async function loadAccessLog() {
+      const body = document.getElementById('access-log-body');
+      const summaryBar = document.getElementById('acl-summary-bar');
+      body.innerHTML = '<tr><td colspan="8" class="no-results">Loading…</td></tr>';
+      summaryBar.style.display = 'none';
+      try {
+        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/identity_log.csv');
+        if (!text || !text.trim()) {
+          body.innerHTML = '<tr><td colspan="8" class="no-results">No identity events logged yet — events are written on each rep login.</td></tr>';
+          return;
+        }
+        const rows = parseCSV(text);
+        _accessLogRows = rows;
+
+        const eventFilter = document.getElementById('acl-filter-event').value;
+        const repFilter   = document.getElementById('acl-filter-rep').value.toLowerCase().trim();
+        const startFilter = document.getElementById('acl-filter-start').value;
+        const endFilter   = document.getElementById('acl-filter-end').value;
+
+        const filtered = rows.filter(r => {
+          if (eventFilter && r.event_type !== eventFilter) return false;
+          if (repFilter && !(
+            (r.raw_identity      || '').toLowerCase().includes(repFilter) ||
+            (r.rep_display_name  || '').toLowerCase().includes(repFilter) ||
+            (r.resolved_identity || '').toLowerCase().includes(repFilter)
+          )) return false;
+          if (startFilter && (r.timestamp || '') < startFilter) return false;
+          if (endFilter   && (r.timestamp || '') > endFilter + 'T99') return false;
+          return true;
+        });
+
+        // Summary bar — highlight mismatch count
+        const mismatches = rows.filter(r => r.event_type === 'identity_mismatch').length;
+        if (mismatches > 0) {
+          summaryBar.style.display = 'block';
+          summaryBar.innerHTML = `⚠️ <strong>${mismatches}</strong> identity_mismatch event${mismatches !== 1 ? 's' : ''} in log — these reps signed in but had no matching assignments. Filter by "identity_mismatch" to investigate.`;
+        }
+
+        if (!filtered.length) {
+          body.innerHTML = '<tr><td colspan="8" class="no-results">No results match current filters</td></tr>';
+          return;
+        }
+
+        body.innerHTML = [...filtered].reverse().map(r => {
+          const ec = EVENT_COLORS[r.event_type] || {};
+          const eventBadge = ec.badge ? `${ec.badge} ` : '';
+          const rowStyle = ec.bg ? `background:${ec.bg};` : '';
+          const badgeStyle = ec.color ? `color:${ec.color};font-weight:700;` : '';
+
+          // Candidates: parse JSON array, show first few inline
+          let candidatesHtml = escHtml(r.candidate_identities || '');
+          try {
+            const arr = JSON.parse(r.candidate_identities || '[]');
+            if (arr.length > 0) {
+              const preview = arr.slice(0, 3).map(escHtml).join(', ');
+              const more = arr.length > 3 ? ` <span style="color:#9ca3af">+${arr.length - 3} more</span>` : '';
+              candidatesHtml = `<span title="${escHtml(arr.join(', '))}">${preview}${more}</span>`;
+            }
+          } catch(e) {}
+
+          const notesHtml = r.notes ? `<br><span style="color:#6b7280;font-size:11px;">${escHtml(r.notes)}</span>` : '';
+
+          return `<tr style="${rowStyle}">
+            <td style="font-size:11px;white-space:nowrap;">${escHtml((r.timestamp||'').replace('T',' ').slice(0,19))}</td>
+            <td><span style="${badgeStyle}">${eventBadge}${escHtml(r.event_type||'')}</span></td>
+            <td>${escHtml(r.rep_display_name||'')}</td>
+            <td style="font-size:11px;word-break:break-all;">${escHtml(r.raw_identity||'')}</td>
+            <td style="font-size:11px;word-break:break-all;">${escHtml(r.resolved_identity||'—')}</td>
+            <td><code style="font-size:11px;">${escHtml(r.match_type||'—')}</code></td>
+            <td style="text-align:center;">${escHtml(r.assignment_count||'0')}</td>
+            <td>${candidatesHtml}${notesHtml}</td>
+          </tr>`;
+        }).join('');
+      } catch(e) {
+        body.innerHTML = `<tr><td colspan="8" class="no-results">Error loading identity log: ${escHtml(e.message)}</td></tr>`;
+      }
+    }
+
+    function exportAccessLog() {
+      if (!_accessLogRows.length) { alert('Load the log first.'); return; }
+      const headers = ['timestamp','event_type','rep_display_name','raw_identity','resolved_identity','match_type','candidate_identities','assignment_count','notes'];
+      const csv = [headers.join(','),
+        ..._accessLogRows.map(r => headers.map(h => '"' + String(r[h]||'').replace(/"/g,'""') + '"').join(','))
+      ].join('\n');
+      const a = document.createElement('a');
+      a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+      a.download = 'identity_log_' + new Date().toISOString().slice(0,10) + '.csv';
+      a.click();
+    }
 
     // ── Snapshot Tab ──────────────────────────────────────────────────────────────
 

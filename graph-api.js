@@ -304,6 +304,62 @@ async function logActivity(user, actionType, detail) {
   }
 }
 
+// ─── Section 3b: Identity Event Logging ──────────────────────────────────
+// Separate CSV from activity_log. Records every login attempt, identity
+// resolution result, and assignment mismatch. Always fire-and-forget.
+//
+// Schema: identity_log.csv
+//   timestamp          ISO-8601
+//   event_type         login_attempt | login_success | identity_mismatch | identity_match
+//   rep_display_name   Display name from token/Graph
+//   raw_identity       The email/UPN directly from the MSAL token
+//   resolved_identity  The email that actually matched an assignment row (or '' if none)
+//   match_type         OID | identity_map | fallback | none
+//   candidate_identities  JSON array of all emails checked during resolution
+//   assignment_count   Number of assignment rows matched
+//   notes              Optional free-text debug info
+
+const IDENTITY_LOG_HEADERS = [
+  'timestamp', 'event_type', 'rep_display_name', 'raw_identity',
+  'resolved_identity', 'match_type', 'candidate_identities',
+  'assignment_count', 'notes',
+];
+const IDENTITY_LOG_PATH = SP_ROOT + '/identity_log.csv';
+
+async function logIdentityEvent({
+  eventType       = '',
+  repDisplayName  = '',
+  rawIdentity     = '',
+  resolvedIdentity = '',
+  matchType       = '',
+  candidates      = [],
+  assignmentCount = '',
+  notes           = '',
+} = {}) {
+  try {
+    const row = [
+      new Date().toISOString(),
+      eventType,
+      repDisplayName,
+      rawIdentity,
+      resolvedIdentity,
+      matchType,
+      Array.isArray(candidates) ? JSON.stringify(candidates) : String(candidates),
+      assignmentCount != null ? String(assignmentCount) : '',
+      notes,
+    ].map(v => csvEscape(String(v))).join(',');
+
+    let existing = '';
+    try { existing = await getFileText(IDENTITY_LOG_PATH) || ''; } catch(e) {}
+    const csv = existing.trim()
+      ? existing.trimEnd() + '\n' + row
+      : IDENTITY_LOG_HEADERS.join(',') + '\n' + row;
+    await putFile(IDENTITY_LOG_PATH, csv, 'text/csv');
+  } catch(e) {
+    console.warn('[IdentityLog] logIdentityEvent failed (non-blocking):', e.message);
+  }
+}
+
 
 
 
@@ -599,7 +655,7 @@ async function getAllAssignedReps() {
   return Object.values(map);
 }
 
-async function getPlayAssignments(repEmail) {
+async function getPlayAssignments(repEmail, meta = null) {
   const text = await getFileText(SP_ROOT + "/assignments.json");
   if (!text) return [];
   const data = JSON.parse(text);
@@ -614,11 +670,16 @@ async function getPlayAssignments(repEmail) {
     const byOid = list.filter(a => a.rep_oid && a.rep_oid === user.oid);
     if (byOid.length > 0) {
       console.log("[ChefSaaS] Matched " + byOid.length + " accounts via OID");
+      if (meta) {
+        meta.matchType        = 'OID';
+        meta.resolvedIdentity = emailLower;
+        meta.candidates       = [emailLower];
+      }
       return byOid;
     }
   }
 
-  // Tier 2: resolve via identity map aliases
+  // Tier 2: resolve via rep-identity.json alias overrides
   try {
     const repEntry = await resolveRepByEmail(emailLower);
     if (repEntry) {
@@ -629,6 +690,11 @@ async function getPlayAssignments(repEmail) {
       );
       if (byAlias.length > 0) {
         console.log("[ChefSaaS] Matched " + byAlias.length + " accounts via identity map for " + repEntry.display_name);
+        if (meta) {
+          meta.matchType        = 'identity_map';
+          meta.resolvedIdentity = aliases[0] || emailLower;
+          meta.candidates       = aliases;
+        }
         return byAlias;
       }
     }
@@ -636,7 +702,8 @@ async function getPlayAssignments(repEmail) {
     console.warn("[ChefSaaS] Identity map lookup failed, falling back:", e.message);
   }
 
-  // Tier 3: direct match using enriched candidate set (token + Graph /me + identity map + STATIC_ALIASES)
+  // Tier 3: direct match using enriched candidate set
+  // (token claims + Graph /me + email-lookup.json + STATIC_ALIASES)
   const allCandidates = await getEmailCandidates(emailLower);
 
   const matched = list.filter(a => {
@@ -644,6 +711,28 @@ async function getPlayAssignments(repEmail) {
     const repEmail  = (a.rep_email    || '').toLowerCase().trim();
     return [...allCandidates].some(e => e === repLogin || e === repEmail);
   });
+
+  if (meta) {
+    // Did any candidate come from email-lookup.json? (→ identity_map) or only from
+    // STATIC_ALIASES / token? (→ fallback)
+    const lookupHit = [...allCandidates].some(c => _lookupRepEntry(c) !== null);
+    meta.matchType = matched.length > 0 ? (lookupHit ? 'identity_map' : 'fallback') : 'none';
+
+    if (matched.length > 0) {
+      // Identify the specific candidate email that hit a row
+      const assignedEmails = new Set(
+        list.flatMap(a => [
+          (a.rep_sso_login || '').toLowerCase().trim(),
+          (a.rep_email     || '').toLowerCase().trim(),
+        ].filter(Boolean))
+      );
+      meta.resolvedIdentity = [...allCandidates].find(c => assignedEmails.has(c)) || emailLower;
+    } else {
+      meta.resolvedIdentity = null;
+    }
+    meta.candidates = [...allCandidates];
+  }
+
   console.log('[ChefSaaS] Candidates:', [...allCandidates], '→', matched.length, 'accounts');
   return matched;
 }

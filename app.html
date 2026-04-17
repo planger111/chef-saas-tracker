@@ -435,12 +435,13 @@
     }
 
     // Try play_assignments first (v2); fall back to target_accounts (v1)
-    async function loadRepAccounts(email, name) {
+    async function loadRepAccounts(email, name, meta) {
       try {
-        const assignments = await getPlayAssignments(email);
+        const assignments = await getPlayAssignments(email, meta || null);
         if (assignments && assignments.length > 0) return assignments;
       } catch (e) {
         console.warn('getPlayAssignments failed, falling back to target_accounts:', e);
+        if (meta) meta.matchType = 'fallback';
       }
       return getRepAccounts(email, name);
     }
@@ -604,14 +605,26 @@
         const email = currentUser.email;
         const name  = currentUser.name;
 
+        // Log the login attempt immediately (fire-and-forget) — captures raw token identity
+        // before any resolution happens so we always have a baseline record.
+        logIdentityEvent({
+          eventType:      'login_attempt',
+          repDisplayName: name,
+          rawIdentity:    email,
+          notes: 'token candidates: ' + (currentUser.emails || [email]).join(', '),
+        }).catch(() => {});
+
         // Warm the Graph /me profile cache and email-lookup table in parallel — non-blocking,
         // ensures both are cached before getEmailCandidates() runs during assignment matching.
         fetchGraphUserProfile().catch(() => {});
         loadEmailLookup().catch(() => {});
 
+        // Capture identity resolution metadata alongside the account fetch.
+        const identMeta = {};
+
         // Fetch accounts + plays in parallel; fetch logs once after (avoids double CSV download)
         const [accounts, plays] = await Promise.all([
-          loadRepAccounts(email, name),
+          loadRepAccounts(email, name, identMeta),
           getPlays()
         ]);
 
@@ -648,6 +661,17 @@
           await showDemoMode();
           if (currentUser.oid) registerOID(currentUser.username, currentUser.oid).catch(() => {});
           logActivity(currentUser, 'login', 'dashboard').catch(() => {});
+          // Identity mismatch — signed in but no assignments found
+          logIdentityEvent({
+            eventType:        'identity_mismatch',
+            repDisplayName:   name,
+            rawIdentity:      email,
+            resolvedIdentity: identMeta.resolvedIdentity || '',
+            matchType:        identMeta.matchType        || 'none',
+            candidates:       identMeta.candidates       || [],
+            assignmentCount:  0,
+            notes: 'No assignment rows matched any candidate identity',
+          }).catch(() => {});
           return;
         }
 
@@ -690,6 +714,17 @@
         }
         // Background: log this login event (non-blocking)
         logActivity(currentUser, 'login', 'dashboard').catch(() => {});
+        // Identity resolution success — log full details
+        logIdentityEvent({
+          eventType:        'login_success',
+          repDisplayName:   name,
+          rawIdentity:      email,
+          resolvedIdentity: identMeta.resolvedIdentity || email,
+          matchType:        identMeta.matchType        || 'fallback',
+          candidates:       identMeta.candidates       || [],
+          assignmentCount:  repAccounts.length,
+          notes: '',
+        }).catch(() => {});
 
         // Show login greeting with staleness check (non-blocking)
         try { showLoginGreeting(currentUser, allPlays, repAccounts); } catch(e) {}
