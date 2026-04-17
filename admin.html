@@ -71,6 +71,19 @@
     }
     #poll-dot { width: 7px; height: 7px; border-radius: 50%; background: #9ca3af; transition: background 0.4s; }
     #poll-dot.active { background: #22c55e; }
+
+    /* ── Rep picker typeahead dropdown ────────────────────────────── */
+    .rp-item {
+      padding: 9px 12px; cursor: pointer; font-size: 13px;
+      border-bottom: 1px solid #f3f4f6; line-height: 1.35;
+      transition: background 0.1s;
+    }
+    .rp-item:last-child { border-bottom: none; }
+    .rp-item:hover, .rp-item.rp-active { background: #e8f0fe; }
+    .rp-item .rp-name { font-weight: 600; color: #1a1a1a; }
+    .rp-item .rp-email { color: #6b7280; font-size: 12px; }
+    .rp-item .rp-hl { background: #fef08a; border-radius: 2px; padding: 0 1px; }
+    .rp-empty { padding: 12px; text-align: center; color: #aaa; font-size: 13px; }
   </style>
 </head>
 <body>
@@ -754,9 +767,19 @@
           </div>
 
           <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Reassign to Rep</label>
-          <select id="corr-rep-picker" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;margin-bottom:14px;">
-            <option value="">Loading reps…</option>
-          </select>
+          <!-- Typeahead rep picker — replaces plain <select> -->
+          <div id="corr-rep-combobox" style="position:relative;margin-bottom:14px;">
+            <input id="corr-rep-search" type="text" autocomplete="off"
+              placeholder="Type name or email to search…"
+              style="width:100%;padding:8px 36px 8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;box-sizing:border-box;outline:none;"
+              oninput="_rpRender()" onkeydown="_rpKeydown(event)" onfocus="_rpOpen()">
+            <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#aaa;font-size:14px;pointer-events:none;">▾</span>
+            <div id="corr-rep-dropdown"
+              style="display:none;position:absolute;left:0;right:0;top:calc(100% + 2px);background:#fff;border:1px solid #d1d5db;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.13);max-height:220px;overflow-y:auto;z-index:10001;"></div>
+            <!-- hidden fields carry the selected canonical values -->
+            <input type="hidden" id="corr-rep-value">
+            <input type="hidden" id="corr-rep-name">
+          </div>
 
           <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Notes (optional)</label>
           <input id="corr-notes" type="text" placeholder="e.g. corrected upload error" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;margin-bottom:18px;box-sizing:border-box;">
@@ -1431,18 +1454,143 @@
     // ── Assignment Correction Modal ───────────────────────────────────────────
     let _correctionTarget = null;
 
+    // ── Rep Picker Typeahead ──────────────────────────────────────────────────
+    // Lightweight combobox — no external library.
+    // Data source: email-lookup.json (authoritative, 93 reps with name + email + UPN)
+    //              falls back to getAllAssignedReps() if lookup unavailable.
+    // State is module-level so keydown/click handlers can share it.
+
+    let _rpOpts    = [];   // [{ email, name, upn }] — full list
+    let _rpFiltered = [];  // current filtered subset
+    let _rpCursor  = -1;   // keyboard-highlighted index into _rpFiltered
+
     async function _loadRepPickerOptions() {
       try {
         const lookup = await loadEmailLookup();
         if (lookup && lookup.length > 0) {
-          return lookup
-            .map(r => ({ email: (r.primary_email || r.upn || '').toLowerCase().trim(), name: r.name || r.primary_email || '' }))
-            .filter(r => r.email);
+          return lookup.map(r => ({
+            email: (r.primary_email || '').toLowerCase().trim(),
+            name:  r.name || r.primary_email || '',
+            upn:   (r.upn || '').toLowerCase().trim(),
+          })).filter(r => r.email);
         }
       } catch(e) {}
       const reps = await getAllAssignedReps();
-      return reps.map(r => ({ email: r.email, name: r.repName || r.email }));
+      return reps.map(r => ({ email: r.email, name: r.repName || r.email, upn: '' }));
     }
+
+    function _rpHighlight(text, query) {
+      if (!query) return escHtml(text);
+      const idx = text.toLowerCase().indexOf(query.toLowerCase());
+      if (idx === -1) return escHtml(text);
+      return escHtml(text.slice(0, idx))
+           + `<span class="rp-hl">${escHtml(text.slice(idx, idx + query.length))}</span>`
+           + escHtml(text.slice(idx + query.length));
+    }
+
+    function _rpRender() {
+      const query = (document.getElementById('corr-rep-search').value || '').trim().toLowerCase();
+      const dd    = document.getElementById('corr-rep-dropdown');
+      _rpCursor   = -1;
+
+      if (!_rpOpts.length) {
+        dd.innerHTML = '<div class="rp-empty">Loading reps…</div>';
+        dd.style.display = 'block';
+        return;
+      }
+
+      _rpFiltered = query
+        ? _rpOpts.filter(r =>
+            r.name.toLowerCase().includes(query)  ||
+            r.email.toLowerCase().includes(query) ||
+            (r.upn && r.upn.includes(query)))
+        : _rpOpts;
+
+      if (_rpFiltered.length === 0) {
+        dd.innerHTML = '<div class="rp-empty">No matches found</div>';
+        dd.style.display = 'block';
+        return;
+      }
+
+      dd.innerHTML = _rpFiltered.map((r, i) =>
+        `<div class="rp-item" data-idx="${i}" onmousedown="_rpSelect(${i})">
+           <div class="rp-name">${_rpHighlight(r.name, query)}</div>
+           <div class="rp-email">${_rpHighlight(r.email, query)}</div>
+         </div>`
+      ).join('');
+      dd.style.display = 'block';
+    }
+
+    function _rpOpen() {
+      _rpRender();
+    }
+
+    function _rpSelect(idx) {
+      const rep = _rpFiltered[idx];
+      if (!rep) return;
+      document.getElementById('corr-rep-search').value = `${rep.name}  —  ${rep.email}`;
+      document.getElementById('corr-rep-value').value  = rep.email;
+      document.getElementById('corr-rep-name').value   = rep.name;
+      document.getElementById('corr-rep-dropdown').style.display = 'none';
+      _rpCursor = -1;
+    }
+
+    function _rpKeydown(e) {
+      const dd = document.getElementById('corr-rep-dropdown');
+      const items = dd.querySelectorAll('.rp-item');
+      if (dd.style.display === 'none' && e.key !== 'Escape') { _rpRender(); return; }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        _rpCursor = Math.min(_rpCursor + 1, items.length - 1);
+        items.forEach((el, i) => el.classList.toggle('rp-active', i === _rpCursor));
+        if (_rpCursor >= 0) items[_rpCursor].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        _rpCursor = Math.max(_rpCursor - 1, 0);
+        items.forEach((el, i) => el.classList.toggle('rp-active', i === _rpCursor));
+        if (_rpCursor >= 0) items[_rpCursor].scrollIntoView({ block: 'nearest' });
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (_rpCursor >= 0 && _rpFiltered[_rpCursor]) _rpSelect(_rpCursor);
+      } else if (e.key === 'Escape') {
+        dd.style.display = 'none';
+        _rpCursor = -1;
+      }
+    }
+
+    function _rpInit(opts, currentEmail) {
+      _rpOpts     = opts;
+      _rpFiltered = opts;
+      _rpCursor   = -1;
+      // Pre-fill with current rep
+      const current = opts.find(r => r.email === currentEmail);
+      const searchEl = document.getElementById('corr-rep-search');
+      const valueEl  = document.getElementById('corr-rep-value');
+      const nameEl   = document.getElementById('corr-rep-name');
+      if (current) {
+        searchEl.value = `${current.name}  —  ${current.email}`;
+        valueEl.value  = current.email;
+        nameEl.value   = current.name;
+      } else if (currentEmail) {
+        searchEl.value = currentEmail;
+        valueEl.value  = currentEmail;
+        nameEl.value   = currentEmail;
+      } else {
+        searchEl.value = '';
+        valueEl.value  = '';
+        nameEl.value   = '';
+      }
+      document.getElementById('corr-rep-dropdown').style.display = 'none';
+    }
+
+    // Close dropdown when clicking outside the combobox
+    document.addEventListener('mousedown', e => {
+      const box = document.getElementById('corr-rep-combobox');
+      if (box && !box.contains(e.target)) {
+        const dd = document.getElementById('corr-rep-dropdown');
+        if (dd) dd.style.display = 'none';
+      }
+    });
 
     async function openCorrectionModal(rowIdx) {
       const a = _filteredRows[rowIdx];
@@ -1460,21 +1608,21 @@
       document.getElementById('corr-btn-deactivate').style.display = isInactive ? 'none' : '';
       document.getElementById('corr-btn-reactivate').style.display = isInactive ? '' : 'none';
       document.getElementById('corr-btn-save').disabled = false;
-      // Load rep picker async
-      const sel = document.getElementById('corr-rep-picker');
-      sel.innerHTML = '<option value="">Loading reps…</option>';
+
+      // Reset picker to loading state, show modal
+      const currentEmail = (a.rep_sso_login || a.rep_email || '').toLowerCase().trim();
+      _rpInit([], currentEmail);
       document.getElementById('correction-modal').style.display = 'flex';
+      // Auto-focus search input
+      setTimeout(() => document.getElementById('corr-rep-search')?.focus(), 80);
+
+      // Load options async then re-init with real data
       try {
         const opts = await _loadRepPickerOptions();
-        const currentEmail = (a.rep_sso_login || a.rep_email || '').toLowerCase().trim();
-        sel.innerHTML = opts.map(r =>
-          `<option value="${escHtml(r.email)}"${r.email === currentEmail ? ' selected' : ''}>${escHtml(r.name)} &lt;${escHtml(r.email)}&gt;</option>`
-        ).join('');
-        if (!sel.value) {
-          sel.insertAdjacentHTML('afterbegin', `<option value="${escHtml(currentEmail)}" selected>${escHtml(currentEmail)} (current)</option>`);
-        }
+        _rpInit(opts, currentEmail);
       } catch(e) {
-        sel.innerHTML = `<option value="${escHtml((a.rep_sso_login||a.rep_email||''))}">${escHtml(a.rep_sso_login||a.rep_email||'(unknown)')}</option>`;
+        // leave picker with just the current rep pre-filled
+        _rpInit([{ email: currentEmail, name: currentEmail, upn: '' }], currentEmail);
       }
     }
 
@@ -1486,15 +1634,14 @@
     async function saveReassignment() {
       const a = _correctionTarget;
       if (!a) return;
-      const sel      = document.getElementById('corr-rep-picker');
-      const newEmail = (sel.value || '').trim().toLowerCase();
-      const notes    = document.getElementById('corr-notes').value.trim();
-      const msgEl    = document.getElementById('corr-msg');
-      const saveBtn  = document.getElementById('corr-btn-save');
-      if (!newEmail) { msgEl.textContent = 'Please select a rep.'; return; }
+      const newEmail   = (document.getElementById('corr-rep-value').value || '').trim().toLowerCase();
+      const newRepName = (document.getElementById('corr-rep-name').value  || '').trim();
+      const notes      = document.getElementById('corr-notes').value.trim();
+      const msgEl      = document.getElementById('corr-msg');
+      const saveBtn    = document.getElementById('corr-btn-save');
+      if (!newEmail) { msgEl.textContent = 'Please select a rep from the list.'; return; }
       const oldEmail = (a.rep_sso_login || a.rep_email || '').toLowerCase().trim();
       if (newEmail === oldEmail) { msgEl.textContent = 'No change — same rep selected.'; return; }
-      const newRepName = (sel.options[sel.selectedIndex]?.text || newEmail).split('<')[0].trim();
       saveBtn.disabled = true; msgEl.textContent = 'Saving…'; msgEl.style.color = '#555';
       try {
         const admin = getCurrentUser ? getCurrentUser() : {};
