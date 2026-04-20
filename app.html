@@ -284,10 +284,14 @@
         </div>
 
         <!-- Always shown on step 2 -->
+        <div class="form-group" id="call-date-field-group">
+          <label class="form-label">Date of call / meeting <span style="font-weight:400;color:#888;">(optional)</span></label>
+          <input type="date" class="form-control" id="field-call-date" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;">
+        </div>
         <div class="form-group" id="notes-field-group">
           <label class="form-label">Notes <span style="font-weight:400;color:#888;">(optional)</span></label>
-          <textarea class="form-control" id="field-notes" rows="3" maxlength="120" placeholder="Any additional context…" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;resize:vertical;"></textarea>
-          <div id="notes-char-counter" style="font-size:12px;color:#6b7280;margin-top:4px;text-align:right;">0 / 120 characters</div>
+          <textarea class="form-control" id="field-notes" rows="3" maxlength="500" placeholder="Any additional context…" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;resize:vertical;"></textarea>
+          <div id="notes-char-counter" style="font-size:12px;color:#6b7280;margin-top:4px;text-align:right;">0 / 500 characters</div>
         </div>
 
         <!-- Custom questions (populated per-play from play.questions.custom) -->
@@ -1209,7 +1213,9 @@
       const notesEl = document.getElementById('field-notes');
       if (notesEl) notesEl.value = '';
       const counter = document.getElementById('notes-char-counter');
-      if (counter) counter.textContent = '0 / 120 characters';
+      if (counter) counter.textContent = '0 / 500 characters';
+      const dateEl = document.getElementById('field-call-date');
+      if (dateEl) dateEl.value = '';
 
       goToLogStep(1);
       showScreen('screen-log-form');
@@ -1403,6 +1409,7 @@
           next_step_type:   outcome === 'Interested' ? nextStepType : '',
           timing:           timingVal,
           notes:            document.getElementById('field-notes')?.value || '',
+          call_date:        document.getElementById('field-call-date')?.value || '',
           extra_json:       collectCustomAnswers(),
         };
 
@@ -1725,7 +1732,7 @@
     document.getElementById('btn-submit-engagement').addEventListener('click', submitEngagement);
     document.getElementById('field-notes').addEventListener('input', function() {
       const counter = document.getElementById('notes-char-counter');
-      if (counter) counter.textContent = this.value.length + ' / 120 characters';
+      if (counter) counter.textContent = this.value.length + ' / 500 characters';
     });
 
     // ─────────────────────────────────────────────

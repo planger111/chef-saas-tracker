@@ -970,7 +970,7 @@ function calculatePoints(outcome, nextStepType, data) {
 
 // ─── CSV helpers ──────────────────────────────────────────────────────────
 
-const CSV_HEADERS = ["id","submitted_at","play_id","play_name","account_id","account_name","rep_email","rep_name","interaction_type","outcome","reason_label","reason_code","next_step_type","timing","contact_level","notes","points_earned"];
+const CSV_HEADERS = ["id","submitted_at","play_id","play_name","account_id","account_name","rep_email","rep_name","interaction_type","outcome","reason_label","reason_code","next_step_type","timing","contact_level","notes","call_date","points_earned"];
 
 function csvEscape(val) {
   val = val !== undefined && val !== null ? String(val) : "";
