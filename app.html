@@ -416,6 +416,7 @@
     let activeFilter   = 'all'; // 'all' | 'not-started' | 'interested' | 'not-interested'
     let currentStep    = 1;     // current step in log form wizard (1|2)
     let _dashboardReady = false; // true once dashboard play cards are rendered
+    let _selectedLbPlay = null;  // currently selected play for leaderboard
     const _responseOptionsCache = {};  // keyed by response_set_id
 
     // ─────────────────────────────────────────────
@@ -706,9 +707,10 @@
         // Always render the dashboard first — user must click a play to drill in
         renderPlayCards();
 
-        // Render leaderboard peek
-        const lbData = await getLeaderboard();
-        renderLeaderboardPeek(lbData);
+        // Render leaderboard peek (per-play)
+        _selectedLbPlay = allPlays.length > 0 ? allPlays[0].play_id : null;
+        const lbData = await getLeaderboard(_selectedLbPlay);
+        renderLeaderboardPeek(lbData, allPlays, _selectedLbPlay);
 
         showScreen('screen-dashboard');
 
@@ -927,10 +929,25 @@
     // ─────────────────────────────────────────────
     // LEADERBOARD PEEK
     // ─────────────────────────────────────────────
-    function renderLeaderboardPeek(data) {
+    function renderLeaderboardPeek(data, plays, selectedPlayId) {
       const container = document.getElementById('dashboard-leaderboard-peek');
+
+      // Play selector (only shows rep's assigned plays)
+      const playOpts = (plays || allPlays).map(p =>
+        `<option value="${p.play_id}" ${p.play_id === selectedPlayId ? 'selected' : ''}>${p.play_name || p.play_id}</option>`
+      ).join('');
+      const picker = `<select id="lb-peek-play-picker" style="width:100%;padding:6px 8px;font-size:13px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:8px;background:#f9fafb;">${playOpts}</select>`;
+
       if (!data || !data.length) {
-        container.innerHTML = '<div style="text-align:center;color:#999;padding:12px;">No data yet.</div>';
+        container.innerHTML = `
+          <div class="lb-peek-header">
+            <span class="lb-peek-title">Top Reps</span>
+            <a href="#" id="view-full-leaderboard" class="lb-peek-link">Full leaderboard →</a>
+          </div>
+          ${picker}
+          <div style="text-align:center;color:#999;padding:12px;">No data yet for this play.</div>
+        `;
+        _wireLbPeekEvents();
         return;
       }
 
@@ -964,13 +981,29 @@
           <span class="lb-peek-title">Top Reps</span>
           <a href="#" id="view-full-leaderboard" class="lb-peek-link">Full leaderboard →</a>
         </div>
+        ${picker}
         ${rows}
       `;
 
-      document.getElementById('view-full-leaderboard').addEventListener('click', e => {
-        e.preventDefault();
-        loadLeaderboard();
-      });
+      _wireLbPeekEvents();
+    }
+
+    function _wireLbPeekEvents() {
+      const pickerEl = document.getElementById('lb-peek-play-picker');
+      if (pickerEl) {
+        pickerEl.addEventListener('change', async function() {
+          _selectedLbPlay = this.value;
+          const lbData = await getLeaderboard(_selectedLbPlay);
+          renderLeaderboardPeek(lbData, allPlays, _selectedLbPlay);
+        });
+      }
+      const fullLink = document.getElementById('view-full-leaderboard');
+      if (fullLink) {
+        fullLink.addEventListener('click', e => {
+          e.preventDefault();
+          loadLeaderboard(_selectedLbPlay);
+        });
+      }
     }
 
     // ─────────────────────────────────────────────
@@ -1573,16 +1606,18 @@
     // ─────────────────────────────────────────────
     // LEADERBOARD (full)
     // ─────────────────────────────────────────────
-    async function loadLeaderboard() {
+    async function loadLeaderboard(playId) {
       showScreen('screen-loading');
       try {
-        const [data, allReps] = await Promise.all([getLeaderboard(), getAllAssignedReps()]);
-        // Pad in reps who are assigned but have never submitted
+        const pid = playId || _selectedLbPlay || (allPlays.length > 0 ? allPlays[0].play_id : null);
+        _selectedLbPlay = pid;
+        const [data, playReps] = await Promise.all([getLeaderboard(pid), pid ? getRepsForPlay(pid) : getAllAssignedReps()]);
+        // Pad in reps assigned to this play who have never submitted
         const seen = new Set((data || []).map(e => e.email.toLowerCase()));
-        const unstarted = allReps
+        const unstarted = playReps
           .filter(r => !seen.has(r.email.toLowerCase()))
           .map(r => ({ email: r.email, repName: r.repName, totalPoints: 0, completedAccounts: 0 }));
-        renderFullLeaderboard([...(data || []), ...unstarted]);
+        renderFullLeaderboard([...(data || []), ...unstarted], pid);
         showScreen('screen-leaderboard');
       } catch (err) {
         console.error('Leaderboard load error:', err);
@@ -1590,10 +1625,18 @@
       }
     }
 
-    function renderFullLeaderboard(data) {
+    function renderFullLeaderboard(data, selectedPlayId) {
       const container = document.getElementById('leaderboard-list');
+
+      // Play selector (only rep's assigned plays)
+      const playOpts = allPlays.map(p =>
+        `<option value="${p.play_id}" ${p.play_id === selectedPlayId ? 'selected' : ''}>${p.play_name || p.play_id}</option>`
+      ).join('');
+      const picker = `<select id="lb-full-play-picker" style="width:100%;padding:10px;font-size:14px;border:1px solid #d1d5db;border-radius:8px;margin-bottom:16px;background:#f9fafb;">${playOpts}</select>`;
+
       if (!data || !data.length) {
-        container.innerHTML = '<div style="text-align:center;color:#999;padding:24px;">No data yet.</div>';
+        container.innerHTML = picker + '<div style="text-align:center;color:#999;padding:24px;">No data yet for this play.</div>';
+        _wireLbFullPickerEvent();
         return;
       }
 
@@ -1624,7 +1667,17 @@
         `;
       }).join('');
 
-      container.innerHTML = html;
+      container.innerHTML = picker + html;
+      _wireLbFullPickerEvent();
+    }
+
+    function _wireLbFullPickerEvent() {
+      const el = document.getElementById('lb-full-play-picker');
+      if (el) {
+        el.addEventListener('change', function() {
+          loadLeaderboard(this.value);
+        });
+      }
     }
 
     // ─────────────────────────────────────────────

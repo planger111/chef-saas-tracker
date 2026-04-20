@@ -1062,13 +1062,19 @@ async function getRepPoints(repEmail) {
   return logs.reduce((sum, l) => sum + (Number(l.points_earned) || 0), 0);
 }
 
-async function getLeaderboard() {
+async function getLeaderboard(playId) {
   try {
-    const plays = await getPlays();
+    let playIds;
+    if (playId) {
+      playIds = [playId];
+    } else {
+      const plays = await getPlays();
+      playIds = plays.map(p => p.play_id);
+    }
     const repMap = {};
-    for (const play of plays) {
-      const playId = play.play_id.replace(/[^a-z0-9]/gi, "_");
-      const text = await getFileText(SP_ROOT + "/" + playId + "_engagements.csv");
+    for (const pid of playIds) {
+      const safePid = pid.replace(/[^a-z0-9]/gi, "_");
+      const text = await getFileText(SP_ROOT + "/" + safePid + "_engagements.csv");
       if (!text) continue;
       parseCSV(text).forEach(log => {
         const key = log.rep_email; if (!key) return;
@@ -1080,6 +1086,20 @@ async function getLeaderboard() {
     return Object.values(repMap).map(r => ({ ...r, completedAccounts: r.engagedAccounts.size, engagedAccounts: r.engagedAccounts.size, interestedAccounts: r.interestedAccounts.size }))
                                 .sort((a, b) => b.totalPoints - a.totalPoints);
   } catch(e) { return []; }
+}
+
+async function getRepsForPlay(playId) {
+  const text = await getFileText(SP_ROOT + "/assignments.json");
+  if (!text) return [];
+  const data = JSON.parse(text);
+  const map = {};
+  (data.assignments || [])
+    .filter(a => a.active_flag !== false && a.play_id === playId)
+    .forEach(a => {
+      const email = (a.rep_sso_login || a.rep_email || '').toLowerCase();
+      if (email && !map[email]) map[email] = { email, repName: a.rep_name || email };
+    });
+  return Object.values(map);
 }
 
 // ─── All engagements (admin view) ────────────────────────────────────────────
