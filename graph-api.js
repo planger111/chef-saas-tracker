@@ -559,8 +559,8 @@ async function fetchGraphUserProfile() {
 //
 // Admin tools: clearEmailLookupCache() / refreshEmailLookup() (exposed globally).
 
-const EMAIL_LOOKUP_CACHE_KEY = 'chef_email_lookup_v2';
-const EMAIL_LOOKUP_TS_KEY    = 'chef_email_lookup_ts_v2';
+const EMAIL_LOOKUP_CACHE_KEY = 'chef_email_lookup_v1';
+const EMAIL_LOOKUP_TS_KEY    = 'chef_email_lookup_ts_v1';
 const EMAIL_LOOKUP_TTL_MS    = 24 * 60 * 60 * 1000; // 24 hours
 
 let _emailLookup    = null;  // null = not yet loaded; [] = loaded (possibly empty)

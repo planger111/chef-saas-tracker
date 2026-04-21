@@ -8,7 +8,7 @@ const CONFIG = {
   clientId: "48db2acc-9dfb-4337-9abb-302c9dfb88fc",
 
   // Your SharePoint site URL (e.g. https://progresssoftware.sharepoint.com/sites/SalesOps)
-  sharepointSiteUrl: "https://progresssoftware.sharepoint.com/sites/INFRASalesApps",
+  sharepointSiteUrl: "https://progresssoftware.sharepoint.com/sites/INFRASalesLeadership",
 
   // Leave these as-is
   graphBaseUrl: "https://graph.microsoft.com/v1.0",
