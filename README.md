@@ -9,7 +9,7 @@ A mobile-first web app for Progress INFRA Sales. Reps log account engagement out
 | Item | Value |
 |------|-------|
 | Azure AD App | `INFRA SalesPlay Tracker` (Client ID: `48db2acc-9dfb-4337-9abb-302c9dfb88fc`) |
-| SharePoint site | `https://progresssoftware.sharepoint.com/sites/INFRASalesLeadership` |
+| SharePoint site | `https://progresssoftware.sharepoint.com/sites/INFRASalesApps` |
 | Graph permission | `Sites.ReadWrite.All` (admin consent granted) |
 | GitHub repo | `planger111/chef-saas-tracker` (private) |
 | Demo (public) | https://planger111.github.io/chef-saas-demo/ |
