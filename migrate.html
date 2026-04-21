@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SharePoint Data Migration</title>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; background: #1a1a2e; color: #e0e0e0; }
+  h1 { color: #00d4aa; }
+  .step { background: #16213e; border-radius: 10px; padding: 16px; margin: 12px 0; border-left: 4px solid #444; }
+  .step.active { border-left-color: #f0c040; }
+  .step.done { border-left-color: #00d4aa; }
+  .step.error { border-left-color: #ff4444; }
+  button { background: #00d4aa; color: #1a1a2e; border: none; padding: 12px 24px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin: 8px 4px; }
+  button:disabled { background: #444; color: #888; cursor: not-allowed; }
+  button.danger { background: #ff4444; color: #fff; }
+  #log { background: #0d1117; border-radius: 8px; padding: 16px; margin-top: 16px; font-family: monospace; font-size: 13px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; }
+  .ok { color: #00d4aa; }
+  .warn { color: #f0c040; }
+  .err { color: #ff4444; }
+  .info { color: #58a6ff; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+  td, th { padding: 6px 10px; text-align: left; border-bottom: 1px solid #333; }
+  th { color: #00d4aa; }
+</style>
+</head>
+<body>
+
+<h1>🔄 SharePoint Data Migration</h1>
+<p>Copies all SalesPlay Tracker data from the old site to the new site via Microsoft Graph API.</p>
+
+<div class="step" id="step-auth">
+  <strong>Step 1:</strong> Sign in with your Progress account
+  <br><button onclick="doLogin()" id="btn-login">Sign In</button>
+  <span id="auth-status"></span>
+</div>
+
+<div class="step" id="step-discover">
+  <strong>Step 2:</strong> Discover drives on both sites
+  <br><button onclick="discoverDrives()" id="btn-discover" disabled>Discover Drives</button>
+  <span id="discover-status"></span>
+</div>
+
+<div class="step" id="step-list">
+  <strong>Step 3:</strong> List all files on old site
+  <br><button onclick="listFiles()" id="btn-list" disabled>List Files</button>
+  <div id="file-list"></div>
+</div>
+
+<div class="step" id="step-copy">
+  <strong>Step 4:</strong> Copy all files to new site
+  <br><button onclick="copyAll()" id="btn-copy" disabled>Copy All Files</button>
+  <span id="copy-status"></span>
+</div>
+
+<div class="step" id="step-verify">
+  <strong>Step 5:</strong> Verify copy
+  <br><button onclick="verifyCopy()" id="btn-verify" disabled>Verify</button>
+  <div id="verify-result"></div>
+</div>
+
+<div id="log"></div>
+
+<script src="msal-browser.js"></script>
+<script>
+// ─── Config ──────────────────────────────────────────────────────────────────
+const OLD_SITE = "https://progresssoftware.sharepoint.com/sites/INFRASalesLeadership";
+const NEW_SITE = "https://progresssoftware.sharepoint.com/sites/INFRASalesApps";
+const SP_ROOT  = "Chef SaaS Tracker/ChefSaaS";
+const GRAPH    = "https://graph.microsoft.com/v1.0";
+
+const MSAL_CONFIG = {
+  auth: {
+    clientId: "48db2acc-9dfb-4337-9abb-302c9dfb88fc",
+    authority: "https://login.microsoftonline.com/db266a67-cbe0-4d26-ae1a-d0581fe03535",
+    redirectUri: window.location.origin,
+  }
+};
+const SCOPES = ["https://graph.microsoft.com/Sites.ReadWrite.All", "https://graph.microsoft.com/User.Read"];
+
+let msalApp, token;
+let oldDriveId, newDriveId;
+let filesToCopy = [];
+
+// ─── Logging ─────────────────────────────────────────────────────────────────
+function log(cls, msg) {
+  const el = document.getElementById('log');
+  const line = document.createElement('span');
+  line.className = cls;
+  line.textContent = msg + '\n';
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function setStep(id, state) {
+  document.getElementById(id).className = 'step ' + state;
+}
+
+// ─── Auth ────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  try {
+    msalApp = new msal.PublicClientApplication(MSAL_CONFIG);
+    await msalApp.initialize();
+    const resp = await msalApp.loginPopup({ scopes: SCOPES });
+    token = resp.accessToken;
+    document.getElementById('auth-status').textContent = ' ✅ Signed in as ' + resp.account.username;
+    setStep('step-auth', 'done');
+    document.getElementById('btn-discover').disabled = false;
+    log('ok', '✅ Authenticated as ' + resp.account.username);
+  } catch(e) {
+    log('err', '❌ Login failed: ' + e.message);
+    setStep('step-auth', 'error');
+  }
+}
+
+async function getToken() {
+  try {
+    const accounts = msalApp.getAllAccounts();
+    const resp = await msalApp.acquireTokenSilent({ scopes: SCOPES, account: accounts[0] });
+    token = resp.accessToken;
+  } catch(e) {
+    const resp = await msalApp.acquireTokenPopup({ scopes: SCOPES });
+    token = resp.accessToken;
+  }
+  return token;
+}
+
+// ─── Graph helpers ───────────────────────────────────────────────────────────
+async function graphGet(url) {
+  const t = await getToken();
+  const resp = await fetch(url.startsWith('http') ? url : GRAPH + url, {
+    headers: { Authorization: 'Bearer ' + t }
+  });
+  if (!resp.ok) throw new Error('Graph ' + resp.status + ': ' + (await resp.text()));
+  return resp.json();
+}
+
+async function graphGetText(url) {
+  const t = await getToken();
+  const resp = await fetch(url, { headers: { Authorization: 'Bearer ' + t } });
+  if (!resp.ok) return null;
+  return resp.text();
+}
+
+async function graphPut(url, body, contentType) {
+  const t = await getToken();
+  const resp = await fetch(url.startsWith('http') ? url : GRAPH + url, {
+    method: 'PUT',
+    headers: { Authorization: 'Bearer ' + t, 'Content-Type': contentType },
+    body: body
+  });
+  if (!resp.ok) throw new Error('Upload ' + resp.status + ': ' + (await resp.text()));
+  return resp.json();
+}
+
+async function getSiteId(siteUrl) {
+  const u = new URL(siteUrl);
+  const data = await graphGet('/sites/' + u.hostname + ':' + u.pathname);
+  return data.id;
+}
+
+async function getDriveId(siteId) {
+  const data = await graphGet('/sites/' + siteId + '/drive');
+  return data.id;
+}
+
+// ─── Step 2: Discover ────────────────────────────────────────────────────────
+async function discoverDrives() {
+  setStep('step-discover', 'active');
+  try {
+    log('info', '🔍 Looking up old site...');
+    const oldSiteId = await getSiteId(OLD_SITE);
+    oldDriveId = await getDriveId(oldSiteId);
+    log('ok', '  Old drive ID: ' + oldDriveId);
+
+    log('info', '🔍 Looking up new site...');
+    const newSiteId = await getSiteId(NEW_SITE);
+    newDriveId = await getDriveId(newSiteId);
+    log('ok', '  New drive ID: ' + newDriveId);
+
+    document.getElementById('discover-status').textContent = ' ✅ Both drives found';
+    setStep('step-discover', 'done');
+    document.getElementById('btn-list').disabled = false;
+  } catch(e) {
+    log('err', '❌ Drive discovery failed: ' + e.message);
+    setStep('step-discover', 'error');
+  }
+}
+
+// ─── Step 3: List files ──────────────────────────────────────────────────────
+async function listFilesRecursive(driveId, folderPath) {
+  const results = [];
+  try {
+    const data = await graphGet(GRAPH + '/drives/' + driveId + '/root:/' + encodeURIComponent(folderPath).replace(/%2F/g, '/') + ':/children');
+    for (const item of (data.value || [])) {
+      if (item.folder) {
+        const subFiles = await listFilesRecursive(driveId, folderPath + '/' + item.name);
+        results.push(...subFiles);
+      } else {
+        results.push({
+          name: item.name,
+          path: folderPath + '/' + item.name,
+          relativePath: (folderPath + '/' + item.name).replace(SP_ROOT + '/', ''),
+          size: item.size,
+          downloadUrl: item['@microsoft.graph.downloadUrl']
+        });
+      }
+    }
+  } catch(e) {
+    log('warn', '⚠️ Could not list ' + folderPath + ': ' + e.message);
+  }
+  return results;
+}
+
+async function listFiles() {
+  setStep('step-list', 'active');
+  log('info', '📂 Listing files in ' + SP_ROOT + ' on old site...');
+  try {
+    filesToCopy = await listFilesRecursive(oldDriveId, SP_ROOT);
+    log('ok', '  Found ' + filesToCopy.length + ' files');
+
+    let html = '<table><tr><th>File</th><th>Size</th></tr>';
+    for (const f of filesToCopy) {
+      const sizeKb = (f.size / 1024).toFixed(1);
+      html += '<tr><td>' + f.relativePath + '</td><td>' + sizeKb + ' KB</td></tr>';
+    }
+    html += '</table>';
+    document.getElementById('file-list').innerHTML = html;
+
+    setStep('step-list', 'done');
+    document.getElementById('btn-copy').disabled = false;
+  } catch(e) {
+    log('err', '❌ File listing failed: ' + e.message);
+    setStep('step-list', 'error');
+  }
+}
+
+// ─── Step 4: Copy ────────────────────────────────────────────────────────────
+async function copyAll() {
+  setStep('step-copy', 'active');
+  let copied = 0, failed = 0;
+  log('info', '📋 Starting copy of ' + filesToCopy.length + ' files...');
+
+  for (const f of filesToCopy) {
+    try {
+      // Download from old site
+      const content = await graphGetText(f.downloadUrl);
+      if (content === null) { log('warn', '  ⚠️ Could not download: ' + f.relativePath); failed++; continue; }
+
+      // Determine content type
+      const ct = f.name.endsWith('.json') ? 'application/json' : 'text/csv';
+
+      // Upload to new site at same path
+      const uploadUrl = GRAPH + '/drives/' + newDriveId + '/root:/' + f.path + ':/content';
+      await graphPut(uploadUrl, content, ct);
+
+      copied++;
+      log('ok', '  ✅ ' + f.relativePath + ' (' + (f.size / 1024).toFixed(1) + ' KB)');
+    } catch(e) {
+      failed++;
+      log('err', '  ❌ ' + f.relativePath + ': ' + e.message);
+    }
+  }
+
+  const status = copied + ' copied, ' + failed + ' failed';
+  document.getElementById('copy-status').textContent = ' ' + (failed === 0 ? '✅ ' : '⚠️ ') + status;
+  setStep('step-copy', failed === 0 ? 'done' : 'error');
+  document.getElementById('btn-verify').disabled = false;
+  log(failed === 0 ? 'ok' : 'warn', '📋 Copy complete: ' + status);
+}
+
+// ─── Step 5: Verify ─────────────────────────────────────────────────────────
+async function verifyCopy() {
+  setStep('step-verify', 'active');
+  log('info', '🔍 Verifying files on new site...');
+
+  const newFiles = await listFilesRecursive(newDriveId, SP_ROOT);
+  const newMap = {};
+  for (const f of newFiles) newMap[f.relativePath] = f.size;
+
+  let html = '<table><tr><th>File</th><th>Old Size</th><th>New Size</th><th>Status</th></tr>';
+  let allGood = true;
+
+  for (const f of filesToCopy) {
+    const newSize = newMap[f.relativePath];
+    const match = newSize !== undefined;
+    if (!match) allGood = false;
+    html += '<tr><td>' + f.relativePath + '</td><td>' + (f.size/1024).toFixed(1) + ' KB</td><td>' +
+      (match ? (newSize/1024).toFixed(1) + ' KB' : '—') + '</td><td>' +
+      (match ? '✅' : '❌ MISSING') + '</td></tr>';
+  }
+  html += '</table>';
+  document.getElementById('verify-result').innerHTML = html;
+
+  if (allGood) {
+    log('ok', '✅ All ' + filesToCopy.length + ' files verified on new site!');
+    log('ok', '');
+    log('ok', '🎉 Migration complete. Safe to update config.js and deploy.');
+  } else {
+    log('err', '❌ Some files are missing on the new site. Re-run copy or investigate.');
+  }
+  setStep('step-verify', allGood ? 'done' : 'error');
+}
+</script>
+</body>
+</html>
