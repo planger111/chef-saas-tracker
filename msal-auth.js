@@ -1,7 +1,22 @@
-// INFRA SalesPlay Tracker — MSAL Authentication (popup flow)
+// INFRA SalesPlay Tracker — MSAL Authentication (popup with redirect fallback)
 
 let _msalInstance = null;
 let _account = null;
+
+// Detect contexts where popups are blocked (Teams in-app browser, iframes, webviews)
+function _useRedirectFlow() {
+  try {
+    // Running inside an iframe
+    if (window !== window.parent) return true;
+    // Teams in-app browser injects a "Teams" user-agent token
+    if (/Teams/i.test(navigator.userAgent)) return true;
+    // Generic webview indicators (Android WebView, iOS WKWebView/FBAV, etc.)
+    if (/wv|WebView|FBAN|FBAV|Instagram|Line\//i.test(navigator.userAgent)) return true;
+    // window.opener set means we ARE a popup already
+    if (window.opener && window.opener !== window) return true;
+  } catch (_) { /* cross-origin frame check may throw — treat as embedded */ return true; }
+  return false;
+}
 
 function _getMsalConfig() {
   return {
@@ -48,16 +63,39 @@ async function signIn() {
     _msalInstance = new msal.PublicClientApplication(_getMsalConfig());
     await _msalInstance.handleRedirectPromise();
   }
-  // Use popup — no redirect URI issues, works on any page
-  const response = await _msalInstance.loginPopup({ scopes: CONFIG.scopes });
-  if (response && response.account) {
-    _account = response.account;
+
+  const loginRequest = { scopes: CONFIG.scopes };
+
+  if (_useRedirectFlow()) {
+    // Redirect flow for Teams / embedded browsers / webviews
+    await _msalInstance.loginRedirect(loginRequest);
+    return null; // page will reload on redirect return
   }
-  return _account;
+
+  // Popup flow for normal browsers
+  try {
+    const response = await _msalInstance.loginPopup(loginRequest);
+    if (response && response.account) {
+      _account = response.account;
+    }
+    return _account;
+  } catch (popupErr) {
+    // If popup fails at runtime (blocked by browser), fall back to redirect
+    if (popupErr.errorCode === "block_nested_popups" ||
+        popupErr.errorCode === "popup_window_error") {
+      await _msalInstance.loginRedirect(loginRequest);
+      return null;
+    }
+    throw popupErr;
+  }
 }
 
 async function signOut() {
-  await _msalInstance.logoutPopup({ account: _account });
+  if (_useRedirectFlow()) {
+    await _msalInstance.logoutRedirect({ account: _account });
+  } else {
+    await _msalInstance.logoutPopup({ account: _account });
+  }
   _account = null;
 }
 
@@ -71,9 +109,21 @@ async function getAccessToken() {
     return result.accessToken;
   } catch (err) {
     if (err instanceof msal.InteractionRequiredAuthError) {
-      // Fall back to popup for token refresh
-      const result = await _msalInstance.acquireTokenPopup(request);
-      return result.accessToken;
+      if (_useRedirectFlow()) {
+        await _msalInstance.acquireTokenRedirect(request);
+        return null; // page will reload
+      }
+      try {
+        const result = await _msalInstance.acquireTokenPopup(request);
+        return result.accessToken;
+      } catch (popupErr) {
+        if (popupErr.errorCode === "block_nested_popups" ||
+            popupErr.errorCode === "popup_window_error") {
+          await _msalInstance.acquireTokenRedirect(request);
+          return null;
+        }
+        throw popupErr;
+      }
     }
     throw err;
   }
