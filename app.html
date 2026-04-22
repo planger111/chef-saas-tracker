@@ -369,11 +369,11 @@
 
 
   <!-- ===================== SCRIPTS ===================== -->
-  <script src="msal-browser.js"></script>
-  <script src="config.js"></script>
-  <script src="msal-auth.js"></script>
-  <script src="graph-api.js"></script>
-  <script src="form-engine.js"></script>
+  <script src="msal-browser.js?v=2"></script>
+  <script src="config.js?v=2"></script>
+  <script src="msal-auth.js?v=2"></script>
+  <script src="graph-api.js?v=2"></script>
+  <script src="form-engine.js?v=2"></script>
 
   <script>
     // ─────────────────────────────────────────────
@@ -1705,11 +1705,8 @@
       } catch (err) {
         console.error('Sign in error:', err);
         const msg = err && err.message ? err.message : '';
-        if (msg.includes('popup_window_error') || msg.includes('popupWindowError')) {
-          alert('⚠️ Popup was blocked. Please allow popups for localhost:7341 in your browser and try again.');
-        } else {
-          alert('⚠️ Sign in failed. Please try again.\n\nError: ' + (msg || 'Unknown'));
-        }
+        if (!msg) return; // redirect flow returns null, no error
+        alert('⚠️ Sign in failed. Please try again.\n\nError: ' + msg);
       }
     });
 

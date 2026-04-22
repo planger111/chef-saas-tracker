@@ -26,7 +26,7 @@ function _getMsalConfig() {
     auth: {
       clientId: CONFIG.clientId,
       authority: `https://login.microsoftonline.com/${CONFIG.tenantId}`,
-      redirectUri: window.location.origin,
+      redirectUri: window.location.origin + window.location.pathname,
     },
     cache: {
       cacheLocation: "localStorage",
