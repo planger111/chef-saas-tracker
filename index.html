@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="refresh" content="0; url=app.html" />
   <title>INFRA SalesPlay Tracker</title>
+  <script>
+    // Preserve MSAL auth hash when redirecting to app.html
+    window.location.replace('app.html' + window.location.hash + window.location.search);
+  </script>
 </head>
 <body></body>
 </html>
