@@ -111,7 +111,12 @@ async function getAccessToken() {
     const result = await _msalInstance.acquireTokenSilent(request);
     return result.accessToken;
   } catch (err) {
-    if (err instanceof msal.InteractionRequiredAuthError) {
+    // Any error that requires user interaction or iframe timeout on mobile
+    const needsInteraction = err instanceof msal.InteractionRequiredAuthError;
+    const iframeFailed = err.errorCode === "monitor_window_timeout" ||
+                         err.errorCode === "token_renewal_error";
+
+    if (needsInteraction || iframeFailed) {
       if (_useRedirectFlow()) {
         await _msalInstance.acquireTokenRedirect(request);
         return null; // page will reload
