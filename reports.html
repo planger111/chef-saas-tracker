@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports — INFRA SalesPlay Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { max-width: 100%; background: #f0f2f5; }
+    .reports-wrapper { max-width: 1400px; margin: 0 auto; padding: 0 16px 40px; }
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
+    .header h1 { font-size: 18px; font-weight: 700; color: #fff; }
+    .header a { color: rgba(255,255,255,.85); font-size: 13px; text-decoration: none; }
+
+    /* Play selector */
+    .play-selector { background: #fff; border-radius: 12px; padding: 20px; margin: 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .play-selector label { font-weight: 700; font-size: 14px; color: #333; margin-right: 12px; }
+    .play-selector select { font-size: 15px; padding: 8px 14px; border-radius: 8px; border: 1px solid #ccc; min-width: 280px; }
+
+    /* View toggle tabs */
+    .view-tabs { display: flex; gap: 6px; margin: 16px 0 12px; flex-wrap: wrap; }
+    .view-tab { padding: 8px 18px; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; color: #555; transition: all .15s; }
+    .view-tab.active { background: #0078d4; color: #fff; border-color: #0078d4; }
+    .view-tab:hover:not(.active) { background: #f0f7ff; border-color: #0078d4; color: #0078d4; }
+
+    /* Cards */
+    .report-card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .report-card h2 { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 16px; }
+    .report-card h3 { font-size: 14px; font-weight: 600; color: #555; margin: 16px 0 8px; }
+
+    /* KPI row */
+    .kpi-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+    .kpi-box { flex: 1; min-width: 140px; background: #f8faff; border-radius: 10px; padding: 16px; text-align: center; }
+    .kpi-box .kpi-value { font-size: 28px; font-weight: 800; color: #0078d4; }
+    .kpi-box .kpi-label { font-size: 12px; color: #666; margin-top: 4px; font-weight: 600; text-transform: uppercase; }
+    .kpi-box.green .kpi-value { color: #107c10; }
+    .kpi-box.orange .kpi-value { color: #d97706; }
+    .kpi-box.red .kpi-value { color: #d32f2f; }
+
+    /* Tables */
+    .report-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .report-table th { background: #f5f7fa; text-align: left; padding: 10px 12px; font-weight: 700; color: #555; border-bottom: 2px solid #e0e0e0; white-space: nowrap; }
+    .report-table td { padding: 10px 12px; border-bottom: 1px solid #eee; vertical-align: top; }
+    .report-table tr:hover { background: #f8faff; }
+    .report-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .report-table .bar-cell { width: 120px; }
+    .mini-bar { height: 8px; border-radius: 4px; background: #e0e0e0; overflow: hidden; }
+    .mini-bar-fill { height: 100%; border-radius: 4px; background: #0078d4; }
+
+    /* Outcome badges */
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+    .badge-interested { background: #e6f4ea; color: #107c10; }
+    .badge-not-interested { background: #fce8e6; color: #d32f2f; }
+    .badge-meeting { background: #e8f0fe; color: #1a73e8; }
+    .badge-deal { background: #fef7e0; color: #d97706; }
+    .badge-won { background: #c8e6c9; color: #2e7d32; }
+    .badge-default { background: #f0f0f0; color: #555; }
+
+    /* Chart containers */
+    .chart-row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .chart-box { flex: 1; min-width: 300px; }
+    .h-bar { display: flex; align-items: center; margin: 6px 0; gap: 8px; }
+    .h-bar-label { width: 130px; font-size: 12px; font-weight: 600; color: #555; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .h-bar-track { flex: 1; height: 22px; background: #eee; border-radius: 6px; overflow: hidden; position: relative; }
+    .h-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 700; color: #fff; min-width: 24px; }
+    .h-bar-value { font-size: 12px; font-weight: 700; color: #333; min-width: 36px; }
+
+    /* Export button */
+    .export-btn { padding: 8px 18px; border: 1px solid #0078d4; background: #fff; color: #0078d4; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-left: 12px; }
+    .export-btn:hover { background: #0078d4; color: #fff; }
+
+    /* Loading */
+    .loading { text-align: center; padding: 60px; color: #888; font-size: 15px; }
+    .loading::before { content: '⏳ '; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .kpi-row { flex-direction: column; }
+      .chart-row { flex-direction: column; }
+      .h-bar-label { width: 90px; font-size: 11px; }
+      .report-table { font-size: 12px; }
+      .report-table th, .report-table td { padding: 8px 6px; }
+    }
+
+    /* Screen states */
+    .screen { display: none; }
+    .screen.active { display: block; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <h1>📊 Play Reports</h1>
+    <a href="admin.html">← Back to Admin</a>
+  </div>
+
+  <!-- Login screen -->
+  <div id="screen-login" class="screen active">
+    <div style="text-align:center;padding:80px 20px;">
+      <div style="font-size:48px;margin-bottom:16px;">📊</div>
+      <h2 style="margin-bottom:12px;color:#333;">INFRA SalesPlay Reports</h2>
+      <p style="color:#666;margin-bottom:24px;">Sign in to view play performance reports</p>
+      <button id="btn-sign-in" style="padding:12px 32px;font-size:16px;font-weight:700;background:#0078d4;color:#fff;border:none;border-radius:10px;cursor:pointer;">Sign In with Microsoft</button>
+    </div>
+  </div>
+
+  <!-- Loading screen -->
+  <div id="screen-loading" class="screen">
+    <div class="loading">Loading report data…</div>
+  </div>
+
+  <!-- Reports screen -->
+  <div id="screen-reports" class="screen">
+    <div class="reports-wrapper">
+      <!-- Play selector -->
+      <div class="play-selector">
+        <label for="play-select">Select Play:</label>
+        <select id="play-select"><option value="">Loading plays…</option></select>
+        <button class="export-btn" id="btn-export-csv">📥 Export CSV</button>
+      </div>
+
+      <!-- View tabs -->
+      <div class="view-tabs">
+        <button class="view-tab active" data-view="summary">Summary</button>
+        <button class="view-tab" data-view="reps">Rep Breakdown</button>
+        <button class="view-tab" data-view="accounts">Account Detail</button>
+        <button class="view-tab" data-view="timeline">Activity Timeline</button>
+        <button class="view-tab" data-view="outcomes">Outcome Analysis</button>
+      </div>
+
+      <!-- View: Summary -->
+      <div id="view-summary" class="report-view">
+        <div id="summary-kpis" class="kpi-row"></div>
+        <div class="chart-row">
+          <div class="report-card chart-box">
+            <h2>Outcome Distribution</h2>
+            <div id="chart-outcomes"></div>
+          </div>
+          <div class="report-card chart-box">
+            <h2>Top Reps by Points</h2>
+            <div id="chart-top-reps"></div>
+          </div>
+        </div>
+        <div class="report-card">
+          <h2>Coverage Overview</h2>
+          <div id="coverage-stats"></div>
+        </div>
+      </div>
+
+      <!-- View: Rep Breakdown -->
+      <div id="view-reps" class="report-view" style="display:none;">
+        <div class="report-card">
+          <h2>Rep Performance</h2>
+          <div id="rep-table-container"></div>
+        </div>
+      </div>
+
+      <!-- View: Account Detail -->
+      <div id="view-accounts" class="report-view" style="display:none;">
+        <div class="report-card">
+          <h2>Account Status</h2>
+          <div style="margin-bottom:12px;">
+            <input type="text" id="account-search" placeholder="Search accounts…" style="padding:8px 14px;border:1px solid #ccc;border-radius:8px;font-size:14px;width:280px;" />
+          </div>
+          <div id="account-table-container"></div>
+        </div>
+      </div>
+
+      <!-- View: Timeline -->
+      <div id="view-timeline" class="report-view" style="display:none;">
+        <div class="report-card">
+          <h2>Daily Engagement Activity</h2>
+          <div id="timeline-chart"></div>
+        </div>
+        <div class="report-card">
+          <h2>Recent Engagements</h2>
+          <div id="timeline-table-container"></div>
+        </div>
+      </div>
+
+      <!-- View: Outcome Analysis -->
+      <div id="view-outcomes" class="report-view" style="display:none;">
+        <div class="report-card">
+          <h2>Outcomes by Rep</h2>
+          <div id="outcomes-by-rep"></div>
+        </div>
+        <div class="report-card">
+          <h2>Conversion Funnel</h2>
+          <div id="conversion-funnel"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== SCRIPTS ===================== -->
+  <script src="msal-browser.js?v=2"></script>
+  <script src="config.js?v=2"></script>
+  <script src="msal-auth.js?v=2"></script>
+  <script src="graph-api.js?v=2"></script>
+
+  <script>
+    let currentUser = null;
+    let allPlays = [];
+    let allAssignments = [];
+    let currentPlayLogs = [];
+    let currentPlayAssignments = [];
+
+    // ─── Helpers ───
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function outcomeBadge(outcome) {
+      const o = (outcome || '').toLowerCase();
+      if (o.includes('interested') && !o.includes('not')) return `<span class="badge badge-interested">${outcome}</span>`;
+      if (o.includes('not interested')) return `<span class="badge badge-not-interested">${outcome}</span>`;
+      if (o.includes('meeting')) return `<span class="badge badge-meeting">${outcome}</span>`;
+      if (o.includes('deal') || o.includes('opportunity')) return `<span class="badge badge-deal">${outcome}</span>`;
+      if (o.includes('won')) return `<span class="badge badge-won">${outcome}</span>`;
+      return `<span class="badge badge-default">${outcome || '—'}</span>`;
+    }
+
+    function pct(n, d) { return d > 0 ? Math.round((n / d) * 100) : 0; }
+
+    function horizontalBar(label, value, maxVal, color = '#0078d4') {
+      const w = maxVal > 0 ? Math.max(2, (value / maxVal) * 100) : 0;
+      return `<div class="h-bar">
+        <div class="h-bar-label" title="${label}">${label}</div>
+        <div class="h-bar-track"><div class="h-bar-fill" style="width:${w}%;background:${color};">${value > 0 && w > 15 ? value : ''}</div></div>
+        <div class="h-bar-value">${value}</div>
+      </div>`;
+    }
+
+    // ─── Data Loading ───
+    async function loadPlayData(playId) {
+      const safePid = playId.replace(/[^a-z0-9]/gi, '_');
+
+      // Load engagements for this play
+      try {
+        const text = await getFileText(SP_ROOT + '/' + safePid + '_engagements.csv');
+        currentPlayLogs = text ? parseCSV(text) : [];
+      } catch (e) { currentPlayLogs = []; }
+
+      // Filter assignments for this play
+      currentPlayAssignments = allAssignments.filter(a => a.play_id === playId && a.active_flag !== false);
+    }
+
+    // ─── Views ───
+    function renderSummary(playId) {
+      const logs = currentPlayLogs;
+      const assignments = currentPlayAssignments;
+      const totalAccounts = assignments.length;
+      const engagedAccountIds = new Set(logs.map(l => l.account_id).filter(Boolean));
+      const contacted = engagedAccountIds.size;
+      const untouched = totalAccounts - contacted;
+      const totalPoints = logs.reduce((s, l) => s + (Number(l.points_earned) || 0), 0);
+      const interestedCount = logs.filter(l => (l.outcome || '').toLowerCase().includes('interested') && !(l.outcome || '').toLowerCase().includes('not')).length;
+      const uniqueReps = new Set(logs.map(l => l.rep_email).filter(Boolean)).size;
+
+      document.getElementById('summary-kpis').innerHTML = `
+        <div class="kpi-box"><div class="kpi-value">${totalAccounts}</div><div class="kpi-label">Total Accounts</div></div>
+        <div class="kpi-box green"><div class="kpi-value">${contacted}</div><div class="kpi-label">Contacted</div></div>
+        <div class="kpi-box ${untouched > 0 ? 'orange' : 'green'}"><div class="kpi-value">${untouched}</div><div class="kpi-label">Untouched</div></div>
+        <div class="kpi-box"><div class="kpi-value">${pct(contacted, totalAccounts)}%</div><div class="kpi-label">Coverage</div></div>
+        <div class="kpi-box green"><div class="kpi-value">${interestedCount}</div><div class="kpi-label">Interested</div></div>
+        <div class="kpi-box"><div class="kpi-value">${totalPoints.toLocaleString()}</div><div class="kpi-label">Total Points</div></div>
+        <div class="kpi-box"><div class="kpi-value">${uniqueReps}</div><div class="kpi-label">Active Reps</div></div>
+      `;
+
+      // Outcome chart
+      const outcomeCounts = {};
+      logs.forEach(l => { const o = l.outcome || 'Unknown'; outcomeCounts[o] = (outcomeCounts[o] || 0) + 1; });
+      const sorted = Object.entries(outcomeCounts).sort((a, b) => b[1] - a[1]);
+      const maxCount = sorted.length > 0 ? sorted[0][1] : 1;
+      const colors = { 'Interested': '#107c10', 'Not Interested': '#d32f2f', 'Meeting Booked': '#1a73e8', 'Active Deal': '#d97706', 'Closed Won': '#2e7d32' };
+      document.getElementById('chart-outcomes').innerHTML = sorted.map(([o, c]) => horizontalBar(o, c, maxCount, colors[o] || '#888')).join('');
+
+      // Top reps chart
+      const repPoints = {};
+      logs.forEach(l => {
+        const e = l.rep_email || 'unknown';
+        if (!repPoints[e]) repPoints[e] = { name: l.rep_name || e, points: 0 };
+        repPoints[e].points += Number(l.points_earned) || 0;
+      });
+      const topReps = Object.values(repPoints).sort((a, b) => b.points - a.points).slice(0, 10);
+      const maxPts = topReps.length > 0 ? topReps[0].points : 1;
+      document.getElementById('chart-top-reps').innerHTML = topReps.map(r => horizontalBar(r.name, r.points, maxPts, '#16a34a')).join('') || '<p style="color:#888;">No engagement data yet.</p>';
+
+      // Coverage
+      const repCoverage = {};
+      assignments.forEach(a => {
+        const e = (a.rep_sso_login || a.rep_email || '').toLowerCase();
+        if (!e) return;
+        if (!repCoverage[e]) repCoverage[e] = { name: a.rep_name || e, total: 0, contacted: 0 };
+        repCoverage[e].total++;
+        if (engagedAccountIds.has(a.account_id)) repCoverage[e].contacted++;
+      });
+      const coverageList = Object.values(repCoverage).sort((a, b) => pct(b.contacted, b.total) - pct(a.contacted, a.total));
+      document.getElementById('coverage-stats').innerHTML = coverageList.length > 0 ? `
+        <table class="report-table">
+          <tr><th>Rep</th><th class="num">Assigned</th><th class="num">Contacted</th><th class="num">Coverage</th><th class="bar-cell">Progress</th></tr>
+          ${coverageList.map(r => `<tr>
+            <td>${r.name}</td>
+            <td class="num">${r.total}</td>
+            <td class="num">${r.contacted}</td>
+            <td class="num">${pct(r.contacted, r.total)}%</td>
+            <td class="bar-cell"><div class="mini-bar"><div class="mini-bar-fill" style="width:${pct(r.contacted, r.total)}%;background:${pct(r.contacted, r.total) >= 80 ? '#107c10' : pct(r.contacted, r.total) >= 40 ? '#d97706' : '#d32f2f'}"></div></div></td>
+          </tr>`).join('')}
+        </table>` : '<p style="color:#888;">No assignment data.</p>';
+    }
+
+    function renderReps() {
+      const logs = currentPlayLogs;
+      const repData = {};
+      logs.forEach(l => {
+        const e = l.rep_email || 'unknown';
+        if (!repData[e]) repData[e] = { name: l.rep_name || e, email: e, points: 0, engagements: 0, accounts: new Set(), outcomes: {} };
+        repData[e].points += Number(l.points_earned) || 0;
+        repData[e].engagements++;
+        if (l.account_id) repData[e].accounts.add(l.account_id);
+        const o = l.outcome || 'Other';
+        repData[e].outcomes[o] = (repData[e].outcomes[o] || 0) + 1;
+      });
+      const reps = Object.values(repData).sort((a, b) => b.points - a.points);
+
+      // Also include reps with assignments but no engagements
+      const assignedReps = {};
+      currentPlayAssignments.forEach(a => {
+        const e = (a.rep_sso_login || a.rep_email || '').toLowerCase();
+        if (e && !repData[e]) {
+          if (!assignedReps[e]) assignedReps[e] = { name: a.rep_name || e, email: e, points: 0, engagements: 0, accounts: new Set(), outcomes: {} };
+          assignedReps[e].accounts.add(a.account_id);
+        }
+      });
+      const allReps = [...reps, ...Object.values(assignedReps)];
+
+      document.getElementById('rep-table-container').innerHTML = allReps.length > 0 ? `
+        <table class="report-table">
+          <tr><th>Rep</th><th class="num">Points</th><th class="num">Engagements</th><th class="num">Accounts Touched</th><th>Top Outcomes</th></tr>
+          ${allReps.map(r => {
+            const topOutcomes = Object.entries(r.outcomes).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([o, c]) => `${outcomeBadge(o)} ×${c}`).join(' ');
+            return `<tr>
+              <td><strong>${r.name}</strong><br><span style="font-size:11px;color:#888;">${r.email}</span></td>
+              <td class="num"><strong>${r.points}</strong></td>
+              <td class="num">${r.engagements}</td>
+              <td class="num">${r.accounts.size}</td>
+              <td>${topOutcomes || '<span style="color:#aaa;">No activity</span>'}</td>
+            </tr>`;
+          }).join('')}
+        </table>` : '<p style="color:#888;">No data available.</p>';
+    }
+
+    function renderAccounts() {
+      const logs = currentPlayLogs;
+      const assignments = currentPlayAssignments;
+
+      // Build account map from assignments
+      const accountMap = {};
+      assignments.forEach(a => {
+        const id = a.account_id || '';
+        if (!id) return;
+        accountMap[id] = { id, name: a.account_name || id, rep: a.rep_name || a.rep_email || '—', engagements: [], lastOutcome: '—', lastDate: '—', totalPoints: 0 };
+      });
+
+      // Add engagement data
+      logs.forEach(l => {
+        const id = l.account_id || '';
+        if (!accountMap[id]) accountMap[id] = { id, name: l.account_name || id, rep: l.rep_name || '—', engagements: [], lastOutcome: '—', lastDate: '—', totalPoints: 0 };
+        accountMap[id].engagements.push(l);
+        accountMap[id].totalPoints += Number(l.points_earned) || 0;
+      });
+
+      // Compute latest for each
+      Object.values(accountMap).forEach(a => {
+        if (a.engagements.length > 0) {
+          const latest = a.engagements.sort((x, y) => (y.submitted_at || '').localeCompare(x.submitted_at || ''))[0];
+          a.lastOutcome = latest.outcome || '—';
+          a.lastDate = (latest.call_date || latest.submitted_at || '').split('T')[0];
+        }
+      });
+
+      const accounts = Object.values(accountMap).sort((a, b) => a.name.localeCompare(b.name));
+      window._reportAccounts = accounts;
+      renderAccountTable(accounts);
+
+      document.getElementById('account-search').oninput = function () {
+        const q = this.value.toLowerCase();
+        renderAccountTable(q ? accounts.filter(a => a.name.toLowerCase().includes(q) || a.rep.toLowerCase().includes(q)) : accounts);
+      };
+    }
+
+    function renderAccountTable(accounts) {
+      document.getElementById('account-table-container').innerHTML = accounts.length > 0 ? `
+        <table class="report-table">
+          <tr><th>Account</th><th>Assigned Rep</th><th class="num">Engagements</th><th>Last Outcome</th><th>Last Date</th><th class="num">Points</th></tr>
+          ${accounts.map(a => `<tr>
+            <td><strong>${a.name}</strong></td>
+            <td>${a.rep}</td>
+            <td class="num">${a.engagements.length}</td>
+            <td>${outcomeBadge(a.lastOutcome)}</td>
+            <td>${a.lastDate}</td>
+            <td class="num">${a.totalPoints}</td>
+          </tr>`).join('')}
+        </table>` : '<p style="color:#888;">No accounts found.</p>';
+    }
+
+    function renderTimeline() {
+      const logs = currentPlayLogs;
+
+      // Daily counts
+      const dailyCounts = {};
+      logs.forEach(l => {
+        const d = (l.call_date || l.submitted_at || '').split('T')[0];
+        if (d) dailyCounts[d] = (dailyCounts[d] || 0) + 1;
+      });
+      const days = Object.entries(dailyCounts).sort((a, b) => a[0].localeCompare(b[0]));
+      const maxDaily = days.length > 0 ? Math.max(...days.map(d => d[1])) : 1;
+
+      document.getElementById('timeline-chart').innerHTML = days.length > 0
+        ? days.slice(-30).map(([d, c]) => horizontalBar(d, c, maxDaily, '#0078d4')).join('')
+        : '<p style="color:#888;">No timeline data.</p>';
+
+      // Recent engagements table
+      const recent = [...logs].sort((a, b) => (b.submitted_at || '').localeCompare(a.submitted_at || '')).slice(0, 50);
+      document.getElementById('timeline-table-container').innerHTML = recent.length > 0 ? `
+        <table class="report-table">
+          <tr><th>Date</th><th>Rep</th><th>Account</th><th>Outcome</th><th>Notes</th><th class="num">Points</th></tr>
+          ${recent.map(l => `<tr>
+            <td style="white-space:nowrap;">${(l.call_date || l.submitted_at || '').split('T')[0]}</td>
+            <td>${l.rep_name || l.rep_email || '—'}</td>
+            <td>${l.account_name || l.account_id || '—'}</td>
+            <td>${outcomeBadge(l.outcome)}</td>
+            <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(l.notes || '').replace(/"/g, '&quot;')}">${l.notes || '—'}</td>
+            <td class="num">${l.points_earned || 0}</td>
+          </tr>`).join('')}
+        </table>` : '';
+    }
+
+    function renderOutcomes() {
+      const logs = currentPlayLogs;
+
+      // Outcomes by rep
+      const repOutcomes = {};
+      logs.forEach(l => {
+        const e = l.rep_name || l.rep_email || 'Unknown';
+        if (!repOutcomes[e]) repOutcomes[e] = {};
+        const o = l.outcome || 'Other';
+        repOutcomes[e][o] = (repOutcomes[e][o] || 0) + 1;
+      });
+
+      // Get all unique outcomes
+      const allOutcomes = [...new Set(logs.map(l => l.outcome || 'Other'))].sort();
+
+      const reps = Object.entries(repOutcomes).sort((a, b) => a[0].localeCompare(b[0]));
+      document.getElementById('outcomes-by-rep').innerHTML = reps.length > 0 ? `
+        <table class="report-table">
+          <tr><th>Rep</th>${allOutcomes.map(o => `<th class="num">${o}</th>`).join('')}<th class="num">Total</th></tr>
+          ${reps.map(([name, outcomes]) => {
+            const total = Object.values(outcomes).reduce((s, v) => s + v, 0);
+            return `<tr><td><strong>${name}</strong></td>${allOutcomes.map(o => `<td class="num">${outcomes[o] || ''}</td>`).join('')}<td class="num"><strong>${total}</strong></td></tr>`;
+          }).join('')}
+        </table>` : '<p style="color:#888;">No outcome data.</p>';
+
+      // Conversion funnel
+      const totalAccounts = currentPlayAssignments.length;
+      const contactedSet = new Set(logs.map(l => l.account_id).filter(Boolean));
+      const contacted = contactedSet.size;
+      const interestedSet = new Set(logs.filter(l => (l.outcome || '').toLowerCase().includes('interested') && !(l.outcome || '').toLowerCase().includes('not')).map(l => l.account_id).filter(Boolean));
+      const meetingSet = new Set(logs.filter(l => (l.outcome || '').toLowerCase().includes('meeting')).map(l => l.account_id).filter(Boolean));
+      const dealSet = new Set(logs.filter(l => (l.outcome || '').toLowerCase().includes('deal') || (l.outcome || '').toLowerCase().includes('opportunity')).map(l => l.account_id).filter(Boolean));
+
+      const funnel = [
+        { label: 'Total Accounts', count: totalAccounts, color: '#555' },
+        { label: 'Contacted', count: contacted, color: '#0078d4' },
+        { label: 'Interested', count: interestedSet.size, color: '#107c10' },
+        { label: 'Meeting Booked', count: meetingSet.size, color: '#1a73e8' },
+        { label: 'Active Deal', count: dealSet.size, color: '#d97706' },
+      ];
+
+      document.getElementById('conversion-funnel').innerHTML = `
+        <div style="max-width:500px;margin:0 auto;">
+          ${funnel.map((f, i) => {
+            const w = totalAccounts > 0 ? Math.max(8, (f.count / totalAccounts) * 100) : 8;
+            const convRate = i > 0 && funnel[i - 1].count > 0 ? ` (${pct(f.count, funnel[i - 1].count)}%)` : '';
+            return `<div style="margin:8px 0;text-align:center;">
+              <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">${f.label}: ${f.count}${convRate}</div>
+              <div style="margin:0 auto;height:28px;width:${w}%;background:${f.color};border-radius:6px;"></div>
+            </div>`;
+          }).join('')}
+        </div>`;
+    }
+
+    // ─── CSV Export ───
+    function exportCSV() {
+      const playSelect = document.getElementById('play-select');
+      const playName = playSelect.options[playSelect.selectedIndex]?.text || 'report';
+
+      const activeView = document.querySelector('.view-tab.active')?.dataset.view || 'summary';
+      let rows = [];
+
+      if (activeView === 'accounts' && window._reportAccounts) {
+        rows.push(['Account', 'Rep', 'Engagements', 'Last Outcome', 'Last Date', 'Points']);
+        window._reportAccounts.forEach(a => rows.push([a.name, a.rep, a.engagements.length, a.lastOutcome, a.lastDate, a.totalPoints]));
+      } else {
+        rows.push(['Date', 'Rep', 'Account', 'Outcome', 'Notes', 'Points']);
+        currentPlayLogs.sort((a, b) => (b.submitted_at || '').localeCompare(a.submitted_at || '')).forEach(l => {
+          rows.push([(l.call_date || l.submitted_at || '').split('T')[0], l.rep_name || l.rep_email, l.account_name || l.account_id, l.outcome, l.notes || '', l.points_earned || 0]);
+        });
+      }
+
+      const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${playName.replace(/[^a-z0-9]/gi, '_')}_report.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // ─── View Switching ───
+    function switchView(viewName) {
+      document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === viewName));
+      document.querySelectorAll('.report-view').forEach(v => v.style.display = 'none');
+      document.getElementById('view-' + viewName).style.display = 'block';
+
+      const playId = document.getElementById('play-select').value;
+      if (!playId) return;
+
+      switch (viewName) {
+        case 'summary': renderSummary(playId); break;
+        case 'reps': renderReps(); break;
+        case 'accounts': renderAccounts(); break;
+        case 'timeline': renderTimeline(); break;
+        case 'outcomes': renderOutcomes(); break;
+      }
+    }
+
+    // ─── Init ───
+    async function loadReports() {
+      showScreen('screen-loading');
+
+      // Load plays and assignments
+      allPlays = await getPlays();
+      const assText = await getFileText(SP_ROOT + '/assignments.json');
+      allAssignments = assText ? (JSON.parse(assText).assignments || []).filter(a => a.active_flag !== false) : [];
+
+      // Populate play selector
+      const sel = document.getElementById('play-select');
+      sel.innerHTML = allPlays.map(p => `<option value="${p.play_id}">${p.play_name || p.play_id}</option>`).join('');
+
+      if (allPlays.length > 0) {
+        await loadPlayData(allPlays[0].play_id);
+        renderSummary(allPlays[0].play_id);
+      }
+
+      showScreen('screen-reports');
+    }
+
+    // ─── Event Listeners ───
+    document.getElementById('btn-sign-in').addEventListener('click', async () => {
+      try {
+        const account = await signIn();
+        if (account) {
+          currentUser = getCurrentUser();
+          await loadReports();
+        }
+      } catch (err) {
+        console.error('Sign in error:', err);
+        const msg = err && err.message ? err.message : '';
+        if (!msg) return;
+        alert('⚠️ Sign in failed. Please try again.\n\nError: ' + msg);
+      }
+    });
+
+    document.getElementById('play-select').addEventListener('change', async function () {
+      if (!this.value) return;
+      showScreen('screen-loading');
+      await loadPlayData(this.value);
+      const activeView = document.querySelector('.view-tab.active')?.dataset.view || 'summary';
+      showScreen('screen-reports');
+      switchView(activeView);
+    });
+
+    document.querySelectorAll('.view-tab').forEach(tab => {
+      tab.addEventListener('click', () => switchView(tab.dataset.view));
+    });
+
+    document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
+
+    // Auto-init
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await initAuth();
+        const user = getCurrentUser();
+        if (user) {
+          currentUser = user;
+          await loadReports();
+        } else {
+          showScreen('screen-login');
+        }
+      } catch (err) {
+        console.error('Init error:', err);
+        showScreen('screen-login');
+      }
+    });
+  </script>
+</body>
+</html>
