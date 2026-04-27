@@ -293,6 +293,16 @@ async function logActivity(user, actionType, detail) {
       detail || ''
     ].map(v => csvEscape(String(v))).join(',');
     const filePath = SP_ROOT + "/activity_log.csv";
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const { text: existing, eTag } = await getFileWithETag(filePath);
+      const csv = (existing || '').trim()
+        ? (existing || '').trimEnd() + '\n' + row
+        : ACTIVITY_LOG_HEADERS.join(',') + '\n' + row;
+      const ok = await putFileWithETag(filePath, csv, 'text/csv', eTag);
+      if (ok) return;
+      await new Promise(r => setTimeout(r, 200 + Math.random() * 500));
+    }
+    // Final fallback — force write
     let existing = '';
     try { existing = await getFileText(filePath) || ''; } catch(e) {}
     const csv = existing.trim()
@@ -497,7 +507,50 @@ async function putFile(filePath, content, contentType) {
   }
 }
 
-async function getFileText(filePath) {
+// Read file with eTag for optimistic concurrency
+async function getFileWithETag(filePath) {
+  const driveId = await getDriveId();
+  const token = await getAccessToken();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const meta = await fetch(CONFIG.graphBaseUrl + "/drives/" + driveId + "/root:/" + filePath, {
+      signal: controller.signal,
+      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }
+    });
+    if (!meta.ok) return { text: null, eTag: null };
+    const metaJson = await meta.json();
+    const eTag = metaJson.eTag || null;
+    const resp = await fetch(metaJson["@microsoft.graph.downloadUrl"], {
+      signal: controller.signal,
+      headers: { Authorization: "Bearer " + token }
+    });
+    if (!resp.ok) return { text: null, eTag: null };
+    const text = await resp.text();
+    return { text, eTag };
+  } catch(e) { return { text: null, eTag: null }; } finally { clearTimeout(timeout); }
+}
+
+// Write file with optional eTag check (returns false on conflict)
+async function putFileWithETag(filePath, content, contentType, eTag) {
+  const driveId = await getDriveId();
+  const token = await getAccessToken();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  try {
+    const headers = { Authorization: "Bearer " + token, "Content-Type": contentType || "text/plain" };
+    if (eTag) headers["If-Match"] = eTag;
+    const resp = await fetch(CONFIG.graphBaseUrl + "/drives/" + driveId + "/root:/" + filePath + ":/content", {
+      method: "PUT", signal: controller.signal, headers, body: content
+    });
+    if (resp.status === 412) return false; // conflict — someone else modified the file
+    if (!resp.ok) { const t = await resp.text(); throw new Error("Upload " + resp.status + ": " + t); }
+    return true;
+  } catch(e) {
+    if (e.name === 'AbortError') throw new Error("Save timed out — check your connection and try again.");
+    throw e;
+  } finally { clearTimeout(timeout); }
+}
   const driveId = await getDriveId();
   const token = await getAccessToken();
   const controller = new AbortController();
@@ -1009,8 +1062,26 @@ async function logEngagement(fields) {
   const entry = { ...fields, id: Date.now().toString(), submitted_at: new Date().toISOString(), points_earned: pts };
   const playId = (fields.play_id || "engagements").replace(/[^a-z0-9]/gi, "_");
   const filePath = SP_ROOT + "/" + playId + "_engagements.csv";
-  const existing = await getFileText(filePath);
-  const csv = (existing && existing.trim()) ? existing.trimEnd() + "\n" + toCsvRow(entry) : CSV_HEADERS.join(",") + "\n" + toCsvRow(entry);
+
+  // Retry loop with eTag to prevent lost updates from concurrent writes
+  const MAX_RETRIES = 4;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const { text: existing, eTag } = await getFileWithETag(filePath);
+    const csv = (existing && existing.trim())
+      ? existing.trimEnd() + "\n" + toCsvRow(entry)
+      : CSV_HEADERS.join(",") + "\n" + toCsvRow(entry);
+
+    const ok = await putFileWithETag(filePath, csv, "text/csv", eTag);
+    if (ok) return entry;
+
+    // Conflict — wait briefly then retry with fresh data
+    await new Promise(r => setTimeout(r, 300 + Math.random() * 700));
+  }
+  // Final attempt without eTag (force write rather than lose the entry)
+  const { text: existing } = await getFileWithETag(filePath);
+  const csv = (existing && existing.trim())
+    ? existing.trimEnd() + "\n" + toCsvRow(entry)
+    : CSV_HEADERS.join(",") + "\n" + toCsvRow(entry);
   await putFile(filePath, csv, "text/csv");
   return entry;
 }
