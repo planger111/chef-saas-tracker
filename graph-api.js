@@ -552,6 +552,27 @@ async function putFileWithETag(filePath, content, contentType, eTag) {
   } finally { clearTimeout(timeout); }
 }
 
+async function getFileText(filePath) {
+  const driveId = await getDriveId();
+  const token = await getAccessToken();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const meta = await fetch(CONFIG.graphBaseUrl + "/drives/" + driveId + "/root:/" + filePath, {
+      signal: controller.signal,
+      headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" }
+    });
+    if (!meta.ok) return null;
+    const metaJson = await meta.json();
+    const resp = await fetch(metaJson["@microsoft.graph.downloadUrl"], {
+      signal: controller.signal,
+      headers: { Authorization: "Bearer " + token }
+    });
+    if (!resp.ok) return null;
+    return resp.text();
+  } catch(e) { return null; } finally { clearTimeout(timeout); }
+}
+
 async function writeJsonFile(filePath, data) {
   return putFile(SP_ROOT + "/" + filePath, JSON.stringify(data, null, 2), "application/json");
 }
