@@ -3,36 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Reports — INFRA SalesPlay Tracker</title>
+  <title>Play Snapshot — INFRA SalesPlay Tracker</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
     body { max-width: 100%; background: #f0f2f5; }
-    .reports-wrapper { max-width: 1400px; margin: 0 auto; padding: 0 16px 40px; }
+    .reports-wrapper { max-width: 1100px; margin: 0 auto; padding: 0 16px 40px; }
     .header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
     .header h1 { font-size: 18px; font-weight: 700; color: #fff; }
     .header a { color: rgba(255,255,255,.85); font-size: 13px; text-decoration: none; }
 
     /* Play selector */
-    .play-selector { background: #fff; border-radius: 12px; padding: 20px; margin: 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-    .play-selector label { font-weight: 700; font-size: 14px; color: #333; margin-right: 12px; }
-    .play-selector select { font-size: 15px; padding: 8px 14px; border-radius: 8px; border: 1px solid #ccc; min-width: 280px; }
+    .play-selector { background: #fff; border-radius: 12px; padding: 20px; margin: 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,.08); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .play-selector label { font-weight: 700; font-size: 14px; color: #333; }
+    .play-selector select { font-size: 15px; padding: 8px 14px; border-radius: 8px; border: 1px solid #ccc; min-width: 280px; flex: 1; }
 
-    /* View toggle tabs */
-    .view-tabs { display: flex; gap: 6px; margin: 16px 0 12px; flex-wrap: wrap; }
-    .view-tab { padding: 8px 18px; border-radius: 8px; border: 1px solid #ddd; background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; color: #555; transition: all .15s; }
-    .view-tab.active { background: #0078d4; color: #fff; border-color: #0078d4; }
-    .view-tab:hover:not(.active) { background: #f0f7ff; border-color: #0078d4; color: #0078d4; }
+    /* Print button */
+    .print-btn { padding: 8px 18px; border: 1px solid #0078d4; background: #fff; color: #0078d4; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .print-btn:hover { background: #0078d4; color: #fff; }
+    .export-btn { padding: 8px 18px; border: 1px solid #16a34a; background: #fff; color: #16a34a; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .export-btn:hover { background: #16a34a; color: #fff; }
 
-    /* Cards */
-    .report-card { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-    .report-card h2 { font-size: 16px; font-weight: 700; color: #333; margin-bottom: 16px; }
-    .report-card h3 { font-size: 14px; font-weight: 600; color: #555; margin: 16px 0 8px; }
+    /* Report sections */
+    .report-section { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .report-section h2 { font-size: 16px; font-weight: 700; color: #333; margin: 0 0 16px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
+    .report-section h3 { font-size: 14px; font-weight: 600; color: #555; margin: 16px 0 8px; }
 
     /* KPI row */
     .kpi-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
-    .kpi-box { flex: 1; min-width: 140px; background: #f8faff; border-radius: 10px; padding: 16px; text-align: center; }
+    .kpi-box { flex: 1; min-width: 130px; background: #f8faff; border-radius: 10px; padding: 16px; text-align: center; }
     .kpi-box .kpi-value { font-size: 28px; font-weight: 800; color: #0078d4; }
-    .kpi-box .kpi-label { font-size: 12px; color: #666; margin-top: 4px; font-weight: 600; text-transform: uppercase; }
+    .kpi-box .kpi-label { font-size: 11px; color: #666; margin-top: 4px; font-weight: 600; text-transform: uppercase; }
     .kpi-box.green .kpi-value { color: #107c10; }
     .kpi-box.orange .kpi-value { color: #d97706; }
     .kpi-box.red .kpi-value { color: #d32f2f; }
@@ -43,9 +43,7 @@
     .report-table td { padding: 10px 12px; border-bottom: 1px solid #eee; vertical-align: top; }
     .report-table tr:hover { background: #f8faff; }
     .report-table .num { text-align: right; font-variant-numeric: tabular-nums; }
-    .report-table .bar-cell { width: 120px; }
-    .mini-bar { height: 8px; border-radius: 4px; background: #e0e0e0; overflow: hidden; }
-    .mini-bar-fill { height: 100%; border-radius: 4px; background: #0078d4; }
+    .report-table .money { text-align: right; font-variant-numeric: tabular-nums; color: #0078d4; font-weight: 600; }
 
     /* Outcome badges */
     .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
@@ -56,41 +54,47 @@
     .badge-won { background: #c8e6c9; color: #2e7d32; }
     .badge-default { background: #f0f0f0; color: #555; }
 
-    /* Chart containers */
-    .chart-row { display: flex; gap: 16px; flex-wrap: wrap; }
-    .chart-box { flex: 1; min-width: 300px; }
+    /* Horizontal bars */
     .h-bar { display: flex; align-items: center; margin: 6px 0; gap: 8px; }
-    .h-bar-label { width: 130px; font-size: 12px; font-weight: 600; color: #555; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .h-bar-track { flex: 1; height: 22px; background: #eee; border-radius: 6px; overflow: hidden; position: relative; }
+    .h-bar-label { width: 150px; font-size: 12px; font-weight: 600; color: #555; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .h-bar-track { flex: 1; height: 22px; background: #eee; border-radius: 6px; overflow: hidden; }
     .h-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 700; color: #fff; min-width: 24px; }
     .h-bar-value { font-size: 12px; font-weight: 700; color: #333; min-width: 36px; }
 
-    /* Export button */
-    .export-btn { padding: 8px 18px; border: 1px solid #0078d4; background: #fff; color: #0078d4; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-left: 12px; }
-    .export-btn:hover { background: #0078d4; color: #fff; }
+    /* Snapshot header */
+    .snapshot-header { text-align: center; margin-bottom: 16px; }
+    .snapshot-header h1 { font-size: 22px; font-weight: 800; color: #333; margin-bottom: 4px; }
+    .snapshot-header .snapshot-date { font-size: 13px; color: #888; }
 
     /* Loading */
     .loading { text-align: center; padding: 60px; color: #888; font-size: 15px; }
     .loading::before { content: '⏳ '; }
 
-    /* Responsive */
+    /* Screen states */
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    /* Print styles */
+    @media print {
+      body { background: #fff !important; }
+      .header, .play-selector, .no-print { display: none !important; }
+      .report-section { box-shadow: none !important; border: 1px solid #ddd; page-break-inside: avoid; margin-bottom: 12px; padding: 16px; }
+      .snapshot-header { margin-top: 0; }
+      .kpi-box { border: 1px solid #eee; }
+    }
+
     @media (max-width: 768px) {
       .kpi-row { flex-direction: column; }
-      .chart-row { flex-direction: column; }
       .h-bar-label { width: 90px; font-size: 11px; }
       .report-table { font-size: 12px; }
       .report-table th, .report-table td { padding: 8px 6px; }
     }
-
-    /* Screen states */
-    .screen { display: none; }
-    .screen.active { display: block; }
   </style>
 </head>
 <body>
   <!-- Header -->
   <div class="header">
-    <h1>📊 Play Reports</h1>
+    <h1>📊 Play Snapshot</h1>
     <a href="admin.html">← Back to Admin</a>
   </div>
 
@@ -98,8 +102,8 @@
   <div id="screen-login" class="screen active">
     <div style="text-align:center;padding:80px 20px;">
       <div style="font-size:48px;margin-bottom:16px;">📊</div>
-      <h2 style="margin-bottom:12px;color:#333;">INFRA SalesPlay Reports</h2>
-      <p style="color:#666;margin-bottom:24px;">Sign in to view play performance reports</p>
+      <h2 style="margin-bottom:12px;color:#333;">INFRA SalesPlay Snapshot</h2>
+      <p style="color:#666;margin-bottom:24px;">Sign in to view play performance snapshots</p>
       <button id="btn-sign-in" style="padding:12px 32px;font-size:16px;font-weight:700;background:#0078d4;color:#fff;border:none;border-radius:10px;cursor:pointer;">Sign In with Microsoft</button>
     </div>
   </div>
@@ -113,82 +117,15 @@
   <div id="screen-reports" class="screen">
     <div class="reports-wrapper">
       <!-- Play selector -->
-      <div class="play-selector">
+      <div class="play-selector no-print">
         <label for="play-select">Select Play:</label>
         <select id="play-select"><option value="">Loading plays…</option></select>
+        <button class="print-btn" onclick="window.print()">🖨️ Print / PDF</button>
         <button class="export-btn" id="btn-export-csv">📥 Export CSV</button>
       </div>
 
-      <!-- View tabs -->
-      <div class="view-tabs">
-        <button class="view-tab active" data-view="summary">Summary</button>
-        <button class="view-tab" data-view="reps">Rep Breakdown</button>
-        <button class="view-tab" data-view="accounts">Account Detail</button>
-        <button class="view-tab" data-view="timeline">Activity Timeline</button>
-        <button class="view-tab" data-view="outcomes">Outcome Analysis</button>
-      </div>
-
-      <!-- View: Summary -->
-      <div id="view-summary" class="report-view">
-        <div id="summary-kpis" class="kpi-row"></div>
-        <div class="chart-row">
-          <div class="report-card chart-box">
-            <h2>Outcome Distribution</h2>
-            <div id="chart-outcomes"></div>
-          </div>
-          <div class="report-card chart-box">
-            <h2>Top Reps by Points</h2>
-            <div id="chart-top-reps"></div>
-          </div>
-        </div>
-        <div class="report-card">
-          <h2>Coverage Overview</h2>
-          <div id="coverage-stats"></div>
-        </div>
-      </div>
-
-      <!-- View: Rep Breakdown -->
-      <div id="view-reps" class="report-view" style="display:none;">
-        <div class="report-card">
-          <h2>Rep Performance</h2>
-          <div id="rep-table-container"></div>
-        </div>
-      </div>
-
-      <!-- View: Account Detail -->
-      <div id="view-accounts" class="report-view" style="display:none;">
-        <div class="report-card">
-          <h2>Account Status</h2>
-          <div style="margin-bottom:12px;">
-            <input type="text" id="account-search" placeholder="Search accounts…" style="padding:8px 14px;border:1px solid #ccc;border-radius:8px;font-size:14px;width:280px;" />
-          </div>
-          <div id="account-table-container"></div>
-        </div>
-      </div>
-
-      <!-- View: Timeline -->
-      <div id="view-timeline" class="report-view" style="display:none;">
-        <div class="report-card">
-          <h2>Daily Engagement Activity</h2>
-          <div id="timeline-chart"></div>
-        </div>
-        <div class="report-card">
-          <h2>Recent Engagements</h2>
-          <div id="timeline-table-container"></div>
-        </div>
-      </div>
-
-      <!-- View: Outcome Analysis -->
-      <div id="view-outcomes" class="report-view" style="display:none;">
-        <div class="report-card">
-          <h2>Outcomes by Rep</h2>
-          <div id="outcomes-by-rep"></div>
-        </div>
-        <div class="report-card">
-          <h2>Conversion Funnel</h2>
-          <div id="conversion-funnel"></div>
-        </div>
-      </div>
+      <!-- Report content (populated by JS) -->
+      <div id="report-content"></div>
     </div>
   </div>
 
@@ -211,350 +148,356 @@
       document.getElementById(id).classList.add('active');
     }
 
+    function esc(s) { const el = document.createElement('span'); el.textContent = s; return el.innerHTML; }
+
     function outcomeBadge(outcome) {
       const o = (outcome || '').toLowerCase();
-      if (o.includes('interested') && !o.includes('not')) return `<span class="badge badge-interested">${outcome}</span>`;
-      if (o.includes('not interested')) return `<span class="badge badge-not-interested">${outcome}</span>`;
-      if (o.includes('meeting')) return `<span class="badge badge-meeting">${outcome}</span>`;
-      if (o.includes('deal') || o.includes('opportunity')) return `<span class="badge badge-deal">${outcome}</span>`;
-      if (o.includes('won')) return `<span class="badge badge-won">${outcome}</span>`;
-      return `<span class="badge badge-default">${outcome || '—'}</span>`;
+      if (o.includes('not interested')) return `<span class="badge badge-not-interested">${esc(outcome)}</span>`;
+      if (o.includes('interested')) return `<span class="badge badge-interested">${esc(outcome)}</span>`;
+      if (o.includes('meeting')) return `<span class="badge badge-meeting">${esc(outcome)}</span>`;
+      if (o.includes('deal') || o.includes('opportunity')) return `<span class="badge badge-deal">${esc(outcome)}</span>`;
+      if (o.includes('won')) return `<span class="badge badge-won">${esc(outcome)}</span>`;
+      return `<span class="badge badge-default">${esc(outcome || '—')}</span>`;
     }
 
     function pct(n, d) { return d > 0 ? Math.round((n / d) * 100) : 0; }
 
-    function horizontalBar(label, value, maxVal, color = '#0078d4') {
+    function fmtMoney(val) {
+      const n = Number(String(val).replace(/[^0-9.-]/g, ''));
+      if (!n && n !== 0) return '—';
+      if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
+      if (n >= 1000) return '$' + (n / 1000).toFixed(0) + 'K';
+      return '$' + n.toLocaleString();
+    }
+
+    function parseArr(val) {
+      if (!val) return 0;
+      return Number(String(val).replace(/[$,\s]/g, '')) || 0;
+    }
+
+    function daysBetween(dateStr1, dateStr2) {
+      const d1 = new Date(dateStr1), d2 = new Date(dateStr2);
+      if (isNaN(d1) || isNaN(d2)) return null;
+      return Math.floor((d2 - d1) / 86400000);
+    }
+
+    function horizontalBar(label, value, maxVal, color = '#0078d4', suffix = '') {
       const w = maxVal > 0 ? Math.max(2, (value / maxVal) * 100) : 0;
       return `<div class="h-bar">
-        <div class="h-bar-label" title="${label}">${label}</div>
-        <div class="h-bar-track"><div class="h-bar-fill" style="width:${w}%;background:${color};">${value > 0 && w > 15 ? value : ''}</div></div>
-        <div class="h-bar-value">${value}</div>
+        <div class="h-bar-label" title="${esc(label)}">${esc(label)}</div>
+        <div class="h-bar-track"><div class="h-bar-fill" style="width:${w}%;background:${color};">${value > 0 && w > 15 ? value + suffix : ''}</div></div>
+        <div class="h-bar-value">${value}${suffix}</div>
       </div>`;
     }
 
     // ─── Data Loading ───
     async function loadPlayData(playId) {
       const safePid = playId.replace(/[^a-z0-9]/gi, '_');
-
-      // Load engagements for this play
       try {
         const text = await getFileText(SP_ROOT + '/' + safePid + '_engagements.csv');
         currentPlayLogs = text ? parseCSV(text) : [];
       } catch (e) { currentPlayLogs = []; }
-
-      // Filter assignments for this play
       currentPlayAssignments = allAssignments.filter(a => a.play_id === playId && a.active_flag !== false);
     }
 
-    // ─── Views ───
-    function renderSummary(playId) {
+    // ─── Build the full snapshot ───
+    function renderSnapshot(playId) {
       const logs = currentPlayLogs;
       const assignments = currentPlayAssignments;
-      const totalAccounts = assignments.length;
-      const engagedAccountIds = new Set(logs.map(l => l.account_id).filter(Boolean));
-      const contacted = engagedAccountIds.size;
-      const untouched = totalAccounts - contacted;
-      const totalPoints = logs.reduce((s, l) => s + (Number(l.points_earned) || 0), 0);
-      const interestedCount = logs.filter(l => (l.outcome || '').toLowerCase().includes('interested') && !(l.outcome || '').toLowerCase().includes('not')).length;
-      const uniqueReps = new Set(logs.map(l => l.rep_email).filter(Boolean)).size;
+      const now = new Date();
+      const playName = (allPlays.find(p => p.play_id === playId) || {}).play_name || playId;
 
-      document.getElementById('summary-kpis').innerHTML = `
-        <div class="kpi-box"><div class="kpi-value">${totalAccounts}</div><div class="kpi-label">Total Accounts</div></div>
-        <div class="kpi-box green"><div class="kpi-value">${contacted}</div><div class="kpi-label">Contacted</div></div>
-        <div class="kpi-box ${untouched > 0 ? 'orange' : 'green'}"><div class="kpi-value">${untouched}</div><div class="kpi-label">Untouched</div></div>
-        <div class="kpi-box"><div class="kpi-value">${pct(contacted, totalAccounts)}%</div><div class="kpi-label">Coverage</div></div>
-        <div class="kpi-box green"><div class="kpi-value">${interestedCount}</div><div class="kpi-label">Interested</div></div>
-        <div class="kpi-box"><div class="kpi-value">${totalPoints.toLocaleString()}</div><div class="kpi-label">Total Points</div></div>
-        <div class="kpi-box"><div class="kpi-value">${uniqueReps}</div><div class="kpi-label">Active Reps</div></div>
-      `;
-
-      // Outcome chart
-      const outcomeCounts = {};
-      logs.forEach(l => { const o = l.outcome || 'Unknown'; outcomeCounts[o] = (outcomeCounts[o] || 0) + 1; });
-      const sorted = Object.entries(outcomeCounts).sort((a, b) => b[1] - a[1]);
-      const maxCount = sorted.length > 0 ? sorted[0][1] : 1;
-      const colors = { 'Interested': '#107c10', 'Not Interested': '#d32f2f', 'Meeting Booked': '#1a73e8', 'Active Deal': '#d97706', 'Closed Won': '#2e7d32' };
-      document.getElementById('chart-outcomes').innerHTML = sorted.map(([o, c]) => horizontalBar(o, c, maxCount, colors[o] || '#888')).join('');
-
-      // Top reps chart
-      const repPoints = {};
-      logs.forEach(l => {
-        const e = l.rep_email || 'unknown';
-        if (!repPoints[e]) repPoints[e] = { name: l.rep_name || e, points: 0 };
-        repPoints[e].points += Number(l.points_earned) || 0;
-      });
-      const topReps = Object.values(repPoints).sort((a, b) => b.points - a.points).slice(0, 10);
-      const maxPts = topReps.length > 0 ? topReps[0].points : 1;
-      document.getElementById('chart-top-reps').innerHTML = topReps.map(r => horizontalBar(r.name, r.points, maxPts, '#16a34a')).join('') || '<p style="color:#888;">No engagement data yet.</p>';
-
-      // Coverage
-      const repCoverage = {};
-      assignments.forEach(a => {
-        const e = (a.rep_sso_login || a.rep_email || '').toLowerCase();
-        if (!e) return;
-        if (!repCoverage[e]) repCoverage[e] = { name: a.rep_name || e, total: 0, contacted: 0 };
-        repCoverage[e].total++;
-        if (engagedAccountIds.has(a.account_id)) repCoverage[e].contacted++;
-      });
-      const coverageList = Object.values(repCoverage).sort((a, b) => pct(b.contacted, b.total) - pct(a.contacted, a.total));
-      document.getElementById('coverage-stats').innerHTML = coverageList.length > 0 ? `
-        <table class="report-table">
-          <tr><th>Rep</th><th class="num">Assigned</th><th class="num">Contacted</th><th class="num">Coverage</th><th class="bar-cell">Progress</th></tr>
-          ${coverageList.map(r => `<tr>
-            <td>${r.name}</td>
-            <td class="num">${r.total}</td>
-            <td class="num">${r.contacted}</td>
-            <td class="num">${pct(r.contacted, r.total)}%</td>
-            <td class="bar-cell"><div class="mini-bar"><div class="mini-bar-fill" style="width:${pct(r.contacted, r.total)}%;background:${pct(r.contacted, r.total) >= 80 ? '#107c10' : pct(r.contacted, r.total) >= 40 ? '#d97706' : '#d32f2f'}"></div></div></td>
-          </tr>`).join('')}
-        </table>` : '<p style="color:#888;">No assignment data.</p>';
-    }
-
-    function renderReps() {
-      const logs = currentPlayLogs;
-      const repData = {};
-      logs.forEach(l => {
-        const e = l.rep_email || 'unknown';
-        if (!repData[e]) repData[e] = { name: l.rep_name || e, email: e, points: 0, engagements: 0, accounts: new Set(), outcomes: {} };
-        repData[e].points += Number(l.points_earned) || 0;
-        repData[e].engagements++;
-        if (l.account_id) repData[e].accounts.add(l.account_id);
-        const o = l.outcome || 'Other';
-        repData[e].outcomes[o] = (repData[e].outcomes[o] || 0) + 1;
-      });
-      const reps = Object.values(repData).sort((a, b) => b.points - a.points);
-
-      // Also include reps with assignments but no engagements
-      const assignedReps = {};
-      currentPlayAssignments.forEach(a => {
-        const e = (a.rep_sso_login || a.rep_email || '').toLowerCase();
-        if (e && !repData[e]) {
-          if (!assignedReps[e]) assignedReps[e] = { name: a.rep_name || e, email: e, points: 0, engagements: 0, accounts: new Set(), outcomes: {} };
-          assignedReps[e].accounts.add(a.account_id);
-        }
-      });
-      const allReps = [...reps, ...Object.values(assignedReps)];
-
-      document.getElementById('rep-table-container').innerHTML = allReps.length > 0 ? `
-        <table class="report-table">
-          <tr><th>Rep</th><th class="num">Points</th><th class="num">Engagements</th><th class="num">Accounts Touched</th><th>Top Outcomes</th></tr>
-          ${allReps.map(r => {
-            const topOutcomes = Object.entries(r.outcomes).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([o, c]) => `${outcomeBadge(o)} ×${c}`).join(' ');
-            return `<tr>
-              <td><strong>${r.name}</strong><br><span style="font-size:11px;color:#888;">${r.email}</span></td>
-              <td class="num"><strong>${r.points}</strong></td>
-              <td class="num">${r.engagements}</td>
-              <td class="num">${r.accounts.size}</td>
-              <td>${topOutcomes || '<span style="color:#aaa;">No activity</span>'}</td>
-            </tr>`;
-          }).join('')}
-        </table>` : '<p style="color:#888;">No data available.</p>';
-    }
-
-    function renderAccounts() {
-      const logs = currentPlayLogs;
-      const assignments = currentPlayAssignments;
-
-      // Build account map from assignments
+      // ── Compute account-level data ──
       const accountMap = {};
       assignments.forEach(a => {
         const id = a.account_id || '';
         if (!id) return;
-        accountMap[id] = { id, name: a.account_name || id, rep: a.rep_name || a.rep_email || '—', engagements: [], lastOutcome: '—', lastDate: '—', totalPoints: 0 };
+        if (!accountMap[id]) accountMap[id] = {
+          id, name: a.account_name || id,
+          rep: a.rep_name || a.rep_email || '—',
+          repEmail: (a.rep_sso_login || a.rep_email || '').toLowerCase(),
+          arr: parseArr(a.arr),
+          arrRaw: a.arr || '',
+          engagements: [], lastOutcome: null, lastDate: null, firstTouchDate: null
+        };
       });
-
-      // Add engagement data
       logs.forEach(l => {
         const id = l.account_id || '';
-        if (!accountMap[id]) accountMap[id] = { id, name: l.account_name || id, rep: l.rep_name || '—', engagements: [], lastOutcome: '—', lastDate: '—', totalPoints: 0 };
+        if (!accountMap[id]) accountMap[id] = {
+          id, name: l.account_name || id, rep: l.rep_name || '—',
+          repEmail: (l.rep_email || '').toLowerCase(),
+          arr: 0, arrRaw: '',
+          engagements: [], lastOutcome: null, lastDate: null, firstTouchDate: null
+        };
         accountMap[id].engagements.push(l);
-        accountMap[id].totalPoints += Number(l.points_earned) || 0;
       });
 
-      // Compute latest for each
-      Object.values(accountMap).forEach(a => {
+      // Compute latest/first for each account
+      const accounts = Object.values(accountMap);
+      accounts.forEach(a => {
         if (a.engagements.length > 0) {
-          const latest = a.engagements.sort((x, y) => (y.submitted_at || '').localeCompare(x.submitted_at || ''))[0];
-          a.lastOutcome = latest.outcome || '—';
-          a.lastDate = (latest.call_date || latest.submitted_at || '').split('T')[0];
+          const sorted = a.engagements.sort((x, y) => (y.submitted_at || '').localeCompare(x.submitted_at || ''));
+          const latest = sorted[0];
+          const earliest = sorted[sorted.length - 1];
+          a.lastOutcome = latest.outcome || null;
+          a.lastDate = latest.call_date || (latest.submitted_at || '').split('T')[0];
+          a.firstTouchDate = earliest.call_date || (earliest.submitted_at || '').split('T')[0];
+          a.lastReason = latest.reason_label || '';
+          a.lastNotes = latest.notes || '';
         }
       });
 
-      const accounts = Object.values(accountMap).sort((a, b) => a.name.localeCompare(b.name));
-      window._reportAccounts = accounts;
-      renderAccountTable(accounts);
+      // Find play start date (earliest engagement across all accounts)
+      const allDates = logs.map(l => l.call_date || (l.submitted_at || '').split('T')[0]).filter(Boolean).sort();
+      const playStartDate = allDates.length > 0 ? allDates[0] : null;
 
-      document.getElementById('account-search').oninput = function () {
-        const q = this.value.toLowerCase();
-        renderAccountTable(q ? accounts.filter(a => a.name.toLowerCase().includes(q) || a.rep.toLowerCase().includes(q)) : accounts);
-      };
-    }
+      // ── KPI calculations ──
+      const totalAccounts = accounts.length;
+      const touchedAccounts = accounts.filter(a => a.engagements.length > 0);
+      const untouchedAccounts = accounts.filter(a => a.engagements.length === 0);
+      const contacted = touchedAccounts.length;
+      const untouched = untouchedAccounts.length;
+      const totalEngagements = logs.length;
 
-    function renderAccountTable(accounts) {
-      document.getElementById('account-table-container').innerHTML = accounts.length > 0 ? `
-        <table class="report-table">
-          <tr><th>Account</th><th>Assigned Rep</th><th class="num">Engagements</th><th>Last Outcome</th><th>Last Date</th><th class="num">Points</th></tr>
-          ${accounts.map(a => `<tr>
-            <td><strong>${a.name}</strong></td>
-            <td>${a.rep}</td>
-            <td class="num">${a.engagements.length}</td>
-            <td>${outcomeBadge(a.lastOutcome)}</td>
-            <td>${a.lastDate}</td>
-            <td class="num">${a.totalPoints}</td>
-          </tr>`).join('')}
-        </table>` : '<p style="color:#888;">No accounts found.</p>';
-    }
+      // Average days untouched
+      let avgDaysUntouched = '—';
+      if (playStartDate && untouchedAccounts.length > 0) {
+        const days = daysBetween(playStartDate, now.toISOString().split('T')[0]);
+        avgDaysUntouched = days !== null ? days : '—';
+      }
 
-    function renderTimeline() {
-      const logs = currentPlayLogs;
+      // Average days since last touch (for touched accounts)
+      let avgDaysSinceTouch = '—';
+      if (touchedAccounts.length > 0) {
+        const today = now.toISOString().split('T')[0];
+        const daysArr = touchedAccounts.map(a => daysBetween(a.lastDate, today)).filter(d => d !== null);
+        if (daysArr.length > 0) avgDaysSinceTouch = Math.round(daysArr.reduce((s, d) => s + d, 0) / daysArr.length);
+      }
 
-      // Daily counts
-      const dailyCounts = {};
+      // Interested / Not Interested accounts (by latest outcome)
+      const interestedAccounts = accounts.filter(a => a.lastOutcome && a.lastOutcome.toLowerCase().includes('interested') && !a.lastOutcome.toLowerCase().includes('not'));
+      const notInterestedAccounts = accounts.filter(a => a.lastOutcome && a.lastOutcome.toLowerCase().includes('not interested'));
+
+      // Total ARR at play
+      const totalArr = accounts.reduce((s, a) => s + a.arr, 0);
+      const interestedArr = interestedAccounts.reduce((s, a) => s + a.arr, 0);
+      const notInterestedArr = notInterestedAccounts.reduce((s, a) => s + a.arr, 0);
+
+      // ── Outcome distribution ──
+      const outcomeCounts = {};
+      logs.forEach(l => { const o = l.outcome || 'Unknown'; outcomeCounts[o] = (outcomeCounts[o] || 0) + 1; });
+      const outcomesSorted = Object.entries(outcomeCounts).sort((a, b) => b[1] - a[1]);
+      const maxOutcome = outcomesSorted.length > 0 ? outcomesSorted[0][1] : 1;
+      const outcomeColors = { 'Interested': '#107c10', 'Not Interested': '#d32f2f', 'Meeting Booked': '#1a73e8', 'Active Deal': '#d97706', 'Closed Won': '#2e7d32' };
+
+      // ── Reason breakdown ──
+      const reasonCounts = {};
       logs.forEach(l => {
-        const d = (l.call_date || l.submitted_at || '').split('T')[0];
-        if (d) dailyCounts[d] = (dailyCounts[d] || 0) + 1;
+        const r = l.reason_label || '';
+        if (r) reasonCounts[r] = (reasonCounts[r] || 0) + 1;
       });
-      const days = Object.entries(dailyCounts).sort((a, b) => a[0].localeCompare(b[0]));
-      const maxDaily = days.length > 0 ? Math.max(...days.map(d => d[1])) : 1;
+      const reasonsSorted = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1]);
+      const maxReason = reasonsSorted.length > 0 ? reasonsSorted[0][1] : 1;
 
-      document.getElementById('timeline-chart').innerHTML = days.length > 0
-        ? days.slice(-30).map(([d, c]) => horizontalBar(d, c, maxDaily, '#0078d4')).join('')
-        : '<p style="color:#888;">No timeline data.</p>';
+      // ── Top 10 Interested by ARR ──
+      const top10Interested = [...interestedAccounts].sort((a, b) => b.arr - a.arr).slice(0, 10);
 
-      // Recent engagements table
-      const recent = [...logs].sort((a, b) => (b.submitted_at || '').localeCompare(a.submitted_at || '')).slice(0, 50);
-      document.getElementById('timeline-table-container').innerHTML = recent.length > 0 ? `
-        <table class="report-table">
-          <tr><th>Date</th><th>Rep</th><th>Account</th><th>Outcome</th><th>Notes</th><th class="num">Points</th></tr>
-          ${recent.map(l => `<tr>
-            <td style="white-space:nowrap;">${(l.call_date || l.submitted_at || '').split('T')[0]}</td>
-            <td>${l.rep_name || l.rep_email || '—'}</td>
-            <td>${l.account_name || l.account_id || '—'}</td>
-            <td>${outcomeBadge(l.outcome)}</td>
-            <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(l.notes || '').replace(/"/g, '&quot;')}">${l.notes || '—'}</td>
-            <td class="num">${l.points_earned || 0}</td>
-          </tr>`).join('')}
-        </table>` : '';
-    }
+      // ── Top 10 Not Interested by ARR ──
+      const top10NotInterested = [...notInterestedAccounts].sort((a, b) => b.arr - a.arr).slice(0, 10);
 
-    function renderOutcomes() {
-      const logs = currentPlayLogs;
-
-      // Outcomes by rep
-      const repOutcomes = {};
+      // ── Top reps by points (recalculated) ──
+      const repData = {};
       logs.forEach(l => {
-        const e = l.rep_name || l.rep_email || 'Unknown';
-        if (!repOutcomes[e]) repOutcomes[e] = {};
-        const o = l.outcome || 'Other';
-        repOutcomes[e][o] = (repOutcomes[e][o] || 0) + 1;
+        const e = (l.rep_email || 'unknown').toLowerCase();
+        const canonical = typeof _canonicalEmail === 'function' ? _canonicalEmail(e) : e;
+        if (!repData[canonical]) repData[canonical] = { name: l.rep_name || e, points: 0, engagements: 0, accounts: new Set(), interested: 0, notInterested: 0 };
+        if ((l.rep_name || '').length > (repData[canonical].name || '').length) repData[canonical].name = l.rep_name;
+        repData[canonical].points += typeof _recalcPoints === 'function' ? _recalcPoints(l) : (Number(l.points_earned) || 0);
+        repData[canonical].engagements++;
+        if (l.account_id) repData[canonical].accounts.add(l.account_id);
+        if ((l.outcome || '').toLowerCase().includes('interested') && !(l.outcome || '').toLowerCase().includes('not')) repData[canonical].interested++;
+        if ((l.outcome || '').toLowerCase().includes('not interested')) repData[canonical].notInterested++;
       });
+      const topReps = Object.values(repData).sort((a, b) => b.points - a.points).slice(0, 15);
+      const maxRepPts = topReps.length > 0 ? topReps[0].points : 1;
 
-      // Get all unique outcomes
-      const allOutcomes = [...new Set(logs.map(l => l.outcome || 'Other'))].sort();
+      // ── Untouched accounts list ──
+      const untouchedList = [...untouchedAccounts].sort((a, b) => b.arr - a.arr);
 
-      const reps = Object.entries(repOutcomes).sort((a, b) => a[0].localeCompare(b[0]));
-      document.getElementById('outcomes-by-rep').innerHTML = reps.length > 0 ? `
-        <table class="report-table">
-          <tr><th>Rep</th>${allOutcomes.map(o => `<th class="num">${o}</th>`).join('')}<th class="num">Total</th></tr>
-          ${reps.map(([name, outcomes]) => {
-            const total = Object.values(outcomes).reduce((s, v) => s + v, 0);
-            return `<tr><td><strong>${name}</strong></td>${allOutcomes.map(o => `<td class="num">${outcomes[o] || ''}</td>`).join('')}<td class="num"><strong>${total}</strong></td></tr>`;
-          }).join('')}
-        </table>` : '<p style="color:#888;">No outcome data.</p>';
+      // ══════ BUILD HTML ══════
+      const html = `
+        <div class="snapshot-header">
+          <h1>${esc(playName)}</h1>
+          <div class="snapshot-date">Snapshot as of ${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+        </div>
 
-      // Conversion funnel
-      const totalAccounts = currentPlayAssignments.length;
-      const contactedSet = new Set(logs.map(l => l.account_id).filter(Boolean));
-      const contacted = contactedSet.size;
-      const interestedSet = new Set(logs.filter(l => (l.outcome || '').toLowerCase().includes('interested') && !(l.outcome || '').toLowerCase().includes('not')).map(l => l.account_id).filter(Boolean));
-      const meetingSet = new Set(logs.filter(l => (l.outcome || '').toLowerCase().includes('meeting')).map(l => l.account_id).filter(Boolean));
-      const dealSet = new Set(logs.filter(l => (l.outcome || '').toLowerCase().includes('deal') || (l.outcome || '').toLowerCase().includes('opportunity')).map(l => l.account_id).filter(Boolean));
+        <!-- KPIs -->
+        <div class="report-section">
+          <h2>📈 Activity Summary</h2>
+          <div class="kpi-row">
+            <div class="kpi-box"><div class="kpi-value">${totalAccounts}</div><div class="kpi-label">Total Accounts</div></div>
+            <div class="kpi-box green"><div class="kpi-value">${contacted}</div><div class="kpi-label">Contacted</div></div>
+            <div class="kpi-box ${untouched > 0 ? 'red' : 'green'}"><div class="kpi-value">${untouched}</div><div class="kpi-label">Untouched</div></div>
+            <div class="kpi-box"><div class="kpi-value">${totalEngagements}</div><div class="kpi-label">Total Touches</div></div>
+            <div class="kpi-box green"><div class="kpi-value">${interestedAccounts.length}</div><div class="kpi-label">Interested</div></div>
+            <div class="kpi-box red"><div class="kpi-value">${notInterestedAccounts.length}</div><div class="kpi-label">Not Interested</div></div>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi-box ${typeof avgDaysUntouched === 'number' && avgDaysUntouched > 14 ? 'red' : 'orange'}"><div class="kpi-value">${avgDaysUntouched}</div><div class="kpi-label">Avg Days Untouched</div></div>
+            <div class="kpi-box"><div class="kpi-value">${avgDaysSinceTouch}</div><div class="kpi-label">Avg Days Since Last Touch</div></div>
+            <div class="kpi-box"><div class="kpi-value">${fmtMoney(totalArr)}</div><div class="kpi-label">Total ARR at Play</div></div>
+            <div class="kpi-box green"><div class="kpi-value">${fmtMoney(interestedArr)}</div><div class="kpi-label">Interested ARR</div></div>
+            <div class="kpi-box red"><div class="kpi-value">${fmtMoney(notInterestedArr)}</div><div class="kpi-label">Not Interested ARR</div></div>
+          </div>
+        </div>
 
-      const funnel = [
-        { label: 'Total Accounts', count: totalAccounts, color: '#555' },
-        { label: 'Contacted', count: contacted, color: '#0078d4' },
-        { label: 'Interested', count: interestedSet.size, color: '#107c10' },
-        { label: 'Meeting Booked', count: meetingSet.size, color: '#1a73e8' },
-        { label: 'Active Deal', count: dealSet.size, color: '#d97706' },
-      ];
+        <!-- Outcome Distribution -->
+        <div class="report-section">
+          <h2>📊 Outcome Distribution</h2>
+          ${outcomesSorted.length > 0
+            ? outcomesSorted.map(([o, c]) => horizontalBar(o, c, maxOutcome, outcomeColors[o] || '#888')).join('')
+            : '<p style="color:#888;">No engagement data yet.</p>'}
+        </div>
 
-      document.getElementById('conversion-funnel').innerHTML = `
-        <div style="max-width:500px;margin:0 auto;">
-          ${funnel.map((f, i) => {
-            const w = totalAccounts > 0 ? Math.max(8, (f.count / totalAccounts) * 100) : 8;
-            const convRate = i > 0 && funnel[i - 1].count > 0 ? ` (${pct(f.count, funnel[i - 1].count)}%)` : '';
-            return `<div style="margin:8px 0;text-align:center;">
-              <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:4px;">${f.label}: ${f.count}${convRate}</div>
-              <div style="margin:0 auto;height:28px;width:${w}%;background:${f.color};border-radius:6px;"></div>
-            </div>`;
-          }).join('')}
-        </div>`;
+        <!-- Reason Breakdown -->
+        <div class="report-section">
+          <h2>💬 Reason Breakdown</h2>
+          ${reasonsSorted.length > 0
+            ? reasonsSorted.map(([r, c]) => horizontalBar(r, c, maxReason, '#6366f1')).join('')
+            : '<p style="color:#888;">No reasons recorded yet.</p>'}
+        </div>
+
+        <!-- Top 10 Interested by ARR -->
+        <div class="report-section">
+          <h2>✅ Top 10 Interested Accounts by ARR</h2>
+          ${top10Interested.length > 0 ? `
+            <table class="report-table">
+              <tr><th>#</th><th>Account</th><th>Rep</th><th class="money">ARR</th><th>Reason</th><th>Last Date</th><th>Notes</th></tr>
+              ${top10Interested.map((a, i) => `<tr>
+                <td>${i + 1}</td>
+                <td><strong>${esc(a.name)}</strong></td>
+                <td>${esc(a.rep)}</td>
+                <td class="money">${fmtMoney(a.arr)}</td>
+                <td>${esc(a.lastReason || '—')}</td>
+                <td style="white-space:nowrap;">${a.lastDate || '—'}</td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(a.lastNotes)}">${esc(a.lastNotes || '—')}</td>
+              </tr>`).join('')}
+            </table>
+            <div style="margin-top:8px;font-size:13px;color:#107c10;font-weight:600;">Total Interested ARR: ${fmtMoney(interestedArr)}</div>
+          ` : '<p style="color:#888;">No interested accounts yet.</p>'}
+        </div>
+
+        <!-- Top 10 Not Interested by ARR -->
+        <div class="report-section">
+          <h2>❌ Top 10 Not Interested Accounts by ARR</h2>
+          ${top10NotInterested.length > 0 ? `
+            <table class="report-table">
+              <tr><th>#</th><th>Account</th><th>Rep</th><th class="money">ARR</th><th>Reason</th><th>Last Date</th><th>Notes</th></tr>
+              ${top10NotInterested.map((a, i) => `<tr>
+                <td>${i + 1}</td>
+                <td><strong>${esc(a.name)}</strong></td>
+                <td>${esc(a.rep)}</td>
+                <td class="money">${fmtMoney(a.arr)}</td>
+                <td>${esc(a.lastReason || '—')}</td>
+                <td style="white-space:nowrap;">${a.lastDate || '—'}</td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(a.lastNotes)}">${esc(a.lastNotes || '—')}</td>
+              </tr>`).join('')}
+            </table>
+            <div style="margin-top:8px;font-size:13px;color:#d32f2f;font-weight:600;">Total Not Interested ARR: ${fmtMoney(notInterestedArr)}</div>
+          ` : '<p style="color:#888;">No not-interested accounts yet.</p>'}
+        </div>
+
+        <!-- Top Reps by Points -->
+        <div class="report-section">
+          <h2>🏆 Top Reps by Points</h2>
+          ${topReps.length > 0 ? `
+            <table class="report-table">
+              <tr><th>#</th><th>Rep</th><th class="num">Points</th><th class="num">Touches</th><th class="num">Accounts</th><th class="num">Interested</th><th class="num">Not Interested</th></tr>
+              ${topReps.map((r, i) => `<tr>
+                <td>${i + 1}</td>
+                <td><strong>${esc(r.name)}</strong></td>
+                <td class="num"><strong>${r.points}</strong></td>
+                <td class="num">${r.engagements}</td>
+                <td class="num">${r.accounts.size}</td>
+                <td class="num" style="color:#107c10;">${r.interested}</td>
+                <td class="num" style="color:#d32f2f;">${r.notInterested}</td>
+              </tr>`).join('')}
+            </table>
+          ` : '<p style="color:#888;">No engagement data yet.</p>'}
+        </div>
+
+        <!-- Untouched Accounts -->
+        ${untouchedList.length > 0 ? `
+        <div class="report-section">
+          <h2>⚠️ Untouched Accounts (${untouched})</h2>
+          <p style="font-size:13px;color:#888;margin-bottom:12px;">Assigned accounts with zero engagements — sorted by ARR (highest first)${playStartDate ? '. Play active since ' + playStartDate : ''}.</p>
+          <table class="report-table">
+            <tr><th>#</th><th>Account</th><th>Assigned Rep</th><th class="money">ARR</th><th class="num">Days Waiting</th></tr>
+            ${untouchedList.slice(0, 30).map((a, i) => {
+              const daysWaiting = playStartDate ? daysBetween(playStartDate, now.toISOString().split('T')[0]) : '—';
+              return `<tr>
+                <td>${i + 1}</td>
+                <td><strong>${esc(a.name)}</strong></td>
+                <td>${esc(a.rep)}</td>
+                <td class="money">${fmtMoney(a.arr)}</td>
+                <td class="num" style="color:${typeof daysWaiting === 'number' && daysWaiting > 14 ? '#d32f2f' : '#d97706'};">${daysWaiting}</td>
+              </tr>`;
+            }).join('')}
+          </table>
+          ${untouchedList.length > 30 ? `<p style="font-size:12px;color:#888;margin-top:8px;">Showing top 30 of ${untouchedList.length} untouched accounts.</p>` : ''}
+        </div>` : ''}
+      `;
+
+      document.getElementById('report-content').innerHTML = html;
     }
 
     // ─── CSV Export ───
     function exportCSV() {
       const playSelect = document.getElementById('play-select');
       const playName = playSelect.options[playSelect.selectedIndex]?.text || 'report';
+      const logs = currentPlayLogs;
+      const rows = [['Date', 'Rep', 'Account', 'Outcome', 'Reason', 'Notes', 'ARR']];
 
-      const activeView = document.querySelector('.view-tab.active')?.dataset.view || 'summary';
-      let rows = [];
+      // Build account ARR lookup from assignments
+      const arrLookup = {};
+      currentPlayAssignments.forEach(a => { if (a.account_id) arrLookup[a.account_id] = a.arr || ''; });
 
-      if (activeView === 'accounts' && window._reportAccounts) {
-        rows.push(['Account', 'Rep', 'Engagements', 'Last Outcome', 'Last Date', 'Points']);
-        window._reportAccounts.forEach(a => rows.push([a.name, a.rep, a.engagements.length, a.lastOutcome, a.lastDate, a.totalPoints]));
-      } else {
-        rows.push(['Date', 'Rep', 'Account', 'Outcome', 'Notes', 'Points']);
-        currentPlayLogs.sort((a, b) => (b.submitted_at || '').localeCompare(a.submitted_at || '')).forEach(l => {
-          rows.push([(l.call_date || l.submitted_at || '').split('T')[0], l.rep_name || l.rep_email, l.account_name || l.account_id, l.outcome, l.notes || '', l.points_earned || 0]);
-        });
-      }
+      logs.sort((a, b) => (b.submitted_at || '').localeCompare(a.submitted_at || '')).forEach(l => {
+        rows.push([
+          (l.call_date || l.submitted_at || '').split('T')[0],
+          l.rep_name || l.rep_email,
+          l.account_name || l.account_id,
+          l.outcome,
+          l.reason_label || '',
+          l.notes || '',
+          arrLookup[l.account_id] || ''
+        ]);
+      });
 
       const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${playName.replace(/[^a-z0-9]/gi, '_')}_report.csv`;
+      a.download = `${playName.replace(/[^a-z0-9]/gi, '_')}_snapshot.csv`;
       a.click();
       URL.revokeObjectURL(url);
-    }
-
-    // ─── View Switching ───
-    function switchView(viewName) {
-      document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === viewName));
-      document.querySelectorAll('.report-view').forEach(v => v.style.display = 'none');
-      document.getElementById('view-' + viewName).style.display = 'block';
-
-      const playId = document.getElementById('play-select').value;
-      if (!playId) return;
-
-      switch (viewName) {
-        case 'summary': renderSummary(playId); break;
-        case 'reps': renderReps(); break;
-        case 'accounts': renderAccounts(); break;
-        case 'timeline': renderTimeline(); break;
-        case 'outcomes': renderOutcomes(); break;
-      }
     }
 
     // ─── Init ───
     async function loadReports() {
       showScreen('screen-loading');
-
-      // Load plays and assignments
       allPlays = await getPlays();
       const assText = await getFileText(SP_ROOT + '/assignments.json');
       allAssignments = assText ? (JSON.parse(assText).assignments || []).filter(a => a.active_flag !== false) : [];
 
-      // Populate play selector
       const sel = document.getElementById('play-select');
       sel.innerHTML = allPlays.map(p => `<option value="${p.play_id}">${p.play_name || p.play_id}</option>`).join('');
 
       if (allPlays.length > 0) {
         await loadPlayData(allPlays[0].play_id);
-        renderSummary(allPlays[0].play_id);
+        renderSnapshot(allPlays[0].play_id);
       }
-
       showScreen('screen-reports');
     }
 
@@ -568,9 +511,7 @@
         }
       } catch (err) {
         console.error('Sign in error:', err);
-        const msg = err && err.message ? err.message : '';
-        if (!msg) return;
-        alert('⚠️ Sign in failed. Please try again.\n\nError: ' + msg);
+        if (err && err.message) alert('⚠️ Sign in failed.\n\n' + err.message);
       }
     });
 
@@ -578,13 +519,8 @@
       if (!this.value) return;
       showScreen('screen-loading');
       await loadPlayData(this.value);
-      const activeView = document.querySelector('.view-tab.active')?.dataset.view || 'summary';
+      renderSnapshot(this.value);
       showScreen('screen-reports');
-      switchView(activeView);
-    });
-
-    document.querySelectorAll('.view-tab').forEach(tab => {
-      tab.addEventListener('click', () => switchView(tab.dataset.view));
     });
 
     document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
