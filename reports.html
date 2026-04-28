@@ -28,6 +28,16 @@
     .report-section h2 { font-size: 16px; font-weight: 700; color: #333; margin: 0 0 16px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
     .report-section h3 { font-size: 14px; font-weight: 600; color: #555; margin: 16px 0 8px; }
 
+    /* Side-by-side split */
+    .split-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .split-card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+    .split-card h2 { font-size: 15px; font-weight: 700; margin: 0 0 14px; padding-bottom: 8px; border-bottom: 2px solid #eee; }
+    .split-card.card-green { border-top: 4px solid #107c10; }
+    .split-card.card-red { border-top: 4px solid #d32f2f; }
+    .split-card .card-total { margin-top: 12px; padding-top: 10px; border-top: 1px solid #eee; font-size: 14px; font-weight: 700; display: flex; justify-content: space-between; }
+    .split-card .card-count { font-size: 32px; font-weight: 800; margin-bottom: 4px; }
+    .split-card .card-arr { font-size: 14px; color: #666; font-weight: 600; }
+
     /* KPI row */
     .kpi-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
     .kpi-box { flex: 1; min-width: 130px; background: #f8faff; border-radius: 10px; padding: 16px; text-align: center; }
@@ -78,13 +88,16 @@
     @media print {
       body { background: #fff !important; }
       .header, .play-selector, .no-print { display: none !important; }
-      .report-section { box-shadow: none !important; border: 1px solid #ddd; page-break-inside: avoid; margin-bottom: 12px; padding: 16px; }
+      .report-section, .split-card { box-shadow: none !important; border: 1px solid #ddd; page-break-inside: avoid; margin-bottom: 12px; padding: 16px; }
+      .split-row { gap: 12px; }
+      .split-card { border-top-width: 3px !important; }
       .snapshot-header { margin-top: 0; }
       .kpi-box { border: 1px solid #eee; }
     }
 
     @media (max-width: 768px) {
       .kpi-row { flex-direction: column; }
+      .split-row { grid-template-columns: 1fr; }
       .h-bar-label { width: 90px; font-size: 11px; }
       .report-table { font-size: 12px; }
       .report-table th, .report-table td { padding: 8px 6px; }
@@ -130,10 +143,10 @@
   </div>
 
   <!-- ===================== SCRIPTS ===================== -->
-  <script src="msal-browser.js?v=3"></script>
-  <script src="config.js?v=3"></script>
-  <script src="msal-auth.js?v=3"></script>
-  <script src="graph-api.js?v=3"></script>
+  <script src="msal-browser.js?v=4"></script>
+  <script src="config.js?v=4"></script>
+  <script src="msal-auth.js?v=4"></script>
+  <script src="graph-api.js?v=4"></script>
 
   <script>
     let currentUser = null;
@@ -290,14 +303,26 @@
       const maxOutcome = outcomesSorted.length > 0 ? outcomesSorted[0][1] : 1;
       const outcomeColors = { 'Interested': '#107c10', 'Not Interested': '#d32f2f', 'Meeting Booked': '#1a73e8', 'Active Deal': '#d97706', 'Closed Won': '#2e7d32' };
 
-      // ── Reason breakdown ──
-      const reasonCounts = {};
+      // ── Reason breakdown — split by interested vs not interested ──
+      const interestedReasons = {};
+      const notInterestedReasons = {};
       logs.forEach(l => {
         const r = l.reason_label || '';
-        if (r) reasonCounts[r] = (reasonCounts[r] || 0) + 1;
+        if (!r) return;
+        const o = (l.outcome || '').toLowerCase();
+        if (o.includes('not interested')) {
+          notInterestedReasons[r] = (notInterestedReasons[r] || 0) + 1;
+        } else if (o.includes('interested')) {
+          interestedReasons[r] = (interestedReasons[r] || 0) + 1;
+        } else {
+          // Other outcomes — group with interested reasons
+          interestedReasons[r] = (interestedReasons[r] || 0) + 1;
+        }
       });
-      const reasonsSorted = Object.entries(reasonCounts).sort((a, b) => b[1] - a[1]);
-      const maxReason = reasonsSorted.length > 0 ? reasonsSorted[0][1] : 1;
+      const intReasonsSorted = Object.entries(interestedReasons).sort((a, b) => b[1] - a[1]);
+      const notIntReasonsSorted = Object.entries(notInterestedReasons).sort((a, b) => b[1] - a[1]);
+      const maxIntReason = intReasonsSorted.length > 0 ? intReasonsSorted[0][1] : 1;
+      const maxNotIntReason = notIntReasonsSorted.length > 0 ? notIntReasonsSorted[0][1] : 1;
 
       // ── Top 10 Interested by ARR ──
       const top10Interested = [...interestedAccounts].sort((a, b) => b.arr - a.arr).slice(0, 10);
@@ -339,12 +364,10 @@
             <div class="kpi-box green"><div class="kpi-value">${contacted}</div><div class="kpi-label">Contacted</div></div>
             <div class="kpi-box ${untouched > 0 ? 'red' : 'green'}"><div class="kpi-value">${untouched}</div><div class="kpi-label">Untouched</div></div>
             <div class="kpi-box"><div class="kpi-value">${totalEngagements}</div><div class="kpi-label">Total Touches</div></div>
-            <div class="kpi-box green"><div class="kpi-value">${interestedAccounts.length}</div><div class="kpi-label">Interested</div></div>
-            <div class="kpi-box red"><div class="kpi-value">${notInterestedAccounts.length}</div><div class="kpi-label">Not Interested</div></div>
           </div>
           <div class="kpi-row">
             <div class="kpi-box ${typeof avgDaysUntouched === 'number' && avgDaysUntouched > 14 ? 'red' : 'orange'}"><div class="kpi-value">${avgDaysUntouched}</div><div class="kpi-label">Avg Days Untouched</div></div>
-            <div class="kpi-box"><div class="kpi-value">${avgDaysSinceTouch}</div><div class="kpi-label">Avg Days Since Last Touch</div></div>
+            <div class="kpi-box"><div class="kpi-value">${avgDaysSinceTouch}</div><div class="kpi-label">Avg Days Since Touch</div></div>
             <div class="kpi-box"><div class="kpi-value">${fmtMoney(totalArr)}</div><div class="kpi-label">Total ARR at Play</div></div>
             <div class="kpi-box green"><div class="kpi-value">${fmtMoney(interestedArr)}</div><div class="kpi-label">Interested ARR</div></div>
             <div class="kpi-box red"><div class="kpi-value">${fmtMoney(notInterestedArr)}</div><div class="kpi-label">Not Interested ARR</div></div>
@@ -359,52 +382,42 @@
             : '<p style="color:#888;">No engagement data yet.</p>'}
         </div>
 
-        <!-- Reason Breakdown -->
-        <div class="report-section">
-          <h2>💬 Reason Breakdown</h2>
-          ${reasonsSorted.length > 0
-            ? reasonsSorted.map(([r, c]) => horizontalBar(r, c, maxReason, '#6366f1')).join('')
-            : '<p style="color:#888;">No reasons recorded yet.</p>'}
-        </div>
-
-        <!-- Top 10 Interested by ARR -->
-        <div class="report-section">
-          <h2>✅ Top 10 Interested Accounts by ARR</h2>
-          ${top10Interested.length > 0 ? `
-            <table class="report-table">
-              <tr><th>#</th><th>Account</th><th>Rep</th><th class="money">ARR</th><th>Reason</th><th>Last Date</th><th>Notes</th></tr>
-              ${top10Interested.map((a, i) => `<tr>
-                <td>${i + 1}</td>
-                <td><strong>${esc(a.name)}</strong></td>
-                <td>${esc(a.rep)}</td>
-                <td class="money">${fmtMoney(a.arr)}</td>
-                <td>${esc(a.lastReason || '—')}</td>
-                <td style="white-space:nowrap;">${a.lastDate || '—'}</td>
-                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(a.lastNotes)}">${esc(a.lastNotes || '—')}</td>
-              </tr>`).join('')}
-            </table>
-            <div style="margin-top:8px;font-size:13px;color:#107c10;font-weight:600;">Total Interested ARR: ${fmtMoney(interestedArr)}</div>
-          ` : '<p style="color:#888;">No interested accounts yet.</p>'}
-        </div>
-
-        <!-- Top 10 Not Interested by ARR -->
-        <div class="report-section">
-          <h2>❌ Top 10 Not Interested Accounts by ARR</h2>
-          ${top10NotInterested.length > 0 ? `
-            <table class="report-table">
-              <tr><th>#</th><th>Account</th><th>Rep</th><th class="money">ARR</th><th>Reason</th><th>Last Date</th><th>Notes</th></tr>
-              ${top10NotInterested.map((a, i) => `<tr>
-                <td>${i + 1}</td>
-                <td><strong>${esc(a.name)}</strong></td>
-                <td>${esc(a.rep)}</td>
-                <td class="money">${fmtMoney(a.arr)}</td>
-                <td>${esc(a.lastReason || '—')}</td>
-                <td style="white-space:nowrap;">${a.lastDate || '—'}</td>
-                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(a.lastNotes)}">${esc(a.lastNotes || '—')}</td>
-              </tr>`).join('')}
-            </table>
-            <div style="margin-top:8px;font-size:13px;color:#d32f2f;font-weight:600;">Total Not Interested ARR: ${fmtMoney(notInterestedArr)}</div>
-          ` : '<p style="color:#888;">No not-interested accounts yet.</p>'}
+        <!-- Top 10 Interested & Not Interested — side by side -->
+        <div class="split-row">
+          <div class="split-card card-green">
+            <h2 style="color:#107c10;">✅ Top Interested by ARR</h2>
+            <div style="display:flex;gap:16px;margin-bottom:14px;">
+              <div><div class="card-count" style="color:#107c10;">${interestedAccounts.length}</div><div class="card-arr">accounts · ${fmtMoney(interestedArr)}</div></div>
+            </div>
+            ${top10Interested.length > 0 ? `
+              <table class="report-table" style="font-size:12px;">
+                <tr><th>Account</th><th>Rep</th><th class="money">ARR</th><th>Reason</th></tr>
+                ${top10Interested.map(a => `<tr>
+                  <td><strong>${esc(a.name)}</strong></td>
+                  <td style="font-size:11px;">${esc(a.rep)}</td>
+                  <td class="money">${fmtMoney(a.arr)}</td>
+                  <td style="font-size:11px;">${esc(a.lastReason || '—')}</td>
+                </tr>`).join('')}
+              </table>
+            ` : '<p style="color:#888;font-size:13px;">No interested accounts yet.</p>'}
+          </div>
+          <div class="split-card card-red">
+            <h2 style="color:#d32f2f;">❌ Top Not Interested by ARR</h2>
+            <div style="display:flex;gap:16px;margin-bottom:14px;">
+              <div><div class="card-count" style="color:#d32f2f;">${notInterestedAccounts.length}</div><div class="card-arr">accounts · ${fmtMoney(notInterestedArr)}</div></div>
+            </div>
+            ${top10NotInterested.length > 0 ? `
+              <table class="report-table" style="font-size:12px;">
+                <tr><th>Account</th><th>Rep</th><th class="money">ARR</th><th>Reason</th></tr>
+                ${top10NotInterested.map(a => `<tr>
+                  <td><strong>${esc(a.name)}</strong></td>
+                  <td style="font-size:11px;">${esc(a.rep)}</td>
+                  <td class="money">${fmtMoney(a.arr)}</td>
+                  <td style="font-size:11px;">${esc(a.lastReason || '—')}</td>
+                </tr>`).join('')}
+              </table>
+            ` : '<p style="color:#888;font-size:13px;">No not-interested accounts yet.</p>'}
+          </div>
         </div>
 
         <!-- Top Reps by Points -->
@@ -430,7 +443,7 @@
         ${untouchedList.length > 0 ? `
         <div class="report-section">
           <h2>⚠️ Untouched Accounts (${untouched})</h2>
-          <p style="font-size:13px;color:#888;margin-bottom:12px;">Assigned accounts with zero engagements — sorted by ARR (highest first)${playStartDate ? '. Play active since ' + playStartDate : ''}.</p>
+          <p style="font-size:13px;color:#888;margin-bottom:12px;">Assigned but never contacted — sorted by ARR${playStartDate ? '. Play active since ' + playStartDate : ''}.</p>
           <table class="report-table">
             <tr><th>#</th><th>Account</th><th>Assigned Rep</th><th class="money">ARR</th><th class="num">Days Waiting</th></tr>
             ${untouchedList.slice(0, 30).map((a, i) => {
@@ -444,8 +457,24 @@
               </tr>`;
             }).join('')}
           </table>
-          ${untouchedList.length > 30 ? `<p style="font-size:12px;color:#888;margin-top:8px;">Showing top 30 of ${untouchedList.length} untouched accounts.</p>` : ''}
+          ${untouchedList.length > 30 ? `<p style="font-size:12px;color:#888;margin-top:8px;">Showing top 30 of ${untouchedList.length}.</p>` : ''}
         </div>` : ''}
+
+        <!-- Reason Breakdown — split by outcome, side by side -->
+        <div class="split-row">
+          <div class="split-card card-green">
+            <h2 style="color:#107c10;">💬 Interested — Why They Said Yes</h2>
+            ${intReasonsSorted.length > 0
+              ? intReasonsSorted.map(([r, c]) => horizontalBar(r, c, maxIntReason, '#107c10')).join('')
+              : '<p style="color:#888;font-size:13px;">No reasons recorded.</p>'}
+          </div>
+          <div class="split-card card-red">
+            <h2 style="color:#d32f2f;">💬 Not Interested — Why They Said No</h2>
+            ${notIntReasonsSorted.length > 0
+              ? notIntReasonsSorted.map(([r, c]) => horizontalBar(r, c, maxNotIntReason, '#d32f2f')).join('')
+              : '<p style="color:#888;font-size:13px;">No reasons recorded.</p>'}
+          </div>
+        </div>
       `;
 
       document.getElementById('report-content').innerHTML = html;
