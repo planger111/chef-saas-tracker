@@ -369,11 +369,11 @@
 
 
   <!-- ===================== SCRIPTS ===================== -->
-  <script src="msal-browser.js?v=2"></script>
-  <script src="config.js?v=2"></script>
-  <script src="msal-auth.js?v=2"></script>
-  <script src="graph-api.js?v=2"></script>
-  <script src="form-engine.js?v=2"></script>
+  <script src="msal-browser.js?v=3"></script>
+  <script src="config.js?v=3"></script>
+  <script src="msal-auth.js?v=3"></script>
+  <script src="graph-api.js?v=3"></script>
+  <script src="form-engine.js?v=3"></script>
 
   <script>
     // ─────────────────────────────────────────────
@@ -1651,6 +1651,11 @@
         const rankStr = rank <= 3 ? rankEmoji[rank - 1] : String(rank);
         const noScore = pts === 0;
         const taunt   = rifTaunts[idx % rifTaunts.length];
+        const engaged = entry.engagedAccounts || entry.completedAccounts || 0;
+        const interested = entry.interestedAccounts || 0;
+        const pct     = engaged > 0 ? Math.round((interested / engaged) * 100) : 0;
+        const engCount = entry.totalEngagements || 0;
+        const lastAct = entry.lastActivity ? _formatRelativeDate(entry.lastActivity) : '';
 
         return `
           <div class="leaderboard-row${isMe ? ' current-user' : ''}" style="${noScore ? 'opacity:0.75;' : ''}">
@@ -1658,10 +1663,11 @@
             <div class="leaderboard-info">
               <div class="leaderboard-name">${entry.repName || entry.email}${isMe ? ' 👈 you' : ''}</div>
               <div class="leaderboard-level" style="${noScore ? 'color:#e53e3e;font-weight:600;' : ''}">${noScore ? '😶 No Score — Too busy to sell I guess...' : `${level.badge} ${level.name}`}</div>
+              ${noScore ? '' : `<div style="font-size:11px;color:#6b7280;margin-top:2px;">${engCount} touch${engCount !== 1 ? 'es' : ''} · ${interested} interested (${pct}%)${lastAct ? ' · ' + lastAct : ''}</div>`}
             </div>
             <div class="leaderboard-right">
               <div class="leaderboard-points" style="${noScore ? 'color:#e53e3e;' : ''}">${pts.toLocaleString()} pts</div>
-              <div class="leaderboard-accounts">${entry.completedAccounts || 0} accounts</div>
+              <div class="leaderboard-accounts">${engaged} accounts</div>
             </div>
           </div>
         `;
@@ -1669,6 +1675,20 @@
 
       container.innerHTML = picker + html;
       _wireLbFullPickerEvent();
+    }
+
+    function _formatRelativeDate(isoStr) {
+      try {
+        const d = new Date(isoStr);
+        const now = new Date();
+        const diffMs = now - d;
+        const diffDays = Math.floor(diffMs / 86400000);
+        if (diffDays === 0) return 'today';
+        if (diffDays === 1) return 'yesterday';
+        if (diffDays < 7) return diffDays + 'd ago';
+        if (diffDays < 30) return Math.floor(diffDays / 7) + 'w ago';
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      } catch(e) { return ''; }
     }
 
     function _wireLbFullPickerEvent() {

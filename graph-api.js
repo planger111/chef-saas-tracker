@@ -1130,7 +1130,24 @@ async function getLatestExecutionPerAccount(playId, accountIds) {
 
 async function getRepPoints(repEmail) {
   const logs = await _getAllLogsForRep(repEmail);
-  return logs.reduce((sum, l) => sum + (Number(l.points_earned) || 0), 0);
+  return logs.reduce((sum, l) => sum + _recalcPoints(l), 0);
+}
+
+// Recalculate points from raw row data — source of truth is the CSV fields, not stored points_earned
+function _recalcPoints(row) {
+  return calculatePoints(row.outcome, row.next_step_type, row);
+}
+
+// Normalize a rep email to a canonical key using STATIC_ALIASES
+function _canonicalEmail(email) {
+  const e = (email || '').toLowerCase();
+  // Pick the alphabetically-first alias as canonical so both variants map to the same key
+  const aliases = STATIC_ALIASES[e];
+  if (aliases && aliases.length) {
+    const all = [e, ...aliases].sort();
+    return all[0];
+  }
+  return e;
 }
 
 async function getLeaderboard(playId) {
@@ -1148,14 +1165,37 @@ async function getLeaderboard(playId) {
       const text = await getFileText(SP_ROOT + "/" + safePid + "_engagements.csv");
       if (!text) continue;
       parseCSV(text).forEach(log => {
-        const key = log.rep_email; if (!key) return;
-        if (!repMap[key]) repMap[key] = { email: key, repName: log.rep_name || key, totalPoints: 0, engagedAccounts: new Set(), interestedAccounts: new Set() };
-        repMap[key].totalPoints += Number(log.points_earned) || 0;
-        if (log.account_id) { repMap[key].engagedAccounts.add(log.account_id); if (log.outcome === "Interested") repMap[key].interestedAccounts.add(log.account_id); }
+        const rawEmail = (log.rep_email || '').toLowerCase();
+        if (!rawEmail) return;
+        const key = _canonicalEmail(rawEmail);
+        if (!repMap[key]) repMap[key] = {
+          email: rawEmail, repName: log.rep_name || rawEmail,
+          totalPoints: 0, engagedAccounts: new Set(), interestedAccounts: new Set(),
+          totalEngagements: 0, lastActivity: ''
+        };
+        // Prefer the longer (full) name variant
+        if ((log.rep_name || '').length > (repMap[key].repName || '').length) {
+          repMap[key].repName = log.rep_name;
+        }
+        // Recalculate points from raw fields — CSV is the source of truth
+        repMap[key].totalPoints += _recalcPoints(log);
+        repMap[key].totalEngagements += 1;
+        if (log.account_id) {
+          repMap[key].engagedAccounts.add(log.account_id);
+          if (log.outcome === 'Interested') repMap[key].interestedAccounts.add(log.account_id);
+        }
+        const ts = log.submitted_at || log.call_date || '';
+        if (ts > repMap[key].lastActivity) repMap[key].lastActivity = ts;
       });
     }
-    return Object.values(repMap).map(r => ({ ...r, completedAccounts: r.engagedAccounts.size, engagedAccounts: r.engagedAccounts.size, interestedAccounts: r.interestedAccounts.size }))
-                                .sort((a, b) => b.totalPoints - a.totalPoints);
+    return Object.values(repMap).map(r => ({
+      ...r,
+      completedAccounts: r.engagedAccounts.size,
+      engagedAccounts: r.engagedAccounts.size,
+      interestedAccounts: r.interestedAccounts.size,
+      totalEngagements: r.totalEngagements,
+      lastActivity: r.lastActivity,
+    })).sort((a, b) => b.totalPoints - a.totalPoints);
   } catch(e) { return []; }
 }
 
