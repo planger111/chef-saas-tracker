@@ -1214,8 +1214,11 @@ async function getLeaderboard(playId) {
 
     // Build results from reps who have engagements
     const results = Object.values(repMap).map(r => {
-      const assigned = repAssignedCounts[_canonicalEmail(r.email)] ? repAssignedCounts[_canonicalEmail(r.email)].size : 0;
+      const canonical = _canonicalEmail(r.email);
+      let assigned = repAssignedCounts[canonical] ? repAssignedCounts[canonical].size : 0;
       const engaged = r.engagedAccounts.size;
+      // If rep has engagements but no assignment match, use engaged count so they still appear
+      if (assigned === 0 && engaged > 0) assigned = engaged;
       let pts = r.totalPoints;
       if (assigned > 0 && engaged >= assigned) pts += 50;
       const ppa = assigned > 0 ? Math.round(pts / assigned) : 0;
