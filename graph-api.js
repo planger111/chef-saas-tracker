@@ -592,12 +592,21 @@ let _graphUserProfile = null;
 async function fetchGraphUserProfile() {
   if (_graphUserProfile !== null) return _graphUserProfile;
   try {
-    const data = await _graphFetch('/me?$select=mail,userPrincipalName,otherMails,displayName');
+    const data = await _graphFetch('/me?$select=mail,userPrincipalName,otherMails,displayName,proxyAddresses');
     _graphUserProfile = data || {};
-    console.log('[Identity] /me profile:', _graphUserProfile.mail, '/', _graphUserProfile.userPrincipalName);
+    // Extract SMTP aliases from proxyAddresses (format: "SMTP:user@domain.com" or "smtp:user@domain.com")
+    if (_graphUserProfile.proxyAddresses && Array.isArray(_graphUserProfile.proxyAddresses)) {
+      _graphUserProfile._smtpAliases = _graphUserProfile.proxyAddresses
+        .filter(p => typeof p === 'string' && p.toLowerCase().startsWith('smtp:'))
+        .map(p => p.substring(5).toLowerCase().trim());
+    } else {
+      _graphUserProfile._smtpAliases = [];
+    }
+    console.log('[Identity] /me profile:', _graphUserProfile.mail, '/', _graphUserProfile.userPrincipalName,
+      _graphUserProfile._smtpAliases.length ? '+ ' + _graphUserProfile._smtpAliases.length + ' proxy aliases' : '');
   } catch(e) {
     console.warn('[Identity] /me fetch failed (non-critical, falling back to token claims):', e.message);
-    _graphUserProfile = {};
+    _graphUserProfile = { _smtpAliases: [] };
   }
   return _graphUserProfile;
 }
@@ -746,6 +755,8 @@ async function getEmailCandidates(primaryEmail) {
     add(profile.mail);
     add(profile.userPrincipalName);
     (profile.otherMails || []).forEach(add);
+    // proxyAddresses SMTP aliases (auto-discovers cross-domain emails like @sharefile.com)
+    (profile._smtpAliases || []).forEach(add);
   } catch(e) {}
 
   // Layer 0 (applied after layers 1+2 so we have the full token picture):
