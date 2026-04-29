@@ -369,11 +369,11 @@
 
 
   <!-- ===================== SCRIPTS ===================== -->
-  <script src="msal-browser.js?v=3"></script>
-  <script src="config.js?v=3"></script>
-  <script src="msal-auth.js?v=3"></script>
-  <script src="graph-api.js?v=3"></script>
-  <script src="form-engine.js?v=3"></script>
+  <script src="msal-browser.js?v=5"></script>
+  <script src="config.js?v=5"></script>
+  <script src="msal-auth.js?v=5"></script>
+  <script src="graph-api.js?v=5"></script>
+  <script src="form-engine.js?v=5"></script>
 
   <script>
     // ─────────────────────────────────────────────
@@ -1616,7 +1616,7 @@
         const seen = new Set((data || []).map(e => e.email.toLowerCase()));
         const unstarted = playReps
           .filter(r => !seen.has(r.email.toLowerCase()))
-          .map(r => ({ email: r.email, repName: r.repName, totalPoints: 0, completedAccounts: 0 }));
+          .map(r => ({ email: r.email, repName: r.repName, totalPoints: 0, completedAccounts: 0, assignedAccounts: 0, pointsPerAccount: 0 }));
         renderFullLeaderboard([...(data || []), ...unstarted], pid);
         showScreen('screen-leaderboard');
       } catch (err) {
@@ -1634,40 +1634,49 @@
       ).join('');
       const picker = `<select id="lb-full-play-picker" style="width:100%;padding:10px;font-size:14px;border:1px solid #d1d5db;border-radius:8px;margin-bottom:16px;background:#f9fafb;">${playOpts}</select>`;
 
-      if (!data || !data.length) {
+      // Filter out reps with no assigned accounts
+      const qualified = (data || []).filter(e => (e.assignedAccounts || 0) > 0);
+
+      if (!qualified.length) {
         container.innerHTML = picker + '<div style="text-align:center;color:#999;padding:24px;">No data yet for this play.</div>';
         _wireLbFullPickerEvent();
         return;
       }
 
+      const MIN_LOGGED = 8;
       const rankEmoji = ['🥇', '🥈', '🥉'];
       const rifTaunts = ['😬','😅','👀','🫣','💀','🙈','😰','🤡'];
 
-      const html = data.map((entry, idx) => {
+      const html = qualified.map((entry, idx) => {
         const rank    = idx + 1;
         const pts     = entry.totalPoints || 0;
+        const ppa     = entry.pointsPerAccount || 0;
         const level   = getLevel(pts);
         const isMe    = entry.email === currentUser.email;
-        const rankStr = rank <= 3 ? rankEmoji[rank - 1] : String(rank);
         const noScore = pts === 0;
         const taunt   = rifTaunts[idx % rifTaunts.length];
         const engaged = entry.engagedAccounts || entry.completedAccounts || 0;
+        const assigned = entry.assignedAccounts || 0;
         const interested = entry.interestedAccounts || 0;
         const pct     = engaged > 0 ? Math.round((interested / engaged) * 100) : 0;
         const engCount = entry.totalEngagements || 0;
         const lastAct = entry.lastActivity ? _formatRelativeDate(entry.lastActivity) : '';
+        const belowMin = engaged < MIN_LOGGED && !noScore;
+        const isComplete = entry.isComplete;
+        const rankStr = noScore ? taunt : (belowMin ? '🔒' : (rank <= 3 ? rankEmoji[rank - 1] : String(rank)));
+        const coveragePct = assigned > 0 ? Math.round((engaged / assigned) * 100) : 0;
 
         return `
-          <div class="leaderboard-row${isMe ? ' current-user' : ''}" style="${noScore ? 'opacity:0.75;' : ''}">
-            <div class="leaderboard-rank">${noScore ? taunt : rankStr}</div>
+          <div class="leaderboard-row${isMe ? ' current-user' : ''}" style="${noScore ? 'opacity:0.75;' : belowMin ? 'opacity:0.85;' : ''}">
+            <div class="leaderboard-rank">${rankStr}</div>
             <div class="leaderboard-info">
-              <div class="leaderboard-name">${entry.repName || entry.email}${isMe ? ' 👈 you' : ''}</div>
-              <div class="leaderboard-level" style="${noScore ? 'color:#e53e3e;font-weight:600;' : ''}">${noScore ? '😶 No Score — Too busy to sell I guess...' : `${level.badge} ${level.name}`}</div>
-              ${noScore ? '' : `<div style="font-size:11px;color:#6b7280;margin-top:2px;">${engCount} touch${engCount !== 1 ? 'es' : ''} · ${interested} interested (${pct}%)${lastAct ? ' · ' + lastAct : ''}</div>`}
+              <div class="leaderboard-name">${entry.repName || entry.email}${isMe ? ' 👈 you' : ''}${isComplete ? ' <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">✓ COMPLETE</span>' : ''}</div>
+              <div class="leaderboard-level" style="${noScore ? 'color:#e53e3e;font-weight:600;' : ''}">${noScore ? '😶 No Score — Too busy to sell I guess...' : belowMin ? `🔒 Log ${MIN_LOGGED - engaged} more to qualify (${engaged}/${MIN_LOGGED})` : `${level.badge} ${level.name}`}</div>
+              ${noScore ? '' : `<div style="font-size:11px;color:#6b7280;margin-top:2px;">${engCount} touch${engCount !== 1 ? 'es' : ''} · ${engaged}/${assigned} accounts (${coveragePct}%) · ${interested} interested (${pct}%)${lastAct ? ' · ' + lastAct : ''}</div>`}
             </div>
             <div class="leaderboard-right">
-              <div class="leaderboard-points" style="${noScore ? 'color:#e53e3e;' : ''}">${pts.toLocaleString()} pts</div>
-              <div class="leaderboard-accounts">${engaged} accounts</div>
+              <div class="leaderboard-points" style="${noScore ? 'color:#e53e3e;' : ''}">${ppa} pts/acct</div>
+              <div class="leaderboard-accounts">${pts.toLocaleString()} total</div>
             </div>
           </div>
         `;

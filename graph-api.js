@@ -1171,6 +1171,19 @@ async function getLeaderboard(playId) {
       const plays = await getPlays();
       playIds = plays.map(p => p.play_id);
     }
+
+    // Load assignments to get assigned account counts per rep
+    const assText = await getFileText(SP_ROOT + "/assignments.json");
+    const allAssignments = assText ? (JSON.parse(assText).assignments || []).filter(a => a.active_flag !== false) : [];
+    const repAssignedCounts = {};
+    allAssignments.forEach(a => {
+      if (playId && a.play_id !== playId) return;
+      const email = _canonicalEmail((a.rep_sso_login || a.rep_email || '').toLowerCase());
+      if (!email) return;
+      if (!repAssignedCounts[email]) repAssignedCounts[email] = new Set();
+      if (a.account_id) repAssignedCounts[email].add(a.account_id);
+    });
+
     const repMap = {};
     for (const pid of playIds) {
       const safePid = pid.replace(/[^a-z0-9]/gi, "_");
@@ -1185,11 +1198,9 @@ async function getLeaderboard(playId) {
           totalPoints: 0, engagedAccounts: new Set(), interestedAccounts: new Set(),
           totalEngagements: 0, lastActivity: ''
         };
-        // Prefer the longer (full) name variant
         if ((log.rep_name || '').length > (repMap[key].repName || '').length) {
           repMap[key].repName = log.rep_name;
         }
-        // Recalculate points from raw fields — CSV is the source of truth
         repMap[key].totalPoints += _recalcPoints(log);
         repMap[key].totalEngagements += 1;
         if (log.account_id) {
@@ -1200,14 +1211,27 @@ async function getLeaderboard(playId) {
         if (ts > repMap[key].lastActivity) repMap[key].lastActivity = ts;
       });
     }
-    return Object.values(repMap).map(r => ({
-      ...r,
-      completedAccounts: r.engagedAccounts.size,
-      engagedAccounts: r.engagedAccounts.size,
-      interestedAccounts: r.interestedAccounts.size,
-      totalEngagements: r.totalEngagements,
-      lastActivity: r.lastActivity,
-    })).sort((a, b) => b.totalPoints - a.totalPoints);
+
+    return Object.values(repMap).map(r => {
+      const assigned = repAssignedCounts[_canonicalEmail(r.email)] ? repAssignedCounts[_canonicalEmail(r.email)].size : 0;
+      const engaged = r.engagedAccounts.size;
+      let pts = r.totalPoints;
+      // 100% completion bonus
+      if (assigned > 0 && engaged >= assigned) pts += 50;
+      const ppa = assigned > 0 ? Math.round(pts / assigned) : 0;
+      return {
+        ...r,
+        totalPoints: pts,
+        completedAccounts: engaged,
+        engagedAccounts: engaged,
+        interestedAccounts: r.interestedAccounts.size,
+        totalEngagements: r.totalEngagements,
+        lastActivity: r.lastActivity,
+        assignedAccounts: assigned,
+        pointsPerAccount: ppa,
+        isComplete: assigned > 0 && engaged >= assigned,
+      };
+    }).sort((a, b) => b.pointsPerAccount - a.pointsPerAccount);
   } catch(e) { return []; }
 }
 
