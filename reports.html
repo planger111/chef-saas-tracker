@@ -6,101 +6,128 @@
   <title>Play Snapshot — INFRA SalesPlay Tracker</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
-    body { max-width: 100%; background: #f0f2f5; }
-    .reports-wrapper { max-width: 1100px; margin: 0 auto; padding: 0 16px 40px; }
-    .header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; }
-    .header h1 { font-size: 18px; font-weight: 700; color: #fff; }
-    .header a { color: rgba(255,255,255,.85); font-size: 13px; text-decoration: none; }
+    :root {
+      --slate-50:#f8fafc; --slate-100:#f1f5f9; --slate-200:#e2e8f0; --slate-300:#cbd5e1;
+      --slate-400:#94a3b8; --slate-500:#64748b; --slate-600:#475569; --slate-700:#334155;
+      --slate-800:#1e293b; --slate-900:#0f172a;
+      --green-50:#f0fdf4; --green-100:#dcfce7; --green-600:#16a34a; --green-700:#15803d;
+      --red-50:#fef2f2; --red-100:#fee2e2; --red-600:#dc2626; --red-700:#b91c1c;
+      --blue-50:#eff6ff; --blue-500:#3b82f6; --blue-600:#2563eb;
+      --amber-50:#fffbeb; --amber-500:#f59e0b; --amber-600:#d97706;
+      --radius:12px; --radius-sm:8px;
+      --shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md:0 4px 6px rgba(0,0,0,0.04),0 2px 4px rgba(0,0,0,0.03);
+    }
+    *{box-sizing:border-box;}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--slate-50);color:var(--slate-800);-webkit-font-smoothing:antialiased;max-width:100%;}
+    .reports-wrapper{max-width:1120px;margin:0 auto;padding:0 20px 60px;}
 
-    /* Play selector */
-    .play-selector { background: #fff; border-radius: 12px; padding: 20px; margin: 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,.08); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .play-selector label { font-weight: 700; font-size: 14px; color: #333; }
-    .play-selector select { font-size: 15px; padding: 8px 14px; border-radius: 8px; border: 1px solid #ccc; min-width: 280px; flex: 1; }
+    /* Header */
+    .header{background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 50%,#2563eb 100%);padding:16px 24px;display:flex;align-items:center;justify-content:space-between;}
+    .header h1{font-size:17px;font-weight:700;color:#fff;letter-spacing:-0.01em;}
+    .header a{color:rgba(255,255,255,0.75);font-size:13px;text-decoration:none;transition:color .15s;}
+    .header a:hover{color:#fff;}
 
-    /* Print button */
-    .print-btn { padding: 8px 18px; border: 1px solid #0078d4; background: #fff; color: #0078d4; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
-    .print-btn:hover { background: #0078d4; color: #fff; }
-    .export-btn { padding: 8px 18px; border: 1px solid #16a34a; background: #fff; color: #16a34a; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; }
-    .export-btn:hover { background: #16a34a; color: #fff; }
+    /* Play selector bar */
+    .play-bar{background:#fff;border:1px solid var(--slate-200);border-radius:var(--radius);padding:16px 20px;margin:20px 0;display:flex;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:var(--shadow);}
+    .play-bar label{font-weight:600;font-size:13px;color:var(--slate-500);text-transform:uppercase;letter-spacing:0.04em;}
+    .play-bar select{font-size:15px;padding:8px 14px;border-radius:var(--radius-sm);border:1px solid var(--slate-300);min-width:280px;flex:1;color:var(--slate-800);background:var(--slate-50);transition:border-color .15s;}
+    .play-bar select:focus{outline:none;border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(59,130,246,0.12);}
 
-    /* Report sections */
-    .report-section { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-    .report-section h2 { font-size: 16px; font-weight: 700; color: #333; margin: 0 0 16px; border-bottom: 2px solid #eee; padding-bottom: 8px; }
-    .report-section h3 { font-size: 14px; font-weight: 600; color: #555; margin: 16px 0 8px; }
+    /* Buttons */
+    .btn{padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:1.5px solid;}
+    .btn-print{border-color:var(--slate-300);background:#fff;color:var(--slate-600);}
+    .btn-print:hover{background:var(--slate-50);border-color:var(--slate-400);}
+    .btn-export{border-color:var(--green-600);background:#fff;color:var(--green-700);}
+    .btn-export:hover{background:var(--green-50);}
 
-    /* Side-by-side split */
-    .split-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-    .split-card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
-    .split-card h2 { font-size: 15px; font-weight: 700; margin: 0 0 14px; padding-bottom: 8px; border-bottom: 2px solid #eee; }
-    .split-card.card-green { border-top: 4px solid #107c10; }
-    .split-card.card-red { border-top: 4px solid #d32f2f; }
-    .split-card .card-total { margin-top: 12px; padding-top: 10px; border-top: 1px solid #eee; font-size: 14px; font-weight: 700; display: flex; justify-content: space-between; }
-    .split-card .card-count { font-size: 32px; font-weight: 800; margin-bottom: 4px; }
-    .split-card .card-arr { font-size: 14px; color: #666; font-weight: 600; }
+    /* Snapshot title */
+    .snap-title{text-align:center;margin:8px 0 24px;}
+    .snap-title h1{font-size:26px;font-weight:800;color:var(--slate-900);letter-spacing:-0.02em;margin:0 0 4px;}
+    .snap-title .snap-date{font-size:13px;color:var(--slate-400);font-weight:500;}
 
-    /* KPI row */
-    .kpi-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
-    .kpi-box { flex: 1; min-width: 130px; background: #f8faff; border-radius: 10px; padding: 16px; text-align: center; }
-    .kpi-box .kpi-value { font-size: 28px; font-weight: 800; color: #0078d4; }
-    .kpi-box .kpi-label { font-size: 11px; color: #666; margin-top: 4px; font-weight: 600; text-transform: uppercase; }
-    .kpi-box.green .kpi-value { color: #107c10; }
-    .kpi-box.orange .kpi-value { color: #d97706; }
-    .kpi-box.red .kpi-value { color: #d32f2f; }
+    /* Coverage hero */
+    .coverage-hero{background:#fff;border:1px solid var(--slate-200);border-radius:var(--radius);padding:24px 28px;margin-bottom:16px;box-shadow:var(--shadow);}
+    .coverage-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;}
+    .coverage-top span:first-child{font-size:14px;font-weight:700;color:var(--slate-700);}
+    .coverage-top .coverage-pct{font-size:32px;font-weight:800;color:var(--blue-600);letter-spacing:-0.02em;}
+    .coverage-track{height:14px;background:var(--slate-100);border-radius:7px;overflow:hidden;}
+    .coverage-fill{height:100%;border-radius:7px;background:linear-gradient(90deg,#3b82f6,#2563eb);transition:width .6s ease;}
+    .coverage-meta{display:flex;gap:28px;margin-top:14px;font-size:13px;color:var(--slate-500);}
+    .coverage-meta strong{color:var(--slate-800);font-weight:700;}
+
+    /* Card */
+    .card{background:#fff;border:1px solid var(--slate-200);border-radius:var(--radius);padding:24px;margin-bottom:16px;box-shadow:var(--shadow);}
+    .card-hdr{display:flex;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--slate-100);}
+    .card-hdr h2{font-size:15px;font-weight:700;color:var(--slate-800);margin:0;}
+    .card-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+
+    /* KPI grid */
+    .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+    .kpi{text-align:center;padding:18px 10px;border-radius:var(--radius-sm);background:var(--slate-50);border:1px solid var(--slate-100);}
+    .kpi .kv{font-size:28px;font-weight:800;letter-spacing:-0.02em;color:var(--slate-800);}
+    .kpi .kl{font-size:10px;color:var(--slate-500);font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-top:3px;}
+    .kpi.kg .kv{color:var(--green-600);} .kpi.kr .kv{color:var(--red-600);}
+    .kpi.kb .kv{color:var(--blue-600);} .kpi.ka .kv{color:var(--amber-600);}
+
+    /* Split layout */
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+    .scard{background:#fff;border:1px solid var(--slate-200);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+    .scard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+    .scard.sg::before{background:linear-gradient(90deg,#16a34a,#4ade80);}
+    .scard.sr::before{background:linear-gradient(90deg,#dc2626,#f87171);}
+    .scard .sc-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:14px;}
+    .scard.sg .sc-pill{background:var(--green-50);color:var(--green-700);}
+    .scard.sr .sc-pill{background:var(--red-50);color:var(--red-700);}
+    .sc-stats{display:flex;gap:24px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--slate-100);}
+    .sc-stat{text-align:center;}
+    .sc-stat .sv{font-size:30px;font-weight:800;letter-spacing:-0.02em;}
+    .sc-stat .sl{font-size:10px;color:var(--slate-500);font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-top:2px;}
+    .scard.sg .sv{color:var(--green-600);} .scard.sr .sv{color:var(--red-600);}
 
     /* Tables */
-    .report-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .report-table th { background: #f5f7fa; text-align: left; padding: 10px 12px; font-weight: 700; color: #555; border-bottom: 2px solid #e0e0e0; white-space: nowrap; }
-    .report-table td { padding: 10px 12px; border-bottom: 1px solid #eee; vertical-align: top; }
-    .report-table tr:hover { background: #f8faff; }
-    .report-table .num { text-align: right; font-variant-numeric: tabular-nums; }
-    .report-table .money { text-align: right; font-variant-numeric: tabular-nums; color: #0078d4; font-weight: 600; }
+    .tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;}
+    .tbl thead th{background:var(--slate-50);text-align:left;padding:10px 12px;font-weight:700;color:var(--slate-500);font-size:11px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid var(--slate-200);}
+    .tbl tbody td{padding:10px 12px;border-bottom:1px solid var(--slate-100);color:var(--slate-700);}
+    .tbl tbody tr:last-child td{border-bottom:none;}
+    .tbl tbody tr:hover td{background:var(--slate-50);}
+    .tbl .r{text-align:right;font-variant-numeric:tabular-nums;}
+    .tbl .money{text-align:right;font-variant-numeric:tabular-nums;color:var(--blue-600);font-weight:600;}
+    .tbl .rk{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:var(--slate-100);color:var(--slate-600);}
+    .tbl .rk-1{background:#fef3c7;color:#92400e;} .tbl .rk-2{background:var(--slate-100);color:var(--slate-600);} .tbl .rk-3{background:#fed7aa;color:#9a3412;}
 
-    /* Outcome badges */
-    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-    .badge-interested { background: #e6f4ea; color: #107c10; }
-    .badge-not-interested { background: #fce8e6; color: #d32f2f; }
-    .badge-meeting { background: #e8f0fe; color: #1a73e8; }
-    .badge-deal { background: #fef7e0; color: #d97706; }
-    .badge-won { background: #c8e6c9; color: #2e7d32; }
-    .badge-default { background: #f0f0f0; color: #555; }
+    /* Bars */
+    .bar-row{display:flex;align-items:center;padding:5px 0;gap:10px;}
+    .bar-row+.bar-row{border-top:1px solid var(--slate-50);}
+    .bar-lbl{width:140px;font-size:13px;font-weight:500;color:var(--slate-600);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:0;}
+    .bar-track{flex:1;height:24px;background:var(--slate-100);border-radius:6px;overflow:hidden;}
+    .bar-fill{height:100%;border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:11px;font-weight:700;color:#fff;min-width:28px;transition:width .4s ease;}
+    .bar-ct{min-width:32px;font-size:13px;font-weight:700;color:var(--slate-700);text-align:right;}
 
-    /* Horizontal bars */
-    .h-bar { display: flex; align-items: center; margin: 6px 0; gap: 8px; }
-    .h-bar-label { width: 150px; font-size: 12px; font-weight: 600; color: #555; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .h-bar-track { flex: 1; height: 22px; background: #eee; border-radius: 6px; overflow: hidden; }
-    .h-bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 700; color: #fff; min-width: 24px; }
-    .h-bar-value { font-size: 12px; font-weight: 700; color: #333; min-width: 36px; }
+    /* Pill badges */
+    .pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+    .pill-g{background:var(--green-50);color:var(--green-700);}
+    .pill-r{background:var(--red-50);color:var(--red-700);}
 
-    /* Snapshot header */
-    .snapshot-header { text-align: center; margin-bottom: 16px; }
-    .snapshot-header h1 { font-size: 22px; font-weight: 800; color: #333; margin-bottom: 4px; }
-    .snapshot-header .snapshot-date { font-size: 13px; color: #888; }
+    /* Misc */
+    .empty{text-align:center;padding:24px;color:var(--slate-400);font-size:13px;font-style:italic;}
+    .screen{display:none;} .screen.active{display:block;}
+    .loading{text-align:center;padding:80px 20px;color:var(--slate-400);font-size:15px;}
 
-    /* Loading */
-    .loading { text-align: center; padding: 60px; color: #888; font-size: 15px; }
-    .loading::before { content: '⏳ '; }
-
-    /* Screen states */
-    .screen { display: none; }
-    .screen.active { display: block; }
-
-    /* Print styles */
-    @media print {
-      body { background: #fff !important; }
-      .header, .play-selector, .no-print { display: none !important; }
-      .report-section, .split-card { box-shadow: none !important; border: 1px solid #ddd; page-break-inside: avoid; margin-bottom: 12px; padding: 16px; }
-      .split-row { gap: 12px; }
-      .split-card { border-top-width: 3px !important; }
-      .snapshot-header { margin-top: 0; }
-      .kpi-box { border: 1px solid #eee; }
+    /* Print */
+    @media print{
+      body{background:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      .header,.play-bar,.no-print{display:none!important;}
+      .card,.scard,.coverage-hero{box-shadow:none!important;border:1px solid #ddd;page-break-inside:avoid;margin-bottom:10px;padding:16px;}
+      .split{gap:10px;} .snap-title{margin-top:0;} .kpi{border:1px solid #eee;}
     }
-
-    @media (max-width: 768px) {
-      .kpi-row { flex-direction: column; }
-      .split-row { grid-template-columns: 1fr; }
-      .h-bar-label { width: 90px; font-size: 11px; }
-      .report-table { font-size: 12px; }
-      .report-table th, .report-table td { padding: 8px 6px; }
+    @media(max-width:768px){
+      .kpi-grid{grid-template-columns:repeat(2,1fr);}
+      .split{grid-template-columns:1fr;}
+      .bar-lbl{width:100px;font-size:12px;}
+      .tbl{font-size:12px;} .tbl thead th,.tbl tbody td{padding:8px 6px;}
+      .coverage-meta{flex-wrap:wrap;gap:12px;}
+      .sc-stats{gap:16px;}
     }
   </style>
 </head>
@@ -113,28 +140,28 @@
 
   <!-- Login screen -->
   <div id="screen-login" class="screen active">
-    <div style="text-align:center;padding:80px 20px;">
-      <div style="font-size:48px;margin-bottom:16px;">📊</div>
-      <h2 style="margin-bottom:12px;color:#333;">INFRA SalesPlay Snapshot</h2>
-      <p style="color:#666;margin-bottom:24px;">Sign in to view play performance snapshots</p>
-      <button id="btn-sign-in" style="padding:12px 32px;font-size:16px;font-weight:700;background:#0078d4;color:#fff;border:none;border-radius:10px;cursor:pointer;">Sign In with Microsoft</button>
+    <div style="text-align:center;padding:100px 20px;">
+      <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#0f172a,#2563eb);display:inline-flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:20px;">📊</div>
+      <h2 style="margin-bottom:8px;color:var(--slate-900);font-size:22px;font-weight:800;">INFRA SalesPlay Snapshot</h2>
+      <p style="color:var(--slate-500);margin-bottom:28px;font-size:15px;">Sign in to view play performance snapshots</p>
+      <button id="btn-sign-in" style="padding:12px 36px;font-size:15px;font-weight:700;background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;border:none;border-radius:10px;cursor:pointer;">Sign In with Microsoft</button>
     </div>
   </div>
 
   <!-- Loading screen -->
   <div id="screen-loading" class="screen">
-    <div class="loading">Loading report data…</div>
+    <div class="loading">⏳ Loading report data…</div>
   </div>
 
   <!-- Reports screen -->
   <div id="screen-reports" class="screen">
     <div class="reports-wrapper">
       <!-- Play selector -->
-      <div class="play-selector no-print">
-        <label for="play-select">Select Play:</label>
+      <div class="play-bar no-print">
+        <label for="play-select">Play</label>
         <select id="play-select"><option value="">Loading plays…</option></select>
-        <button class="print-btn" onclick="window.print()">🖨️ Print / PDF</button>
-        <button class="export-btn" id="btn-export-csv">📥 Export CSV</button>
+        <button class="btn btn-print" onclick="window.print()">🖨️ Print / PDF</button>
+        <button class="btn btn-export" id="btn-export-csv">📥 Export CSV</button>
       </div>
 
       <!-- Report content (populated by JS) -->
@@ -143,10 +170,10 @@
   </div>
 
   <!-- ===================== SCRIPTS ===================== -->
-  <script src="msal-browser.js?v=4"></script>
-  <script src="config.js?v=4"></script>
-  <script src="msal-auth.js?v=4"></script>
-  <script src="graph-api.js?v=4"></script>
+  <script src="msal-browser.js?v=5"></script>
+  <script src="config.js?v=5"></script>
+  <script src="msal-auth.js?v=5"></script>
+  <script src="graph-api.js?v=5"></script>
 
   <script>
     let currentUser = null;
@@ -350,129 +377,169 @@
       const untouchedList = [...untouchedAccounts].sort((a, b) => b.arr - a.arr);
 
       // ══════ BUILD HTML ══════
+      const coveragePct = totalAccounts > 0 ? Math.round((contacted / totalAccounts) * 100) : 0;
+
+      function bar(label, value, maxVal, color) {
+        const w = maxVal > 0 ? Math.max(3, (value / maxVal) * 100) : 0;
+        return `<div class="bar-row">
+          <div class="bar-lbl" title="${esc(label)}">${esc(label)}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color};">${value > 0 && w > 18 ? value : ''}</div></div>
+          <div class="bar-ct">${value}</div>
+        </div>`;
+      }
+
       const html = `
-        <div class="snapshot-header">
+        <div class="snap-title">
           <h1>${esc(playName)}</h1>
-          <div class="snapshot-date">Snapshot as of ${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          <div class="snap-date">Snapshot · ${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+        </div>
+
+        <!-- Coverage Hero -->
+        <div class="coverage-hero">
+          <div class="coverage-top">
+            <span>Account Coverage</span>
+            <span class="coverage-pct">${coveragePct}%</span>
+          </div>
+          <div class="coverage-track"><div class="coverage-fill" style="width:${coveragePct}%"></div></div>
+          <div class="coverage-meta">
+            <span><strong>${contacted}</strong> contacted</span>
+            <span><strong>${untouched}</strong> untouched</span>
+            <span><strong>${totalAccounts}</strong> total accounts</span>
+            <span><strong>${totalEngagements}</strong> total touches</span>
+          </div>
         </div>
 
         <!-- KPIs -->
-        <div class="report-section">
-          <h2>📈 Activity Summary</h2>
-          <div class="kpi-row">
-            <div class="kpi-box"><div class="kpi-value">${totalAccounts}</div><div class="kpi-label">Total Accounts</div></div>
-            <div class="kpi-box green"><div class="kpi-value">${contacted}</div><div class="kpi-label">Contacted</div></div>
-            <div class="kpi-box ${untouched > 0 ? 'red' : 'green'}"><div class="kpi-value">${untouched}</div><div class="kpi-label">Untouched</div></div>
-            <div class="kpi-box"><div class="kpi-value">${totalEngagements}</div><div class="kpi-label">Total Touches</div></div>
+        <div class="card">
+          <div class="kpi-grid">
+            <div class="kpi kb"><div class="kv">${fmtMoney(totalArr)}</div><div class="kl">Total ARR</div></div>
+            <div class="kpi kg"><div class="kv">${fmtMoney(interestedArr)}</div><div class="kl">Interested ARR</div></div>
+            <div class="kpi kr"><div class="kv">${fmtMoney(notInterestedArr)}</div><div class="kl">Not Interested ARR</div></div>
+            <div class="kpi ${typeof avgDaysUntouched === 'number' && avgDaysUntouched > 14 ? 'kr' : 'ka'}"><div class="kv">${avgDaysUntouched}</div><div class="kl">Avg Days Untouched</div></div>
+            <div class="kpi"><div class="kv">${avgDaysSinceTouch}</div><div class="kl">Avg Days Since Touch</div></div>
           </div>
-          <div class="kpi-row">
-            <div class="kpi-box ${typeof avgDaysUntouched === 'number' && avgDaysUntouched > 14 ? 'red' : 'orange'}"><div class="kpi-value">${avgDaysUntouched}</div><div class="kpi-label">Avg Days Untouched</div></div>
-            <div class="kpi-box"><div class="kpi-value">${avgDaysSinceTouch}</div><div class="kpi-label">Avg Days Since Touch</div></div>
-            <div class="kpi-box"><div class="kpi-value">${fmtMoney(totalArr)}</div><div class="kpi-label">Total ARR at Play</div></div>
-            <div class="kpi-box green"><div class="kpi-value">${fmtMoney(interestedArr)}</div><div class="kpi-label">Interested ARR</div></div>
-            <div class="kpi-box red"><div class="kpi-value">${fmtMoney(notInterestedArr)}</div><div class="kpi-label">Not Interested ARR</div></div>
+        </div>
+
+        <!-- Interested & Not Interested — side by side -->
+        <div class="split">
+          <div class="scard sg">
+            <div class="sc-pill">✓ Interested</div>
+            <div class="sc-stats">
+              <div class="sc-stat"><div class="sv">${interestedAccounts.length}</div><div class="sl">Accounts</div></div>
+              <div class="sc-stat"><div class="sv">${fmtMoney(interestedArr)}</div><div class="sl">Total ARR</div></div>
+              <div class="sc-stat"><div class="sv">${pct(interestedAccounts.length, totalAccounts)}%</div><div class="sl">of Total</div></div>
+            </div>
+            ${top10Interested.length > 0 ? `
+              <table class="tbl">
+                <thead><tr><th></th><th>Account</th><th>Rep</th><th class="money">ARR</th><th>Reason</th></tr></thead>
+                <tbody>${top10Interested.map((a, i) => `<tr>
+                  <td><span class="rk ${i < 3 ? 'rk-' + (i+1) : ''}">${i+1}</span></td>
+                  <td><strong>${esc(a.name)}</strong></td>
+                  <td style="font-size:12px;color:var(--slate-500);">${esc(a.rep)}</td>
+                  <td class="money">${fmtMoney(a.arr)}</td>
+                  <td><span class="pill pill-g">${esc(a.lastReason || '—')}</span></td>
+                </tr>`).join('')}</tbody>
+              </table>
+            ` : '<div class="empty">No interested accounts yet</div>'}
+          </div>
+          <div class="scard sr">
+            <div class="sc-pill">✗ Not Interested</div>
+            <div class="sc-stats">
+              <div class="sc-stat"><div class="sv">${notInterestedAccounts.length}</div><div class="sl">Accounts</div></div>
+              <div class="sc-stat"><div class="sv">${fmtMoney(notInterestedArr)}</div><div class="sl">Total ARR</div></div>
+              <div class="sc-stat"><div class="sv">${pct(notInterestedAccounts.length, totalAccounts)}%</div><div class="sl">of Total</div></div>
+            </div>
+            ${top10NotInterested.length > 0 ? `
+              <table class="tbl">
+                <thead><tr><th></th><th>Account</th><th>Rep</th><th class="money">ARR</th><th>Reason</th></tr></thead>
+                <tbody>${top10NotInterested.map((a, i) => `<tr>
+                  <td><span class="rk ${i < 3 ? 'rk-' + (i+1) : ''}">${i+1}</span></td>
+                  <td><strong>${esc(a.name)}</strong></td>
+                  <td style="font-size:12px;color:var(--slate-500);">${esc(a.rep)}</td>
+                  <td class="money">${fmtMoney(a.arr)}</td>
+                  <td><span class="pill pill-r">${esc(a.lastReason || '—')}</span></td>
+                </tr>`).join('')}</tbody>
+              </table>
+            ` : '<div class="empty">No not-interested accounts yet</div>'}
           </div>
         </div>
 
         <!-- Outcome Distribution -->
-        <div class="report-section">
-          <h2>📊 Outcome Distribution</h2>
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-icon" style="background:var(--blue-50);">📊</div>
+            <h2>Outcome Distribution</h2>
+          </div>
           ${outcomesSorted.length > 0
-            ? outcomesSorted.map(([o, c]) => horizontalBar(o, c, maxOutcome, outcomeColors[o] || '#888')).join('')
-            : '<p style="color:#888;">No engagement data yet.</p>'}
+            ? outcomesSorted.map(([o, c]) => bar(o, c, maxOutcome, outcomeColors[o] || '#94a3b8')).join('')
+            : '<div class="empty">No engagement data yet</div>'}
         </div>
 
-        <!-- Top 10 Interested & Not Interested — side by side -->
-        <div class="split-row">
-          <div class="split-card card-green">
-            <h2 style="color:#107c10;">✅ Top Interested by ARR</h2>
-            <div style="display:flex;gap:16px;margin-bottom:14px;">
-              <div><div class="card-count" style="color:#107c10;">${interestedAccounts.length}</div><div class="card-arr">accounts · ${fmtMoney(interestedArr)}</div></div>
-            </div>
-            ${top10Interested.length > 0 ? `
-              <table class="report-table" style="font-size:12px;">
-                <tr><th>Account</th><th>Rep</th><th class="money">ARR</th><th>Reason</th></tr>
-                ${top10Interested.map(a => `<tr>
-                  <td><strong>${esc(a.name)}</strong></td>
-                  <td style="font-size:11px;">${esc(a.rep)}</td>
-                  <td class="money">${fmtMoney(a.arr)}</td>
-                  <td style="font-size:11px;">${esc(a.lastReason || '—')}</td>
-                </tr>`).join('')}
-              </table>
-            ` : '<p style="color:#888;font-size:13px;">No interested accounts yet.</p>'}
+        <!-- Top Reps -->
+        <div class="card">
+          <div class="card-hdr">
+            <div class="card-icon" style="background:#fef3c7;">🏆</div>
+            <h2>Top Reps by Points</h2>
           </div>
-          <div class="split-card card-red">
-            <h2 style="color:#d32f2f;">❌ Top Not Interested by ARR</h2>
-            <div style="display:flex;gap:16px;margin-bottom:14px;">
-              <div><div class="card-count" style="color:#d32f2f;">${notInterestedAccounts.length}</div><div class="card-arr">accounts · ${fmtMoney(notInterestedArr)}</div></div>
-            </div>
-            ${top10NotInterested.length > 0 ? `
-              <table class="report-table" style="font-size:12px;">
-                <tr><th>Account</th><th>Rep</th><th class="money">ARR</th><th>Reason</th></tr>
-                ${top10NotInterested.map(a => `<tr>
-                  <td><strong>${esc(a.name)}</strong></td>
-                  <td style="font-size:11px;">${esc(a.rep)}</td>
-                  <td class="money">${fmtMoney(a.arr)}</td>
-                  <td style="font-size:11px;">${esc(a.lastReason || '—')}</td>
-                </tr>`).join('')}
-              </table>
-            ` : '<p style="color:#888;font-size:13px;">No not-interested accounts yet.</p>'}
-          </div>
-        </div>
-
-        <!-- Top Reps by Points -->
-        <div class="report-section">
-          <h2>🏆 Top Reps by Points</h2>
           ${topReps.length > 0 ? `
-            <table class="report-table">
-              <tr><th>#</th><th>Rep</th><th class="num">Points</th><th class="num">Touches</th><th class="num">Accounts</th><th class="num">Interested</th><th class="num">Not Interested</th></tr>
-              ${topReps.map((r, i) => `<tr>
-                <td>${i + 1}</td>
+            <table class="tbl">
+              <thead><tr><th></th><th>Rep</th><th class="r">Points</th><th class="r">Touches</th><th class="r">Accounts</th><th class="r">Interested</th><th class="r">Not Int.</th></tr></thead>
+              <tbody>${topReps.map((r, i) => `<tr>
+                <td><span class="rk ${i < 3 ? 'rk-' + (i+1) : ''}">${i+1}</span></td>
                 <td><strong>${esc(r.name)}</strong></td>
-                <td class="num"><strong>${r.points}</strong></td>
-                <td class="num">${r.engagements}</td>
-                <td class="num">${r.accounts.size}</td>
-                <td class="num" style="color:#107c10;">${r.interested}</td>
-                <td class="num" style="color:#d32f2f;">${r.notInterested}</td>
-              </tr>`).join('')}
+                <td class="r"><strong>${r.points}</strong></td>
+                <td class="r">${r.engagements}</td>
+                <td class="r">${r.accounts.size}</td>
+                <td class="r" style="color:var(--green-600);">${r.interested}</td>
+                <td class="r" style="color:var(--red-600);">${r.notInterested}</td>
+              </tr>`).join('')}</tbody>
             </table>
-          ` : '<p style="color:#888;">No engagement data yet.</p>'}
+          ` : '<div class="empty">No engagement data yet</div>'}
         </div>
 
         <!-- Untouched Accounts -->
         ${untouchedList.length > 0 ? `
-        <div class="report-section">
-          <h2>⚠️ Untouched Accounts (${untouched})</h2>
-          <p style="font-size:13px;color:#888;margin-bottom:12px;">Assigned but never contacted — sorted by ARR${playStartDate ? '. Play active since ' + playStartDate : ''}.</p>
-          <table class="report-table">
-            <tr><th>#</th><th>Account</th><th>Assigned Rep</th><th class="money">ARR</th><th class="num">Days Waiting</th></tr>
-            ${untouchedList.slice(0, 30).map((a, i) => {
-              const daysWaiting = playStartDate ? daysBetween(playStartDate, now.toISOString().split('T')[0]) : '—';
+        <div class="card" style="border-left:3px solid var(--amber-500);">
+          <div class="card-hdr">
+            <div class="card-icon" style="background:var(--amber-50);">⚠️</div>
+            <h2>Untouched Accounts (${untouched})</h2>
+            <span style="font-size:12px;color:var(--slate-400);margin-left:auto;">Sorted by ARR${playStartDate ? ' · Play since ' + playStartDate : ''}</span>
+          </div>
+          <table class="tbl">
+            <thead><tr><th></th><th>Account</th><th>Assigned Rep</th><th class="money">ARR</th><th class="r">Days Waiting</th></tr></thead>
+            <tbody>${untouchedList.slice(0, 20).map((a, i) => {
+              const dw = playStartDate ? daysBetween(playStartDate, now.toISOString().split('T')[0]) : '—';
               return `<tr>
-                <td>${i + 1}</td>
+                <td>${i+1}</td>
                 <td><strong>${esc(a.name)}</strong></td>
-                <td>${esc(a.rep)}</td>
+                <td style="font-size:12px;color:var(--slate-500);">${esc(a.rep)}</td>
                 <td class="money">${fmtMoney(a.arr)}</td>
-                <td class="num" style="color:${typeof daysWaiting === 'number' && daysWaiting > 14 ? '#d32f2f' : '#d97706'};">${daysWaiting}</td>
+                <td class="r" style="color:${typeof dw === 'number' && dw > 14 ? 'var(--red-600)' : 'var(--amber-600)'};">${dw}</td>
               </tr>`;
-            }).join('')}
+            }).join('')}</tbody>
           </table>
-          ${untouchedList.length > 30 ? `<p style="font-size:12px;color:#888;margin-top:8px;">Showing top 30 of ${untouchedList.length}.</p>` : ''}
+          ${untouchedList.length > 20 ? `<div style="text-align:center;padding:8px;font-size:12px;color:var(--slate-400);">Showing 20 of ${untouchedList.length}</div>` : ''}
         </div>` : ''}
 
-        <!-- Reason Breakdown — split by outcome, side by side -->
-        <div class="split-row">
-          <div class="split-card card-green">
-            <h2 style="color:#107c10;">💬 Interested — Why They Said Yes</h2>
+        <!-- Reasons — split by outcome, side by side -->
+        <div class="split">
+          <div class="scard sg">
+            <div class="card-hdr">
+              <div class="card-icon" style="background:var(--green-50);">💬</div>
+              <h2 style="color:var(--green-700);">Why They Said Yes</h2>
+            </div>
             ${intReasonsSorted.length > 0
-              ? intReasonsSorted.map(([r, c]) => horizontalBar(r, c, maxIntReason, '#107c10')).join('')
-              : '<p style="color:#888;font-size:13px;">No reasons recorded.</p>'}
+              ? intReasonsSorted.map(([r, c]) => bar(r, c, maxIntReason, 'linear-gradient(90deg,#16a34a,#4ade80)')).join('')
+              : '<div class="empty">No reasons recorded</div>'}
           </div>
-          <div class="split-card card-red">
-            <h2 style="color:#d32f2f;">💬 Not Interested — Why They Said No</h2>
+          <div class="scard sr">
+            <div class="card-hdr">
+              <div class="card-icon" style="background:var(--red-50);">💬</div>
+              <h2 style="color:var(--red-700);">Why They Said No</h2>
+            </div>
             ${notIntReasonsSorted.length > 0
-              ? notIntReasonsSorted.map(([r, c]) => horizontalBar(r, c, maxNotIntReason, '#d32f2f')).join('')
-              : '<p style="color:#888;font-size:13px;">No reasons recorded.</p>'}
+              ? notIntReasonsSorted.map(([r, c]) => bar(r, c, maxNotIntReason, 'linear-gradient(90deg,#dc2626,#f87171)')).join('')
+              : '<div class="empty">No reasons recorded</div>'}
           </div>
         </div>
       `;
