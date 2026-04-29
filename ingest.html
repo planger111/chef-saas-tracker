@@ -552,6 +552,7 @@
       'kathleen.faria@progress.com',
       'k.faria@progress.com',
       'kathy.faria@progress.com',
+      'scheaney@progress.com',
     ];
     // Check all email candidates from token
     const candidates = currentUser.emails || [(currentUser.email || currentUser.username || '').toLowerCase()];
@@ -560,7 +561,7 @@
     const isProgressEmail = candidates.some(e => e.endsWith('@progress.com'));
     const nameLower = (currentUser.name || '').toLowerCase();
     const nameMatch = isProgressEmail && (
-      nameLower.includes('langer') || nameLower.includes('faria') || nameLower.includes('kathleen')
+      nameLower.includes('langer') || nameLower.includes('faria') || nameLower.includes('kathleen') || nameLower.includes('scheaney')
     );
     if (!emailMatch && !nameMatch) {
       log('err', `Access denied. Ingest requires admin permissions. Detected: ${candidates.join(', ')}`);
