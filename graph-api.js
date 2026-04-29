@@ -12,6 +12,9 @@ let _driveId = null;
 // Maps each known email variant to its siblings. Built from rep-identity.json.
 // Used in both getPlayAssignments (Tier 3) and _getAllLogsForRep for consistent matching.
 const STATIC_ALIASES = {
+  'scheaney@progress.com': ['sara.cheaney@sharefile.com', 'sara.cheaney@progress.com'],
+  'sara.cheaney@sharefile.com': ['scheaney@progress.com', 'sara.cheaney@progress.com'],
+  'sara.cheaney@progress.com': ['scheaney@progress.com', 'sara.cheaney@sharefile.com'],
   'klesel@progress.com': ['micah.klesel@progress.com'],
   'micah.klesel@progress.com': ['klesel@progress.com'],
   'capparel@progress.com': ['richard.capparelli@progress.com'],
