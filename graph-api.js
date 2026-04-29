@@ -1212,11 +1212,11 @@ async function getLeaderboard(playId) {
       });
     }
 
-    return Object.values(repMap).map(r => {
+    // Build results from reps who have engagements
+    const results = Object.values(repMap).map(r => {
       const assigned = repAssignedCounts[_canonicalEmail(r.email)] ? repAssignedCounts[_canonicalEmail(r.email)].size : 0;
       const engaged = r.engagedAccounts.size;
       let pts = r.totalPoints;
-      // 100% completion bonus
       if (assigned > 0 && engaged >= assigned) pts += 50;
       const ppa = assigned > 0 ? Math.round(pts / assigned) : 0;
       return {
@@ -1231,7 +1231,30 @@ async function getLeaderboard(playId) {
         pointsPerAccount: ppa,
         isComplete: assigned > 0 && engaged >= assigned,
       };
-    }).sort((a, b) => b.pointsPerAccount - a.pointsPerAccount);
+    });
+
+    // Add unstarted reps who have assigned accounts but zero engagements
+    const seenEmails = new Set(Object.keys(repMap));
+    const assReps = {};
+    allAssignments.forEach(a => {
+      if (playId && a.play_id !== playId) return;
+      const email = _canonicalEmail((a.rep_sso_login || a.rep_email || '').toLowerCase());
+      if (!email || seenEmails.has(email)) return;
+      if (!assReps[email]) assReps[email] = { name: a.rep_name || email, count: 0 };
+      if (a.account_id) assReps[email].count++;
+    });
+    Object.entries(assReps).forEach(([email, info]) => {
+      if (info.count > 0) {
+        results.push({
+          email, repName: info.name, totalPoints: 0,
+          completedAccounts: 0, engagedAccounts: 0, interestedAccounts: 0,
+          totalEngagements: 0, lastActivity: '',
+          assignedAccounts: info.count, pointsPerAccount: 0, isComplete: false,
+        });
+      }
+    });
+
+    return results.sort((a, b) => b.pointsPerAccount - a.pointsPerAccount);
   } catch(e) { return []; }
 }
 

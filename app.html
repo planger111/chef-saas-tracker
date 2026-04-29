@@ -369,11 +369,11 @@
 
 
   <!-- ===================== SCRIPTS ===================== -->
-  <script src="msal-browser.js?v=5"></script>
-  <script src="config.js?v=5"></script>
-  <script src="msal-auth.js?v=5"></script>
-  <script src="graph-api.js?v=5"></script>
-  <script src="form-engine.js?v=5"></script>
+  <script src="msal-browser.js?v=6"></script>
+  <script src="config.js?v=6"></script>
+  <script src="msal-auth.js?v=6"></script>
+  <script src="graph-api.js?v=6"></script>
+  <script src="form-engine.js?v=6"></script>
 
   <script>
     // ─────────────────────────────────────────────
@@ -1611,13 +1611,8 @@
       try {
         const pid = playId || _selectedLbPlay || (allPlays.length > 0 ? allPlays[0].play_id : null);
         _selectedLbPlay = pid;
-        const [data, playReps] = await Promise.all([getLeaderboard(pid), pid ? getRepsForPlay(pid) : getAllAssignedReps()]);
-        // Pad in reps assigned to this play who have never submitted
-        const seen = new Set((data || []).map(e => e.email.toLowerCase()));
-        const unstarted = playReps
-          .filter(r => !seen.has(r.email.toLowerCase()))
-          .map(r => ({ email: r.email, repName: r.repName, totalPoints: 0, completedAccounts: 0, assignedAccounts: 0, pointsPerAccount: 0 }));
-        renderFullLeaderboard([...(data || []), ...unstarted], pid);
+        const data = await getLeaderboard(pid);
+        renderFullLeaderboard(data || [], pid);
         showScreen('screen-leaderboard');
       } catch (err) {
         console.error('Leaderboard load error:', err);
