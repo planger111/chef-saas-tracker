@@ -1020,6 +1020,16 @@ function calculatePoints(outcome, nextStepType, data) {
     if (reasonLabel.includes('already have solution') || reasonLabel.includes('already solved')) bonus += 8;
   }
 
+  // Speed bonus — reward reps who finish before the May 21 deadline
+  const deadline = new Date('2025-05-21T23:59:59');
+  const logDate = new Date(data && (data.call_date || data.submitted_at) || Date.now());
+  if (!isNaN(logDate) && logDate < deadline) {
+    const daysLeft = Math.floor((deadline - logDate) / 86400000);
+    if (daysLeft >= 14) bonus += 15;
+    else if (daysLeft >= 7) bonus += 10;
+    else if (daysLeft >= 1) bonus += 5;
+  }
+
   return base + bonus;
 }
 
