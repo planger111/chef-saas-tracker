@@ -835,6 +835,67 @@
           <div id="corr-msg" style="margin-top:12px;font-size:13px;min-height:18px;color:#d32f2f;"></div>
         </div>
       </div><!-- /#correction-modal -->
+
+  <!-- Play Edit Modal -->
+  <div id="play-edit-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;overflow-y:auto;">
+    <div style="max-width:600px;margin:60px auto;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.2);padding:28px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="margin:0;font-size:18px;">✏️ Edit Play</h3>
+        <button onclick="closePlayEditModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;line-height:1;">×</button>
+      </div>
+      <div id="play-edit-warning" style="display:none;background:#fff3cd;border:1px solid #fbbf24;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#92400e;"></div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Play ID <span style="font-weight:400;color:#9ca3af;">(immutable)</span></label>
+        <input type="text" id="edit-play-id" disabled style="width:100%;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;font-family:monospace;background:#f9fafb;color:#888;box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Play Name *</label>
+        <input type="text" id="edit-play-name" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Product / Solution</label>
+        <select id="edit-play-product" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;" onchange="onEditProductChange()">
+          <option value="">— none —</option>
+          <option value="Chef">Chef</option>
+          <option value="Chef SaaS">Chef SaaS</option>
+          <option value="MOVEit">MOVEit</option>
+          <option value="WS_FTP">WS_FTP</option>
+          <option value="WhatsUp Gold">WhatsUp Gold</option>
+          <option value="OpenEdge">OpenEdge</option>
+          <option value="MarkLogic">MarkLogic</option>
+          <option value="Other">Other</option>
+        </select>
+        <div id="edit-product-other-wrap" style="display:none;margin-top:8px;">
+          <input type="text" id="edit-play-product-other" placeholder="Enter product name" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;box-sizing:border-box;">
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Description / Elevator Pitch</label>
+        <textarea id="edit-play-description" rows="3" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Why It Matters</label>
+        <textarea id="edit-play-why" rows="3" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Rep Instructions</label>
+        <textarea id="edit-play-instructions" rows="3" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Status</label>
+        <div style="display:flex;gap:0;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;">
+          <button type="button" id="edit-status-draft" onclick="setEditPlayStatus(false)" style="flex:1;padding:9px;border:none;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#374151;border-right:1px solid #d1d5db;">Draft (Inactive)</button>
+          <button type="button" id="edit-status-active" onclick="setEditPlayStatus(true)" style="flex:1;padding:9px;border:none;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#374151;">Active</button>
+        </div>
+      </div>
+      <div id="play-edit-status" style="display:none;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:12px;"></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;">
+        <button onclick="closePlayEditModal()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:9px 18px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">Cancel</button>
+        <button id="edit-play-save-btn" onclick="savePlayEdit()" style="background:#0078d4;color:#fff;border:none;padding:9px 18px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">💾 Save Changes</button>
+      </div>
+    </div>
+  </div><!-- /#play-edit-modal -->
+
   <script src="msal-browser.js?v=10"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
   <script src="config.js?v=10"></script>
@@ -1268,8 +1329,10 @@
             </td>
             <td style="padding:10px 8px;">
               <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button onclick="showPlayEditModal('${escHtml(p.play_id)}')"
+                  style="background:#e8f0fe;border:1px solid #c3d4f7;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;color:#1a56db;font-weight:600;">✏️ Quick Edit</button>
                 <a href="ingest.html?play=${escHtml(p.play_id)}&mode=config"
-                  style="background:#e8f0fe;border:1px solid #c3d4f7;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;text-decoration:none;color:#1a56db;">✏️ Edit Play</a>
+                  style="background:#f0f7ff;border:1px solid #c3d4f7;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;text-decoration:none;color:#1a56db;">🔧 Full Wizard</a>
                 <a href="ingest.html?play=${escHtml(p.play_id)}&mode=accounts"
                   style="background:#e8f5e9;border:1px solid #a7d7a9;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;text-decoration:none;color:#107c10;">➕ Add Targets</a>
                 <button onclick="exportPlayEngagements('${escHtml(p.play_id)}','${escHtml(p.play_name)}')"
@@ -1345,6 +1408,150 @@
       } catch(e) {
         statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
         statusEl.textContent = '✗ Delete failed: ' + e.message;
+      }
+    }
+
+    // ── Play Edit Modal ───────────────────────────────────────────────────────
+    let _editPlayId = null;
+    let _editPlayActive = true;
+
+    async function showPlayEditModal(playId) {
+      _editPlayId = playId;
+      const config = await getPlaysConfig();
+      const play = (config.plays || []).find(p => p.play_id === playId);
+      if (!play) { alert('Play not found: ' + playId); return; }
+
+      document.getElementById('edit-play-id').value = play.play_id;
+      document.getElementById('edit-play-name').value = play.play_name || '';
+      document.getElementById('edit-play-description').value = play.elevator_pitch || '';
+      document.getElementById('edit-play-why').value = play.why_it_matters || '';
+      document.getElementById('edit-play-instructions').value = play.instructions || '';
+
+      // Product dropdown
+      const productSel = document.getElementById('edit-play-product');
+      const productOpts = Array.from(productSel.options).map(o => o.value);
+      if (play.product && productOpts.includes(play.product)) {
+        productSel.value = play.product;
+      } else if (play.product) {
+        productSel.value = 'Other';
+        document.getElementById('edit-play-product-other').value = play.product;
+        document.getElementById('edit-product-other-wrap').style.display = 'block';
+      } else {
+        productSel.value = '';
+      }
+      onEditProductChange();
+
+      // Status
+      _editPlayActive = play.active !== false;
+      setEditPlayStatus(_editPlayActive);
+
+      // Warning for plays with engagements
+      const warningEl = document.getElementById('play-edit-warning');
+      const engCount = (_allData || []).filter(r => r.play_id === playId).length;
+      if (engCount > 0) {
+        warningEl.style.display = 'block';
+        warningEl.innerHTML = `⚠️ This play has <strong>${engCount}</strong> engagement log${engCount !== 1 ? 's' : ''}. Changes apply to future submissions only. The play ID cannot be changed.`;
+      } else {
+        warningEl.style.display = 'none';
+      }
+
+      document.getElementById('play-edit-status').style.display = 'none';
+      document.getElementById('edit-play-save-btn').disabled = false;
+      document.getElementById('edit-play-save-btn').textContent = '💾 Save Changes';
+      document.getElementById('edit-play-save-btn').style.background = '#0078d4';
+      document.getElementById('play-edit-modal').style.display = 'block';
+    }
+
+    function closePlayEditModal() {
+      document.getElementById('play-edit-modal').style.display = 'none';
+      _editPlayId = null;
+    }
+
+    function onEditProductChange() {
+      const sel = document.getElementById('edit-play-product');
+      const otherWrap = document.getElementById('edit-product-other-wrap');
+      if (otherWrap) otherWrap.style.display = sel.value === 'Other' ? 'block' : 'none';
+    }
+
+    function setEditPlayStatus(active) {
+      _editPlayActive = active;
+      const draftBtn = document.getElementById('edit-status-draft');
+      const activeBtn = document.getElementById('edit-status-active');
+      draftBtn.style.background = active ? '#fff' : '#fff3cd';
+      draftBtn.style.color = active ? '#374151' : '#92400e';
+      draftBtn.style.fontWeight = active ? '500' : '700';
+      activeBtn.style.background = active ? '#e8f5e9' : '#fff';
+      activeBtn.style.color = active ? '#107c10' : '#374151';
+      activeBtn.style.fontWeight = active ? '700' : '500';
+    }
+
+    async function savePlayEdit() {
+      if (!_editPlayId) return;
+      const name = document.getElementById('edit-play-name').value.trim();
+      if (!name) { alert('Play name is required.'); return; }
+
+      const btn = document.getElementById('edit-play-save-btn');
+      const statusEl = document.getElementById('play-edit-status');
+      btn.disabled = true;
+      btn.textContent = '⏳ Saving…';
+
+      try {
+        const config = await getPlaysConfig();
+        const play = (config.plays || []).find(p => p.play_id === _editPlayId);
+        if (!play) throw new Error('Play not found');
+
+        // Check if deactivating a play with active accounts
+        if (!_editPlayActive && play.active !== false) {
+          try {
+            const assignText = await getFileText(SP_ROOT + '/assignments.json');
+            if (assignText) {
+              const assignData = JSON.parse(assignText);
+              const activeAccts = (assignData.assignments || []).filter(a => a.play_id === _editPlayId && a.active !== 'No');
+              if (activeAccts.length > 0 && !confirm(`This play has ${activeAccts.length} active account assignment${activeAccts.length !== 1 ? 's' : ''}. Deactivating will hide it from reps. Continue?`)) {
+                btn.disabled = false;
+                btn.textContent = '💾 Save Changes';
+                return;
+              }
+            }
+          } catch(e) {}
+        }
+
+        // Product
+        const productSel = document.getElementById('edit-play-product');
+        const product = productSel.value === 'Other'
+          ? (document.getElementById('edit-play-product-other')?.value?.trim() || 'Other')
+          : productSel.value;
+
+        // Update play — play_id is IMMUTABLE
+        play.play_name = name;
+        play.product = product;
+        play.elevator_pitch = document.getElementById('edit-play-description').value.trim();
+        play.why_it_matters = document.getElementById('edit-play-why').value.trim();
+        play.instructions = document.getElementById('edit-play-instructions').value.trim();
+        play.active = _editPlayActive;
+
+        await savePlaysConfig(config);
+        try { await logActivity(currentUser, 'play_edited', `Edited play: ${name} (${_editPlayId})`); } catch(e) {}
+
+        statusEl.style.display = 'block';
+        statusEl.style.background = '#e8f5e9';
+        statusEl.style.color = '#107c10';
+        statusEl.textContent = '✅ Play updated successfully.';
+        btn.textContent = '✅ Saved';
+        btn.style.background = '#107c10';
+
+        setTimeout(() => {
+          closePlayEditModal();
+          loadPlaysTab();
+        }, 1000);
+      } catch(e) {
+        statusEl.style.display = 'block';
+        statusEl.style.background = '#fde8e8';
+        statusEl.style.color = '#c00';
+        statusEl.textContent = '✗ Save failed: ' + e.message;
+        btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
+        btn.style.background = '#0078d4';
       }
     }
 
