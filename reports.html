@@ -621,12 +621,34 @@
 
     document.getElementById('btn-export-csv').addEventListener('click', exportCSV);
 
+    // Auth gate — only admin/manager roles can access reports
+    const REPORT_ADMINS = {
+      'langer@progress.com': true, 'philip.langer@progress.com': true,
+      'planger@progress.com': true, 'phil.langer@progress.com': true,
+      'kathleen.faria@progress.com': true, 'kfaria@progress.com': true,
+      'k.faria@progress.com': true, 'kathy.faria@progress.com': true,
+      'scheaney@progress.com': true,
+    };
+
     // Auto-init
     document.addEventListener('DOMContentLoaded', async () => {
       try {
         await initAuth();
         const user = getCurrentUser();
         if (user) {
+          const emails = user.emails || [user.email || ''];
+          const hasAccess = emails.some(e => REPORT_ADMINS[e.toLowerCase()]);
+          if (!hasAccess) {
+            document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">
+              <div style="text-align:center;padding:40px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);max-width:400px;">
+                <div style="font-size:48px;margin-bottom:16px;">🚫</div>
+                <h2 style="color:#d32f2f;margin-bottom:8px;">Access Denied</h2>
+                <p style="color:#666;">Reports require admin access.</p>
+                <a href="app.html" style="display:inline-block;margin-top:20px;background:#0078d4;color:#fff;padding:10px 24px;border-radius:8px;text-decoration:none;font-weight:600;">Go to Rep App</a>
+              </div>
+            </div>`;
+            return;
+          }
           currentUser = user;
           await loadReports();
         } else {

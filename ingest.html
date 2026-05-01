@@ -557,13 +557,7 @@
     // Check all email candidates from token
     const candidates = currentUser.emails || [(currentUser.email || currentUser.username || '').toLowerCase()];
     const emailMatch = candidates.some(e => ADMIN_EMAILS.includes(e.toLowerCase()));
-    // Name-based fallback: known admins by display name + @progress.com domain
-    const isProgressEmail = candidates.some(e => e.endsWith('@progress.com'));
-    const nameLower = (currentUser.name || '').toLowerCase();
-    const nameMatch = isProgressEmail && (
-      nameLower.includes('langer') || nameLower.includes('faria') || nameLower.includes('kathleen') || nameLower.includes('scheaney')
-    );
-    if (!emailMatch && !nameMatch) {
+    if (!emailMatch) {
       log('err', `Access denied. Ingest requires admin permissions. Detected: ${candidates.join(', ')}`);
       return false;
     }

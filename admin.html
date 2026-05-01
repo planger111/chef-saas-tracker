@@ -793,12 +793,12 @@
           <div id="corr-msg" style="margin-top:12px;font-size:13px;min-height:18px;color:#d32f2f;"></div>
         </div>
       </div><!-- /#correction-modal -->
-  <script src="msal-browser.js?v=9"></script>
+  <script src="msal-browser.js?v=10"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-  <script src="config.js?v=9"></script>
-  <script src="msal-auth.js?v=9"></script>
-  <script src="graph-api.js?v=9"></script>
-  <script src="export.js?v=9"></script>
+  <script src="config.js?v=10"></script>
+  <script src="msal-auth.js?v=10"></script>
+  <script src="graph-api.js?v=10"></script>
+  <script src="export.js?v=10"></script>
 
   <script>
     let _allData = [];
@@ -1896,14 +1896,6 @@ Let's go! 🚀`;
         console.log('[Admin] Email candidates for role check:', emailCandidates);
         // Primary lookup: exact email match
         let role = emailCandidates.map(e => ADMIN_ROLES[e]).find(r => r);
-        // Fallback: name-based match for known managers (covers UPN edge cases)
-        if (!role && user?.name) {
-          const nameLower = user.name.toLowerCase();
-          const isProgressEmail = emailCandidates.some(e => e.endsWith('@progress.com'));
-          if (isProgressEmail && (nameLower.includes('faria') || nameLower.includes('kathleen'))) {
-            role = 'manager';
-          }
-        }
         if (!role) {
           // Not an admin at all — block access
           console.warn('[Admin] Access denied. Candidates:', emailCandidates, 'Known roles:', Object.keys(ADMIN_ROLES));

@@ -11,198 +11,9 @@ let _driveId = null;
 // ─── Static alias map (module-level, shared by all matching functions) ────────
 // Maps each known email variant to its siblings. Built from rep-identity.json.
 // Used in both getPlayAssignments (Tier 3) and _getAllLogsForRep for consistent matching.
-const STATIC_ALIASES = {
-  'scheaney@progress.com': ['sara.cheaney@sharefile.com', 'sara.cheaney@progress.com'],
-  'sara.cheaney@sharefile.com': ['scheaney@progress.com', 'sara.cheaney@progress.com'],
-  'sara.cheaney@progress.com': ['scheaney@progress.com', 'sara.cheaney@sharefile.com'],
-  'klesel@progress.com': ['micah.klesel@progress.com'],
-  'micah.klesel@progress.com': ['klesel@progress.com'],
-  'capparel@progress.com': ['richard.capparelli@progress.com'],
-  'richard.capparelli@progress.com': ['capparel@progress.com'],
-  'robert.wosneski@progress.com': ['wosneski@progress.com'],
-  'wosneski@progress.com': ['robert.wosneski@progress.com'],
-  'dandria.alston-popovic@progress.com': ['dpopovic@progress.com'],
-  'dpopovic@progress.com': ['dandria.alston-popovic@progress.com'],
-  'fatemah.shirzad@progress.com': ['shirzad@progress.com'],
-  'shirzad@progress.com': ['fatemah.shirzad@progress.com'],
-  'jakub.krzyzak@progress.com': ['krzyzak@progress.com'],
-  'krzyzak@progress.com': ['jakub.krzyzak@progress.com'],
-  'jorobert@progress.com': ['joshua.roberts@progress.com'],
-  'joshua.roberts@progress.com': ['jorobert@progress.com'],
-  'gould@progress.com': ['matt.gould@progress.com'],
-  'matt.gould@progress.com': ['gould@progress.com'],
-  'comrie@progress.com': ['rob.comrie@progress.com'],
-  'rob.comrie@progress.com': ['comrie@progress.com'],
-  'lemlein@progress.com': ['ryan.lemlein@progress.com'],
-  'ryan.lemlein@progress.com': ['lemlein@progress.com'],
-  'stinson.fernandes@progress.com': ['stinsonf@progress.com'],
-  'stinsonf@progress.com': ['stinson.fernandes@progress.com'],
-  'somukher@progress.com': ['souvik.mukherjee@progress.com'],
-  'souvik.mukherjee@progress.com': ['somukher@progress.com'],
-  'preeti.kumari2@progress.com': ['prkumari@progress.com'],
-  'prkumari@progress.com': ['preeti.kumari2@progress.com'],
-  'pprabhu@progress.com': ['prakash.prabhu@progress.com'],
-  'prakash.prabhu@progress.com': ['pprabhu@progress.com'],
-  'sak@progress.com': ['sampath.acharyak@progress.com'],
-  'sampath.acharyak@progress.com': ['sak@progress.com'],
-  'adam.weir@progress.com': ['adweir@progress.com'],
-  'adweir@progress.com': ['adam.weir@progress.com'],
-  'joshua.sands@progress.com': ['sands@progress.com'],
-  'sands@progress.com': ['joshua.sands@progress.com'],
-  'kerry.lafferty@progress.com': ['lafferty@progress.com'],
-  'lafferty@progress.com': ['kerry.lafferty@progress.com'],
-  'octon@progress.com': ['tim.octon@progress.com'],
-  'tim.octon@progress.com': ['octon@progress.com'],
-  'ana.valeva@progress.com': ['valeva@progress.com'],
-  'valeva@progress.com': ['ana.valeva@progress.com'],
-  'friedrich.scharz@progress.com': ['scharz@progress.com'],
-  'scharz@progress.com': ['friedrich.scharz@progress.com'],
-  'gbeblein@progress.com': ['georgiana.beblein@progress.com'],
-  'georgiana.beblein@progress.com': ['gbeblein@progress.com'],
-  'zhaneta.radeva@progress.com': ['zradeva@progress.com'],
-  'zradeva@progress.com': ['zhaneta.radeva@progress.com'],
-  'zkolev@progress.com': ['zlatomir.kolev@progress.com'],
-  'zlatomir.kolev@progress.com': ['zkolev@progress.com'],
-  'dimitar.kachorev@progress.com': ['kachorev@progress.com'],
-  'kachorev@progress.com': ['dimitar.kachorev@progress.com'],
-  'cacciama@progress.com': ['nicolo.cacciamano@progress.com'],
-  'nicolo.cacciamano@progress.com': ['cacciama@progress.com'],
-  'plaangel@progress.com': ['plamena.angelova@progress.com'],
-  'plamena.angelova@progress.com': ['plaangel@progress.com'],
-  'genov@progress.com': ['todor.genov@progress.com'],
-  'todor.genov@progress.com': ['genov@progress.com'],
-  'lulcheva@progress.com': ['vyara.lulcheva@progress.com'],
-  'vyara.lulcheva@progress.com': ['lulcheva@progress.com'],
-  'zdinev@progress.com': ['zdravko.dinev@progress.com'],
-  'zdravko.dinev@progress.com': ['zdinev@progress.com'],
-  'filip.gieci@progress.com': ['gieci@progress.com'],
-  'gieci@progress.com': ['filip.gieci@progress.com'],
-  'jakub.andrzejewski@progress.com': ['jandrzej@progress.com'],
-  'jandrzej@progress.com': ['jakub.andrzejewski@progress.com'],
-  'lrausche@progress.com': ['lukas.rauscher@progress.com'],
-  'lukas.rauscher@progress.com': ['lrausche@progress.com'],
-  'marek.machalek@progress.com': ['mmachale@progress.com'],
-  'mmachale@progress.com': ['marek.machalek@progress.com'],
-  'pavla.sehnalova@progress.com': ['psehnalo@progress.com'],
-  'psehnalo@progress.com': ['pavla.sehnalova@progress.com'],
-  'martinek@progress.com': ['vojtech.martinek@progress.com'],
-  'vojtech.martinek@progress.com': ['martinek@progress.com'],
-  'arjun.sp@progress.com': ['arjunsp@progress.com'],
-  'arjunsp@progress.com': ['arjun.sp@progress.com'],
-  'ashneeja.mp@progress.com': ['ashnmp@progress.com'],
-  'ashnmp@progress.com': ['ashneeja.mp@progress.com'],
-  'jtiwari@progress.com': ['jyoti.tiwari@progress.com'],
-  'jyoti.tiwari@progress.com': ['jtiwari@progress.com'],
-  'mmuheeb@progress.com': ['mohammed.muheeb@progress.com'],
-  'mohammed.muheeb@progress.com': ['mmuheeb@progress.com'],
-  'neha.katare@progress.com': ['nkatare@progress.com'],
-  'nkatare@progress.com': ['neha.katare@progress.com'],
-  'sourav.das@progress.com': ['souravda@progress.com'],
-  'souravda@progress.com': ['sourav.das@progress.com'],
-  'aakansha.nishu@progress.com': ['aakansha@progress.com'],
-  'aakansha@progress.com': ['aakansha.nishu@progress.com'],
-  'achowdar@progress.com': ['apathiakhil.chowdary@progress.com'],
-  'apathiakhil.chowdary@progress.com': ['achowdar@progress.com'],
-  'aganguly@progress.com': ['arka.ganguly@progress.com'],
-  'arka.ganguly@progress.com': ['aganguly@progress.com'],
-  'balamuru@progress.com': ['varshaa.balamurugan@progress.com'],
-  'varshaa.balamurugan@progress.com': ['balamuru@progress.com'],
-  'manusha.p@progress.com': ['manusha@progress.com'],
-  'manusha@progress.com': ['manusha.p@progress.com'],
-  'anumu@progress.com': ['anushree.mulimani@progress.com'],
-  'anushree.mulimani@progress.com': ['anumu@progress.com'],
-  'keerthana.s@progress.com': ['keerths@progress.com'],
-  'keerths@progress.com': ['keerthana.s@progress.com'],
-  'gracer@progress.com': ['mona.gracer@progress.com'],
-  'mona.gracer@progress.com': ['gracer@progress.com'],
-  'rcleetus@progress.com': ['riyamary.cleetus@progress.com'],
-  'riyamary.cleetus@progress.com': ['rcleetus@progress.com'],
-  'rudrabhavin.trivedi@progress.com': ['trivedi@progress.com'],
-  'trivedi@progress.com': ['rudrabhavin.trivedi@progress.com'],
-  'shyamkumar.ny@progress.com': ['skumary@progress.com'],
-  'skumary@progress.com': ['shyamkumar.ny@progress.com'],
-  'anusha.seethepalli@progress.com': ['aseethe@progress.com'],
-  'aseethe@progress.com': ['anusha.seethepalli@progress.com'],
-  'jyoti.sharma@progress.com': ['jysharma@progress.com'],
-  'jysharma@progress.com': ['jyoti.sharma@progress.com'],
-  'mdukhand@progress.com': ['mehul.dukhande@progress.com'],
-  'mehul.dukhande@progress.com': ['mdukhand@progress.com'],
-  'rahul.honawad@progress.com': ['rhonawad@progress.com'],
-  'rhonawad@progress.com': ['rahul.honawad@progress.com'],
-  'simanta.saha@progress.com': ['sisaha@progress.com'],
-  'sisaha@progress.com': ['simanta.saha@progress.com'],
-  'snagappa@progress.com': ['subashini.nagappan@progress.com'],
-  'subashini.nagappan@progress.com': ['snagappa@progress.com'],
-  'anirudh.v@progress.com': ['anirudhv@progress.com'],
-  'anirudhv@progress.com': ['anirudh.v@progress.com'],
-  'j.abhiram.varma@progress.com': ['jvarma@progress.com'],
-  'jvarma@progress.com': ['j.abhiram.varma@progress.com'],
-  'assadi.khader@progress.com': ['mabdul@progress.com'],
-  'mabdul@progress.com': ['assadi.khader@progress.com'],
-  'pkaarthi@progress.com': ['pnkoushal.kaarthiek@progress.com'],
-  'pnkoushal.kaarthiek@progress.com': ['pkaarthi@progress.com'],
-  'carrie.yuan@progress.com': ['yuan@progress.com'],
-  'yuan@progress.com': ['carrie.yuan@progress.com'],
-  'amardeep.singh@progress.com': ['amarsing@progress.com'],
-  'amarsing@progress.com': ['amardeep.singh@progress.com'],
-  'langer@progress.com': ['philip.langer@progress.com', 'planger@progress.com', 'phil.langer@progress.com'],
-  'philip.langer@progress.com': ['langer@progress.com', 'planger@progress.com', 'phil.langer@progress.com'],
-  'planger@progress.com': ['langer@progress.com', 'philip.langer@progress.com', 'phil.langer@progress.com'],
-  'phil.langer@progress.com': ['langer@progress.com', 'philip.langer@progress.com', 'planger@progress.com'],
-  'mae.witcher@progress.com': ['witcher@progress.com'],
-  'witcher@progress.com': ['mae.witcher@progress.com'],
-  'ichaudha@progress.com': ['isha.chaudhary@progress.com'],
-  'isha.chaudhary@progress.com': ['ichaudha@progress.com'],
-  'jaro.stusak@progress.com': ['jstusak@progress.com'],
-  'jstusak@progress.com': ['jaro.stusak@progress.com'],
-  'bergsma@progress.com': ['shawn.bergsma@progress.com'],
-  'shawn.bergsma@progress.com': ['bergsma@progress.com'],
-  'joseph.kuderer@progress.com': ['kuderer@progress.com'],
-  'kuderer@progress.com': ['joseph.kuderer@progress.com'],
-  'mcgowan@progress.com': ['stephen.mcgowan@progress.com'],
-  'stephen.mcgowan@progress.com': ['mcgowan@progress.com'],
-  'faria@progress.com': ['kathleen.faria@progress.com', 'kfaria@progress.com', 'k.faria@progress.com', 'kathy.faria@progress.com'],
-  'kathleen.faria@progress.com': ['faria@progress.com', 'kfaria@progress.com', 'k.faria@progress.com', 'kathy.faria@progress.com'],
-  'kfaria@progress.com': ['faria@progress.com', 'kathleen.faria@progress.com', 'k.faria@progress.com', 'kathy.faria@progress.com'],
-  'k.faria@progress.com': ['faria@progress.com', 'kathleen.faria@progress.com', 'kfaria@progress.com', 'kathy.faria@progress.com'],
-  'kathy.faria@progress.com': ['faria@progress.com', 'kathleen.faria@progress.com', 'kfaria@progress.com', 'k.faria@progress.com'],
-  'cfranke@progress.com': ['courtney.franke@progress.com'],
-  'courtney.franke@progress.com': ['cfranke@progress.com'],
-  'mihail.hristov@progress.com': ['mihhrist@progress.com'],
-  'mihhrist@progress.com': ['mihail.hristov@progress.com'],
-  'denikolo@progress.com': ['desislava.nikolova@progress.com'],
-  'desislava.nikolova@progress.com': ['denikolo@progress.com'],
-  'jiri.mazal@progress.com': ['jmazal@progress.com'],
-  'jmazal@progress.com': ['jiri.mazal@progress.com'],
-  'schwarz@progress.com': ['thomas.schwarz@progress.com'],
-  'thomas.schwarz@progress.com': ['schwarz@progress.com'],
-  'laszlo.vanya@progress.com': ['lvanya@progress.com'],
-  'lvanya@progress.com': ['laszlo.vanya@progress.com'],
-  'alisha.wilson@progress.com': ['awilson@progress.com'],
-  'awilson@progress.com': ['alisha.wilson@progress.com'],
-  'chguerre@progress.com': ['christopher.guerrero@progress.com'],
-  'christopher.guerrero@progress.com': ['chguerre@progress.com'],
-  'lauren.dipresso@progress.com': ['ldipress@progress.com'],
-  'ldipress@progress.com': ['lauren.dipresso@progress.com'],
-  'asahay@progress.com': ['ayush.sahay@progress.com'],
-  'ayush.sahay@progress.com': ['asahay@progress.com'],
-  'sageorge@progress.com': ['sathish.george@progress.com'],
-  'sathish.george@progress.com': ['sageorge@progress.com'],
-  'bvivek@progress.com': ['vivek.bolde@progress.com'],
-  'vivek.bolde@progress.com': ['bvivek@progress.com'],
-  'coronado@progress.com': ['david.coronado@progress.com'],
-  'david.coronado@progress.com': ['coronado@progress.com'],
-  'lmihaylo@progress.com': ['ludmila.mihaylovitch@progress.com'],
-  'ludmila.mihaylovitch@progress.com': ['lmihaylo@progress.com'],
-  'mohammad.sameer@progress.com': ['msameer@progress.com'],
-  'msameer@progress.com': ['mohammad.sameer@progress.com'],
-  'vijetha.p@progress.com': ['vijetp@progress.com'],
-  'vijetp@progress.com': ['vijetha.p@progress.com'],
-  'shylesh.kb@progress.com': ['shylkb@progress.com'],
-  'shylkb@progress.com': ['shylesh.kb@progress.com'],
-  'sophiya.shaheen@progress.com': ['sshahe@progress.com'],
-  'sshahe@progress.com': ['sophiya.shaheen@progress.com'],
-};
+// Identity aliases are now resolved via SharePoint email-lookup.json and Graph API proxyAddresses.
+// No hardcoded email data in source code.
+const STATIC_ALIASES = {};
 
 // ─── Section 2: Identity ──────────────────────────────────────────────────
 // rep-identity.json lives in SharePoint only — never in the GitHub repo.
@@ -619,7 +430,7 @@ async function fetchGraphUserProfile() {
 //   1. SharePoint: Chef SaaS Tracker/ChefSaaS/email-lookup.json
 //      → Admin uploads this via the Identity tab. Updates take effect within
 //        24 hours for all reps without any code redeploy.
-//   2. localStorage cache (TTL: 24 hours)
+//   2. sessionStorage cache (TTL: 24 hours)
 //      → Avoids a SharePoint round-trip on every page load.
 //   3. Static /email-lookup.json (deployed with the app)
 //      → Always-available fallback. Updated only via redeploy.
@@ -642,12 +453,12 @@ function _buildEmailLookupMap(lookup) {
   return map;
 }
 
-// Clear the localStorage cache so the next loadEmailLookup() fetches fresh data.
+// Clear the sessionStorage cache so the next loadEmailLookup() fetches fresh data.
 // Called by the admin UI after uploading a new file.
 function clearEmailLookupCache() {
   try {
-    localStorage.removeItem(EMAIL_LOOKUP_CACHE_KEY);
-    localStorage.removeItem(EMAIL_LOOKUP_TS_KEY);
+    sessionStorage.removeItem(EMAIL_LOOKUP_CACHE_KEY);
+    sessionStorage.removeItem(EMAIL_LOOKUP_TS_KEY);
   } catch(e) {}
   _emailLookup = null;
   _emailLookupMap = null;
@@ -664,16 +475,16 @@ async function loadEmailLookup() {
   // Return cached in-memory copy immediately if available this session
   if (_emailLookup !== null) return _emailLookup;
 
-  // ── Check localStorage cache (24h TTL) ───────────────────────────────────
+  // ── Check sessionStorage cache (24h TTL) ───────────────────────────────────
   try {
-    const cached = localStorage.getItem(EMAIL_LOOKUP_CACHE_KEY);
-    const ts     = localStorage.getItem(EMAIL_LOOKUP_TS_KEY);
+    const cached = sessionStorage.getItem(EMAIL_LOOKUP_CACHE_KEY);
+    const ts     = sessionStorage.getItem(EMAIL_LOOKUP_TS_KEY);
     if (cached && ts) {
       const ageMs = Date.now() - new Date(ts).getTime();
       if (ageMs < EMAIL_LOOKUP_TTL_MS) {
         _emailLookup    = JSON.parse(cached);
         _emailLookupMap = _buildEmailLookupMap(_emailLookup);
-        console.log(`[Identity] email-lookup from localStorage cache (${Math.round(ageMs / 60000)}m old, ${_emailLookup.length} reps)`);
+        console.log(`[Identity] email-lookup from sessionStorage cache (${Math.round(ageMs / 60000)}m old, ${_emailLookup.length} reps)`);
         return _emailLookup;
       }
       console.log('[Identity] email-lookup cache expired — fetching fresh');
@@ -703,12 +514,12 @@ async function loadEmailLookup() {
   _emailLookup    = loaded || [];
   _emailLookupMap = _buildEmailLookupMap(_emailLookup);
 
-  // ── Store in localStorage cache ───────────────────────────────────────────
+  // ── Store in sessionStorage cache ───────────────────────────────────────────
   if (_emailLookup.length > 0) {
     try {
-      localStorage.setItem(EMAIL_LOOKUP_CACHE_KEY, JSON.stringify(_emailLookup));
-      localStorage.setItem(EMAIL_LOOKUP_TS_KEY, new Date().toISOString());
-    } catch(e) { /* localStorage full or blocked — non-fatal */ }
+      sessionStorage.setItem(EMAIL_LOOKUP_CACHE_KEY, JSON.stringify(_emailLookup));
+      sessionStorage.setItem(EMAIL_LOOKUP_TS_KEY, new Date().toISOString());
+    } catch(e) { /* sessionStorage full or blocked — non-fatal */ }
   }
 
   console.log(`[Identity] email-lookup loaded from ${source || 'nowhere'}: ${_emailLookup.length} reps`);

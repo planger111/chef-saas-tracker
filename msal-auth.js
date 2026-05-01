@@ -29,8 +29,8 @@ function _getMsalConfig() {
       redirectUri: window.location.origin,
     },
     cache: {
-      cacheLocation: "localStorage",
-      storeAuthStateInCookie: true,
+      cacheLocation: "sessionStorage",
+      storeAuthStateInCookie: false,
     },
   };
 }
