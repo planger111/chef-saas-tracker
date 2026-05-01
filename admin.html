@@ -3729,6 +3729,74 @@ Let's go! 🚀`;
       }
     }
 
+    // ── Admin Feedback Tab ────────────────────────────────────────────
+    let _feedbackData = [];
+
+    async function loadFeedbackTab() {
+      const container = document.getElementById('feedback-list');
+      container.innerHTML = '<div class="empty">Loading...</div>';
+      try {
+        const raw = await getFileText(SP_ROOT + '/rep_feedback.json');
+        if (!raw) { container.innerHTML = '<div class="empty">No feedback file found.</div>'; return; }
+        const data = JSON.parse(raw);
+        _feedbackData = (data.feedback || []).sort((a, b) => b.created_at.localeCompare(a.created_at));
+        filterFeedback();
+      } catch (e) {
+        console.error('Load feedback error:', e);
+        container.innerHTML = '<div class="empty">Could not load feedback.</div>';
+      }
+    }
+
+    function filterFeedback() {
+      const filter = document.getElementById('feedback-filter').value;
+      const filtered = filter === 'all' ? _feedbackData : _feedbackData.filter(f => f.status === filter);
+      const container = document.getElementById('feedback-list');
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty">No feedback matching filter.</div>';
+        return;
+      }
+      container.innerHTML = filtered.map(f => `
+        <div style="border:1px solid #e2e8f0;border-radius:10px;padding:14px;margin-bottom:10px;background:#fff;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-weight:600;">${escHtml(f.rep_name || f.rep_email)}</span>
+            <span style="font-size:11px;color:#94a3b8;">${new Date(f.created_at).toLocaleDateString()} ${new Date(f.created_at).toLocaleTimeString()}</span>
+          </div>
+          <div style="margin-bottom:6px;">
+            <span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:${feedbackTypeColor(f.feedback_type)};">${escHtml(f.feedback_type)}</span>
+            ${f.play_id ? `<span style="font-size:11px;color:#64748b;margin-left:6px;">Play: ${escHtml(f.play_id)}</span>` : ''}
+            ${f.account_id ? `<span style="font-size:11px;color:#64748b;margin-left:6px;">Acct: ${escHtml(f.account_id)}</span>` : ''}
+          </div>
+          <div style="font-size:13px;margin-bottom:8px;white-space:pre-wrap;">${escHtml(f.message)}</div>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select id="fb-status-${f.id}" style="padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+              ${['New','Reviewed','Resolved','Dismissed'].map(s => `<option value="${s}" ${f.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+            <input id="fb-notes-${f.id}" placeholder="Manager notes..." value="${escHtml(f.manager_notes || '')}" style="flex:1;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;" />
+            <button onclick="updateFeedbackItem('${f.id}')" style="padding:4px 10px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">Save</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function feedbackTypeColor(type) {
+      const m = { 'Question': '#dbeafe', 'Bug': '#fee2e2', 'Play Suggestion': '#dcfce7', 'Account Issue': '#fef3c7' };
+      return m[type] || '#f1f5f9';
+    }
+
+    async function updateFeedbackItem(id) {
+      const fb = _feedbackData.find(f => f.id === id);
+      if (!fb) return;
+      fb.status = document.getElementById('fb-status-' + id).value;
+      fb.manager_notes = document.getElementById('fb-notes-' + id).value;
+      try {
+        await writeJsonFile('rep_feedback.json', { feedback: _feedbackData });
+        filterFeedback();
+      } catch (e) {
+        console.error('Update feedback error:', e);
+        alert('Failed to update feedback');
+      }
+    }
+
   </script>
 <footer class="security-footer">
   INFRA SalesPlay Tracker — Progress Software Proprietary &amp; Confidential &nbsp;·&nbsp; Progress employees only &nbsp;<a href="security.html" class="sec-footer-link">Security &amp; Privacy</a>
