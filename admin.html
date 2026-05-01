@@ -2523,7 +2523,7 @@ Let's go! 🚀`;
       const body = document.getElementById('activity-log-body');
       body.innerHTML = '<tr><td colspan="5" class="no-results">Loading…</td></tr>';
       try {
-        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/activity_log.csv');
+        const text = await getFileText(`${SP_ROOT}/activity_log.csv`);
         if (!text || !text.trim()) {
           body.innerHTML = '<tr><td colspan="5" class="no-results">No activity logged yet</td></tr>';
           return;
@@ -2583,7 +2583,7 @@ Let's go! 🚀`;
       body.innerHTML = '<tr><td colspan="8" class="no-results">Loading…</td></tr>';
       summaryBar.style.display = 'none';
       try {
-        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/identity_log.csv');
+        const text = await getFileText(`${SP_ROOT}/identity_log.csv`);
         if (!text || !text.trim()) {
           body.innerHTML = '<tr><td colspan="8" class="no-results">No identity events logged yet — events are written on each rep login.</td></tr>';
           return;
@@ -2856,7 +2856,7 @@ Let's go! 🚀`;
       statsBar.style.display = 'none';
 
       try {
-        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/demo_log.csv');
+        const text = await getFileText(`${SP_ROOT}/demo_log.csv`);
         if (!text || !text.trim()) {
           body.innerHTML = '<tr><td colspan="6" class="no-results">No demo activity logged yet</td></tr>';
           return;
@@ -2922,7 +2922,7 @@ Let's go! 🚀`;
     const demoBtnExport = document.getElementById('demo-btn-export');
     if (demoBtnExport) demoBtnExport.addEventListener('click', async () => {
       try {
-        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/demo_log.csv');
+        const text = await getFileText(`${SP_ROOT}/demo_log.csv`);
         if (!text) { alert('No demo activity to export'); return; }
         const blob = new Blob([text], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
@@ -3400,12 +3400,12 @@ Let's go! 🚀`;
       try {
         await Promise.all([
           _pollCSV(
-            'Chef SaaS Tracker/ChefSaaS/activity_log.csv',
+            `${SP_ROOT}/activity_log.csv`,
             TS_KEY_ACTIVITY,
             processActivityRow
           ),
           _pollCSV(
-            'Chef SaaS Tracker/ChefSaaS/identity_log.csv',
+            `${SP_ROOT}/identity_log.csv`,
             TS_KEY_IDENTITY,
             processIdentityRow
           ),

@@ -1593,7 +1593,7 @@
       btn.style.background = '#107c10';
       log('ok', '');
       log('ok', `🎉 Done! ${_isExistingPlay ? 'Targets updated.' : 'Reps can now open the app and see their accounts.'}`);
-      log('info', 'Files written: Chef SaaS Tracker/ChefSaaS/assignments.json · plays.json');
+      log('info', `Files written: ${SP_ROOT}/assignments.json · plays.json`);
       try {
         await logActivity(currentUser, 'ingest_upload', `${actionLabel}: ${finalAssignments.length} total rows for play: ${currentPlayDef.play_name}`);
       } catch(e) {}

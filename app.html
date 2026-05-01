@@ -1073,7 +1073,7 @@
 
       let demoData = DEMO_FALLBACK;
       try {
-        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/demo-accounts.json');
+        const text = await getFileText(`${SP_ROOT}/demo-accounts.json`);
         if (text) {
           const json = JSON.parse(text);
           if (json && json.plays) demoData = json;
@@ -1099,9 +1099,9 @@
         row.points || 0
       ].join(',');
       try {
-        const existing = await getFileText('Chef SaaS Tracker/ChefSaaS/demo_log.csv') || '';
+        const existing = await getFileText(`${SP_ROOT}/demo_log.csv`) || '';
         const content  = existing ? existing + '\n' + line : headers + '\n' + line;
-        await putFile('Chef SaaS Tracker/ChefSaaS/demo_log.csv', content, 'text/csv');
+        await putFile(`${SP_ROOT}/demo_log.csv`, content, 'text/csv');
       } catch(e) { console.warn('Demo log write failed', e); }
     }
 

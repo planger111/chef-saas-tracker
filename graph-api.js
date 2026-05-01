@@ -3,7 +3,7 @@
 // Only needs Sites.ReadWrite.All (already granted)
 
 // Root folder inside SharePoint Documents — matches the OneDrive-synced local folder
-const SP_ROOT = "Chef SaaS Tracker/ChefSaaS";
+const SP_ROOT = `Chef SaaS Tracker/${CONFIG.dataFolder}`;
 
 let _siteId = null;
 let _driveId = null;
