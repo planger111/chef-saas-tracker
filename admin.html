@@ -143,6 +143,7 @@
         <button class="admin-tab" data-tab="identity" id="tab-btn-identity" style="display:none;">Identity</button>
         <button class="admin-tab" data-tab="access-log" id="tab-btn-access-log" style="display:none;">Access Log</button>
         <button class="admin-tab" data-tab="corrections" id="tab-btn-corrections" style="display:none;">Corrections</button>
+        <button class="admin-tab" data-tab="rep-view">Rep View</button>
       </div>
 
       <!-- Activity Log Tab Panel -->
@@ -754,6 +755,24 @@
         </div>
       </div><!-- /#tab-corrections -->
 
+      <!-- Rep View Tab Panel -->
+      <div id="tab-rep-view" class="admin-tab-panel" style="display:none;">
+        <div style="background:#e8f4fd;border:1px solid #b3d9f2;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+          <span style="font-size:16px;">👁️</span>
+          <span style="font-size:13px;color:#1a5276;font-weight:600;">Manager View</span>
+          <span style="font-size:12px;color:#5b7d95;margin-left:4px;">— Read-only — viewing as manager</span>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label for="rep-view-select" style="font-size:13px;font-weight:600;color:#555;margin-right:8px;">Select Rep:</label>
+          <select id="rep-view-select" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;font-size:14px;min-width:280px;">
+            <option value="">— Choose a rep —</option>
+          </select>
+        </div>
+        <div id="rep-view-content">
+          <div style="text-align:center;padding:48px;color:#aaa;font-size:14px;">Select a rep to view their plays and accounts</div>
+        </div>
+      </div><!-- /#tab-rep-view -->
+
       <!-- ── Assignment Correction Modal ── -->
       <div id="correction-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;align-items:center;justify-content:center;">
         <div style="background:#fff;border-radius:12px;padding:28px 32px;max-width:520px;width:95%;box-shadow:0 8px 32px rgba(0,0,0,.22);position:relative;">
@@ -1085,6 +1104,7 @@
         if (tab.dataset.tab === 'identity') { checkIdentityFile(); checkEmailLookupStatus(); }
         if (tab.dataset.tab === 'access-log') loadAccessLog();
         if (tab.dataset.tab === 'corrections') loadCorrectionsLog();
+        if (tab.dataset.tab === 'rep-view') loadRepViewTab();
       });
     });
 
@@ -3518,9 +3538,179 @@ Let's go! 🚀`;
       console.log(`[Poll] Alert polling started — ${POLL_INTERVAL_MS / 1000}s interval`);
     }
 
+    // ── Rep View Tab (Manager) ──────────────────────────────────────────────
+    let _repViewInitialized = false;
+    async function loadRepViewTab() {
+      const wrap    = document.getElementById('rep-view-content');
+      const select  = document.getElementById('rep-view-select');
+
+      if (!_repViewInitialized) {
+        _repViewInitialized = true;
+        wrap.innerHTML = '<div style="text-align:center;padding:32px;"><div class="spinner"></div><p style="color:#888;margin-top:12px;">Loading rep list…</p></div>';
+        try {
+          const allAssignments = await getPlayAssignments(null);
+          const repMap = {};
+          allAssignments.forEach(a => {
+            const email = (a.rep_sso_login || a.rep_email || '').toLowerCase();
+            if (!email) return;
+            if (!repMap[email]) repMap[email] = a.rep_name || email;
+          });
+          const reps = Object.entries(repMap).sort((a, b) => a[1].localeCompare(b[1]));
+          select.innerHTML = '<option value="">— Choose a rep —</option>' +
+            reps.map(([email, name]) => `<option value="${escHtml(email)}">${escHtml(name)} (${escHtml(email)})</option>`).join('');
+          wrap.innerHTML = '<div style="text-align:center;padding:48px;color:#aaa;font-size:14px;">Select a rep to view their plays and accounts</div>';
+        } catch (e) {
+          wrap.innerHTML = `<div style="color:#d32f2f;padding:16px;">Error loading reps: ${escHtml(e.message)}</div>`;
+          return;
+        }
+        select.addEventListener('change', () => renderRepView(select.value));
+      }
+    }
+
+    async function renderRepView(repEmail) {
+      const wrap = document.getElementById('rep-view-content');
+      if (!repEmail) {
+        wrap.innerHTML = '<div style="text-align:center;padding:48px;color:#aaa;font-size:14px;">Select a rep to view their plays and accounts</div>';
+        return;
+      }
+      wrap.innerHTML = '<div style="text-align:center;padding:32px;"><div class="spinner"></div><p style="color:#888;margin-top:12px;">Loading rep data…</p></div>';
+
+      try {
+        const [allAssignments, playsConfig] = await Promise.all([
+          getPlayAssignments(null),
+          getPlaysConfig()
+        ]);
+        const plays = playsConfig.plays || [];
+        const engagements = _allData || [];
+
+        // Filter assignments for this rep
+        const repAssignments = allAssignments.filter(a =>
+          (a.rep_sso_login || a.rep_email || '').toLowerCase() === repEmail.toLowerCase()
+        );
+        const repName = repAssignments[0]?.rep_name || repEmail;
+
+        // Group assignments by play_id
+        const playGroups = {};
+        repAssignments.forEach(a => {
+          if (!playGroups[a.play_id]) playGroups[a.play_id] = { play_name: a.play_name || a.play_id, accounts: [] };
+          playGroups[a.play_id].accounts.push(a);
+        });
+
+        // Build engagement index: key = account_id|play_id → latest engagement
+        const engByAcctPlay = {};
+        engagements.forEach(e => {
+          const key = e.account_id + '|' + e.play_id;
+          const prev = engByAcctPlay[key];
+          if (!prev || (e.submitted_at || '') > (prev.submitted_at || '')) engByAcctPlay[key] = e;
+        });
+
+        // Compute global stats
+        let totalAccounts = 0, totalEngaged = 0, totalInterested = 0, totalNotInterested = 0, totalWNE = 0, totalNotStarted = 0;
+
+        const playCards = Object.entries(playGroups).map(([playId, group]) => {
+          const accts = group.accounts;
+          const acctCount = accts.length;
+          totalAccounts += acctCount;
+
+          let engaged = 0, interested = 0, notInterested = 0, wne = 0, notStarted = 0;
+          const acctRows = accts.map(a => {
+            const latest = engByAcctPlay[a.account_id + '|' + playId];
+            let status = 'Not Started', badgeClass = 'badge-not-started', lastTouch = '—', lastReason = '—', nextStep = '—', timing = '—';
+            if (latest) {
+              engaged++;
+              status = latest.outcome || 'Engaged';
+              lastTouch = latest.submitted_at ? formatDate(latest.submitted_at) : '—';
+              lastReason = latest.reason_label || '—';
+              nextStep = latest.next_step_type || '—';
+              timing = latest.timing || '—';
+              if (latest.outcome === 'Interested') { interested++; badgeClass = 'badge-won'; }
+              else if (latest.outcome === 'Not Interested') { notInterested++; badgeClass = 'badge-lost'; }
+              else if (latest.outcome === 'Would Not Engage') { wne++; badgeClass = 'badge-wne'; }
+              else { badgeClass = ''; }
+            } else {
+              notStarted++;
+            }
+            return `<tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:8px;">${escHtml(a.account_name || a.account_id)}</td>
+              <td style="padding:8px;"><span class="badge ${badgeClass}">${escHtml(status)}</span></td>
+              <td style="padding:8px;white-space:nowrap;">${escHtml(lastTouch)}</td>
+              <td style="padding:8px;">${escHtml(lastReason)}</td>
+              <td style="padding:8px;">${escHtml(nextStep)}</td>
+              <td style="padding:8px;">${escHtml(timing)}</td>
+            </tr>`;
+          }).join('');
+
+          totalEngaged += engaged;
+          totalInterested += interested;
+          totalNotInterested += notInterested;
+          totalWNE += wne;
+          totalNotStarted += notStarted;
+
+          const playObj = plays.find(p => p.play_id === playId);
+          const displayName = playObj ? playObj.play_name : group.play_name;
+          const cardId = 'rv-play-' + playId.replace(/[^a-zA-Z0-9]/g, '_');
+
+          return `
+            <div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:14px;overflow:hidden;">
+              <div onclick="document.getElementById('${cardId}').style.display = document.getElementById('${cardId}').style.display === 'none' ? 'block' : 'none'; this.querySelector('.rv-arrow').textContent = document.getElementById('${cardId}').style.display === 'none' ? '▶' : '▼';"
+                   style="padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:#f8f9fa;border-bottom:1px solid #eee;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <span class="rv-arrow" style="font-size:11px;color:#888;">▶</span>
+                  <span style="font-weight:700;font-size:14px;color:#333;">${escHtml(displayName)}</span>
+                </div>
+                <div style="font-size:12px;color:#666;">${acctCount} accounts · ${engaged} engaged · ${interested} interested</div>
+              </div>
+              <div id="${cardId}" style="display:none;padding:0;">
+                <div style="overflow-x:auto;">
+                  <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead>
+                      <tr style="background:#fafafa;text-align:left;">
+                        <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Account Name</th>
+                        <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Status</th>
+                        <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Last Touch</th>
+                        <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Last Reason</th>
+                        <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Next Step</th>
+                        <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Timing</th>
+                      </tr>
+                    </thead>
+                    <tbody>${acctRows}</tbody>
+                  </table>
+                </div>
+              </div>
+            </div>`;
+        }).join('');
+
+        const totalPlays = Object.keys(playGroups).length;
+        const summaryHtml = `
+          <div style="background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:20px;">
+            <div style="font-size:15px;font-weight:700;color:#333;margin-bottom:10px;">👤 ${escHtml(repName)} <span style="font-weight:400;font-size:13px;color:#888;">(${escHtml(repEmail)})</span></div>
+            <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:#555;">
+              <span><strong>Total Plays:</strong> ${totalPlays}</span>
+              <span style="color:#ccc;">|</span>
+              <span><strong>Total Accounts:</strong> ${totalAccounts}</span>
+              <span style="color:#ccc;">|</span>
+              <span style="color:#0078d4;"><strong>Engaged:</strong> ${totalEngaged}</span>
+              <span style="color:#ccc;">|</span>
+              <span style="color:#107c10;"><strong>Interested:</strong> ${totalInterested}</span>
+              <span style="color:#ccc;">|</span>
+              <span style="color:#d32f2f;"><strong>Not Interested:</strong> ${totalNotInterested}</span>
+              <span style="color:#ccc;">|</span>
+              <span style="color:#f57c00;"><strong>WNE:</strong> ${totalWNE}</span>
+              <span style="color:#ccc;">|</span>
+              <span style="color:#856404;"><strong>Not Started:</strong> ${totalNotStarted}</span>
+            </div>
+          </div>`;
+
+        wrap.innerHTML = summaryHtml + (playCards || '<div style="text-align:center;padding:24px;color:#aaa;">No plays assigned to this rep.</div>');
+      } catch (e) {
+        wrap.innerHTML = `<div style="color:#d32f2f;padding:16px;">Error loading rep view: ${escHtml(e.message)}</div>`;
+      }
+    }
+
   </script>
 <footer class="security-footer">
   INFRA SalesPlay Tracker — Progress Software Proprietary &amp; Confidential &nbsp;·&nbsp; Progress employees only &nbsp;<a href="security.html" class="sec-footer-link">Security &amp; Privacy</a>
+  &nbsp;·&nbsp; <a href="https://github.com/planger111/chef-saas-tracker/issues/new?title=[Bug]%20&body=%0A**Describe%20the%20issue:**%0A%0A**Steps%20to%20reproduce:**%0A1.%20%0A%0A**Expected%20behavior:**%0A%0A**Browser/Device:**%0A&labels=bug" target="_blank" class="sec-footer-link">🐛 Report Issue</a>
 </footer>
 </body>
 </html>
