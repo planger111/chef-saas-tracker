@@ -13,6 +13,11 @@
   "globalHeaders": {
     "Cache-Control": "no-cache, no-store, must-revalidate",
     "Pragma": "no-cache",
-    "Expires": "0"
+    "Expires": "0",
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://login.microsoftonline.com; connect-src 'self' https://graph.microsoft.com https://login.microsoftonline.com https://*.sharepoint.com; style-src 'self' 'unsafe-inline'; frame-src https://login.microsoftonline.com; img-src 'self' data:; font-src 'self'"
   }
 }
