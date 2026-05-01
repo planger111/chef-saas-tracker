@@ -125,7 +125,7 @@
             <span id="demo-banner-msg">You don't have any assigned accounts yet. Practice with these demo accounts — your manager will assign real accounts soon.</span>
           </div>
           <div class="section-header-row">
-            <span class="section-label">YOUR PLAYS</span>
+            <span class="section-label">MY PLAYS</span>
             <span class="section-sub" id="plays-count-sub"></span>
           </div>
           <div class="plays-grid" id="dashboard-plays-list">
@@ -567,12 +567,26 @@
     // ─────────────────────────────────────────────
     // SCREEN MANAGEMENT
     // ─────────────────────────────────────────────
+    let _screenHistory = ['screen-dashboard'];
     function showScreen(id) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       const target = document.getElementById(id);
       if (target) {
         target.classList.add('active');
         window.scrollTo(0, 0);
+        if (_screenHistory[_screenHistory.length - 1] !== id) {
+          _screenHistory.push(id);
+          history.pushState({ screen: id }, '', location.pathname);
+        }
+      }
+    }
+    function goBack() {
+      if (_screenHistory.length > 1) {
+        _screenHistory.pop();
+        const prev = _screenHistory[_screenHistory.length - 1];
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById(prev);
+        if (target) { target.classList.add('active'); window.scrollTo(0, 0); }
       }
     }
 
@@ -1813,7 +1827,7 @@
 
     // Back: play detail → dashboard
     document.getElementById('btn-back-to-dashboard').addEventListener('click', () => {
-      showDashboard();
+      goBack();
     });
 
     // Back: log form → play detail (step-aware)
@@ -1903,9 +1917,9 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
       // Trap browser back button inside the app
-      history.pushState(null, '', location.href);
-      window.addEventListener('popstate', () => {
-        history.pushState(null, '', location.href);
+      history.pushState({ screen: 'screen-dashboard' }, '', location.href);
+      window.addEventListener('popstate', (e) => {
+        goBack();
       });
 
       const onboardBtn = document.getElementById('btn-onboarding-done');
@@ -1931,6 +1945,70 @@
         showScreen('screen-login');
       }
     });
+
+    // ── Feedback System ──────────────────────────────────────────────────
+    document.getElementById('feedback-fab').addEventListener('click', openFeedbackModal);
+
+    function openFeedbackModal() {
+      const modal = document.getElementById('feedback-modal');
+      modal.style.display = 'block';
+      const playSelect = document.getElementById('fb-play');
+      playSelect.innerHTML = '<option value="">— None —</option>';
+      const plays = allPlays || [];
+      plays.forEach(p => {
+        playSelect.innerHTML += `<option value="${p.play_id}">${escHtml(p.play_name)}</option>`;
+      });
+    }
+
+    function closeFeedbackModal() {
+      document.getElementById('feedback-modal').style.display = 'none';
+      document.getElementById('fb-message').value = '';
+      document.getElementById('fb-status').textContent = '';
+    }
+
+    async function submitFeedback() {
+      const msg = document.getElementById('fb-message').value.trim();
+      if (!msg) {
+        document.getElementById('fb-status').innerHTML = '<span style="color:#dc2626;">Please enter a message.</span>';
+        return;
+      }
+      const statusEl = document.getElementById('fb-status');
+      const submitBtn = document.getElementById('fb-submit');
+      submitBtn.disabled = true;
+      statusEl.innerHTML = '<span style="color:#6366f1;">Submitting...</span>';
+
+      const feedback = {
+        id: 'fb_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+        created_at: new Date().toISOString(),
+        rep_email: currentUser ? currentUser.email : '',
+        rep_name: currentUser ? currentUser.name : '',
+        play_id: document.getElementById('fb-play').value || '',
+        account_id: document.getElementById('fb-account').value.trim() || '',
+        feedback_type: document.getElementById('fb-type').value,
+        message: msg,
+        status: 'New',
+        manager_notes: ''
+      };
+
+      try {
+        let feedbackData = { feedback: [] };
+        try {
+          const existing = await getFileText(SP_ROOT + '/rep_feedback.json');
+          if (existing) feedbackData = JSON.parse(existing);
+        } catch (e) {
+          console.log('No existing feedback file, will create new');
+        }
+        feedbackData.feedback.push(feedback);
+        await writeJsonFile('rep_feedback.json', feedbackData);
+        statusEl.innerHTML = '<span style="color:#16a34a;">✅ Feedback submitted! Thank you.</span>';
+        setTimeout(() => closeFeedbackModal(), 2000);
+      } catch (err) {
+        console.error('Feedback submit error:', err);
+        statusEl.innerHTML = '<span style="color:#dc2626;">❌ Could not save feedback. Please try again or email your manager.</span>';
+      } finally {
+        submitBtn.disabled = false;
+      }
+    }
 
   </script>
 
@@ -1973,6 +2051,36 @@
       </div>
     </div>
   </div>
+
+<!-- ── Floating Feedback Button ── -->
+<button id="feedback-fab" title="Send Feedback" style="position:fixed;bottom:20px;right:20px;width:48px;height:48px;border-radius:50%;background:#6366f1;color:#fff;border:none;font-size:22px;box-shadow:0 4px 12px rgba(0,0,0,0.2);cursor:pointer;z-index:1000;">?</button>
+
+<!-- ── Feedback Modal ── -->
+<div id="feedback-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1001;">
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:12px;padding:24px;width:90%;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="margin:0;">Send Feedback</h3>
+      <button onclick="closeFeedbackModal()" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Type</label>
+    <select id="fb-type" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px;margin-bottom:12px;">
+      <option value="Question">Question</option>
+      <option value="Bug">Bug</option>
+      <option value="Play Suggestion">Play Suggestion</option>
+      <option value="Account Issue">Account Issue</option>
+    </select>
+    <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Message *</label>
+    <textarea id="fb-message" rows="4" placeholder="What's on your mind?" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px;resize:vertical;margin-bottom:12px;"></textarea>
+    <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Related Play</label>
+    <select id="fb-play" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px;margin-bottom:12px;">
+      <option value="">— None —</option>
+    </select>
+    <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">Related Account (optional)</label>
+    <input id="fb-account" placeholder="Account name" style="width:100%;padding:8px;border:1px solid #d1d5db;border-radius:8px;margin-bottom:16px;" />
+    <button id="fb-submit" onclick="submitFeedback()" style="width:100%;padding:10px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;">Submit Feedback</button>
+    <div id="fb-status" style="margin-top:8px;font-size:13px;text-align:center;"></div>
+  </div>
+</div>
 
 <footer class="security-footer">
   INFRA SalesPlay Tracker — Progress Software Proprietary &amp; Confidential &nbsp;·&nbsp; Progress employees only &nbsp;<a href="security.html" class="sec-footer-link">Security &amp; Privacy</a>
