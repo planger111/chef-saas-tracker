@@ -277,25 +277,27 @@
       <!-- ── Response Options Config Tab ── -->
       <div id="tab-config" class="admin-tab-panel" style="display:none;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;">
-          <div style="font-size:13px;color:#555;">Edit response options reps see in the engagement form. Each play can have its own reasons. Changes save to SharePoint and take effect immediately.</div>
+          <div style="font-size:13px;color:#555;">Configure outcomes, reasons, next steps, and timing for each play. Changes are saved per-play to SharePoint.</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button onclick="resetPlayToStandard()" style="background:#fff8e1;color:#856404;border:1px solid #ffe082;padding:9px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;">↩ Reset This Play to Standard</button>
-            <button onclick="resetAllPlaysToStandard()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:9px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;">↩ Reset All Plays to Standard</button>
-            <button onclick="saveConfig()" style="background:#107c10;color:#fff;border:none;padding:9px 20px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;">💾 Save to SharePoint</button>
+            <button onclick="resetPlayToStandard()" style="background:#fff8e1;color:#856404;border:1px solid #ffe082;padding:9px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;">↩ Reset This Play</button>
+            <button onclick="resetAllPlaysToStandard()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:9px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;">↩ Reset All Plays</button>
+            <button id="config-save-btn" onclick="saveConfig()" style="background:#107c10;color:#fff;border:none;padding:9px 20px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;transition:box-shadow 0.3s;">💾 Save to SharePoint</button>
           </div>
         </div>
 
-        <!-- Play picker for reasons -->
-        <div style="background:#f0f7ff;border:1px solid #d0e4f7;border-radius:8px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-          <label style="font-size:13px;font-weight:600;white-space:nowrap;">Editing reasons for play:</label>
+        <!-- Play picker -->
+        <div style="background:#f0f7ff;border:1px solid #d0e4f7;border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <label style="font-size:13px;font-weight:600;white-space:nowrap;">Editing config for play:</label>
           <select id="config-play-picker" onchange="onPlayPickerChange()" style="flex:1;min-width:180px;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
             <option value="">Loading plays…</option>
           </select>
-          <span style="font-size:12px;color:#666;" id="config-response-set-label"></span>
         </div>
 
+        <!-- Dirty indicator -->
+        <div id="config-dirty-indicator" style="display:none;background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:8px 14px;font-size:13px;color:#856404;margin-bottom:12px;">⚠ Unsaved changes — click Save to apply</div>
+
         <div id="config-status" style="display:none;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:12px;"></div>
-        <div id="config-editor" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
+        <div id="config-editor" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;">
           <div style="text-align:center;color:#999;padding:32px;">Loading…</div>
         </div>
       </div><!-- /#tab-config -->
@@ -865,7 +867,7 @@
       if (data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="9" class="no-results">No records found.</td></tr>';
       } else {
-        const outcomeColor = o => o === 'Interested' ? 'color:#107c10;font-weight:700' : o === 'Not Interested' ? 'color:#d32f2f' : '';
+        const outcomeColor = o => o === 'Interested' ? 'color:#107c10;font-weight:700' : o === 'Not Interested' ? 'color:#d32f2f' : o === 'Would Not Engage' ? 'color:#f57c00' : '';
         tbody.innerHTML = data.map(r => `<tr>
           <td style="white-space:nowrap;">${escHtml(formatDate(r.submitted_at))}</td>
           <td>${escHtml(r.rep_name || r.rep_email)}</td>
@@ -905,10 +907,12 @@
           const latestArr  = Object.values(latest);
           const engaged    = latestArr.length;
           const interested = latestArr.filter(e => e.outcome === 'Interested').length;
+          const notInterested = latestArr.filter(e => e.outcome === 'Not Interested').length;
+          const wouldNotEngage = latestArr.filter(e => e.outcome === 'Would Not Engage').length;
           const pct        = targets > 0 ? Math.round((engaged / targets) * 100) : 0;
           const goalLabel  = getGoalLabel(play.goal);
           const goalColor  = play.goal === 'disqualification' || play.goal === 'qualify_out' ? '#d32f2f' : '#107c10';
-          return { play, targets, engaged, interested, pct, goalLabel, goalColor };
+          return { play, targets, engaged, interested, notInterested, wouldNotEngage, pct, goalLabel, goalColor };
         });
 
         if (playStats.length === 0) { wrap.innerHTML = ''; return; }
@@ -923,6 +927,10 @@
             <span class="psr-stat"><strong>${s.engaged}</strong> engaged</span>
             <span class="psr-sep">·</span>
             <span class="psr-stat"><strong>${s.interested}</strong> interested</span>
+            <span class="psr-sep">·</span>
+            <span class="psr-stat"><strong>${s.notInterested}</strong> not interested</span>
+            <span class="psr-sep">·</span>
+            <span class="psr-stat"><strong>${s.wouldNotEngage}</strong> WNE</span>
             <span class="psr-sep">·</span>
             <span class="psr-stat"><strong>${s.targets - s.engaged}</strong> not yet</span>
           </div>
@@ -1932,44 +1940,24 @@ Let's go! 🚀`;
 
     // ── Response Options Config Tab ────────────────────────────────────────
 
-    const STANDARD_INTERESTED = [
-      'Evaluating solutions in this space',
-      'Active budget / funded initiative',
-      'Replacing a current tool',
-      'Executive sponsor engaged',
-      'Strong use case fit',
-    ];
-    const STANDARD_NOT_INTERESTED = [
-      'No budget / not in current plan',
-      'Already have a solution',
-      'Not the right time — revisit later',
-      'Not the right contact / needs escalation',
-      'No need identified',
-    ];
     const STANDARD_FORM_CONFIG = {
       interaction_types: ['Call', 'Email', 'Text', 'In-Person Meeting'],
-      next_step_types:   ['Schedule follow-up', 'Send information', 'Introduce stakeholder', 'Create opportunity', 'Revisit later'],
-      timing_options:    ['Now', 'This month', 'Next quarter', 'Later'],
     };
-
-    function seedStandardOptionsForPlay(config, rsId) {
-      config.options = (config.options || []).filter(o =>
-        (o.response_set_id || '').toUpperCase() !== rsId.toUpperCase()
-      );
-      STANDARD_INTERESTED.forEach((label, i) => config.options.push({
-        response_set_id: rsId, outcome_type: 'Interested',
-        reason_label: label, reason_code: '', sort_order: i + 1, active_flag: true
-      }));
-      STANDARD_NOT_INTERESTED.forEach((label, i) => config.options.push({
-        response_set_id: rsId, outcome_type: 'Not Interested',
-        reason_label: label, reason_code: '', sort_order: i + 1, active_flag: true
-      }));
-    }
 
     let _currentConfig = null;
     let _allAssignments = null;
-    let _selectedResponseSetId = null;
+    let _currentPlayConfig = null;
+    let _selectedPlayId = null;
     let _loadedPlays = [];
+    let _configDirty = false;
+
+    function _setConfigDirty(dirty) {
+      _configDirty = dirty;
+      const ind = document.getElementById('config-dirty-indicator');
+      const btn = document.getElementById('config-save-btn');
+      if (ind) ind.style.display = dirty ? 'block' : 'none';
+      if (btn) btn.style.boxShadow = dirty ? '0 0 8px 2px rgba(16,124,16,0.5)' : 'none';
+    }
 
     async function loadConfigTab() {
       const el = document.getElementById('config-editor');
@@ -1977,183 +1965,233 @@ Let's go! 🚀`;
       try {
         const [config, playsConfig] = await Promise.all([getFullResponseConfig(), getPlaysConfig()]);
         _currentConfig = config;
-        _loadedPlays = (playsConfig.plays || []).filter(p => p.active !== false).map(p => ({
-          play_id: p.play_id,
-          play_name: p.play_name || p.play_id,
-          response_set_id: p.play_id.replace(/[^a-z0-9]/gi, '_').toUpperCase() + '_STANDARD'
-        }));
-
-        // Auto-seed standard options for any play that has none yet
-        let needsSave = false;
-        _loadedPlays.forEach(p => {
-          const hasAny = (_currentConfig.options || []).some(o =>
-            (o.response_set_id || '').toUpperCase() === p.response_set_id.toUpperCase() && o.active_flag !== false
-          );
-          if (!hasAny) { seedStandardOptionsForPlay(_currentConfig, p.response_set_id); needsSave = true; }
-        });
         // Seed standard form config if empty
         if (!_currentConfig.form_config || !Object.keys(_currentConfig.form_config).length) {
           _currentConfig.form_config = { ...STANDARD_FORM_CONFIG };
-          needsSave = true;
+          await saveFullResponseConfig(_currentConfig);
         }
-        if (needsSave) await saveFullResponseConfig(_currentConfig);
+        _loadedPlays = (playsConfig.plays || []).filter(p => p.active !== false).map(p => ({
+          play_id: p.play_id,
+          play_name: p.play_name || p.play_id,
+        }));
 
         const picker = document.getElementById('config-play-picker');
         if (_loadedPlays.length === 0) {
           picker.innerHTML = '<option value="">No plays found — upload accounts first</option>';
-        } else {
-          picker.innerHTML = _loadedPlays.map(p =>
-            `<option value="${escHtml(p.response_set_id)}" data-play="${escHtml(p.play_name)}">${escHtml(p.play_name)}</option>`
-          ).join('');
-          _selectedResponseSetId = _loadedPlays[0].response_set_id;
-          document.getElementById('config-response-set-label').textContent = 'Response set: ' + _selectedResponseSetId;
+          return;
         }
-        renderConfigEditor(_currentConfig);
+        picker.innerHTML = _loadedPlays.map(p =>
+          `<option value="${escHtml(p.play_id)}">${escHtml(p.play_name)}</option>`
+        ).join('');
+        _selectedPlayId = _loadedPlays[0].play_id;
+        await loadPlayConfigEditor(_selectedPlayId);
       } catch(e) {
         el.innerHTML = `<div style="color:#d32f2f;padding:16px;">Error loading config: ${escHtml(e.message)}</div>`;
       }
     }
 
-    function onPlayPickerChange() {
-      // Flush any pending edits first
-      flushEdits();
-      const picker = document.getElementById('config-play-picker');
-      const opt = picker.options[picker.selectedIndex];
-      _selectedResponseSetId = picker.value;
-      document.getElementById('config-response-set-label').textContent = 'Response set: ' + _selectedResponseSetId;
-      renderConfigEditor(_currentConfig);
-    }
-
-    function flushEdits() {
-      document.querySelectorAll('[data-group]').forEach(input => {
-        updateConfigItem(input.dataset.group, parseInt(input.dataset.index), input.value);
-      });
-    }
-
-    function makeOptionGroup(title, items, key, hint) {
-      return `
-        <div style="background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:16px;">
-          <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${escHtml(title)}</div>
-          ${hint ? `<div style="font-size:12px;color:#888;margin-bottom:10px;">${escHtml(hint)}</div>` : ''}
-          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
-            ${items.map((item, i) => `
-              <div style="display:flex;align-items:center;gap:8px;">
-                <input type="text" value="${escHtml(item)}" data-group="${escHtml(key)}" data-index="${i}"
-                  style="flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;" />
-                <button onclick="removeConfigItem('${escHtml(key)}', ${i})"
-                  style="background:none;border:none;color:#d32f2f;font-size:18px;cursor:pointer;line-height:1;padding:4px;">✕</button>
-              </div>`).join('')}
-          </div>
-          <button onclick="addConfigItem('${escHtml(key)}')"
-            style="font-size:13px;color:#0078d4;background:none;border:1px dashed #0078d4;border-radius:6px;padding:6px 12px;cursor:pointer;width:100%;">+ Add option</button>
-        </div>`;
-    }
-
-    function makeReasonGroup(title, outcomeType, hint) {
-      const rsId = _selectedResponseSetId || 'SAAS_STANDARD';
-      const reasons = (_currentConfig.options || [])
-        .filter(o => o.outcome_type === outcomeType && o.active_flag !== false &&
-          (o.response_set_id || 'SAAS_STANDARD').toUpperCase() === rsId.toUpperCase())
-        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-      const key = 'reason_' + outcomeType.replace(/\s+/g, '_') + '|' + rsId;
-      return makeOptionGroup(title, reasons.map(r => r.reason_label), key, hint);
-    }
-
-    function renderConfigEditor(config) {
-      const fc = config.form_config || {};
-      document.getElementById('config-editor').innerHTML =
-        makeReasonGroup('✅ Interested — Reasons', 'Interested', 'Why the customer said yes (specific to this play)') +
-        makeReasonGroup('❌ Not Interested — Reasons', 'Not Interested', 'Why the customer said no (specific to this play)') +
-        '<div style="grid-column:1/-1;border-top:2px solid #eee;padding-top:4px;font-size:11px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:0.5px;">Global options (apply to all plays)</div>' +
-        makeOptionGroup('📞 Interaction Types', fc.interaction_types || [], 'interaction_types', 'How the rep reached the customer') +
-        makeOptionGroup('📅 Next Step Types', fc.next_step_types || [], 'next_step_types', 'What happens after an Interested outcome') +
-        makeOptionGroup('⏱️ Timing Options', fc.timing_options || [], 'timing_options', 'When the customer wants to move forward');
-    }
-
-    function updateConfigItem(key, index, value) {
-      if (key.startsWith('reason_')) {
-        const parts = key.split('|');
-        const outcomeKey = parts[0];
-        const rsId = parts[1];
-        const outcomeType = outcomeKey.includes('Not') ? 'Not Interested' : 'Interested';
-        const reasons = (_currentConfig.options || [])
-          .filter(o => o.outcome_type === outcomeType && o.active_flag !== false &&
-            (o.response_set_id || 'SAAS_STANDARD').toUpperCase() === (rsId || 'SAAS_STANDARD').toUpperCase())
-          .sort((a, b) => (a.sort_order||0)-(b.sort_order||0));
-        if (reasons[index]) reasons[index].reason_label = value;
-      } else {
-        if (!_currentConfig.form_config) _currentConfig.form_config = {};
-        if (_currentConfig.form_config[key]) _currentConfig.form_config[key][index] = value;
+    async function loadPlayConfigEditor(playId) {
+      const el = document.getElementById('config-editor');
+      el.innerHTML = '<div style="text-align:center;color:#999;padding:32px;">Loading play config…</div>';
+      try {
+        _currentPlayConfig = await getPlayConfig(playId);
+        _selectedPlayId = playId;
+        _setConfigDirty(false);
+        renderConfigEditor();
+      } catch(e) {
+        el.innerHTML = `<div style="color:#d32f2f;padding:16px;">Error loading play config: ${escHtml(e.message)}</div>`;
       }
     }
 
-    function removeConfigItem(key, index) {
-      flushEdits();
-      if (key.startsWith('reason_')) {
-        const parts = key.split('|');
-        const outcomeKey = parts[0];
-        const rsId = parts[1];
-        const outcomeType = outcomeKey.includes('Not') ? 'Not Interested' : 'Interested';
-        const reasons = (_currentConfig.options || [])
-          .filter(o => o.outcome_type === outcomeType && o.active_flag !== false &&
-            (o.response_set_id || 'SAAS_STANDARD').toUpperCase() === (rsId || 'SAAS_STANDARD').toUpperCase())
-          .sort((a, b) => (a.sort_order||0)-(b.sort_order||0));
-        if (reasons[index]) reasons[index].active_flag = false;
-      } else {
-        if (_currentConfig.form_config && _currentConfig.form_config[key]) {
-          _currentConfig.form_config[key].splice(index, 1);
+    function onPlayPickerChange() {
+      if (_configDirty) {
+        if (!confirm('You have unsaved changes. Discard?')) {
+          // Revert picker to current play
+          document.getElementById('config-play-picker').value = _selectedPlayId;
+          return;
         }
       }
-      renderConfigEditor(_currentConfig);
+      const picker = document.getElementById('config-play-picker');
+      loadPlayConfigEditor(picker.value);
     }
 
-    function addConfigItem(key) {
-      flushEdits();
-      if (key.startsWith('reason_')) {
-        const parts = key.split('|');
-        const outcomeKey = parts[0];
-        const rsId = parts[1];
-        const outcomeType = outcomeKey.includes('Not') ? 'Not Interested' : 'Interested';
-        const existing = (_currentConfig.options || []).filter(o => o.outcome_type === outcomeType && (o.response_set_id||'SAAS_STANDARD').toUpperCase() === (rsId||'SAAS_STANDARD').toUpperCase());
-        _currentConfig.options = _currentConfig.options || [];
-        _currentConfig.options.push({ response_set_id: rsId || 'SAAS_STANDARD', outcome_type: outcomeType, reason_label: '', reason_code: '', sort_order: existing.length + 1, active_flag: true });
-      } else {
-        if (!_currentConfig.form_config) _currentConfig.form_config = {};
-        _currentConfig.form_config[key] = _currentConfig.form_config[key] || [];
-        _currentConfig.form_config[key].push('');
-      }
-      renderConfigEditor(_currentConfig);
+    function renderConfigEditor() {
+      const OUTCOME_META = {
+        'Interested':        { emoji: '✅', accent: '#4caf50' },
+        'Not Interested':    { emoji: '❌', accent: '#d32f2f' },
+        'Would Not Engage':  { emoji: '⚠️', accent: '#f57c00' },
+      };
+      const FIELD_LABELS = {
+        reasons:    { title: 'Reasons',    addLabel: '+ Add reason' },
+        next_steps: { title: 'Next Steps', addLabel: '+ Add next step' },
+        timing:     { title: 'Timing',     addLabel: '+ Add timing option' },
+      };
+      let html = '';
+
+      // Outcome sections
+      OUTCOME_TYPES.forEach(ot => {
+        const meta = OUTCOME_META[ot];
+        const outcomeData = (_currentPlayConfig && _currentPlayConfig.outcomes && _currentPlayConfig.outcomes[ot]) || {};
+        html += `<div style="grid-column:1/-1;background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:16px;">`;
+        html += `<div style="font-weight:700;font-size:15px;margin-bottom:12px;">${meta.emoji} ${escHtml(ot)}</div>`;
+
+        ['reasons', 'next_steps', 'timing'].forEach(field => {
+          const fl = FIELD_LABELS[field];
+          const items = outcomeData[field] || [];
+          html += `<div style="margin-bottom:14px;border-left:3px solid ${meta.accent};padding-left:12px;">`;
+          html += `<div style="font-weight:700;font-size:13px;margin-bottom:6px;">${escHtml(fl.title)}</div>`;
+          html += `<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px;">`;
+          items.forEach((item, i) => {
+            const safeOt = escHtml(ot);
+            const safeField = escHtml(field);
+            html += `<div style="display:flex;align-items:center;gap:6px;">`;
+            html += `<input type="text" value="${escHtml(item)}" data-ot="${safeOt}" data-field="${safeField}" data-index="${i}" oninput="updateConfigTreeItem('${safeOt}','${safeField}',${i},this.value)" style="flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;" />`;
+            html += `<button onclick="moveConfigTreeItem('${safeOt}','${safeField}',${i},-1)" style="background:none;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;padding:2px 6px;font-size:13px;color:#555;" title="Move up">▲</button>`;
+            html += `<button onclick="moveConfigTreeItem('${safeOt}','${safeField}',${i},1)" style="background:none;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;padding:2px 6px;font-size:13px;color:#555;" title="Move down">▼</button>`;
+            html += `<button onclick="removeConfigTreeItem('${safeOt}','${safeField}',${i})" style="background:none;border:none;color:#d32f2f;font-size:18px;cursor:pointer;line-height:1;padding:4px;" title="Remove">✕</button>`;
+            html += `</div>`;
+          });
+          html += `</div>`;
+          html += `<button onclick="addConfigTreeItem('${escHtml(ot)}','${escHtml(field)}')" style="font-size:13px;color:#0078d4;background:none;border:1px dashed #0078d4;border-radius:6px;padding:6px 12px;cursor:pointer;width:100%;">${escHtml(fl.addLabel)}</button>`;
+          html += `</div>`;
+        });
+        html += `</div>`;
+      });
+
+      // Global separator
+      html += `<div style="grid-column:1/-1;border-top:2px solid #eee;padding-top:4px;font-size:11px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:0.5px;">Global options (apply to all plays)</div>`;
+
+      // Interaction types from _currentConfig.form_config
+      const fc = (_currentConfig && _currentConfig.form_config) || {};
+      const itTypes = fc.interaction_types || [];
+      html += `<div style="grid-column:1/-1;background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:16px;">`;
+      html += `<div style="font-weight:700;font-size:14px;margin-bottom:4px;">📞 Interaction Types</div>`;
+      html += `<div style="font-size:12px;color:#888;margin-bottom:10px;">How the rep reached the customer</div>`;
+      html += `<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px;">`;
+      itTypes.forEach((item, i) => {
+        html += `<div style="display:flex;align-items:center;gap:6px;">`;
+        html += `<input type="text" value="${escHtml(item)}" data-global="interaction_types" data-index="${i}" oninput="updateGlobalItem('interaction_types',${i},this.value)" style="flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;" />`;
+        html += `<button onclick="moveGlobalItem('interaction_types',${i},-1)" style="background:none;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;padding:2px 6px;font-size:13px;color:#555;" title="Move up">▲</button>`;
+        html += `<button onclick="moveGlobalItem('interaction_types',${i},1)" style="background:none;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;padding:2px 6px;font-size:13px;color:#555;" title="Move down">▼</button>`;
+        html += `<button onclick="removeGlobalItem('interaction_types',${i})" style="background:none;border:none;color:#d32f2f;font-size:18px;cursor:pointer;line-height:1;padding:4px;" title="Remove">✕</button>`;
+        html += `</div>`;
+      });
+      html += `</div>`;
+      html += `<button onclick="addGlobalItem('interaction_types')" style="font-size:13px;color:#0078d4;background:none;border:1px dashed #0078d4;border-radius:6px;padding:6px 12px;cursor:pointer;width:100%;">+ Add interaction type</button>`;
+      html += `</div>`;
+
+      document.getElementById('config-editor').innerHTML = html;
+    }
+
+    // ── Tree edit functions (per-play config) ──────────────────────────────
+
+    function updateConfigTreeItem(outcomeType, field, index, value) {
+      if (!_currentPlayConfig || !_currentPlayConfig.outcomes[outcomeType]) return;
+      _currentPlayConfig.outcomes[outcomeType][field][index] = value;
+      _setConfigDirty(true);
+    }
+
+    function removeConfigTreeItem(outcomeType, field, index) {
+      if (!_currentPlayConfig || !_currentPlayConfig.outcomes[outcomeType]) return;
+      _currentPlayConfig.outcomes[outcomeType][field].splice(index, 1);
+      _setConfigDirty(true);
+      renderConfigEditor();
+    }
+
+    function addConfigTreeItem(outcomeType, field) {
+      if (!_currentPlayConfig) return;
+      if (!_currentPlayConfig.outcomes[outcomeType]) _currentPlayConfig.outcomes[outcomeType] = {};
+      if (!_currentPlayConfig.outcomes[outcomeType][field]) _currentPlayConfig.outcomes[outcomeType][field] = [];
+      _currentPlayConfig.outcomes[outcomeType][field].push('');
+      _setConfigDirty(true);
+      renderConfigEditor();
       setTimeout(() => {
-        const inputs = document.querySelectorAll(`[data-group="${key}"]`);
+        const inputs = document.querySelectorAll(`[data-ot="${outcomeType}"][data-field="${field}"]`);
         if (inputs.length) inputs[inputs.length - 1].focus();
       }, 50);
     }
 
+    function moveConfigTreeItem(outcomeType, field, index, direction) {
+      if (!_currentPlayConfig || !_currentPlayConfig.outcomes[outcomeType]) return;
+      const arr = _currentPlayConfig.outcomes[outcomeType][field];
+      const target = index + direction;
+      if (target < 0 || target >= arr.length) return;
+      [arr[index], arr[target]] = [arr[target], arr[index]];
+      _setConfigDirty(true);
+      renderConfigEditor();
+    }
+
+    // ── Global edit functions (form_config in response-options.json) ───────
+
+    function updateGlobalItem(field, index, value) {
+      if (!_currentConfig) _currentConfig = {};
+      if (!_currentConfig.form_config) _currentConfig.form_config = {};
+      if (_currentConfig.form_config[field]) _currentConfig.form_config[field][index] = value;
+      _setConfigDirty(true);
+    }
+
+    function removeGlobalItem(field, index) {
+      if (_currentConfig && _currentConfig.form_config && _currentConfig.form_config[field]) {
+        _currentConfig.form_config[field].splice(index, 1);
+      }
+      _setConfigDirty(true);
+      renderConfigEditor();
+    }
+
+    function addGlobalItem(field) {
+      if (!_currentConfig) _currentConfig = {};
+      if (!_currentConfig.form_config) _currentConfig.form_config = {};
+      _currentConfig.form_config[field] = _currentConfig.form_config[field] || [];
+      _currentConfig.form_config[field].push('');
+      _setConfigDirty(true);
+      renderConfigEditor();
+      setTimeout(() => {
+        const inputs = document.querySelectorAll(`[data-global="${field}"]`);
+        if (inputs.length) inputs[inputs.length - 1].focus();
+      }, 50);
+    }
+
+    function moveGlobalItem(field, index, direction) {
+      if (!_currentConfig || !_currentConfig.form_config || !_currentConfig.form_config[field]) return;
+      const arr = _currentConfig.form_config[field];
+      const target = index + direction;
+      if (target < 0 || target >= arr.length) return;
+      [arr[index], arr[target]] = [arr[target], arr[index]];
+      _setConfigDirty(true);
+      renderConfigEditor();
+    }
+
+    // ── Reset / Save ──────────────────────────────────────────────────────
+
     function resetPlayToStandard() {
-      if (!_selectedResponseSetId) return;
-      const playName = (_loadedPlays.find(p => p.response_set_id === _selectedResponseSetId) || {}).play_name || _selectedResponseSetId;
-      if (!confirm(`Reset "${playName}" response options back to the standard defaults?\n\nThis will replace all Interested and Not Interested reasons for this play.`)) return;
-      flushEdits();
-      seedStandardOptionsForPlay(_currentConfig, _selectedResponseSetId);
-      renderConfigEditor(_currentConfig);
+      if (!_selectedPlayId) return;
+      const playName = (_loadedPlays.find(p => p.play_id === _selectedPlayId) || {}).play_name || _selectedPlayId;
+      if (!confirm(`Reset "${playName}" config back to the standard defaults?\n\nThis will replace all outcomes (Interested, Not Interested, Would Not Engage) including reasons, next steps, and timing.`)) return;
+      _currentPlayConfig = JSON.parse(JSON.stringify(DEFAULT_PLAY_CONFIG));
+      _setConfigDirty(true);
+      renderConfigEditor();
       const statusEl = document.getElementById('config-status');
       statusEl.style.display = 'block'; statusEl.style.background = '#fff8e1'; statusEl.style.color = '#856404';
       statusEl.textContent = '↩ Reset to standard — click Save to SharePoint to apply.';
     }
 
     async function resetAllPlaysToStandard() {
-      if (!confirm('Reset ALL plays to standard response options?\n\nThis will replace Interested and Not Interested reasons for every play and restore standard form config.')) return;
-      flushEdits();
-      _loadedPlays.forEach(p => seedStandardOptionsForPlay(_currentConfig, p.response_set_id));
-      _currentConfig.form_config = { ...STANDARD_FORM_CONFIG };
+      if (!confirm('Reset ALL plays to standard config?\n\nThis will replace Interested, Not Interested, and Would Not Engage outcomes for every play and restore standard form config.')) return;
       const statusEl = document.getElementById('config-status');
       statusEl.style.display = 'block'; statusEl.style.background = '#fff3cd'; statusEl.style.color = '#856404';
       statusEl.textContent = '⏳ Saving all plays to standard…';
       try {
+        const defaultCfg = JSON.parse(JSON.stringify(DEFAULT_PLAY_CONFIG));
+        for (const p of _loadedPlays) {
+          await savePlayConfig(p.play_id, defaultCfg);
+        }
+        _currentConfig.form_config = { ...STANDARD_FORM_CONFIG };
         await saveFullResponseConfig(_currentConfig);
+        _currentPlayConfig = JSON.parse(JSON.stringify(DEFAULT_PLAY_CONFIG));
+        _setConfigDirty(false);
         statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
         statusEl.textContent = '✅ All plays reset to standard and saved.';
-        renderConfigEditor(_currentConfig);
+        renderConfigEditor();
       } catch(e) {
         statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
         statusEl.textContent = '✗ Save failed: ' + e.message;
@@ -2161,31 +2199,87 @@ Let's go! 🚀`;
     }
 
     async function saveConfig() {
-      flushEdits();
+      // Flush all inputs into _currentPlayConfig
+      document.querySelectorAll('[data-ot][data-field]').forEach(input => {
+        const ot = input.dataset.ot;
+        const field = input.dataset.field;
+        const idx = parseInt(input.dataset.index);
+        if (_currentPlayConfig && _currentPlayConfig.outcomes[ot] && _currentPlayConfig.outcomes[ot][field]) {
+          _currentPlayConfig.outcomes[ot][field][idx] = input.value;
+        }
+      });
+      document.querySelectorAll('[data-global]').forEach(input => {
+        const field = input.dataset.global;
+        const idx = parseInt(input.dataset.index);
+        if (_currentConfig && _currentConfig.form_config && _currentConfig.form_config[field]) {
+          _currentConfig.form_config[field][idx] = input.value;
+        }
+      });
+
+      // Validate: filter out blank strings
+      for (const ot of OUTCOME_TYPES) {
+        if (_currentPlayConfig.outcomes[ot]) {
+          for (const field of ['reasons', 'next_steps', 'timing']) {
+            if (_currentPlayConfig.outcomes[ot][field]) {
+              _currentPlayConfig.outcomes[ot][field] = _currentPlayConfig.outcomes[ot][field].filter(v => v.trim() !== '');
+            }
+          }
+        }
+      }
+      if (_currentConfig.form_config) {
+        for (const key of Object.keys(_currentConfig.form_config)) {
+          if (Array.isArray(_currentConfig.form_config[key])) {
+            _currentConfig.form_config[key] = _currentConfig.form_config[key].filter(v => v.trim() !== '');
+          }
+        }
+      }
+
+      // Warn on duplicates (but don't block)
+      for (const ot of OUTCOME_TYPES) {
+        if (_currentPlayConfig.outcomes[ot]) {
+          for (const field of ['reasons', 'next_steps', 'timing']) {
+            const arr = _currentPlayConfig.outcomes[ot][field] || [];
+            const lower = arr.map(v => v.toLowerCase());
+            const dupes = lower.filter((v, i) => lower.indexOf(v) !== i);
+            if (dupes.length) console.warn(`Duplicate ${field} in ${ot}:`, [...new Set(dupes)]);
+          }
+        }
+      }
+
       const statusEl = document.getElementById('config-status');
       statusEl.style.display = 'block';
       statusEl.style.background = '#fff3cd';
       statusEl.style.color = '#856404';
-      statusEl.textContent = '⏳ Saving to SharePoint…';
-
-      // Re-number sort_order per response_set per outcome
-      const bySetAndOutcome = {};
-      (_currentConfig.options || []).filter(o => o.active_flag !== false).forEach(o => {
-        const k = (o.response_set_id||'SAAS_STANDARD') + '|' + o.outcome_type;
-        bySetAndOutcome[k] = bySetAndOutcome[k] || [];
-        bySetAndOutcome[k].push(o);
-      });
-      Object.values(bySetAndOutcome).forEach(arr => arr.sort((a,b) => (a.sort_order||0)-(b.sort_order||0)).forEach((o,i) => { o.sort_order = i+1; }));
+      statusEl.textContent = '⏳ Saving…';
 
       try {
-        await saveFullResponseConfig(_currentConfig);
+        await Promise.all([
+          savePlayConfig(_selectedPlayId, _currentPlayConfig),
+          saveFullResponseConfig(_currentConfig),
+        ]);
+
         statusEl.style.background = '#e8f5e9';
         statusEl.style.color = '#107c10';
-        statusEl.textContent = '✅ Saved! Changes will appear in the rep app immediately.';
+        statusEl.textContent = '✅ Saved!';
+        _setConfigDirty(false);
+
+        // Reload and verify persistence
+        try {
+          const reloaded = await getPlayConfig(_selectedPlayId);
+          const origReasons = (_currentPlayConfig.outcomes['Interested'] || {}).reasons || [];
+          const reloadedReasons = (reloaded.outcomes['Interested'] || {}).reasons || [];
+          if (JSON.stringify(origReasons) !== JSON.stringify(reloadedReasons)) {
+            statusEl.textContent = '✅ Saved! (Note: verification mismatch — reload to confirm)';
+          }
+          _currentPlayConfig = reloaded;
+        } catch(ve) {
+          console.warn('Post-save verification failed:', ve);
+        }
+        renderConfigEditor();
       } catch(e) {
         statusEl.style.background = '#fde8e8';
         statusEl.style.color = '#c00';
-        statusEl.textContent = '✗ Save failed: ' + e.message;
+        statusEl.textContent = '❌ Save failed: ' + e.message + ' — try again or check your connection.';
       }
     }
     // ── Health Check Tab ──────────────────────────────────────────────────────
