@@ -2164,6 +2164,7 @@ Let's go! 🚀`;
         }
         const user = getCurrentUser();
         currentUser = user;
+        if (typeof seedDevDataIfNeeded === 'function') await seedDevDataIfNeeded();
         if (user) document.getElementById("admin-user-name").textContent = user.name;
 
         // Check role — try all email candidates from the token

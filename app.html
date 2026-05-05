@@ -1934,6 +1934,7 @@
         const user = getCurrentUser();
         if (user) {
           currentUser = user;
+          if (typeof seedDevDataIfNeeded === 'function') await seedDevDataIfNeeded();
           await loadDashboard();
           showOnboardingIfNeeded();
           showBookmarkBannerIfNeeded();

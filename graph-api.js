@@ -418,6 +418,57 @@ async function writeJsonFile(filePath, data) {
   return putFile(SP_ROOT + "/" + filePath, JSON.stringify(data, null, 2), "application/json");
 }
 
+// ─── Dev Data Seeding ────────────────────────────────────────────────────────
+// On dev environments, copies core data from production folder if dev folder is empty.
+// This ensures testers have plays/accounts/config to work with.
+const _PROD_ROOT = 'Chef SaaS Tracker/ChefSaaS';
+const _SEED_FILES = ['plays.json', 'assignments.json', 'response-options.json', 'rep-identity.json'];
+
+async function seedDevDataIfNeeded() {
+  if (CONFIG.isProd) return; // never run on production
+  try {
+    const existing = await getFileText(SP_ROOT + '/plays.json');
+    if (existing && existing.trim().length > 10) {
+      console.log('[Dev Seed] plays.json exists, skipping seed');
+      return;
+    }
+  } catch(e) { /* file doesn't exist — proceed with seeding */ }
+
+  console.log('[Dev Seed] Dev folder empty — copying data from production...');
+  let copied = 0;
+  for (const fname of _SEED_FILES) {
+    try {
+      const content = await getFileText(_PROD_ROOT + '/' + fname);
+      if (content) {
+        await putFile(SP_ROOT + '/' + fname, content, 'application/json');
+        copied++;
+        console.log('[Dev Seed] Copied ' + fname);
+      }
+    } catch(e) {
+      console.warn('[Dev Seed] Could not copy ' + fname + ':', e.message);
+    }
+  }
+  // Also copy per-play engagement CSVs
+  try {
+    const playsText = await getFileText(_PROD_ROOT + '/plays.json');
+    if (playsText) {
+      const plays = JSON.parse(playsText).plays || [];
+      for (const p of plays) {
+        const pid = (p.play_id || '').replace(/[^a-z0-9]/gi, '_');
+        if (!pid) continue;
+        try {
+          const csv = await getFileText(_PROD_ROOT + '/' + pid + '_engagements.csv');
+          if (csv) {
+            await putFile(SP_ROOT + '/' + pid + '_engagements.csv', csv, 'text/csv');
+            copied++;
+          }
+        } catch(e) {}
+      }
+    }
+  } catch(e) {}
+  console.log(`[Dev Seed] Done — copied ${copied} files to ${CONFIG.dataFolder}`);
+}
+
 // ─── Section: Rep Identity Enrichment ─────────────────────────────────────
 // Fetches /me from Microsoft Graph to get the rep's primary mail attribute.
 // This fills the gap where the MSAL token only carries the UPN/preferred_username
