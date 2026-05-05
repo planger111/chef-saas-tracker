@@ -1248,6 +1248,7 @@ async function createSnapshot({ label = '', type = 'manual', triggeredBy = '' } 
     { name: 'rep-identity.json',     path: SP_ROOT + '/rep-identity.json' },
     { name: 'activity_log.csv',      path: SP_ROOT + '/activity_log.csv' },
     { name: 'rep_feedback.json',     path: SP_ROOT + '/rep_feedback.json' },
+    { name: 'play_briefs.json',      path: SP_ROOT + '/play_briefs.json' },
   ];
 
   for (const f of coreFiles) {

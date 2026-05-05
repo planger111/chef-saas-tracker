@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Sales Play Intake — INFRA SalesPlay Tracker</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { background:#f5f7fa; margin:0; font-family:system-ui,-apple-system,sans-serif; }
+    .intake-wrap { max-width:640px; margin:0 auto; padding:20px 16px 60px; }
+    .intake-header { text-align:center; margin-bottom:24px; }
+    .intake-header h1 { font-size:22px; color:#1a1a2e; margin:0 0 4px; }
+    .intake-header p { font-size:14px; color:#64748b; margin:0; }
+    .intake-card { background:#fff; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.06); padding:24px; margin-bottom:16px; }
+    .intake-card h2 { font-size:16px; color:#1a1a2e; margin:0 0 16px; border-bottom:1px solid #f0f0f0; padding-bottom:8px; }
+    .intake-field { margin-bottom:14px; }
+    .intake-field label { display:block; font-size:13px; font-weight:600; color:#374151; margin-bottom:4px; }
+    .intake-field label .req { color:#dc2626; }
+    .intake-field input, .intake-field select, .intake-field textarea {
+      width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px;
+      font-family:inherit; box-sizing:border-box; transition:border-color 0.15s;
+    }
+    .intake-field input:focus, .intake-field select:focus, .intake-field textarea:focus {
+      outline:none; border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,0.1);
+    }
+    .intake-field textarea { resize:vertical; min-height:80px; }
+    .intake-field .hint { font-size:12px; color:#9ca3af; margin-top:3px; }
+    .intake-section-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#6366f1; margin-bottom:12px; }
+    .intake-list-builder { border:1px solid #e5e7eb; border-radius:8px; padding:10px; background:#fafbfc; }
+    .intake-list-builder .items { margin-bottom:8px; }
+    .intake-list-builder .item { display:flex; align-items:center; gap:6px; padding:4px 0; font-size:13px; }
+    .intake-list-builder .item button { background:none; border:none; color:#dc2626; cursor:pointer; font-size:16px; padding:0 4px; }
+    .intake-list-builder .add-row { display:flex; gap:6px; }
+    .intake-list-builder .add-row input { flex:1; padding:6px 8px; font-size:13px; }
+    .intake-list-builder .add-row button { padding:6px 12px; background:#6366f1; color:#fff; border:none; border-radius:6px; font-size:13px; cursor:pointer; }
+    .intake-submit-wrap { text-align:center; margin-top:24px; }
+    .intake-submit { padding:14px 40px; background:#6366f1; color:#fff; border:none; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; }
+    .intake-submit:hover { background:#4f46e5; }
+    .intake-submit:disabled { background:#a5b4fc; cursor:not-allowed; }
+    .intake-status { text-align:center; margin-top:12px; font-size:14px; }
+    .intake-login { text-align:center; padding:80px 20px; }
+    .intake-login button { padding:12px 32px; background:#6366f1; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; }
+    @media(max-width:480px) { .intake-wrap { padding:12px 10px 40px; } .intake-card { padding:16px; } }
+  </style>
+</head>
+<body>
+<div class="intake-wrap">
+
+  <!-- Login -->
+  <div id="intake-login" class="intake-login">
+    <h1>📋 Sales Play Intake</h1>
+    <p style="margin:12px 0 24px;color:#64748b;">Submit a play brief for the INFRA sales team to review.</p>
+    <button onclick="doLogin()">Sign in with Microsoft</button>
+  </div>
+
+  <!-- Form -->
+  <div id="intake-form" style="display:none;">
+    <div class="intake-header">
+      <h1>📋 Sales Play Intake Form</h1>
+      <p>Submit a play brief for the sales team to review and launch.</p>
+    </div>
+
+    <!-- Section 1: Basics -->
+    <div class="intake-card">
+      <h2>1. Play Basics</h2>
+      <div class="intake-field">
+        <label>Your Name <span class="req">*</span></label>
+        <input type="text" id="intake-name" placeholder="e.g. Jane Smith" />
+      </div>
+      <div class="intake-field">
+        <label>Your Email <span class="req">*</span></label>
+        <input type="email" id="intake-email" placeholder="e.g. jane.smith@progress.com" />
+      </div>
+      <div class="intake-field">
+        <label>Your Role</label>
+        <input type="text" id="intake-role" placeholder="e.g. Product Manager, Solution Engineer" />
+      </div>
+    </div>
+
+    <!-- Section 2: Play Details -->
+    <div class="intake-card">
+      <h2>2. Play Details</h2>
+      <div class="intake-field">
+        <label>Product / Solution <span class="req">*</span></label>
+        <select id="intake-product">
+          <option value="">— select —</option>
+          <option value="Chef">Chef</option>
+          <option value="WhatsUp Gold">WhatsUp Gold</option>
+          <option value="Loadmaster">Loadmaster</option>
+          <option value="Flowmon">Flowmon</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="intake-field" id="intake-product-other-wrap" style="display:none;">
+        <label>Custom Product Name <span class="req">*</span></label>
+        <input type="text" id="intake-product-other" placeholder="Enter product name" />
+      </div>
+      <div class="intake-field">
+        <label>Play Name <span class="req">*</span></label>
+        <input type="text" id="intake-play-name" placeholder="e.g. Chef SaaS Migration Q3" />
+      </div>
+      <div class="intake-field">
+        <label>Elevator Pitch / Description <span class="req">*</span></label>
+        <textarea id="intake-description" placeholder="What is this play about? What problem are we solving for customers?"></textarea>
+      </div>
+      <div class="intake-field">
+        <label>Why This Play Matters <span class="req">*</span></label>
+        <textarea id="intake-why" placeholder="Why should reps prioritize this? What's the business impact?"></textarea>
+      </div>
+    </div>
+
+    <!-- Section 3: Target & Positioning -->
+    <div class="intake-card">
+      <h2>3. Target & Positioning</h2>
+      <div class="intake-field">
+        <label>Ideal Customer Profile (ICP)</label>
+        <textarea id="intake-icp" rows="3" placeholder="Who is the target customer? Industry, size, current product usage, etc."></textarea>
+      </div>
+      <div class="intake-field">
+        <label>Target Persona</label>
+        <input type="text" id="intake-persona" placeholder="e.g. IT Director, DevOps Lead, CTO" />
+      </div>
+      <div class="intake-field">
+        <label>Competitive Positioning</label>
+        <textarea id="intake-competitive" rows="3" placeholder="How does this differentiate vs competition? Key talk tracks."></textarea>
+      </div>
+    </div>
+
+    <!-- Section 4: Rep Instructions -->
+    <div class="intake-card">
+      <h2>4. Rep Instructions</h2>
+      <div class="intake-field">
+        <label>What Should the Rep Do? <span class="req">*</span></label>
+        <textarea id="intake-instructions" rows="4" placeholder="Step-by-step: what should the rep say/do when they reach the customer?"></textarea>
+      </div>
+      <div class="intake-field">
+        <label>Key Questions to Ask</label>
+        <div class="intake-list-builder" id="lb-questions">
+          <div class="items" id="lb-questions-items"></div>
+          <div class="add-row">
+            <input type="text" id="lb-questions-input" placeholder="Add a question" onkeydown="if(event.key==='Enter'){addListItem('questions');event.preventDefault()}" />
+            <button onclick="addListItem('questions')">+ Add</button>
+          </div>
+        </div>
+        <div class="hint">Questions reps should ask during the conversation.</div>
+      </div>
+    </div>
+
+    <!-- Section 5: Expected Outcomes -->
+    <div class="intake-card">
+      <h2>5. Expected Outcomes</h2>
+      <div class="intake-field">
+        <label>Interested — Likely Reasons</label>
+        <div class="intake-list-builder" id="lb-interested">
+          <div class="items" id="lb-interested-items"></div>
+          <div class="add-row">
+            <input type="text" id="lb-interested-input" placeholder="e.g. Wants a demo" onkeydown="if(event.key==='Enter'){addListItem('interested');event.preventDefault()}" />
+            <button onclick="addListItem('interested')">+ Add</button>
+          </div>
+        </div>
+      </div>
+      <div class="intake-field">
+        <label>Not Interested — Likely Reasons</label>
+        <div class="intake-list-builder" id="lb-not-interested">
+          <div class="items" id="lb-not-interested-items"></div>
+          <div class="add-row">
+            <input type="text" id="lb-not-interested-input" placeholder="e.g. Already using competitor" onkeydown="if(event.key==='Enter'){addListItem('not-interested');event.preventDefault()}" />
+            <button onclick="addListItem('not-interested')">+ Add</button>
+          </div>
+        </div>
+      </div>
+      <div class="intake-field">
+        <label>Suggested Next Steps (if interested)</label>
+        <textarea id="intake-next-steps" rows="3" placeholder="e.g. Schedule a demo, send trial link, connect with SE"></textarea>
+      </div>
+    </div>
+
+    <!-- Section 6: Accounts -->
+    <div class="intake-card">
+      <h2>6. Target Accounts (Optional)</h2>
+      <div class="intake-field">
+        <label>Do you have a target account list?</label>
+        <textarea id="intake-accounts" rows="4" placeholder="Paste account names, one per line, or describe the segment (e.g. 'All Chef on-prem customers with ARR > $50k')"></textarea>
+        <div class="hint">The sales team can also upload accounts later via CSV.</div>
+      </div>
+      <div class="intake-field">
+        <label>Estimated Account Count</label>
+        <input type="number" id="intake-account-count" placeholder="e.g. 150" min="0" />
+      </div>
+    </div>
+
+    <!-- Section 7: Additional -->
+    <div class="intake-card">
+      <h2>7. Additional Context</h2>
+      <div class="intake-field">
+        <label>Collateral / Resources</label>
+        <textarea id="intake-collateral" rows="3" placeholder="Links to one-pagers, decks, battlecards, etc."></textarea>
+      </div>
+      <div class="intake-field">
+        <label>Timing / Urgency</label>
+        <select id="intake-urgency">
+          <option value="">— select —</option>
+          <option value="Immediate">Immediate — start this week</option>
+          <option value="Soon">Soon — within 2 weeks</option>
+          <option value="Planned">Planned — next quarter</option>
+          <option value="Exploring">Exploring — just an idea</option>
+        </select>
+      </div>
+      <div class="intake-field">
+        <label>Anything Else?</label>
+        <textarea id="intake-notes" rows="3" placeholder="Any other context the sales team should know."></textarea>
+      </div>
+    </div>
+
+    <div class="intake-submit-wrap">
+      <button class="intake-submit" id="btn-intake-submit" onclick="submitIntake()">📨 Submit Play Brief</button>
+      <div class="intake-status" id="intake-status"></div>
+    </div>
+  </div>
+
+  <!-- Success -->
+  <div id="intake-success" style="display:none;text-align:center;padding:60px 20px;">
+    <div style="font-size:48px;margin-bottom:16px;">✅</div>
+    <h2 style="color:#16a34a;margin:0 0 8px;">Play Brief Submitted!</h2>
+    <p style="color:#64748b;font-size:14px;margin:0 0 24px;">The sales team will review your submission and follow up.</p>
+    <button onclick="resetForm()" style="padding:10px 24px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">Submit Another</button>
+  </div>
+
+</div>
+
+<footer class="security-footer">
+  INFRA SalesPlay Tracker — Progress Software Proprietary &amp; Confidential &nbsp;·&nbsp; Progress employees only
+</footer>
+
+<script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+<script src="config.js"></script>
+<script src="graph-api.js"></script>
+<script>
+  // ── List builders state ──
+  const _listData = { questions: [], interested: [], 'not-interested': [] };
+
+  function addListItem(listId) {
+    const input = document.getElementById('lb-' + listId + '-input');
+    const val = input.value.trim();
+    if (!val) return;
+    _listData[listId].push(val);
+    input.value = '';
+    renderList(listId);
+  }
+  function removeListItem(listId, idx) {
+    _listData[listId].splice(idx, 1);
+    renderList(listId);
+  }
+  function renderList(listId) {
+    const wrap = document.getElementById('lb-' + listId + '-items');
+    if (_listData[listId].length === 0) { wrap.innerHTML = ''; return; }
+    wrap.innerHTML = _listData[listId].map((v, i) =>
+      `<div class="item"><span>• ${escHtml(v)}</span><button onclick="removeListItem('${listId}',${i})" title="Remove">✕</button></div>`
+    ).join('');
+  }
+
+  // ── Product other toggle ──
+  document.getElementById('intake-product').addEventListener('change', function() {
+    document.getElementById('intake-product-other-wrap').style.display = this.value === 'Other' ? '' : 'none';
+  });
+
+  // ── Auth ──
+  async function doLogin() {
+    try {
+      await initAuth();
+      const user = getCurrentUser();
+      if (user) {
+        document.getElementById('intake-login').style.display = 'none';
+        document.getElementById('intake-form').style.display = '';
+        document.getElementById('intake-name').value = user.name || '';
+        document.getElementById('intake-email').value = user.email || '';
+      }
+    } catch(e) {
+      console.error('Login error:', e);
+      alert('Sign-in failed. Please try again.');
+    }
+  }
+
+  // ── Submit ──
+  async function submitIntake() {
+    const statusEl = document.getElementById('intake-status');
+    const btn = document.getElementById('btn-intake-submit');
+
+    // Validate required fields
+    const name = document.getElementById('intake-name').value.trim();
+    const email = document.getElementById('intake-email').value.trim();
+    const product = document.getElementById('intake-product').value === 'Other'
+      ? (document.getElementById('intake-product-other').value.trim() || 'Other')
+      : document.getElementById('intake-product').value;
+    const playName = document.getElementById('intake-play-name').value.trim();
+    const description = document.getElementById('intake-description').value.trim();
+    const why = document.getElementById('intake-why').value.trim();
+    const instructions = document.getElementById('intake-instructions').value.trim();
+
+    if (!name || !email || !product || !playName || !description || !why || !instructions) {
+      statusEl.innerHTML = '<span style="color:#dc2626;">Please fill in all required fields (marked with *).</span>';
+      return;
+    }
+
+    btn.disabled = true;
+    statusEl.innerHTML = '<span style="color:#6366f1;">⏳ Submitting...</span>';
+
+    const brief = {
+      id: 'brief_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+      submitted_at: new Date().toISOString(),
+      status: 'Pending',
+      submitter_name: name,
+      submitter_email: email,
+      submitter_role: document.getElementById('intake-role').value.trim(),
+      product: product,
+      play_name: playName,
+      description: description,
+      why_it_matters: why,
+      icp: document.getElementById('intake-icp').value.trim(),
+      persona: document.getElementById('intake-persona').value.trim(),
+      competitive: document.getElementById('intake-competitive').value.trim(),
+      instructions: instructions,
+      questions: [..._listData.questions],
+      interested_reasons: [..._listData.interested],
+      not_interested_reasons: [..._listData['not-interested']],
+      next_steps: document.getElementById('intake-next-steps').value.trim(),
+      accounts_text: document.getElementById('intake-accounts').value.trim(),
+      account_count: parseInt(document.getElementById('intake-account-count').value) || 0,
+      collateral: document.getElementById('intake-collateral').value.trim(),
+      urgency: document.getElementById('intake-urgency').value,
+      notes: document.getElementById('intake-notes').value.trim(),
+      manager_notes: '',
+      reviewed_by: ''
+    };
+
+    try {
+      let briefs = { submissions: [] };
+      try {
+        const existing = await getFileText(SP_ROOT + '/play_briefs.json');
+        if (existing) briefs = JSON.parse(existing);
+      } catch(e) { console.log('No existing briefs file, creating new'); }
+
+      briefs.submissions.push(brief);
+      await writeJsonFile(SP_ROOT + '/play_briefs.json', briefs);
+
+      statusEl.innerHTML = '';
+      document.getElementById('intake-form').style.display = 'none';
+      document.getElementById('intake-success').style.display = '';
+    } catch(err) {
+      console.error('Intake submit error:', err);
+      statusEl.innerHTML = '<span style="color:#dc2626;">❌ Failed to submit. Please try again or email your manager.</span>';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function resetForm() {
+    document.getElementById('intake-success').style.display = 'none';
+    document.getElementById('intake-form').style.display = '';
+    // Clear fields
+    ['intake-play-name','intake-description','intake-why','intake-icp','intake-persona',
+     'intake-competitive','intake-instructions','intake-next-steps','intake-accounts',
+     'intake-account-count','intake-collateral','intake-notes'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('intake-product').value = '';
+    document.getElementById('intake-urgency').value = '';
+    _listData.questions = []; _listData.interested = []; _listData['not-interested'] = [];
+    renderList('questions'); renderList('interested'); renderList('not-interested');
+    document.getElementById('intake-status').innerHTML = '';
+  }
+
+  // Auto-login if already authenticated
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      await initAuth();
+      const user = getCurrentUser();
+      if (user) {
+        document.getElementById('intake-login').style.display = 'none';
+        document.getElementById('intake-form').style.display = '';
+        document.getElementById('intake-name').value = user.name || '';
+        document.getElementById('intake-email').value = user.email || '';
+      }
+    } catch(e) { /* show login button */ }
+  });
+</script>
+</body>
+</html>

@@ -138,6 +138,7 @@
         <button class="admin-tab" data-tab="invite">Invite</button>
         <button class="admin-tab" data-tab="config">Config</button>
         <button class="admin-tab" data-tab="feedback">Feedback</button>
+        <button class="admin-tab" data-tab="play-briefs">Play Briefs</button>
         <button class="admin-tab" data-tab="activity-log-user" id="tab-btn-activity-log-user" style="display:none;">Activity Log</button>
         <button class="admin-tab" data-tab="demo-activity" id="tab-btn-demo-activity" style="display:none;">Demo Activity</button>
         <button class="admin-tab" data-tab="snapshots" id="tab-btn-snapshots" style="display:none;">Snapshots</button>
@@ -776,6 +777,27 @@
         </div>
       </div><!-- /#tab-feedback -->
 
+      <!-- Play Briefs Tab Panel -->
+      <div id="tab-play-briefs" class="admin-tab-panel" style="display:none;">
+        <div class="admin-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;">📋 Play Brief Submissions</h3>
+            <div>
+              <select id="briefs-filter" onchange="filterBriefs()" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
+                <option value="all">All</option>
+                <option value="Pending" selected>Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+              <button onclick="loadPlayBriefsTab()" style="padding:6px 14px;background:#f1f5f9;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;margin-left:4px;">⟳ Refresh</button>
+              <a href="intake.html" target="_blank" style="padding:6px 14px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:13px;text-decoration:none;display:inline-block;margin-left:4px;">📤 Share Intake Form</a>
+            </div>
+          </div>
+          <p style="font-size:12px;color:#9ca3af;margin:0 0 12px;">Product managers submit play briefs via the intake form. Review each submission line by line below.</p>
+          <div id="briefs-list" style="min-height:100px;"><div class="empty">Loading briefs...</div></div>
+        </div>
+      </div><!-- /#tab-play-briefs -->
+
       <!-- Rep View Tab Panel -->
       <div id="tab-rep-view" class="admin-tab-panel" style="display:none;">
         <div style="background:#e8f4fd;border:1px solid #b3d9f2;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
@@ -857,12 +879,9 @@
         <select id="edit-play-product" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;" onchange="onEditProductChange()">
           <option value="">— none —</option>
           <option value="Chef">Chef</option>
-          <option value="Chef SaaS">Chef SaaS</option>
-          <option value="MOVEit">MOVEit</option>
-          <option value="WS_FTP">WS_FTP</option>
           <option value="WhatsUp Gold">WhatsUp Gold</option>
-          <option value="OpenEdge">OpenEdge</option>
-          <option value="MarkLogic">MarkLogic</option>
+          <option value="Loadmaster">Loadmaster</option>
+          <option value="Flowmon">Flowmon</option>
           <option value="Other">Other</option>
         </select>
         <div id="edit-product-other-wrap" style="display:none;margin-top:8px;">
@@ -1188,6 +1207,7 @@
         if (tab.dataset.tab === 'corrections') loadCorrectionsLog();
         if (tab.dataset.tab === 'feedback') loadFeedbackTab();
         if (tab.dataset.tab === 'rep-view') loadRepViewTab();
+        if (tab.dataset.tab === 'play-briefs') loadPlayBriefsTab();
       });
     });
 
@@ -3933,6 +3953,101 @@ Let's go! 🚀`;
         wrap.innerHTML = summaryHtml + (playCards || '<div style="text-align:center;padding:24px;color:#aaa;">No plays assigned to this rep.</div>');
       } catch (e) {
         wrap.innerHTML = `<div style="color:#d32f2f;padding:16px;">Error loading rep view: ${escHtml(e.message)}</div>`;
+      }
+    }
+
+    // ── Play Briefs Tab ─────────────────────────────────────────────
+    let _briefsData = [];
+
+    async function loadPlayBriefsTab() {
+      const container = document.getElementById('briefs-list');
+      container.innerHTML = '<div class="empty">Loading...</div>';
+      try {
+        const raw = await getFileText(SP_ROOT + '/play_briefs.json');
+        if (!raw) { container.innerHTML = '<div class="empty">No briefs submitted yet. Share the <a href="intake.html" target="_blank">intake form</a> with product managers.</div>'; return; }
+        const data = JSON.parse(raw);
+        _briefsData = (data.submissions || []).sort((a, b) => (b.submitted_at || '').localeCompare(a.submitted_at || ''));
+        filterBriefs();
+      } catch (e) {
+        console.error('Load briefs error:', e);
+        container.innerHTML = '<div class="empty">Could not load briefs.</div>';
+      }
+    }
+
+    function filterBriefs() {
+      const filter = document.getElementById('briefs-filter').value;
+      const filtered = filter === 'all' ? _briefsData : _briefsData.filter(b => b.status === filter);
+      const container = document.getElementById('briefs-list');
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty">No briefs matching filter.</div>';
+        return;
+      }
+      container.innerHTML = filtered.map(b => {
+        const statusColor = { Pending: '#f59e0b', Approved: '#16a34a', Rejected: '#dc2626' }[b.status] || '#94a3b8';
+        const urgencyLabel = b.urgency ? `<span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fef3c7;color:#92400e;margin-left:6px;">${escHtml(b.urgency)}</span>` : '';
+        return `
+        <details style="border:1px solid #e2e8f0;border-radius:10px;margin-bottom:12px;background:#fff;overflow:hidden;">
+          <summary style="padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:14px;">
+            <div>
+              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${statusColor};margin-right:8px;"></span>
+              <strong>${escHtml(b.play_name || 'Untitled')}</strong>
+              <span style="font-size:12px;color:#64748b;margin-left:8px;">${escHtml(b.product || '')}</span>
+              ${urgencyLabel}
+            </div>
+            <div style="font-size:11px;color:#94a3b8;">${b.submitted_at ? new Date(b.submitted_at).toLocaleDateString() : ''} by ${escHtml(b.submitter_name || b.submitter_email || '?')}</div>
+          </summary>
+          <div style="padding:0 16px 16px;border-top:1px solid #f0f0f0;">
+            ${briefField('Submitter', `${escHtml(b.submitter_name || '')} (${escHtml(b.submitter_email || '')}) — ${escHtml(b.submitter_role || '')}`)}
+            ${briefField('Product', escHtml(b.product || ''))}
+            ${briefField('Play Name', escHtml(b.play_name || ''))}
+            ${briefField('Description', escHtml(b.description || ''))}
+            ${briefField('Why It Matters', escHtml(b.why_it_matters || ''))}
+            ${briefField('ICP', escHtml(b.icp || ''))}
+            ${briefField('Persona', escHtml(b.persona || ''))}
+            ${briefField('Competitive Positioning', escHtml(b.competitive || ''))}
+            ${briefField('Rep Instructions', escHtml(b.instructions || ''))}
+            ${briefField('Questions', (b.questions || []).length > 0 ? b.questions.map(q => '• ' + escHtml(q)).join('<br>') : '—')}
+            ${briefField('Interested Reasons', (b.interested_reasons || []).length > 0 ? b.interested_reasons.map(r => '• ' + escHtml(r)).join('<br>') : '—')}
+            ${briefField('Not Interested Reasons', (b.not_interested_reasons || []).length > 0 ? b.not_interested_reasons.map(r => '• ' + escHtml(r)).join('<br>') : '—')}
+            ${briefField('Next Steps', escHtml(b.next_steps || '—'))}
+            ${briefField('Target Accounts', escHtml(b.accounts_text || '—') + (b.account_count ? ` (est. ${b.account_count})` : ''))}
+            ${briefField('Collateral', escHtml(b.collateral || '—'))}
+            ${briefField('Urgency', escHtml(b.urgency || '—'))}
+            ${briefField('Notes', escHtml(b.notes || '—'))}
+            <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0;">
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <select id="brief-status-${b.id}" style="padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+                  ${['Pending','Approved','Rejected'].map(s => `<option value="${s}" ${b.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+                </select>
+                <input id="brief-notes-${b.id}" placeholder="Manager notes..." value="${escHtml(b.manager_notes || '')}" style="flex:1;min-width:180px;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;" />
+                <button onclick="updateBrief('${b.id}')" style="padding:4px 12px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">Save</button>
+                ${b.status === 'Approved' ? `<a href="ingest.html" target="_blank" style="padding:4px 12px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:12px;text-decoration:none;cursor:pointer;">→ Create Play</a>` : ''}
+              </div>
+            </div>
+          </div>
+        </details>`;
+      }).join('');
+    }
+
+    function briefField(label, value) {
+      return `<div style="display:flex;gap:12px;padding:6px 0;border-bottom:1px solid #f8f9fa;font-size:13px;">
+        <div style="min-width:140px;font-weight:600;color:#374151;">${label}</div>
+        <div style="color:#1a1a2e;flex:1;">${value || '—'}</div>
+      </div>`;
+    }
+
+    async function updateBrief(id) {
+      const brief = _briefsData.find(b => b.id === id);
+      if (!brief) return;
+      brief.status = document.getElementById('brief-status-' + id).value;
+      brief.manager_notes = document.getElementById('brief-notes-' + id).value;
+      brief.reviewed_by = currentUser || '';
+      try {
+        await writeJsonFile(SP_ROOT + '/play_briefs.json', { submissions: _briefsData });
+        filterBriefs();
+      } catch (e) {
+        console.error('Update brief error:', e);
+        alert('Failed to update brief');
       }
     }
 
