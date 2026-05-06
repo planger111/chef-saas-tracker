@@ -3,22 +3,11 @@
 let _msalInstance = null;
 let _account = null;
 
-// Detect contexts where popups are unreliable — use redirect flow instead
+// Always use redirect flow — works universally across mobile, desktop, Teams,
+// embedded browsers, and popup contexts. Popup flow caused block_nested_popups
+// errors when MSAL's fallback tried to redirect from inside a popup window.
 function _useRedirectFlow() {
-  try {
-    const ua = navigator.userAgent;
-    // Mobile browsers — popups are blocked or unreliable on phones/tablets
-    if (/iPhone|iPad|iPod|Android|Mobile|Tablet/i.test(ua)) return true;
-    // Running inside an iframe
-    if (window !== window.parent) return true;
-    // Teams in-app browser
-    if (/Teams/i.test(ua)) return true;
-    // Embedded webviews (Facebook, Instagram, etc.)
-    if (/wv|WebView|FBAN|FBAV|Instagram|Line\//i.test(ua)) return true;
-    // Already inside a popup
-    if (window.opener && window.opener !== window) return true;
-  } catch (_) { /* cross-origin frame check may throw — treat as embedded */ return true; }
-  return false;
+  return true;
 }
 
 function _getMsalConfig() {
