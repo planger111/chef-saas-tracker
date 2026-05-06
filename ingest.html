@@ -175,27 +175,64 @@
   <div class="wizard-steps" id="wizard-steps" style="display:none;">
     <div class="wizard-step" id="ws-1">
       <span class="ws-num">1</span>
-      <span class="ws-label">Basics</span>
+      <span class="ws-label">Product</span>
     </div>
     <div class="wizard-connector"></div>
     <div class="wizard-step" id="ws-2">
       <span class="ws-num">2</span>
-      <span class="ws-label">Outcomes</span>
+      <span class="ws-label">Basics</span>
     </div>
     <div class="wizard-connector"></div>
     <div class="wizard-step" id="ws-3">
       <span class="ws-num">3</span>
-      <span class="ws-label">Questions</span>
+      <span class="ws-label">Outcomes</span>
     </div>
     <div class="wizard-connector"></div>
     <div class="wizard-step" id="ws-4">
       <span class="ws-num">4</span>
+      <span class="ws-label">Questions</span>
+    </div>
+    <div class="wizard-connector"></div>
+    <div class="wizard-step" id="ws-5">
+      <span class="ws-num">5</span>
       <span class="ws-label">Accounts</span>
+    </div>
+    <div class="wizard-connector"></div>
+    <div class="wizard-step" id="ws-6">
+      <span class="ws-num">6</span>
+      <span class="ws-label">Review</span>
     </div>
   </div>
 
-  <!-- Step 1: Basics -->
+  <!-- Step 1: Product -->
   <div class="wizard-panel" id="step-1-panel" style="display:none;">
+    <h3 style="margin:0 0 16px;font-size:18px;">📦 Product / Solution</h3>
+    <p class="step-desc">Which product or solution is this play for?</p>
+
+    <div class="form-row">
+      <label>Product *</label>
+      <select id="play-product" onchange="onProductSelect()" style="padding:8px 10px;font-size:14px;border:1px solid #d1d5db;border-radius:6px;width:100%;">
+        <option value="">— select product —</option>
+        <option value="Chef">Chef</option>
+        <option value="WhatsUp Gold">WhatsUp Gold</option>
+        <option value="Loadmaster">Loadmaster</option>
+        <option value="Flowmon">Flowmon</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <div class="form-row" id="play-product-other-wrap" style="display:none;">
+      <label>Custom Product Name *</label>
+      <input type="text" id="play-product-other" placeholder="Enter product name" />
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;">
+      <button class="btn-primary" id="btn-product-next" onclick="finishProductStep()" disabled>Continue to Basics →</button>
+    </div>
+  </div>
+
+  <!-- Step 2: Basics -->
+  <div class="wizard-panel" id="step-2-panel" style="display:none;">
 
     <div class="form-row">
       <label>Play Name *</label>
@@ -231,15 +268,26 @@
       <textarea id="play-pitch" rows="3" placeholder="What should the rep say? Keep it concise — 2–4 sentences reps can memorize."></textarea>
     </div>
 
+    <div class="form-row">
+      <label>Why It Matters</label>
+      <textarea id="play-why-it-matters" rows="3" placeholder="Why should reps care about this play? What's the business impact?"></textarea>
+    </div>
+
+    <div class="form-row">
+      <label>Rep Instructions</label>
+      <textarea id="play-instructions" rows="3" placeholder="Step-by-step instructions for reps — how to run this play."></textarea>
+    </div>
 
 
-    <div style="display:flex;justify-content:flex-end;">
+
+    <div style="display:flex;justify-content:space-between;">
+      <button class="btn-secondary" onclick="goToStep(1)">← Back to Product</button>
       <button class="btn-primary" id="btn-play-next" onclick="finishPlayStep()" disabled>Continue to Outcomes →</button>
     </div>
   </div>
 
-  <!-- Step 2: Outcomes -->
-  <div class="wizard-panel" id="step-2-panel" style="display:none;">
+  <!-- Step 3: Outcomes -->
+  <div class="wizard-panel" id="step-3-panel" style="display:none;">
     <p class="step-desc">Choose which outcomes reps can log for this play. You can customise per-outcome settings below.</p>
 
     <div id="outcomes-list">
@@ -331,14 +379,14 @@
     </div><!-- /#outcomes-list -->
 
     <div class="wizard-nav">
-      <button class="btn-secondary" onclick="goToStep(1)">← Back to Basics</button>
+      <button class="btn-secondary" onclick="goToStep(2)">← Back to Basics</button>
       <button class="btn-secondary" id="btn-save-config-only" onclick="savePlayConfigOnly()" style="background:#f0f7ff;color:#0078d4;border-color:#b3d4f5;">💾 Save Config Only</button>
-      <button class="btn-primary" id="btn-outcomes-next" onclick="goToStep(3)">Continue to Questions →</button>
+      <button class="btn-primary" id="btn-outcomes-next" onclick="goToStep(4)">Continue to Questions →</button>
     </div>
   </div>
 
-  <!-- Step 3: Questions -->
-  <div class="wizard-panel" id="step-3-panel" style="display:none;">
+  <!-- Step 4: Questions -->
+  <div class="wizard-panel" id="step-4-panel" style="display:none;">
     <p class="step-desc">Choose which fields reps see when logging an interaction for this play. Interaction type and outcome are always included.</p>
 
     <!-- Section A: Standard Fields -->
@@ -368,14 +416,14 @@
     </div>
 
     <div class="wizard-nav">
-      <button class="btn-secondary" onclick="goToStep(2)">← Back to Outcomes</button>
+      <button class="btn-secondary" onclick="goToStep(3)">← Back to Outcomes</button>
       <button class="btn-secondary" onclick="savePlayConfigOnly()" style="background:#f0f7ff;color:#0078d4;border-color:#b3d4f5;">💾 Save Config Only</button>
       <button class="btn-primary" onclick="finishQuestionsStep()">Continue to Accounts →</button>
     </div>
   </div>
 
-  <!-- Step 4: Accounts -->
-  <div class="wizard-panel" id="step-4-panel" style="display:none;">
+  <!-- Step 5: Accounts -->
+  <div class="wizard-panel" id="step-5-panel" style="display:none;">
 
     <!-- Context banner (shown for existing plays) -->
     <div id="step3-context-banner" style="display:none;background:#f0f7ff;border:1px solid #c3dafe;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;">
@@ -391,14 +439,14 @@
     <div style="font-size:13px;font-weight:600;margin-bottom:4px;color:#333;">Upload mode</div>
     <div class="upload-mode-rows">
       <label class="upload-mode-row safe">
-        <input type="radio" name="upload-mode" value="merge" checked onchange="updateStep3Context()">
+        <input type="radio" name="upload-mode" value="merge" checked onchange="updateStep5Context()">
         <div>
           <span class="mode-title">Add accounts</span>
           <span class="mode-desc">New accounts added, existing updated, nothing removed</span>
         </div>
       </label>
       <label class="upload-mode-row destructive">
-        <input type="radio" name="upload-mode" value="replace" onchange="updateStep3Context()">
+        <input type="radio" name="upload-mode" value="replace" onchange="updateStep5Context()">
         <div>
           <span class="mode-title">Replace all</span>
           <span class="mode-desc">⚠ Removes all existing accounts for this play</span>
@@ -475,10 +523,25 @@
 
     <!-- Step nav -->
     <div class="wizard-nav" style="margin-top:24px;">
-      <button class="btn-secondary" id="step4-back-btn" onclick="handleStep4Back()">← Back to Questions</button>
+      <button class="btn-secondary" id="step5-back-btn" onclick="handleStep5Back()">← Back to Questions</button>
+      <button class="btn-secondary" onclick="goToStep(6)" style="margin-left:auto;">Skip — Review Without Accounts →</button>
     </div>
 
-  </div><!-- /#step-4-panel -->
+  </div><!-- /#step-5-panel -->
+
+  <!-- Step 6: Review & Launch -->
+  <div class="wizard-panel" id="step-6-panel" style="display:none;">
+    <h3 style="margin:0 0 16px;font-size:18px;">📋 Review &amp; Launch</h3>
+    <p class="step-desc">Review your play configuration before saving.</p>
+    <div id="review-summary" style="font-size:14px;line-height:1.8;"></div>
+    <div class="wizard-nav" style="margin-top:24px;">
+      <button class="btn-secondary" onclick="goToStep(5)">← Back to Accounts</button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-secondary" onclick="savePlayAsDraft()" style="background:#fff3cd;color:#92400e;border-color:#fbbf24;">💾 Save as Draft</button>
+        <button class="btn-success" onclick="launchPlay()">🚀 Launch as Active</button>
+      </div>
+    </div>
+  </div>
 
 </main>
 
@@ -580,11 +643,11 @@
   let currentStep = 0;
 
   function goToStep(n) {
-    ['step-1-panel','step-2-panel','step-3-panel','step-4-panel'].forEach((id, i) => {
+    ['step-1-panel','step-2-panel','step-3-panel','step-4-panel','step-5-panel','step-6-panel'].forEach((id, i) => {
       const el = document.getElementById(id);
       if (el) el.style.display = (i + 1 === n) ? 'block' : 'none';
     });
-    [1, 2, 3, 4].forEach(i => {
+    [1, 2, 3, 4, 5, 6].forEach(i => {
       const ws = document.getElementById('ws-' + i);
       if (!ws) return;
       ws.classList.remove('active', 'done');
@@ -592,20 +655,23 @@
       else if (i === n) ws.classList.add('active');
     });
     currentStep = n;
-    if (n === 3) {
+    if (n === 4) {
       renderBoilerplateQuestions();
     }
-    if (n === 4) {
+    if (n === 5) {
       const inner = document.getElementById('upload-status-inner');
       if (inner) inner.innerHTML = '';
       const statusEl = document.getElementById('upload-status');
       if (statusEl) statusEl.style.display = 'none';
       populateSummaryBar();
-      updateStep4Context();
-      const backBtn = document.getElementById('step4-back-btn');
+      updateStep5Context();
+      const backBtn = document.getElementById('step5-back-btn');
       if (backBtn && _urlMode === 'accounts') {
         backBtn.textContent = '← Back to Admin';
       }
+    }
+    if (n === 6) {
+      buildReviewSummary();
     }
     window.scrollTo(0, 0);
   }
@@ -614,11 +680,18 @@
     if (!currentPlayDef) return;
     const outcomeCount = document.querySelectorAll('.outcome-cb:checked').length;
     const goalLabel = getGoalLabel(selectedGoal);
+    const productSel = document.getElementById('play-product');
+    const product = productSel?.value === 'Other'
+      ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
+      : (productSel?.value || '');
     const parts = [
       `<span class="psb-val">${esc(currentPlayDef.play_name)}</span>`,
       `<span class="psb-sep">|</span>`,
       `Goal: <span class="psb-val">${esc(goalLabel)}</span>`,
     ];
+    if (product) {
+      parts.push(`<span class="psb-sep">|</span>`, `Product: <span class="psb-val">${esc(product)}</span>`);
+    }
     if (currentPlayDef.target_persona) {
       parts.push(`<span class="psb-sep">|</span>`, `Persona: <span class="psb-val">${esc(currentPlayDef.target_persona)}</span>`);
     }
@@ -696,14 +769,14 @@
     document.getElementById('wizard-steps').style.display = 'flex';
     if (_urlMode === 'accounts') {
       finishPlayStep();
-      setTimeout(() => goToStep(4), 0);
+      setTimeout(() => goToStep(5), 0);
     } else {
       goToStep(1);
     }
   }
 
-  // Update Step 4 context banner based on whether this is an existing play
-  function updateStep4Context() {
+  // Update Step 5 context banner based on whether this is an existing play
+  function updateStep5Context() {
     const banner = document.getElementById('step3-context-banner');
     const titleEl = document.getElementById('step3-context-title');
     const playEl  = document.getElementById('step3-context-play');
@@ -780,7 +853,7 @@
     document.getElementById('fast-path-picker-panel').style.display = 'none';
     document.getElementById('wizard-steps').style.display = 'flex';
     finishPlayStep();
-    setTimeout(() => goToStep(4), 0);
+    setTimeout(() => goToStep(5), 0);
   }
 
   async function loadPlayAccountCount(playId) {
@@ -792,11 +865,11 @@
     } catch(e) { return 0; }
   }
 
-  function handleStep4Back() {
+  function handleStep5Back() {
     if (_urlMode === 'accounts') {
       window.location.href = 'admin.html';
     } else {
-      goToStep(3);
+      goToStep(4);
     }
   }
 
@@ -903,7 +976,7 @@
     if (!requireIngestAdmin()) return;
     if (!currentPlayDef) { log('err', 'No play defined. Go back to Step 1.'); return; }
     currentPlayDef.questions = getQuestionsConfig();
-    goToStep(4);
+    goToStep(5);
   }
 
   function toggleFormPreview() {
@@ -983,10 +1056,15 @@
     const playDef = {
       play_id:        playId,
       play_name:      name,
+      product:        document.getElementById('play-product')?.value === 'Other' 
+                        ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
+                        : (document.getElementById('play-product')?.value || ''),
       goal:           selectedGoal,
       icp:            document.getElementById('play-icp').value.trim(),
       target_persona: document.getElementById('play-persona').value.trim(),
       elevator_pitch: document.getElementById('play-pitch').value.trim(),
+      why_it_matters: document.getElementById('play-why-it-matters')?.value?.trim() || '',
+      instructions:   document.getElementById('play-instructions')?.value?.trim() || '',
       active:         true,
       outcomes:       getOutcomesConfig(),
       questions:      currentPlayDef?.questions || getQuestionsConfig(),
@@ -1030,6 +1108,23 @@
     document.getElementById('play-icp').value     = p.icp || '';
     document.getElementById('play-persona').value = p.target_persona || '';
     document.getElementById('play-pitch').value   = p.elevator_pitch || '';
+    document.getElementById('play-why-it-matters').value = p.why_it_matters || '';
+    document.getElementById('play-instructions').value = p.instructions || '';
+    // Set product dropdown
+    const productSel = document.getElementById('play-product');
+    if (productSel) {
+      const productOpts = Array.from(productSel.options).map(o => o.value);
+      if (p.product && productOpts.includes(p.product)) {
+        productSel.value = p.product;
+      } else if (p.product) {
+        productSel.value = 'Other';
+        const otherInput = document.getElementById('play-product-other');
+        if (otherInput) otherInput.value = p.product;
+        const otherWrap = document.getElementById('play-product-other-wrap');
+        if (otherWrap) otherWrap.style.display = 'block';
+      }
+      onProductSelect();
+    }
     document.querySelectorAll('.play-picker-row').forEach(el => el.classList.remove('selected'));
     if (rowEl) rowEl.classList.add('selected');
     if (p.goal) selectGoal(p.goal);
@@ -1074,17 +1169,24 @@
     const name = document.getElementById('play-name-input').value.trim();
     if (!name || !selectedGoal) return;
     const playId = (_isExistingPlay && _originalPlayId) ? _originalPlayId : slugify(name);
+    const productSel = document.getElementById('play-product');
+    const product = productSel.value === 'Other' 
+      ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
+      : productSel.value;
     currentPlayDef = {
       ...(currentPlayDef || {}),
       play_id:        playId,
       play_name:      name,
+      product:        product,
       goal:           selectedGoal,
       icp:            document.getElementById('play-icp').value.trim(),
       target_persona: document.getElementById('play-persona').value.trim(),
       elevator_pitch: document.getElementById('play-pitch').value.trim(),
+      why_it_matters: document.getElementById('play-why-it-matters').value.trim(),
+      instructions:   document.getElementById('play-instructions').value.trim(),
       active:         currentPlayDef?.active ?? true
     };
-    goToStep(2);
+    goToStep(3);
   }
 
   // ── Step 2: Outcomes ───────────────────────────────────────────────────────
@@ -1585,7 +1687,7 @@
         log('warn', 'Could not seed response options: ' + e.message);
       }
 
-      markStepDone(3);
+      markStepDone(5);
       const actionLabel = _isExistingPlay
         ? (document.querySelector('input[name="upload-mode"]:checked')?.value === 'replace' ? 'Targets Replaced' : 'Targets Added')
         : 'Play Launched';
@@ -1593,7 +1695,7 @@
       btn.style.background = '#107c10';
       log('ok', '');
       log('ok', `🎉 Done! ${_isExistingPlay ? 'Targets updated.' : 'Reps can now open the app and see their accounts.'}`);
-      log('info', 'Files written: Chef SaaS Tracker/ChefSaaS/assignments.json · plays.json');
+      log('info', `Files written: ${SP_ROOT}/assignments.json · plays.json`);
       try {
         await logActivity(currentUser, 'ingest_upload', `${actionLabel}: ${finalAssignments.length} total rows for play: ${currentPlayDef.play_name}`);
       } catch(e) {}
@@ -1605,6 +1707,149 @@
         await logActivity(currentUser, 'ingest_error', `Upload failed for play: ${(currentPlayDef||{}).play_name || 'unknown'} — ${e.message}`);
       } catch(e2) {}
     }
+  }
+
+  // ── Step 1: Product Selection ─────────────────────────────────────────────
+  function onProductSelect() {
+    const sel = document.getElementById('play-product');
+    const otherWrap = document.getElementById('play-product-other-wrap');
+    const btn = document.getElementById('btn-product-next');
+    if (otherWrap) otherWrap.style.display = sel.value === 'Other' ? 'block' : 'none';
+    if (btn) btn.disabled = !sel.value;
+  }
+
+  function finishProductStep() {
+    const sel = document.getElementById('play-product');
+    if (!sel.value) return;
+    if (sel.value === 'Other') {
+      const otherVal = document.getElementById('play-product-other')?.value?.trim();
+      if (!otherVal) { alert('Please enter a product name.'); return; }
+    }
+    goToStep(2);
+  }
+
+  // ── Step 6: Review & Launch ───────────────────────────────────────────────
+  function buildReviewSummary() {
+    const el = document.getElementById('review-summary');
+    if (!el || !currentPlayDef) { if (el) el.innerHTML = '<p style="color:#999;">No play defined yet.</p>'; return; }
+    const productSel = document.getElementById('play-product');
+    const product = productSel?.value === 'Other' 
+      ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
+      : (productSel?.value || '—');
+    const outcomeCount = document.querySelectorAll('.outcome-cb:checked').length;
+    const questionsConfig = getQuestionsConfig();
+    const totalQuestions = questionsConfig.boilerplate.length + questionsConfig.custom.length;
+    const acctCount = parsedAssignments.length;
+    const goalLabel = getGoalLabel(selectedGoal);
+    el.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;width:160px;">Product</td><td style="padding:10px 8px;">${esc(product)}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Play Name</td><td style="padding:10px 8px;">${esc(currentPlayDef.play_name)}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Play ID</td><td style="padding:10px 8px;font-family:monospace;font-size:12px;">${esc(currentPlayDef.play_id)}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Goal</td><td style="padding:10px 8px;">${esc(goalLabel)}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Persona</td><td style="padding:10px 8px;">${esc(currentPlayDef.target_persona || '—')}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Elevator Pitch</td><td style="padding:10px 8px;">${esc(currentPlayDef.elevator_pitch || '—')}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Why It Matters</td><td style="padding:10px 8px;">${esc(currentPlayDef.why_it_matters || '—')}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Outcomes</td><td style="padding:10px 8px;">${outcomeCount} configured</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Questions</td><td style="padding:10px 8px;">${totalQuestions} fields</td></tr>
+        <tr><td style="padding:10px 8px;font-weight:600;color:#555;">Accounts</td><td style="padding:10px 8px;">${acctCount > 0 ? acctCount + ' ready to upload' : '<span style="color:#d97706;">None — accounts can be added later</span>'}</td></tr>
+      </table>
+    `;
+  }
+
+  async function savePlayAsDraft() {
+    if (!requireIngestAdmin()) return;
+    currentPlayDef.active = false;
+    await _saveAndLaunchPlay(false);
+  }
+
+  async function launchPlay() {
+    if (!requireIngestAdmin()) return;
+    currentPlayDef.active = true;
+    await _saveAndLaunchPlay(true);
+  }
+
+  async function _saveAndLaunchPlay(isActive) {
+    const btn = isActive 
+      ? document.querySelector('#step-6-panel .btn-success')
+      : document.querySelector('#step-6-panel .btn-secondary[onclick*="savePlayAsDraft"]');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving…'; }
+
+    try {
+      const productSel = document.getElementById('play-product');
+      const product = productSel?.value === 'Other'
+        ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
+        : (productSel?.value || '');
+      
+      const outcomesConfig = getOutcomesConfig();
+      const questionsConfig = getQuestionsConfig();
+      
+      const playDef = {
+        ...currentPlayDef,
+        product:        product,
+        why_it_matters: document.getElementById('play-why-it-matters')?.value?.trim() || currentPlayDef.why_it_matters || '',
+        instructions:   document.getElementById('play-instructions')?.value?.trim() || currentPlayDef.instructions || '',
+        outcomes:       outcomesConfig,
+        questions:      questionsConfig,
+        active:         isActive,
+        config: {
+          outcomes: _buildOutcomesTree(),
+        }
+      };
+
+      let playsConfig = { plays: [] };
+      try { playsConfig = await getPlaysConfig(); if (!playsConfig?.plays) playsConfig = { plays: [] }; } catch(e) {}
+      const idx = playsConfig.plays.findIndex(p => p.play_id === playDef.play_id);
+      if (idx >= 0) playsConfig.plays[idx] = { ...playsConfig.plays[idx], ...playDef };
+      else playsConfig.plays.push(playDef);
+      await savePlaysConfig(playsConfig);
+
+      if (parsedAssignments.length > 0) {
+        let existingData = {};
+        try {
+          const text = await getFileText(SP_ROOT + '/assignments.json');
+          if (text) existingData = JSON.parse(text);
+        } catch(e) {}
+        const existingAssignments = existingData.assignments || [];
+        const mode = document.querySelector('input[name="upload-mode"]:checked')?.value || 'merge';
+        const key = a => (a.account_id + '|' + (a.rep_sso_login || a.rep_email)).toLowerCase();
+        let finalAssignments;
+        if (mode === 'merge') {
+          const otherPlays = existingAssignments.filter(a => a.play_id !== currentPlayDef.play_id);
+          const newKeys = new Set(parsedAssignments.map(key));
+          const samePlayKept = existingAssignments.filter(a => a.play_id === currentPlayDef.play_id && !newKeys.has(key(a)));
+          finalAssignments = [...otherPlays, ...samePlayKept, ...parsedAssignments];
+        } else {
+          const otherPlays = existingAssignments.filter(a => a.play_id !== currentPlayDef.play_id);
+          finalAssignments = [...otherPlays, ...parsedAssignments];
+        }
+        await writeJsonFile('assignments.json', { ...existingData, assignments: finalAssignments, uploaded_at: new Date().toISOString() });
+      }
+
+      try { await logActivity(currentUser, isActive ? 'play_launched' : 'play_draft_saved', `${isActive ? 'Launched' : 'Saved draft'}: ${playDef.play_name} (${playDef.play_id})`); } catch(e) {}
+
+      const label = isActive ? '✅ Play Launched!' : '✅ Draft Saved!';
+      if (btn) { btn.textContent = label; btn.style.background = '#107c10'; btn.style.color = '#fff'; }
+      markStepDone(6);
+    } catch(e) {
+      alert('Save failed: ' + e.message);
+      if (btn) { btn.disabled = false; btn.textContent = isActive ? '🚀 Launch as Active' : '💾 Save as Draft'; }
+    }
+  }
+
+  function _buildOutcomesTree() {
+    const tree = {};
+    const checked = Array.from(document.querySelectorAll('.outcome-cb:checked'));
+    for (const cb of checked) {
+      const label = cb.dataset.outcome;
+      const defaultOutcome = DEFAULT_PLAY_CONFIG.outcomes[label];
+      tree[label] = {
+        reasons: defaultOutcome ? [...defaultOutcome.reasons] : [],
+        next_steps: defaultOutcome ? [...defaultOutcome.next_steps] : [],
+        timing: defaultOutcome ? [...defaultOutcome.timing] : [],
+      };
+    }
+    return tree;
   }
 </script>
 </body>

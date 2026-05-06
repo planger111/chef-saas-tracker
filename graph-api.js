@@ -3,7 +3,34 @@
 // Only needs Sites.ReadWrite.All (already granted)
 
 // Root folder inside SharePoint Documents — matches the OneDrive-synced local folder
-const SP_ROOT = "Chef SaaS Tracker/ChefSaaS";
+const SP_ROOT = `Chef SaaS Tracker/${CONFIG.dataFolder}`;
+
+// ─── Default Play Config (fallback when play.config is missing) ───────────
+const DEFAULT_PLAY_CONFIG = {
+  outcomes: {
+    "Interested": {
+      reasons: ["Active budget approved", "Executive sponsor identified", "Timeline established", "Evaluating alternatives", "Wants more information", "Other"],
+      next_steps: ["Schedule follow-up", "Send information", "Introduce stakeholder", "Create opportunity", "Revisit later"],
+      timing: ["Now", "This month", "Next quarter", "Later"]
+    },
+    "Not Interested": {
+      reasons: ["Already have a solution", "No budget", "No need", "Wrong timing", "Wrong person", "Other"],
+      next_steps: ["Revisit later", "Send information", "Remove from list"],
+      timing: ["Next quarter", "Next year", "Never"]
+    },
+    "Would Not Engage": {
+      reasons: ["I tried 5x and got no response", "They are going away", "Partner-led", "Can't find the right person", "Other"],
+      next_steps: ["Revisit later", "Escalate internally", "Remove from list"],
+      timing: ["Next quarter", "Next year", "Never"]
+    }
+  },
+  questions: { boilerplate: ["notes", "next_step", "timing"], custom: [] },
+  instructions: "",
+  why_it_matters: ""
+};
+
+// Outcome types recognized by the system
+const OUTCOME_TYPES = ["Interested", "Not Interested", "Would Not Engage"];
 
 let _siteId = null;
 let _driveId = null;
@@ -391,6 +418,57 @@ async function writeJsonFile(filePath, data) {
   return putFile(SP_ROOT + "/" + filePath, JSON.stringify(data, null, 2), "application/json");
 }
 
+// ─── Dev Data Seeding ────────────────────────────────────────────────────────
+// On dev environments, copies core data from production folder if dev folder is empty.
+// This ensures testers have plays/accounts/config to work with.
+const _PROD_ROOT = 'Chef SaaS Tracker/ChefSaaS';
+const _SEED_FILES = ['plays.json', 'assignments.json', 'response-options.json', 'rep-identity.json'];
+
+async function seedDevDataIfNeeded() {
+  if (CONFIG.isProd) return; // never run on production
+  try {
+    const existing = await getFileText(SP_ROOT + '/plays.json');
+    if (existing && existing.trim().length > 10) {
+      console.log('[Dev Seed] plays.json exists, skipping seed');
+      return;
+    }
+  } catch(e) { /* file doesn't exist — proceed with seeding */ }
+
+  console.log('[Dev Seed] Dev folder empty — copying data from production...');
+  let copied = 0;
+  for (const fname of _SEED_FILES) {
+    try {
+      const content = await getFileText(_PROD_ROOT + '/' + fname);
+      if (content) {
+        await putFile(SP_ROOT + '/' + fname, content, 'application/json');
+        copied++;
+        console.log('[Dev Seed] Copied ' + fname);
+      }
+    } catch(e) {
+      console.warn('[Dev Seed] Could not copy ' + fname + ':', e.message);
+    }
+  }
+  // Also copy per-play engagement CSVs
+  try {
+    const playsText = await getFileText(_PROD_ROOT + '/plays.json');
+    if (playsText) {
+      const plays = JSON.parse(playsText).plays || [];
+      for (const p of plays) {
+        const pid = (p.play_id || '').replace(/[^a-z0-9]/gi, '_');
+        if (!pid) continue;
+        try {
+          const csv = await getFileText(_PROD_ROOT + '/' + pid + '_engagements.csv');
+          if (csv) {
+            await putFile(SP_ROOT + '/' + pid + '_engagements.csv', csv, 'text/csv');
+            copied++;
+          }
+        } catch(e) {}
+      }
+    }
+  } catch(e) {}
+  console.log(`[Dev Seed] Done — copied ${copied} files to ${CONFIG.dataFolder}`);
+}
+
 // ─── Section: Rep Identity Enrichment ─────────────────────────────────────
 // Fetches /me from Microsoft Graph to get the rep's primary mail attribute.
 // This fills the gap where the MSAL token only carries the UPN/preferred_username
@@ -745,7 +823,79 @@ async function getPlays() {
   } catch(e) { return [{ play_id: "chef-saas", play_name: "Chef SaaS" }]; }
 }
 
-// ─── Response Options ─────────────────────────────────────────────────────
+// ─── Per-Play Config Layer ─────────────────────────────────────────────────
+// Each play can have its own config tree at play.config
+// Falls back to response-options.json, then DEFAULT_PLAY_CONFIG
+
+async function getPlayConfig(playId) {
+  // First check if the play has inline config
+  const plays = await getPlaysConfig();
+  const play = (plays.plays || []).find(p => p.play_id === playId);
+  if (play && play.config) {
+    // Merge with defaults for any missing keys
+    return _mergePlayConfig(play.config);
+  }
+  // Fall back to building config from response-options.json
+  const rsId = _toResponseSetId(playId);
+  try {
+    const full = await getFullResponseConfig();
+    const opts = (full.options || []).filter(o => o.active_flag !== false);
+    const fc = full.form_config || {};
+    const config = JSON.parse(JSON.stringify(DEFAULT_PLAY_CONFIG));
+    // Override reasons from response-options.json if present
+    for (const outcomeType of ["Interested", "Not Interested"]) {
+      const reasons = opts
+        .filter(o => (o.response_set_id || "").toUpperCase() === rsId && o.outcome_type === outcomeType)
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+        .map(o => o.reason_label);
+      if (reasons.length > 0) config.outcomes[outcomeType].reasons = reasons;
+    }
+    // Override form config from response-options.json
+    if (fc.next_step_types) {
+      config.outcomes["Interested"].next_steps = fc.next_step_types;
+      config.outcomes["Not Interested"].next_steps = fc.next_step_types.filter(s => s !== "Create opportunity");
+    }
+    if (fc.timing_options) {
+      for (const ot of OUTCOME_TYPES) config.outcomes[ot].timing = fc.timing_options;
+    }
+    return config;
+  } catch(e) {
+    console.warn('[PlayConfig] Error loading config for', playId, e);
+    return JSON.parse(JSON.stringify(DEFAULT_PLAY_CONFIG));
+  }
+}
+
+function _mergePlayConfig(playConfig) {
+  const merged = JSON.parse(JSON.stringify(DEFAULT_PLAY_CONFIG));
+  if (playConfig.outcomes) {
+    for (const ot of OUTCOME_TYPES) {
+      if (playConfig.outcomes[ot]) {
+        if (playConfig.outcomes[ot].reasons) merged.outcomes[ot].reasons = playConfig.outcomes[ot].reasons;
+        if (playConfig.outcomes[ot].next_steps) merged.outcomes[ot].next_steps = playConfig.outcomes[ot].next_steps;
+        if (playConfig.outcomes[ot].timing) merged.outcomes[ot].timing = playConfig.outcomes[ot].timing;
+      }
+    }
+  }
+  if (playConfig.questions) merged.questions = playConfig.questions;
+  if (playConfig.instructions) merged.instructions = playConfig.instructions;
+  if (playConfig.why_it_matters) merged.why_it_matters = playConfig.why_it_matters;
+  return merged;
+}
+
+async function savePlayConfig(playId, playConfig) {
+  const playsData = await getPlaysConfig();
+  const play = (playsData.plays || []).find(p => p.play_id === playId);
+  if (!play) throw new Error('Play not found: ' + playId);
+  play.config = playConfig;
+  await savePlaysConfig(playsData);
+  console.log('[PlayConfig] Saved config for', playId);
+}
+
+function _toResponseSetId(playId) {
+  return (playId || '').replace(/[^a-z0-9]/gi, '_').toUpperCase() + '_STANDARD';
+}
+
+// ─── Response Options (backward-compatible) ───────────────────────────────
 
 async function getResponseOptions(responseSetId, outcomeType) {
   const text = await getFileText(SP_ROOT + "/response-options.json");
@@ -824,7 +974,8 @@ function scoreNotes(notes) {
 function calculatePoints(outcome, nextStepType, data) {
   // Base points
   let base = 0;
-  if (outcome === 'Not Interested') base = 15;
+  if (outcome === 'Would Not Engage') base = 5;
+  else if (outcome === 'Not Interested') base = 15;
   else if (outcome === 'Interested') base = nextStepType ? 45 : 30;
 
   // Hidden bonus layer
@@ -1147,6 +1298,8 @@ async function createSnapshot({ label = '', type = 'manual', triggeredBy = '' } 
     { name: 'response-options.json', path: SP_ROOT + '/response-options.json' },
     { name: 'rep-identity.json',     path: SP_ROOT + '/rep-identity.json' },
     { name: 'activity_log.csv',      path: SP_ROOT + '/activity_log.csv' },
+    { name: 'rep_feedback.json',     path: SP_ROOT + '/rep_feedback.json' },
+    { name: 'play_briefs.json',      path: SP_ROOT + '/play_briefs.json' },
   ];
 
   for (const f of coreFiles) {

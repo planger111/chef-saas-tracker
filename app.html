@@ -125,7 +125,7 @@
             <span id="demo-banner-msg">You don't have any assigned accounts yet. Practice with these demo accounts — your manager will assign real accounts soon.</span>
           </div>
           <div class="section-header-row">
-            <span class="section-label">YOUR PLAYS</span>
+            <span class="section-label">MY PLAYS</span>
             <span class="section-sub" id="plays-count-sub"></span>
           </div>
           <div class="plays-grid" id="dashboard-plays-list">
@@ -222,6 +222,9 @@
             <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
               <input type="radio" name="outcome" value="Not Interested" style="width:18px;height:18px;accent-color:#0078d4;"> ❌ Not Interested
             </label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
+              <input type="radio" name="outcome" value="Would Not Engage" style="width:18px;height:18px;accent-color:#0078d4;"> ⚠️ Would Not Engage
+            </label>
           </div>
         </div>
 
@@ -279,6 +282,28 @@
               <option>This month</option>
               <option>Next quarter</option>
               <option>Later</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Would Not Engage fields -->
+        <div id="wne-fields" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Reason <span style="color:#e53e3e;">*</span></label>
+            <select class="form-control" id="field-wne-reason" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Next Step <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <select class="form-control" id="field-wne-next-step" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Timing <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <select class="form-control" id="field-wne-timing" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>
             </select>
           </div>
         </div>
@@ -542,12 +567,26 @@
     // ─────────────────────────────────────────────
     // SCREEN MANAGEMENT
     // ─────────────────────────────────────────────
+    let _screenHistory = ['screen-dashboard'];
     function showScreen(id) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       const target = document.getElementById(id);
       if (target) {
         target.classList.add('active');
         window.scrollTo(0, 0);
+        if (_screenHistory[_screenHistory.length - 1] !== id) {
+          _screenHistory.push(id);
+          history.pushState({ screen: id }, '', location.pathname);
+        }
+      }
+    }
+    function goBack() {
+      if (_screenHistory.length > 1) {
+        _screenHistory.pop();
+        const prev = _screenHistory[_screenHistory.length - 1];
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById(prev);
+        if (target) { target.classList.add('active'); window.scrollTo(0, 0); }
       }
     }
 
@@ -568,6 +607,9 @@
       }
       if (log.outcome === 'Not Interested') {
         return { status: 'Not Interested', statusLabel: 'Not Interested', badgeClass: 'badge-lost', lastDate };
+      }
+      if (log.outcome === 'Would Not Engage') {
+        return { status: 'Would Not Engage', statusLabel: 'Would Not Engage', badgeClass: 'badge-wne', lastDate };
       }
 
       return { status: null, statusLabel: 'Not Started', badgeClass: 'badge-not-started', lastDate: null };
@@ -823,6 +865,10 @@
           const log = latestLogs[a.account_id];
           return !!(log && log.outcome === 'Not Interested');
         }).length;
+        const wouldNotEngage = playAccounts.filter(a => {
+          const log = latestLogs[a.account_id];
+          return !!(log && log.outcome === 'Would Not Engage');
+        }).length;
 
         const pct        = targets > 0 ? Math.round((engaged / targets) * 100) : 0;
         const goalLabel  = getGoalLabel(play.goal);
@@ -840,6 +886,7 @@
         if (engaged > 0) parts.push(`${engaged} Engaged`);
         if (interested > 0)    parts.push(`${interested} Interested 🏆`);
         if (notInterested > 0) parts.push(`${notInterested} Not Interested`);
+        if (wouldNotEngage > 0) parts.push(`${wouldNotEngage} Would Not Engage`);
         const metricsText = parts.join(' → ') || (targets > 0 ? 'No activity yet' : '');
 
         return `
@@ -1073,7 +1120,7 @@
 
       let demoData = DEMO_FALLBACK;
       try {
-        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/demo-accounts.json');
+        const text = await getFileText(`${SP_ROOT}/demo-accounts.json`);
         if (text) {
           const json = JSON.parse(text);
           if (json && json.plays) demoData = json;
@@ -1099,9 +1146,9 @@
         row.points || 0
       ].join(',');
       try {
-        const existing = await getFileText('Chef SaaS Tracker/ChefSaaS/demo_log.csv') || '';
+        const existing = await getFileText(`${SP_ROOT}/demo_log.csv`) || '';
         const content  = existing ? existing + '\n' + line : headers + '\n' + line;
-        await putFile('Chef SaaS Tracker/ChefSaaS/demo_log.csv', content, 'text/csv');
+        await putFile(`${SP_ROOT}/demo_log.csv`, content, 'text/csv');
       } catch(e) { console.warn('Demo log write failed', e); }
     }
 
@@ -1239,7 +1286,7 @@
       // Reset all fields
       document.querySelectorAll('input[name="interaction-type"]').forEach(r => r.checked = false);
       document.querySelectorAll('input[name="outcome"]').forEach(r => r.checked = false);
-      ['field-not-interested-reason', 'field-interested-reason', 'field-next-step-type', 'field-timing', 'field-timing-ni'].forEach(id => {
+      ['field-not-interested-reason', 'field-interested-reason', 'field-next-step-type', 'field-timing', 'field-timing-ni', 'field-wne-reason', 'field-wne-next-step', 'field-wne-timing'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
@@ -1264,6 +1311,29 @@
         document.getElementById('field-interested-reason').innerHTML     = buildReasonOptions(interested);
         document.getElementById('field-not-interested-reason').innerHTML = buildReasonOptions(notInterested);
       });
+
+      // Load WNE + per-play config options
+      const playId = (play || {}).play_id || account.play_id || '';
+      if (playId && typeof getPlayConfig === 'function') {
+        getPlayConfig(playId).then(pc => {
+          if (!pc || !pc.outcomes) return;
+          const wne = pc.outcomes['Would Not Engage'];
+          if (wne) {
+            const wneReasonSel = document.getElementById('field-wne-reason');
+            if (wneReasonSel) wneReasonSel.innerHTML = '<option value="">— Select —</option>' + (wne.reasons || []).map(r => `<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
+            const wneNextSel = document.getElementById('field-wne-next-step');
+            if (wneNextSel) wneNextSel.innerHTML = '<option value="">— Select —</option>' + (wne.next_steps || []).map(r => `<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
+            const wneTimingSel = document.getElementById('field-wne-timing');
+            if (wneTimingSel) wneTimingSel.innerHTML = '<option value="">— Select —</option>' + (wne.timing || []).map(r => `<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
+          }
+          // Also update NI timing from play config
+          const ni = pc.outcomes['Not Interested'];
+          if (ni && ni.timing) {
+            const niTimingSel = document.getElementById('field-timing-ni');
+            if (niTimingSel) niTimingSel.innerHTML = '<option value="">— Select —</option>' + ni.timing.map(r => `<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
+          }
+        }).catch(e => console.warn('[PlayConfig] Failed to load WNE config:', e));
+      }
     }
 
     // Apply per-play question config: show/hide boilerplate fields, render custom questions
@@ -1331,8 +1401,9 @@
       if (step === 2) {
         // Show/hide outcome-specific fields based on step 1 selection
         const outcome = document.querySelector('input[name="outcome"]:checked')?.value;
-        document.getElementById('interested-fields').style.display     = outcome === 'Interested'     ? 'block' : 'none';
-        document.getElementById('not-interested-fields').style.display = outcome === 'Not Interested' ? 'block' : 'none';
+        document.getElementById('interested-fields').style.display     = outcome === 'Interested'       ? 'block' : 'none';
+        document.getElementById('not-interested-fields').style.display = outcome === 'Not Interested'   ? 'block' : 'none';
+        document.getElementById('wne-fields').style.display            = outcome === 'Would Not Engage' ? 'block' : 'none';
       }
 
       const titles = { 1: 'Log Interaction', 2: 'Details' };
@@ -1407,18 +1478,24 @@
           const niReason = document.getElementById('field-not-interested-reason')?.value || '';
           if (!niReason) { alert('Please select a Not Interested Reason.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
         }
+        if (outcome === 'Would Not Engage') {
+          const wneReason = document.getElementById('field-wne-reason')?.value || '';
+          if (!wneReason) { alert('Please select a reason.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
+        }
 
         // Validate required custom questions
         const missingCustom = validateCustomAnswers();
         if (missingCustom) { alert(missingCustom); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
 
-        // Derive reason select from outcome — fixed IDs, no intermediate variable needed
+        // Derive reason select from outcome
         const reasonSelect =
           outcome === 'Interested'
             ? document.getElementById('field-interested-reason')
             : outcome === 'Not Interested'
               ? document.getElementById('field-not-interested-reason')
-              : null;
+              : outcome === 'Would Not Engage'
+                ? document.getElementById('field-wne-reason')
+                : null;
 
         const selectedOption = reasonSelect?.options?.[reasonSelect.selectedIndex];
         const reasonLabel    = selectedOption?.text  || '';
@@ -1426,7 +1503,9 @@
 
         const timingVal = outcome === 'Interested'
           ? (document.getElementById('field-timing')?.value || '')
-          : (document.getElementById('field-timing-ni')?.value || '');
+          : outcome === 'Would Not Engage'
+            ? (document.getElementById('field-wne-timing')?.value || '')
+            : (document.getElementById('field-timing-ni')?.value || '');
 
         const data = {
           account_id:       currentAccount.account_id,
@@ -1439,7 +1518,7 @@
           outcome,
           reason_label:     reasonLabel,
           reason_code:      reasonCode,
-          next_step_type:   outcome === 'Interested' ? nextStepType : '',
+          next_step_type:   outcome === 'Interested' ? nextStepType : outcome === 'Would Not Engage' ? (document.getElementById('field-wne-next-step')?.value || '') : '',
           timing:           timingVal,
           notes:            document.getElementById('field-notes')?.value || '',
           call_date:        document.getElementById('field-call-date')?.value || '',
@@ -1748,7 +1827,7 @@
 
     // Back: play detail → dashboard
     document.getElementById('btn-back-to-dashboard').addEventListener('click', () => {
-      showDashboard();
+      goBack();
     });
 
     // Back: log form → play detail (step-aware)
@@ -1838,9 +1917,9 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
       // Trap browser back button inside the app
-      history.pushState(null, '', location.href);
-      window.addEventListener('popstate', () => {
-        history.pushState(null, '', location.href);
+      history.pushState({ screen: 'screen-dashboard' }, '', location.href);
+      window.addEventListener('popstate', (e) => {
+        goBack();
       });
 
       const onboardBtn = document.getElementById('btn-onboarding-done');
@@ -1855,6 +1934,7 @@
         const user = getCurrentUser();
         if (user) {
           currentUser = user;
+          if (typeof seedDevDataIfNeeded === 'function') await seedDevDataIfNeeded();
           await loadDashboard();
           showOnboardingIfNeeded();
           showBookmarkBannerIfNeeded();
@@ -1908,6 +1988,7 @@
       </div>
     </div>
   </div>
+
 
 <footer class="security-footer">
   INFRA SalesPlay Tracker — Progress Software Proprietary &amp; Confidential &nbsp;·&nbsp; Progress employees only &nbsp;<a href="security.html" class="sec-footer-link">Security &amp; Privacy</a>

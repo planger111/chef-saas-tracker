@@ -192,6 +192,7 @@
 
     function outcomeBadge(outcome) {
       const o = (outcome || '').toLowerCase();
+      if (o.includes('would not engage')) return `<span class="badge badge-wne">${esc(outcome)}</span>`;
       if (o.includes('not interested')) return `<span class="badge badge-not-interested">${esc(outcome)}</span>`;
       if (o.includes('interested')) return `<span class="badge badge-interested">${esc(outcome)}</span>`;
       if (o.includes('meeting')) return `<span class="badge badge-meeting">${esc(outcome)}</span>`;
@@ -314,42 +315,48 @@
         if (daysArr.length > 0) avgDaysSinceTouch = Math.round(daysArr.reduce((s, d) => s + d, 0) / daysArr.length);
       }
 
-      // Interested / Not Interested accounts (by latest outcome)
+      // Interested / Not Interested / Would Not Engage accounts (by latest outcome)
       const interestedAccounts = accounts.filter(a => a.lastOutcome && a.lastOutcome.toLowerCase().includes('interested') && !a.lastOutcome.toLowerCase().includes('not'));
-      const notInterestedAccounts = accounts.filter(a => a.lastOutcome && a.lastOutcome.toLowerCase().includes('not interested'));
+      const notInterestedAccounts = accounts.filter(a => a.lastOutcome && a.lastOutcome === 'Not Interested');
+      const wneAccounts = accounts.filter(a => a.lastOutcome && a.lastOutcome === 'Would Not Engage');
 
       // Total ARR at play
       const totalArr = accounts.reduce((s, a) => s + a.arr, 0);
       const interestedArr = interestedAccounts.reduce((s, a) => s + a.arr, 0);
       const notInterestedArr = notInterestedAccounts.reduce((s, a) => s + a.arr, 0);
+      const wneArr = wneAccounts.reduce((s, a) => s + a.arr, 0);
 
       // ── Outcome distribution ──
       const outcomeCounts = {};
       logs.forEach(l => { const o = l.outcome || 'Unknown'; outcomeCounts[o] = (outcomeCounts[o] || 0) + 1; });
       const outcomesSorted = Object.entries(outcomeCounts).sort((a, b) => b[1] - a[1]);
       const maxOutcome = outcomesSorted.length > 0 ? outcomesSorted[0][1] : 1;
-      const outcomeColors = { 'Interested': '#107c10', 'Not Interested': '#d32f2f', 'Meeting Booked': '#1a73e8', 'Active Deal': '#d97706', 'Closed Won': '#2e7d32' };
+      const outcomeColors = { 'Interested': '#107c10', 'Not Interested': '#d32f2f', 'Would Not Engage': '#f57c00', 'Meeting Booked': '#1a73e8', 'Active Deal': '#d97706', 'Closed Won': '#2e7d32' };
 
-      // ── Reason breakdown — split by interested vs not interested ──
+      // ── Reason breakdown — split by interested vs not interested vs WNE ──
       const interestedReasons = {};
       const notInterestedReasons = {};
+      const wneReasons = {};
       logs.forEach(l => {
         const r = l.reason_label || '';
         if (!r) return;
-        const o = (l.outcome || '').toLowerCase();
-        if (o.includes('not interested')) {
+        const o = (l.outcome || '');
+        if (o === 'Would Not Engage') {
+          wneReasons[r] = (wneReasons[r] || 0) + 1;
+        } else if (o === 'Not Interested') {
           notInterestedReasons[r] = (notInterestedReasons[r] || 0) + 1;
-        } else if (o.includes('interested')) {
+        } else if (o.includes('Interested')) {
           interestedReasons[r] = (interestedReasons[r] || 0) + 1;
         } else {
-          // Other outcomes — group with interested reasons
           interestedReasons[r] = (interestedReasons[r] || 0) + 1;
         }
       });
       const intReasonsSorted = Object.entries(interestedReasons).sort((a, b) => b[1] - a[1]);
       const notIntReasonsSorted = Object.entries(notInterestedReasons).sort((a, b) => b[1] - a[1]);
+      const wneReasonsSorted = Object.entries(wneReasons).sort((a, b) => b[1] - a[1]);
       const maxIntReason = intReasonsSorted.length > 0 ? intReasonsSorted[0][1] : 1;
       const maxNotIntReason = notIntReasonsSorted.length > 0 ? notIntReasonsSorted[0][1] : 1;
+      const maxWneReason = wneReasonsSorted.length > 0 ? wneReasonsSorted[0][1] : 1;
 
       // ── Top 10 Interested by ARR ──
       const top10Interested = [...interestedAccounts].sort((a, b) => b.arr - a.arr).slice(0, 10);
@@ -362,13 +369,14 @@
       logs.forEach(l => {
         const e = (l.rep_email || 'unknown').toLowerCase();
         const canonical = typeof _canonicalEmail === 'function' ? _canonicalEmail(e) : e;
-        if (!repData[canonical]) repData[canonical] = { name: l.rep_name || e, points: 0, engagements: 0, accounts: new Set(), interested: 0, notInterested: 0 };
+        if (!repData[canonical]) repData[canonical] = { name: l.rep_name || e, points: 0, engagements: 0, accounts: new Set(), interested: 0, notInterested: 0, wouldNotEngage: 0 };
         if ((l.rep_name || '').length > (repData[canonical].name || '').length) repData[canonical].name = l.rep_name;
         repData[canonical].points += typeof _recalcPoints === 'function' ? _recalcPoints(l) : (Number(l.points_earned) || 0);
         repData[canonical].engagements++;
         if (l.account_id) repData[canonical].accounts.add(l.account_id);
-        if ((l.outcome || '').toLowerCase().includes('interested') && !(l.outcome || '').toLowerCase().includes('not')) repData[canonical].interested++;
-        if ((l.outcome || '').toLowerCase().includes('not interested')) repData[canonical].notInterested++;
+        if (l.outcome === 'Interested') repData[canonical].interested++;
+        if (l.outcome === 'Not Interested') repData[canonical].notInterested++;
+        if (l.outcome === 'Would Not Engage') repData[canonical].wouldNotEngage++;
       });
       const topReps = Object.values(repData).sort((a, b) => b.points - a.points).slice(0, 15);
       const maxRepPts = topReps.length > 0 ? topReps[0].points : 1;
@@ -415,6 +423,7 @@
             <div class="kpi kb"><div class="kv">${fmtMoney(totalArr)}</div><div class="kl">Total ARR</div></div>
             <div class="kpi kg"><div class="kv">${fmtMoney(interestedArr)}</div><div class="kl">Interested ARR</div></div>
             <div class="kpi kr"><div class="kv">${fmtMoney(notInterestedArr)}</div><div class="kl">Not Interested ARR</div></div>
+            <div class="kpi" style="border-left-color:#f57c00;"><div class="kv">${fmtMoney(wneArr)}</div><div class="kl">Would Not Engage ARR</div></div>
             <div class="kpi ${typeof avgDaysUntouched === 'number' && avgDaysUntouched > 14 ? 'kr' : 'ka'}"><div class="kv">${avgDaysUntouched}</div><div class="kl">Avg Days Untouched</div></div>
             <div class="kpi"><div class="kv">${avgDaysSinceTouch}</div><div class="kl">Avg Days Since Touch</div></div>
           </div>
@@ -462,6 +471,18 @@
               </table>
             ` : '<div class="empty">No not-interested accounts yet</div>'}
           </div>
+          <div class="scard" style="border-left:3px solid #f57c00;">
+            <div class="sc-pill" style="background:#fff3e0;color:#e65100;">⚠ Would Not Engage</div>
+            <div class="sc-stats">
+              <div class="sc-stat"><div class="sv">${wneAccounts.length}</div><div class="sl">Accounts</div></div>
+              <div class="sc-stat"><div class="sv">${fmtMoney(wneArr)}</div><div class="sl">Total ARR</div></div>
+              <div class="sc-stat"><div class="sv">${pct(wneAccounts.length, totalAccounts)}%</div><div class="sl">of Total</div></div>
+            </div>
+            ${wneAccounts.length > 0 ? `
+              <div style="font-size:12px;color:var(--slate-500);margin-top:8px;">Top reasons:</div>
+              ${wneReasonsSorted.slice(0, 5).map(([r, c]) => bar(r, c, maxWneReason, '#f57c00')).join('')}
+            ` : '<div class="empty">No would-not-engage accounts yet</div>'}
+          </div>
         </div>
 
         <!-- Outcome Distribution -->
@@ -483,7 +504,7 @@
           </div>
           ${topReps.length > 0 ? `
             <table class="tbl">
-              <thead><tr><th></th><th>Rep</th><th class="r">Points</th><th class="r">Touches</th><th class="r">Accounts</th><th class="r">Interested</th><th class="r">Not Int.</th></tr></thead>
+              <thead><tr><th></th><th>Rep</th><th class="r">Points</th><th class="r">Touches</th><th class="r">Accounts</th><th class="r">Interested</th><th class="r">Not Int.</th><th class="r">WNE</th></tr></thead>
               <tbody>${topReps.map((r, i) => `<tr>
                 <td><span class="rk ${i < 3 ? 'rk-' + (i+1) : ''}">${i+1}</span></td>
                 <td><strong>${esc(r.name)}</strong></td>
@@ -492,6 +513,7 @@
                 <td class="r">${r.accounts.size}</td>
                 <td class="r" style="color:var(--green-600);">${r.interested}</td>
                 <td class="r" style="color:var(--red-600);">${r.notInterested}</td>
+                <td class="r" style="color:#f57c00;">${r.wouldNotEngage}</td>
               </tr>`).join('')}</tbody>
             </table>
           ` : '<div class="empty">No engagement data yet</div>'}
