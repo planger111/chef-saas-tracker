@@ -110,6 +110,7 @@
         <div class="admin-header-right">
           <span id="admin-user-name" style="font-size:12px;color:#9ca3af;margin-right:8px;"></span>
           <a href="app.html" class="admin-nav-link">Home</a>
+          <a href="reports.html" class="admin-nav-link admin-nav-btn" title="View play reports" style="background:#f0fdf4;color:#15803d;border-color:#bbf7d0;">Reports</a>
           <a href="ingest.html" class="admin-nav-link admin-nav-btn" title="Create a brand new play from scratch">New Play</a>
           <a href="ingest.html?mode=accounts" class="admin-nav-link admin-nav-btn" title="Add accounts to an existing play" style="background:#e8f0fe;color:#1a56db;border-color:#c3d4f7;">Add Accounts</a>
           <div class="export-dropdown">
@@ -134,8 +135,7 @@
         <button class="admin-tab" data-tab="accounts">Accounts</button>
         <button class="admin-tab" data-tab="coverage">Coverage</button>
         <button class="admin-tab" data-tab="health">Health</button>
-        <button class="admin-tab" data-tab="broadcast">Broadcast</button>
-        <button class="admin-tab" data-tab="invite">Invite</button>
+        <button class="admin-tab" data-tab="message">Message</button>
         <button class="admin-tab" data-tab="config">Config</button>
         <button class="admin-tab" data-tab="play-briefs">Play Briefs</button>
         <button class="admin-tab" data-tab="activity-log-user" id="tab-btn-activity-log-user" style="display:none;">Activity Log</button>
@@ -396,47 +396,21 @@
         </div>
       </div><!-- /#tab-accounts -->
 
-      <!-- ── Invite Tab ── -->
-      <div id="tab-invite" class="admin-tab-panel" style="display:none;">
+      <!-- ── Message Tab ── -->
+      <div id="tab-message" class="admin-tab-panel" style="display:none;">
         <div style="max-width:680px;">
-          <h3 style="margin:0 0 4px;">Invite Your Reps</h3>
-          <p style="font-size:13px;color:#555;margin:0 0 20px;">Copy the message below and send it to your team to get them started.</p>
-
-          <!-- Editable prize field -->
-          <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-            <span style="font-size:13px;font-weight:600;white-space:nowrap;">🏆 Prize for top 3:</span>
-            <input id="prize-text" type="text" value="a special prize — TBD by your manager!" style="flex:1;min-width:200px;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;" oninput="rebuildInvite()">
-          </div>
-
-          <!-- Invite preview -->
-          <div id="invite-preview" style="background:#f8faff;border:1px solid #d0e4f7;border-radius:10px;padding:20px 24px;font-size:14px;line-height:1.7;white-space:pre-wrap;font-family:inherit;"></div>
-
-          <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
-            <button onclick="copyInvite()" style="background:#0078d4;color:#fff;border:none;padding:10px 22px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Message</button>
-            <span id="copy-confirm" style="font-size:13px;color:#107c10;align-self:center;display:none;">✓ Copied!</span>
-          </div>
-
-          <!-- Points reference card -->
-          <div style="margin-top:28px;background:#fff;border:1px solid #e9ecef;border-radius:10px;padding:18px 20px;">
-            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#555;margin-bottom:12px;">Points Reference</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;font-size:13px;margin-bottom:16px;">
-              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:#f8f9fa;border-radius:6px;"><span>📞 Not Interested</span><strong style="color:#555;">15 pts</strong></div>
-              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:#f8f9fa;border-radius:6px;"><span>✅ Interested</span><strong style="color:#0078d4;">30 pts</strong></div>
-              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:#f8f9fa;border-radius:6px;"><span>✅ Interested + next step</span><strong style="color:#107c10;">45 pts</strong></div>
-            </div>
-            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#555;margin-bottom:8px;">Levels</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:13px;">
-              <span style="padding:4px 10px;background:#f0f0f0;border-radius:20px;">🌱 Rookie — 0 pts</span>
-              <span style="padding:4px 10px;background:#f0f0f0;border-radius:20px;">🎯 Pitcher — 50 pts</span>
-              <span style="padding:4px 10px;background:#f0f0f0;border-radius:20px;">⭐ Pro — 150 pts</span>
-              <span style="padding:4px 10px;background:#f0f0f0;border-radius:20px;">🥇 Champion — 300 pts</span>
-              <span style="padding:4px 10px;background:#f0f0f0;border-radius:20px;">🏆 Legend — 500 pts</span>
-            </div>
+          <h3 style="margin:0 0 4px;">📣 Send a Message to Your Team</h3>
+          <p style="font-size:13px;color:#555;margin:0 0 20px;">Edit the message below, then copy and paste it into Teams.</p>
+          <textarea id="team-message" rows="12" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;line-height:1.6;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+          <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <button onclick="copyTeamMessage()" style="background:#0078d4;color:#fff;border:none;padding:10px 22px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy to Teams</button>
+            <button onclick="resetTeamMessage()" style="background:#f3f4f6;color:#555;border:1px solid #d1d5db;padding:10px 16px;border-radius:6px;font-size:13px;cursor:pointer;">↩ Reset to Default</button>
+            <span id="message-copy-confirm" style="font-size:13px;color:#107c10;display:none;">✓ Copied!</span>
           </div>
         </div>
-      </div><!-- /#tab-invite -->
+      </div><!-- /#tab-message -->
 
-      <!-- ── Health Check Tab ── -->
+
       <div id="tab-health" class="admin-tab-panel" style="display:none;">
         <div id="health-check-content">
           <div style="text-align:center;padding:32px;"><div class="spinner"></div></div>
@@ -450,54 +424,7 @@
         </div>
       </div><!-- /#tab-coverage -->
 
-      <!-- ── Broadcast Tab ── -->
-      <div id="tab-broadcast" class="admin-tab-panel" style="display:none;">
-        <div style="max-width:780px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
-            <h3 style="margin:0;">📣 Broadcast Update</h3>
-            <button onclick="loadBroadcastTab()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:8px 14px;border-radius:6px;font-size:14px;cursor:pointer;">🔄 Refresh</button>
-          </div>
-
-          <!-- Editable fields -->
-          <div style="background:#f8faff;border:1px solid #d0e4f7;border-radius:10px;padding:18px 20px;margin-bottom:16px;">
-            <div style="display:flex;flex-direction:column;gap:12px;">
-              <div>
-                <label style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;display:block;margin-bottom:4px;">Subject Line</label>
-                <input id="broadcast-subject" type="text" value="🏆 INFRA SalesPlay Tracker — Mid-Quarter Update" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;box-sizing:border-box;">
-              </div>
-              <div>
-                <label style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;display:block;margin-bottom:4px;">Opening Message</label>
-                <textarea id="broadcast-opening" rows="2" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;resize:vertical;box-sizing:border-box;">Great work this quarter! Here's where things stand:</textarea>
-              </div>
-              <div>
-                <label style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;display:block;margin-bottom:4px;">Closing Message</label>
-                <textarea id="broadcast-closing" rows="2" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;resize:vertical;box-sizing:border-box;">Keep up the great work. Every pitch counts! 💪</textarea>
-              </div>
-            </div>
-            <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-              <button onclick="refreshBroadcastPreview()" style="background:#0078d4;color:#fff;border:none;padding:9px 18px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">🔄 Update Preview</button>
-              <button onclick="copyBroadcastMessage()" style="background:#107c10;color:#fff;border:none;padding:9px 18px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Message</button>
-              <span id="broadcast-copy-confirm" style="font-size:13px;color:#107c10;align-self:center;display:none;">✓ Copied!</span>
-            </div>
-          </div>
-
-          <!-- Live leaderboard preview -->
-          <div style="margin-bottom:16px;">
-            <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:8px;">Live Leaderboard (Top 10)</div>
-            <div id="broadcast-leaderboard-preview" style="background:#fff;border:1px solid #e9ecef;border-radius:8px;overflow:hidden;">
-              <div style="text-align:center;padding:24px;color:#aaa;">Loading…</div>
-            </div>
-          </div>
-
-          <!-- Message preview -->
-          <div>
-            <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:8px;">Message Preview</div>
-            <div id="broadcast-message-preview" style="background:#f8faff;border:1px solid #d0e4f7;border-radius:10px;padding:20px 24px;font-size:14px;line-height:1.7;white-space:pre-wrap;font-family:inherit;min-height:200px;"></div>
-          </div>
-        </div>
-      </div><!-- /#tab-broadcast -->
-
-      <!-- Activity Log (User Actions) Tab -->
+      <!-- ── Health Check Tab ── -->
       <div id="tab-activity-log-user" class="admin-tab-panel" style="display:none;">
         <div class="admin-control-bar" style="margin-bottom:12px;">
           <select id="al-filter-user"><option value="">All Users</option></select>
@@ -1176,10 +1103,8 @@
         if (tab.dataset.tab === 'config') loadConfigTab();
         if (tab.dataset.tab === 'plays') loadPlaysTab();
         if (tab.dataset.tab === 'accounts') loadAccountsTab();
-        if (tab.dataset.tab === 'invite') loadInviteTab();
-        if (tab.dataset.tab === 'health') loadHealthTab();
+        if (tab.dataset.tab === 'message') loadMessageTab();        if (tab.dataset.tab === 'health') loadHealthTab();
         if (tab.dataset.tab === 'coverage') loadCoverageTab();
-        if (tab.dataset.tab === 'broadcast') loadBroadcastTab();
         if (tab.dataset.tab === 'activity-log-user') loadActivityLog();
         if (tab.dataset.tab === 'snapshots') loadSnapshotsTab();
         if (tab.dataset.tab === 'identity') { checkIdentityFile(); checkEmailLookupStatus(); }
@@ -2002,60 +1927,33 @@
     }
 
     // ── Invite Tab ────────────────────────────────────────────────────────────
-    function loadInviteTab() { rebuildInvite(); }
-
-    function rebuildInvite() {
+    function loadMessageTab() {
       const appUrl = window.location.origin + window.location.pathname.replace('admin.html', 'app.html');
-      const prize  = (document.getElementById('prize-text')?.value || 'a special prize — TBD by your manager!').trim();
-      const msg =
-`🏆 INFRA SalesPlay Tracker — You're In!
-
-Hey team,
-
-We're using a new tool to track our INFRA SalesPlay initiatives and friendly competition is ON. Log your pitches, earn points, and climb the leaderboard.
-
-👉 Your link: ${appUrl}
-
-📌 BOOKMARK THIS — you'll use it every time you log a pitch.
-   On mobile: tap Share → Add to Home Screen for a one-tap shortcut.
-
-────────────────────────────────
-HOW POINTS WORK
-────────────────────────────────
-Every account you pitch earns you points:
-
-  📞 Not Interested          → 15 pts
-  ✅ Interested              → 30 pts
-  ✅ Interested + next step  → 45 pts
-
-The more you pitch, the higher you climb:
-
-  🌱 Rookie      0 pts
-  🎯 Pitcher    50 pts
-  ⭐ Pro        150 pts
-  🥇 Champion   300 pts
-  🏆 Legend     500 pts
-
-────────────────────────────────
-🎁 PRIZES
-────────────────────────────────
-The TOP 3 reps at the end of the quarter win ${prize}
-
-────────────────────────────────
-
-Log in with your Progress credentials — no new password needed.
-Questions? Reply to this message.
-
-Let's go! 🚀`;
-      document.getElementById('invite-preview').textContent = msg;
+      const el = document.getElementById('team-message');
+      if (el && !el.value) resetTeamMessage();
     }
 
-    function copyInvite() {
-      const text = document.getElementById('invite-preview').textContent;
+    function _defaultTeamMessage() {
+      const appUrl = window.location.origin + window.location.pathname.replace('admin.html', 'app.html');
+      return `Hey team — don't forget to log your pitches in the INFRA SalesPlay Tracker!
+
+👉 ${appUrl}
+
+Bookmark it or add it to your home screen on mobile. Every interaction counts toward the leaderboard. 🏆
+
+Let's go! 🚀`;
+    }
+
+    function resetTeamMessage() {
+      const el = document.getElementById('team-message');
+      if (el) el.value = _defaultTeamMessage();
+    }
+
+    function copyTeamMessage() {
+      const text = document.getElementById('team-message')?.value || '';
       navigator.clipboard.writeText(text).then(() => {
-        const el = document.getElementById('copy-confirm');
-        el.style.display = 'inline';
-        setTimeout(() => el.style.display = 'none', 2500);
+        const el = document.getElementById('message-copy-confirm');
+        if (el) { el.style.display = 'inline'; setTimeout(() => el.style.display = 'none', 2500); }
       });
     }
 
@@ -2074,7 +1972,7 @@ Let's go! 🚀`;
       'kathy.faria@progress.com':    'manager',
       'scheaney@progress.com':       'manager',
     };
-    const MANAGER_TABS    = ['activity-log','leaderboard','coverage','broadcast','health','config','plays','accounts','invite'];
+    const MANAGER_TABS    = ['activity-log','leaderboard','coverage','message','health','config','plays','accounts'];
     const OWNER_ONLY_TABS = [];
 
     let currentAdminRole = null;
@@ -2799,56 +2697,8 @@ Let's go! 🚀`;
     }
 
     // ── Broadcast Tab ─────────────────────────────────────────────────────────
-    let _broadcastData = [];
+    let _unused = null; // formerly _broadcastData
 
-    async function loadBroadcastTab() {
-      _broadcastData = [];
-      const lbWrap = document.getElementById('broadcast-leaderboard-preview');
-      lbWrap.innerHTML = '<div style="text-align:center;padding:24px;color:#aaa;"><div class="spinner"></div></div>';
-      try {
-        const data = await getLeaderboard();
-        _broadcastData = data || [];
-        const top10 = data.slice(0, 10);
-        const rankEmoji = (i) => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
-        lbWrap.innerHTML = top10.map((rep, i) => {
-          const level = getLevel(rep.totalPoints);
-          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #f0f0f0;">
-            <span style="font-size:18px;width:32px;text-align:center;flex-shrink:0;">${rankEmoji(i)}</span>
-            <div style="flex:1;font-weight:600;">${escHtml(rep.repName)}</div>
-            <span style="font-size:13px;color:#888;">${level.badge} ${escHtml(level.name)}</span>
-            <span style="font-weight:700;color:#0078d4;">${rep.totalPoints} pts</span>
-          </div>`;
-        }).join('') || '<div style="padding:20px;text-align:center;color:#aaa;">No data yet</div>';
-        refreshBroadcastPreview();
-      } catch(e) {
-        lbWrap.innerHTML = `<div style="padding:16px;color:#d32f2f;">Error: ${escHtml(e.message)}</div>`;
-      }
-    }
-
-    function refreshBroadcastPreview() {
-      const subject = document.getElementById('broadcast-subject')?.value || '🏆 INFRA SalesPlay Tracker — Mid-Quarter Update';
-      const opening = document.getElementById('broadcast-opening')?.value || '';
-      const closing = document.getElementById('broadcast-closing')?.value || '';
-      const rankLabels = ['🥇', '🥈', '🥉'];
-      const standings = _broadcastData.slice(0, 10).map((rep, i) => {
-        const level  = getLevel(rep.totalPoints);
-        const prefix = i < 3 ? rankLabels[i] : `  #${i+1}`;
-        return `${prefix} ${rep.repName} — ${rep.totalPoints} pts (${level.name})`;
-      }).join('\n');
-
-      const msg = `${subject}\n\n${opening}\n\nCurrent Standings:\n${standings || '(No data yet)'}\n\n${closing}\n\nKeep pitching! 🚀`;
-      const el = document.getElementById('broadcast-message-preview');
-      if (el) el.textContent = msg;
-    }
-
-    function copyBroadcastMessage() {
-      refreshBroadcastPreview();
-      const text = document.getElementById('broadcast-message-preview')?.textContent || '';
-      navigator.clipboard.writeText(text).then(() => {
-        const el = document.getElementById('broadcast-copy-confirm');
-        if (el) { el.style.display = 'inline'; setTimeout(() => el.style.display = 'none', 2500); }
-      });
-    }
 
     // ── Export dropdown ──────────────────────────────────────────────────────
     function toggleExportMenu(btn) {
