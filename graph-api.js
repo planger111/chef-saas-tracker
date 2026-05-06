@@ -422,7 +422,7 @@ async function writeJsonFile(filePath, data) {
 // On dev environments, copies core data from production folder if dev folder is empty.
 // This ensures testers have plays/accounts/config to work with.
 const _PROD_ROOT = 'Chef SaaS Tracker/ChefSaaS';
-const _SEED_FILES = ['plays.json', 'assignments.json', 'response-options.json', 'rep-identity.json'];
+const _SEED_FILES = ['plays.json', 'assignments.json', 'response-options.json', 'rep-identity.json', 'email-lookup.json'];
 
 async function seedDevDataIfNeeded() {
   if (CONFIG.isProd) return; // never run on production
