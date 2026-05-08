@@ -1020,10 +1020,11 @@ tr:hover td {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* Admin tabs */
-.admin-tabs { display:flex; border-bottom:2px solid #e9ecef; margin-bottom:16px; overflow-x:auto; }
-.admin-tab { padding:8px 14px; border:none; background:none; cursor:pointer; font-size:13px; font-weight:500; color:#888; border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; }
-.admin-tab.active { color:#0078d4; font-weight:700; border-bottom-color:#0078d4; }
-.admin-tab:hover:not(.active) { color:#374151; }
+.admin-tabs { display:flex; align-items:center; background:#f1f5f9; border-bottom:2px solid #e2e8f0; padding:6px 16px; gap:2px; overflow-x:auto; flex-wrap:wrap; }
+.admin-tab { padding:6px 14px; border:none; background:none; cursor:pointer; font-size:13px; font-weight:600; color:#64748b; border-radius:6px; white-space:nowrap; transition:background 0.15s,color 0.15s; }
+.admin-tab.active { background:#0078d4; color:#fff; }
+.admin-tab:hover:not(.active) { background:#e2e8f0; color:#1e293b; }
+.tab-divider { width:1px; height:22px; background:#cbd5e1; margin:0 6px; flex-shrink:0; }
 
 /* Play summary rows */
 .play-summary-table { border:1px solid #e9ecef; border-radius:8px; overflow:hidden; margin-bottom:16px; }
