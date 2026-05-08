@@ -395,7 +395,7 @@
 
   <!-- ===================== SCRIPTS ===================== -->
   <script src="msal-browser.js?v=10"></script>
-  <script src="config.js?v=10"></script>
+  <script src="config.js?v=11"></script>
   <script src="msal-auth.js?v=12"></script>
   <script src="graph-api.js?v=11"></script>
   <script src="form-engine.js?v=10"></script>
@@ -1917,9 +1917,14 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
       // Trap browser back button inside the app
-      history.pushState({ screen: 'screen-dashboard' }, '', location.href);
+      history.pushState({ screen: 'screen-dashboard' }, '', location.pathname);
       window.addEventListener('popstate', (e) => {
-        goBack();
+        if (e.state && e.state.screen) {
+          goBack();
+        } else {
+          // Fell past our history stack — re-anchor to prevent leaving the app
+          history.pushState({ screen: _screenHistory[_screenHistory.length - 1] || 'screen-dashboard' }, '', location.pathname);
+        }
       });
 
       const onboardBtn = document.getElementById('btn-onboarding-done');

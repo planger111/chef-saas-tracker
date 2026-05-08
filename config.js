@@ -5,8 +5,10 @@
 const CONFIG = (() => {
   const host = window.location.hostname || '';
 
-  // Production: the main Azure SWA domain
-  const isProd = host.includes('orange-smoke-04675d40f');
+  // Production: exact match on the main Azure SWA domain only.
+  // Dev preview URLs look like orange-smoke-04675d40f-5.eastus2.7.azurestaticapps.net
+  // and must NOT be treated as prod — they need the dev data folder and banner.
+  const isProd = host === 'orange-smoke-04675d40f.7.azurestaticapps.net';
 
   // Dev: preview environments, localhost, or any non-prod host
   const isDev = !isProd;
