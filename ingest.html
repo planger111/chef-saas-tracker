@@ -732,10 +732,9 @@
 
   window.addEventListener('load', async () => {
     try {
-      await initAuth();
-      const accounts = window._msalInstance ? window._msalInstance.getAllAccounts() : [];
-      if (accounts.length > 0) {
-        currentUser = getCurrentUser() || accounts[0];
+      const account = await initAuth();
+      if (account) {
+        currentUser = account;
         onSignedIn();
       }
     } catch(e) {}

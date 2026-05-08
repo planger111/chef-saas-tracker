@@ -269,13 +269,14 @@
   // ── Auth ──
   async function doLogin() {
     try {
-      await initAuth();
       const user = getCurrentUser();
       if (user) {
         document.getElementById('intake-login').style.display = 'none';
         document.getElementById('intake-form').style.display = '';
         document.getElementById('intake-name').value = user.name || '';
         document.getElementById('intake-email').value = user.email || '';
+      } else {
+        await signIn(); // triggers redirect — page reloads on return
       }
     } catch(e) {
       console.error('Login error:', e);
@@ -372,16 +373,15 @@
     document.getElementById('intake-status').innerHTML = '';
   }
 
-  // Auto-login if already authenticated
+  // Auto-login if already authenticated (or returning from redirect)
   document.addEventListener('DOMContentLoaded', async () => {
     try {
-      await initAuth();
-      const user = getCurrentUser();
-      if (user) {
+      const account = await initAuth();
+      if (account) {
         document.getElementById('intake-login').style.display = 'none';
         document.getElementById('intake-form').style.display = '';
-        document.getElementById('intake-name').value = user.name || '';
-        document.getElementById('intake-email').value = user.email || '';
+        document.getElementById('intake-name').value = account.name || '';
+        document.getElementById('intake-email').value = account.username || '';
       }
     } catch(e) { /* show login button */ }
   });

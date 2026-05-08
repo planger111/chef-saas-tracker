@@ -124,6 +124,7 @@
               <button id="btn-excel-drop" onclick="document.getElementById('btn-excel').click();closeExportMenu()">Export Filtered (Excel)</button>
             </div>
           </div>
+          <button class="admin-nav-btn" onclick="openMessageModal()" title="Send message to team" style="background:#fff8e1;color:#92400e;border-color:#fcd34d;">📣 Message</button>
           <a href="#" id="btn-sign-out" class="admin-nav-link">Sign out</a>
           <!-- Hidden for JS compatibility -->
           <button id="btn-export-all" style="display:none;"></button>
@@ -138,7 +139,7 @@
         <button class="admin-tab" data-tab="accounts">Accounts</button>
         <button class="admin-tab" data-tab="coverage">Coverage</button>
         <button class="admin-tab" data-tab="health">Health</button>
-        <button class="admin-tab" data-tab="message">Message</button>
+
         <button class="admin-tab" data-tab="config">Config</button>
         <button class="admin-tab" data-tab="play-briefs">Play Briefs</button>
         <button class="admin-tab" data-tab="activity-log-user" id="tab-btn-activity-log-user" style="display:none;">Activity Log</button>
@@ -399,19 +400,23 @@
         </div>
       </div><!-- /#tab-accounts -->
 
-      <!-- ── Message Tab ── -->
-      <div id="tab-message" class="admin-tab-panel" style="display:none;">
-        <div style="max-width:680px;">
-          <h3 style="margin:0 0 4px;">📣 Send a Message to Your Team</h3>
-          <p style="font-size:13px;color:#555;margin:0 0 20px;">Edit the message below, then copy and paste it into Teams.</p>
-          <textarea id="team-message" rows="12" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;line-height:1.6;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
-          <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+
+      <!-- Message Modal -->
+      <div id="message-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:12px;padding:28px;width:560px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h3 style="margin:0;font-size:16px;">📣 Send a Message to Your Team</h3>
+            <button onclick="closeMessageModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6b7280;">✕</button>
+          </div>
+          <p style="font-size:13px;color:#555;margin:0 0 12px;">Edit below, then copy and paste into Teams.</p>
+          <textarea id="team-message" rows="10" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;line-height:1.6;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+          <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
             <button onclick="copyTeamMessage()" style="background:#0078d4;color:#fff;border:none;padding:10px 22px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy to Teams</button>
-            <button onclick="resetTeamMessage()" style="background:#f3f4f6;color:#555;border:1px solid #d1d5db;padding:10px 16px;border-radius:6px;font-size:13px;cursor:pointer;">↩ Reset to Default</button>
+            <button onclick="resetTeamMessage()" style="background:#f3f4f6;color:#555;border:1px solid #d1d5db;padding:10px 16px;border-radius:6px;font-size:13px;cursor:pointer;">↩ Reset</button>
             <span id="message-copy-confirm" style="font-size:13px;color:#107c10;display:none;">✓ Copied!</span>
           </div>
         </div>
-      </div><!-- /#tab-message -->
+      </div>
 
 
       <div id="tab-health" class="admin-tab-panel" style="display:none;">
@@ -1945,6 +1950,17 @@
 Bookmark it or add it to your home screen on mobile. Every interaction counts toward the leaderboard. 🏆
 
 Let's go! 🚀`;
+    }
+
+    function openMessageModal() {
+      const el = document.getElementById('team-message');
+      if (el && !el.value) resetTeamMessage();
+      const m = document.getElementById('message-modal');
+      if (m) { m.style.display = 'flex'; }
+    }
+    function closeMessageModal() {
+      const m = document.getElementById('message-modal');
+      if (m) m.style.display = 'none';
     }
 
     function resetTeamMessage() {
