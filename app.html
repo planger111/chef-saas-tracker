@@ -168,6 +168,7 @@
         <button class="filter-tab" data-filter="not-started">Not Started</button>
         <button class="filter-tab" data-filter="interested">Interested</button>
         <button class="filter-tab" data-filter="not-interested">Not Interested</button>
+        <button class="filter-tab" data-filter="would-not-engage">Would Not Engage</button>
       </div>
 
       <div style="font-size:13px;color:#0078d4;font-weight:600;padding:8px 2px 4px;">👇 Tap an account to log a pitch</div>
@@ -889,7 +890,7 @@
         if (engaged > 0) parts.push(`${engaged} Engaged`);
         if (interested > 0)    parts.push(`${interested} Interested 🏆`);
         if (notInterested > 0) parts.push(`${notInterested} Not Interested`);
-        if (wouldNotEngage > 0) parts.push(`${wouldNotEngage} Would Not Engage`);
+        if (wouldNotEngage > 0) parts.push(`<span style="color:#e65c00;font-weight:700;">${wouldNotEngage} Would Not Engage</span>`);
         const metricsText = parts.join(' → ') || (targets > 0 ? 'No activity yet' : '');
 
         return `
@@ -904,7 +905,7 @@
               <span class="play-pct" style="${pct === 100 ? 'color:#107c10;font-weight:700;' : ''}">${pct}%</span>
             </div>
             <div class="play-card-bottom">
-              <span class="play-card-metrics">${escHtml(metricsText)}</span>
+              <span class="play-card-metrics">${metricsText}</span>
               ${hasInfo ? `<button class="play-info-link" onclick="event.stopPropagation();showPlayInfo('${escHtml(play.play_id)}')">ⓘ Info</button>` : ''}
             </div>
           </div>
@@ -1229,6 +1230,7 @@
         if (filter === 'not-started')   return !status;
         if (filter === 'interested')    return status === 'Interested';
         if (filter === 'not-interested') return status === 'Not Interested';
+        if (filter === 'would-not-engage') return status === 'Would Not Engage';
 
         return true;
       });
@@ -1456,7 +1458,7 @@
     }
 
     async function submitEngagement() {
-      console.log("PATCH LIVE v4 - deployed app.html");
+      console.log("PATCH LIVE v5 - deployed app.html");
       const interactionType = document.querySelector('input[name="interaction-type"]:checked')?.value;
       const outcome         = document.querySelector('input[name="outcome"]:checked')?.value;
 

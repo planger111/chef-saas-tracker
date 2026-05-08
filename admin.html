@@ -3899,7 +3899,7 @@ Let's go! 🚀`;
       brief.manager_notes = document.getElementById('brief-notes-' + id).value;
       brief.reviewed_by = currentUser || '';
       try {
-        await writeJsonFile(SP_ROOT + '/play_briefs.json', { submissions: _briefsData });
+        await writeJsonFile('play_briefs.json', { submissions: _briefsData });
         filterBriefs();
       } catch (e) {
         console.error('Update brief error:', e);

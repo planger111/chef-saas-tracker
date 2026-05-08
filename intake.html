@@ -344,7 +344,7 @@
       } catch(e) { console.log('No existing briefs file, creating new'); }
 
       briefs.submissions.push(brief);
-      await writeJsonFile(SP_ROOT + '/play_briefs.json', briefs);
+      await writeJsonFile('play_briefs.json', briefs);
 
       statusEl.innerHTML = '';
       document.getElementById('intake-form').style.display = 'none';
