@@ -35,88 +35,9 @@ const OUTCOME_TYPES = ["Interested", "Not Interested", "Would Not Engage"];
 let _siteId = null;
 let _driveId = null;
 
-// ─── Static alias map (module-level, shared by all matching functions) ────────
-// Maps each known email variant to its siblings. Built from rep-identity.json.
-// Used in both getPlayAssignments (Tier 3) and _getAllLogsForRep for consistent matching.
-// Identity aliases are now resolved via SharePoint email-lookup.json and Graph API proxyAddresses.
-// No hardcoded email data in source code.
-const STATIC_ALIASES = {};
-
 // ─── Section 2: Identity ──────────────────────────────────────────────────
-// rep-identity.json lives in SharePoint only — never in the GitHub repo.
-// Schema per rep: { oid, upn, display_name, aliases[], role, active, last_seen }
-
-let _repIdentityMap = null;
-
-async function getRepIdentityMap() {
-  if (_repIdentityMap) return _repIdentityMap;
-  try {
-    const text = await getFileText(SP_ROOT + "/rep-identity.json");
-    if (text) _repIdentityMap = JSON.parse(text);
-  } catch(e) {
-    console.warn("[Identity] Could not load rep-identity.json:", e.message);
-    _repIdentityMap = { reps: [], pending: [] };
-  }
-  return _repIdentityMap;
-}
-
-// Match an email address against all aliases[] in the identity map.
-// Returns the rep entry or null.
-async function resolveRepByEmail(email) {
-  if (!email) return null;
-  const map = await getRepIdentityMap();
-  const lower = email.toLowerCase().trim();
-  return (map.reps || []).find(r => (r.aliases || []).some(a => a.toLowerCase() === lower)) || null;
-}
-
-// Match a display name using last-name-first scoring.
-// Returns { match: repEntry|null, ambiguous: bool, candidates: [] }
-async function resolveRepByName(fullName) {
-  if (!fullName) return { match: null, ambiguous: false, candidates: [] };
-  const map = await getRepIdentityMap();
-  const parts = fullName.trim().toLowerCase().split(/\s+/);
-  const lastName = parts[parts.length - 1];
-  const firstName = parts[0];
-
-  // Step 1: filter to last-name matches
-  const lastMatches = (map.reps || []).filter(r => {
-    const rParts = r.display_name.toLowerCase().split(/\s+/);
-    return rParts[rParts.length - 1] === lastName;
-  });
-  if (lastMatches.length === 0) return { match: null, ambiguous: false, candidates: [] };
-
-  // Step 2: score first name similarity
-  function firstScore(rep) {
-    const rFirst = rep.display_name.toLowerCase().split(/\s+/)[0];
-    if (rFirst === firstName) return 100;
-    if (rFirst.startsWith(firstName) || firstName.startsWith(rFirst)) return 80;
-    if (rFirst.slice(0, 3) === firstName.slice(0, 3)) return 60;
-    return 0;
-  }
-  const scored = lastMatches.map(r => ({ rep: r, score: firstScore(r) })).filter(s => s.score >= 60);
-  if (scored.length === 0) return { match: null, ambiguous: false, candidates: lastMatches };
-  if (scored.length === 1) return { match: scored[0].rep, ambiguous: false, candidates: [] };
-  // Multiple above threshold — ambiguous, admin must pick
-  return { match: null, ambiguous: true, candidates: scored.map(s => s.rep) };
-}
-
-// Write the Entra OID to a rep's identity map entry after first login.
-// Read-check-write to avoid race: only writes if oid is currently empty.
-async function registerOID(upn, oid) {
-  if (!upn || !oid) return;
-  try {
-    const map = await getRepIdentityMap();
-    const rep = (map.reps || []).find(r => (r.aliases || []).some(a => a.toLowerCase() === upn.toLowerCase()));
-    if (!rep) return; // not in map — write to pending[] handled separately
-    if (rep.oid && rep.oid === oid) return; // already registered, no-op
-    rep.oid = oid;
-    rep.last_seen = new Date().toISOString();
-    await writeJsonFile("rep-identity.json", map);
-    _repIdentityMap = map; // update cache
-  } catch(e) {
-    console.warn("[Identity] registerOID failed (non-blocking):", e.message);
-  }
-}
+// Rep identity is resolved via email-lookup.json (Excel-derived, admin-managed)
+// and Graph API /me proxyAddresses. rep-identity.json manual overrides removed.
 
 // ─── Section 3: Activity Logging ─────────────────────────────────────────
 // Appends to activity_log.csv in SharePoint. Always non-blocking — never throws.
@@ -422,7 +343,7 @@ async function writeJsonFile(filePath, data) {
 // On dev environments, copies core data from production folder if dev folder is empty.
 // This ensures testers have plays/accounts/config to work with.
 const _PROD_ROOT = 'Chef SaaS Tracker/ChefSaaS';
-const _SEED_FILES = ['plays.json', 'assignments.json', 'response-options.json', 'rep-identity.json', 'email-lookup.json'];
+const _SEED_FILES = ['plays.json', 'assignments.json', 'response-options.json', 'email-lookup.json'];
 
 async function seedDevDataIfNeeded() {
   if (CONFIG.isProd) return; // never run on production
@@ -622,8 +543,6 @@ function _lookupRepEntry(emailLower) {
 //        primary_email AND the upn so either form matches assignments
 //   1. Graph /me: mail, userPrincipalName, otherMails
 //   2. MSAL token claims: preferred_username, email, upn, unique_name, username
-//   3. rep-identity.json aliases (SharePoint-hosted, admin-managed)
-//   4. STATIC_ALIASES hardcoded map (legacy fallback; now superseded by layer 0)
 
 async function getEmailCandidates(primaryEmail) {
   const candidates = new Set();
@@ -663,20 +582,6 @@ async function getEmailCandidates(primaryEmail) {
       }
     }
   } catch(e) {}
-
-  // Layer 3: rep-identity.json aliases (SharePoint-managed overrides)
-  try {
-    const seed = primaryEmail || [...candidates][0];
-    if (seed) {
-      const repEntry = await resolveRepByEmail(seed);
-      if (repEntry) (repEntry.aliases || []).forEach(add);
-    }
-  } catch(e) {}
-
-  // Layer 4: STATIC_ALIASES expansion (legacy fallback — kept for backward compat
-  // in case a rep isn't in email-lookup.json yet)
-  const snapshot4 = [...candidates];
-  snapshot4.forEach(e => (STATIC_ALIASES[e] || []).forEach(add));
 
   return candidates;
 }
@@ -719,31 +624,8 @@ async function getPlayAssignments(repEmail, meta = null) {
     }
   }
 
-  // Tier 2: resolve via rep-identity.json alias overrides
-  try {
-    const repEntry = await resolveRepByEmail(emailLower);
-    if (repEntry) {
-      const aliases = (repEntry.aliases || []).map(a => a.toLowerCase());
-      const byAlias = list.filter(a =>
-        aliases.includes((a.rep_sso_login || '').toLowerCase()) ||
-        aliases.includes((a.rep_email || '').toLowerCase())
-      );
-      if (byAlias.length > 0) {
-        console.log("[ChefSaaS] Matched " + byAlias.length + " accounts via identity map for " + repEntry.display_name);
-        if (meta) {
-          meta.matchType        = 'identity_map';
-          meta.resolvedIdentity = aliases[0] || emailLower;
-          meta.candidates       = aliases;
-        }
-        return byAlias;
-      }
-    }
-  } catch(e) {
-    console.warn("[ChefSaaS] Identity map lookup failed, falling back:", e.message);
-  }
-
-  // Tier 3: direct match using enriched candidate set
-  // (token claims + Graph /me + email-lookup.json + STATIC_ALIASES)
+  // Tier 2: direct match using enriched candidate set
+  // (token claims + Graph /me + email-lookup.json)
   const allCandidates = await getEmailCandidates(emailLower);
 
   const matched = list.filter(a => {
@@ -1011,7 +893,7 @@ function calculatePoints(outcome, nextStepType, data) {
 
 // ─── CSV helpers ──────────────────────────────────────────────────────────
 
-const CSV_HEADERS = ["id","submitted_at","play_id","play_name","account_id","account_name","rep_email","rep_name","interaction_type","outcome","reason_label","reason_code","next_step_type","timing","contact_level","notes","call_date","points_earned"];
+const CSV_HEADERS = ["id","submitted_at","play_id","play_name","account_id","account_name","rep_email","rep_name","interaction_type","outcome","reason_label","reason_code","next_step_type","timing","contact_level","notes","call_date","points_earned","manager_override","override_by"];
 
 function csvEscape(val) {
   val = val !== undefined && val !== null ? String(val) : "";
@@ -1126,16 +1008,9 @@ function _recalcPoints(row) {
   return calculatePoints(row.outcome, row.next_step_type, row);
 }
 
-// Normalize a rep email to a canonical key using STATIC_ALIASES
+// Normalize a rep email to its canonical lowercase form
 function _canonicalEmail(email) {
-  const e = (email || '').toLowerCase();
-  // Pick the alphabetically-first alias as canonical so both variants map to the same key
-  const aliases = STATIC_ALIASES[e];
-  if (aliases && aliases.length) {
-    const all = [e, ...aliases].sort();
-    return all[0];
-  }
-  return e;
+  return (email || '').toLowerCase().trim();
 }
 
 async function getLeaderboard(playId) {
@@ -1296,7 +1171,7 @@ async function createSnapshot({ label = '', type = 'manual', triggeredBy = '' } 
     { name: 'plays.json',            path: SP_ROOT + '/plays.json' },
     { name: 'assignments.json',      path: SP_ROOT + '/assignments.json' },
     { name: 'response-options.json', path: SP_ROOT + '/response-options.json' },
-    { name: 'rep-identity.json',     path: SP_ROOT + '/rep-identity.json' },
+    { name: 'email-lookup.json',     path: SP_ROOT + '/email-lookup.json' },
     { name: 'activity_log.csv',      path: SP_ROOT + '/activity_log.csv' },
     { name: 'rep_feedback.json',     path: SP_ROOT + '/rep_feedback.json' },
     { name: 'play_briefs.json',      path: SP_ROOT + '/play_briefs.json' },
@@ -1391,7 +1266,7 @@ async function restoreSnapshot(snapshotId, scope = 'full') {
   const snapshotPath = SNAPSHOT_ROOT + '/' + snapshotId;
 
   const scopeFiles = {
-    full:  ['plays.json', 'assignments.json', 'response-options.json', 'rep-identity.json', 'activity_log.csv'],
+    full:  ['plays.json', 'assignments.json', 'response-options.json', 'email-lookup.json', 'activity_log.csv'],
     plays: ['plays.json', 'assignments.json', 'response-options.json'],
     logs:  ['activity_log.csv'],
   };

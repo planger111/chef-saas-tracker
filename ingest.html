@@ -183,17 +183,17 @@
     <div class="wizard-connector"></div>
     <div class="wizard-step" id="ws-2">
       <span class="ws-num">2</span>
-      <span class="ws-label">Basics</span>
+      <span class="ws-label">Play Details</span>
     </div>
     <div class="wizard-connector"></div>
     <div class="wizard-step" id="ws-3">
       <span class="ws-num">3</span>
-      <span class="ws-label">Outcomes</span>
+      <span class="ws-label">Rep Guidance</span>
     </div>
     <div class="wizard-connector"></div>
     <div class="wizard-step" id="ws-4">
       <span class="ws-num">4</span>
-      <span class="ws-label">Questions</span>
+      <span class="ws-label">Outcomes</span>
     </div>
     <div class="wizard-connector"></div>
     <div class="wizard-step" id="ws-5">
@@ -234,31 +234,43 @@
     </div>
   </div>
 
-  <!-- Step 2: Basics -->
+  <!-- Step 2: Play Details -->
   <div class="wizard-panel" id="step-2-panel" style="display:none;">
 
     <div class="form-row">
       <label>Play Name *</label>
-      <input type="text" id="play-name-input" placeholder="e.g. Chef Infrastructure Upgrade"
+      <input type="text" id="play-name-input" placeholder="e.g. Chef SaaS Migration Q3"
              oninput="onPlayNameInput(this.value)" autocomplete="off" />
-      <div class="hint">A short name for this sales play. System auto-generates the ID (e.g. "Chef Infrastructure Upgrade" → chef-infrastructure-upgrade).</div>
+      <div class="hint">Keep it short and descriptive. The system auto-generates the play ID.</div>
       <div id="play-picker-options" style="margin-top:8px;display:none;"></div>
     </div>
 
     <div class="form-row">
-      <label>Goal *</label>
-      <div class="goal-seg">
-        <button type="button" class="goal-seg-btn" data-goal="feedback"        onclick="selectGoalSeg(this)">Feedback</button>
-        <button type="button" class="goal-seg-btn" data-goal="interest"        onclick="selectGoalSeg(this)">Interest</button>
-        <button type="button" class="goal-seg-btn" data-goal="meeting"         onclick="selectGoalSeg(this)">Meeting</button>
-        <button type="button" class="goal-seg-btn" data-goal="disqualification" onclick="selectGoalSeg(this)">Disqualification</button>
-        <button type="button" class="goal-seg-btn" data-goal="expansion"       onclick="selectGoalSeg(this)">Expansion</button>
-      </div>
+      <label>Elevator Pitch / Description *</label>
+      <textarea id="play-pitch" rows="3" placeholder="What is this play about? What problem are we solving for customers?"></textarea>
+    </div>
+
+    <div class="form-row">
+      <label>Why This Play Matters *</label>
+      <textarea id="play-why-it-matters" rows="2" placeholder="Why should reps prioritize this play? What's the business impact?"></textarea>
+    </div>
+
+    <div class="form-row">
+      <label>Desired Customer Outcome *</label>
+      <select id="play-desired-outcome" onchange="validatePlayStep()">
+        <option value="">— select desired outcome —</option>
+        <option value="get_meeting">Get a Meeting / Demo Booked</option>
+        <option value="qualify_interest">Qualify Interest / Identify Opportunity</option>
+        <option value="gather_feedback">Gather Feedback</option>
+        <option value="disqualify">Disqualify / Rule Out</option>
+        <option value="expansion">Drive Expansion / Upsell</option>
+      </select>
+      <div class="hint">What do we want the customer to agree to or do?</div>
     </div>
 
     <div class="form-row">
       <label>Ideal Customer Profile (ICP)</label>
-      <textarea id="play-icp" rows="3" placeholder="Describe the ideal customer — size, industry, tech stack, pain points…"></textarea>
+      <textarea id="play-icp" rows="2" placeholder="Who is this play for? Describe the ideal customer — size, industry, tech stack, pain points…"></textarea>
     </div>
 
     <div class="form-row">
@@ -267,161 +279,81 @@
     </div>
 
     <div class="form-row">
-      <label>Elevator Pitch</label>
-      <textarea id="play-pitch" rows="3" placeholder="What should the rep say? Keep it concise — 2–4 sentences reps can memorize."></textarea>
+      <label>Competitive Positioning</label>
+      <textarea id="play-competitive" rows="2" placeholder="How do we win against the competition? Key differentiators, objection handlers…"></textarea>
     </div>
-
-    <div class="form-row">
-      <label>Why It Matters</label>
-      <textarea id="play-why-it-matters" rows="3" placeholder="Why should reps care about this play? What's the business impact?"></textarea>
-    </div>
-
-    <div class="form-row">
-      <label>Rep Instructions</label>
-      <textarea id="play-instructions" rows="3" placeholder="Step-by-step instructions for reps — how to run this play."></textarea>
-    </div>
-
-
 
     <div style="display:flex;justify-content:space-between;">
       <button class="btn-secondary" onclick="goToStep(1)">← Back to Product</button>
-      <button class="btn-primary" id="btn-play-next" onclick="finishPlayStep()" disabled>Continue to Outcomes →</button>
+      <button class="btn-primary" id="btn-play-next" onclick="finishPlayStep()" disabled>Continue to Rep Guidance →</button>
     </div>
   </div>
 
-  <!-- Step 3: Outcomes -->
+  <!-- Step 3: Rep Guidance -->
   <div class="wizard-panel" id="step-3-panel" style="display:none;">
-    <p class="step-desc">Choose which outcomes reps can log for this play. You can customise per-outcome settings below.</p>
+    <p class="step-desc">Add the key questions reps should ask when running this play. Keep it focused — 3 to 5 questions is ideal.</p>
+
+    <div id="key-questions-list" style="margin-bottom:14px;"></div>
+    <button class="btn-secondary" onclick="addKeyQuestion()" style="width:100%;font-size:13px;padding:9px;">+ Add Key Question</button>
+
+    <div class="wizard-nav" style="margin-top:20px;">
+      <button class="btn-secondary" onclick="goToStep(2)">← Back to Play Details</button>
+      <button class="btn-primary" onclick="finishRepGuidanceStep()">Continue to Outcomes →</button>
+    </div>
+  </div>
+
+  <!-- Step 4: Outcomes -->
+  <div class="wizard-panel" id="step-4-panel" style="display:none;">
+    <p class="step-desc">Select which outcomes reps can log for this play. The reasons and next steps for each outcome are managed by admin in the Config tab.</p>
 
     <div id="outcomes-list">
-
       <div class="outcome-row">
-        <label class="outcome-check">
+        <label class="outcome-check" style="width:100%;cursor:pointer;">
           <input type="checkbox" class="outcome-cb" data-outcome="Interested" checked>
           <span class="outcome-label">Interested</span>
+          <span style="font-size:12px;color:#6b7280;margin-left:8px;font-weight:400;">Customer showed genuine interest</span>
         </label>
-        <div class="outcome-config" style="display:flex;gap:8px;margin-left:auto;">
-          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
-          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
-          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
-        </div>
       </div>
-
       <div class="outcome-row">
-        <label class="outcome-check">
+        <label class="outcome-check" style="width:100%;cursor:pointer;">
           <input type="checkbox" class="outcome-cb" data-outcome="Not Interested" checked>
           <span class="outcome-label">Not Interested</span>
+          <span style="font-size:12px;color:#6b7280;margin-left:8px;font-weight:400;">Customer declined or passed</span>
         </label>
-        <div class="outcome-config" style="display:flex;gap:8px;margin-left:auto;">
-          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
-          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
-          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
-        </div>
       </div>
-
       <div class="outcome-row">
-        <label class="outcome-check">
-          <input type="checkbox" class="outcome-cb" data-outcome="Meeting Booked" checked>
+        <label class="outcome-check" style="width:100%;cursor:pointer;">
+          <input type="checkbox" class="outcome-cb" data-outcome="Would Not Engage" checked>
+          <span class="outcome-label">Would Not Engage</span>
+          <span style="font-size:12px;color:#6b7280;margin-left:8px;font-weight:400;">Could not get a response or engagement</span>
+        </label>
+      </div>
+      <div class="outcome-row">
+        <label class="outcome-check" style="width:100%;cursor:pointer;">
+          <input type="checkbox" class="outcome-cb" data-outcome="Meeting Booked">
           <span class="outcome-label">Meeting Booked</span>
+          <span style="font-size:12px;color:#6b7280;margin-left:8px;font-weight:400;">Follow-up meeting or demo scheduled</span>
         </label>
-        <div class="outcome-config" style="display:flex;gap:8px;margin-left:auto;">
-          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
-          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
-          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
-        </div>
       </div>
-
       <div class="outcome-row">
-        <label class="outcome-check">
-          <input type="checkbox" class="outcome-cb" data-outcome="Follow-Up Needed" checked>
+        <label class="outcome-check" style="width:100%;cursor:pointer;">
+          <input type="checkbox" class="outcome-cb" data-outcome="Follow-Up Needed">
           <span class="outcome-label">Follow-Up Needed</span>
+          <span style="font-size:12px;color:#6b7280;margin-left:8px;font-weight:400;">Customer needs more info or time</span>
         </label>
-        <div class="outcome-config" style="display:flex;gap:8px;margin-left:auto;">
-          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
-          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
-          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
-        </div>
       </div>
-
       <div class="outcome-row">
-        <label class="outcome-check">
-          <input type="checkbox" class="outcome-cb" data-outcome="Feedback Collected" checked>
+        <label class="outcome-check" style="width:100%;cursor:pointer;">
+          <input type="checkbox" class="outcome-cb" data-outcome="Feedback Collected">
           <span class="outcome-label">Feedback Collected</span>
+          <span style="font-size:12px;color:#6b7280;margin-left:8px;font-weight:400;">Valuable product or market feedback gathered</span>
         </label>
-        <div class="outcome-config" style="display:flex;gap:8px;margin-left:auto;">
-          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
-          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
-          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
-        </div>
-      </div>
-
-      <div class="outcome-row">
-        <label class="outcome-check">
-          <input type="checkbox" class="outcome-cb" data-outcome="No Response">
-          <span class="outcome-label">No Response</span>
-        </label>
-        <div class="outcome-config" style="display:none;gap:8px;margin-left:auto;">
-          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
-          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
-          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
-        </div>
-      </div>
-
-      <div class="outcome-row">
-        <label class="outcome-check">
-          <input type="checkbox" class="outcome-cb" data-outcome="Wrong Contact">
-          <span class="outcome-label">Wrong Contact</span>
-        </label>
-        <div class="outcome-config" style="display:none;gap:8px;margin-left:auto;">
-          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
-          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
-          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
-        </div>
-      </div>
-
-    </div><!-- /#outcomes-list -->
-
-    <div class="wizard-nav">
-      <button class="btn-secondary" onclick="goToStep(2)">← Back to Basics</button>
-      <button class="btn-secondary" id="btn-save-config-only" onclick="savePlayConfigOnly()" style="background:#f0f7ff;color:#0078d4;border-color:#b3d4f5;">💾 Save Config Only</button>
-      <button class="btn-primary" id="btn-outcomes-next" onclick="goToStep(4)">Continue to Questions →</button>
-    </div>
-  </div>
-
-  <!-- Step 4: Questions -->
-  <div class="wizard-panel" id="step-4-panel" style="display:none;">
-    <p class="step-desc">Choose which fields reps see when logging an interaction for this play. Interaction type and outcome are always included.</p>
-
-    <!-- Section A: Standard Fields -->
-    <div style="margin-bottom:24px;">
-      <div class="q-section-header">Standard Fields</div>
-      <div id="boilerplate-questions-list"></div>
-    </div>
-
-    <!-- Section B: Custom Questions -->
-    <div style="margin-bottom:24px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div class="q-section-header" style="margin-bottom:0;">Custom Questions</div>
-        <button class="btn-secondary" onclick="addCustomQuestion()" style="padding:6px 12px;font-size:13px;">+ Add Question</button>
-      </div>
-      <div id="custom-questions-list">
-        <div style="font-size:13px;color:#9ca3af;padding:8px 0;" id="cq-empty-msg">No custom questions yet.</div>
-      </div>
-    </div>
-
-    <!-- Preview toggle -->
-    <div style="margin-bottom:16px;">
-      <button class="btn-secondary" onclick="toggleFormPreview()" style="width:100%;font-size:13px;">👁 Preview Rep Form</button>
-      <div id="form-preview" style="display:none;margin-top:10px;border:1px solid #e5e7eb;border-radius:8px;padding:16px;background:#f9fafb;font-size:13px;">
-        <div style="font-weight:700;color:#374151;margin-bottom:8px;">Rep will see these fields:</div>
-        <div id="form-preview-content"></div>
       </div>
     </div>
 
     <div class="wizard-nav">
-      <button class="btn-secondary" onclick="goToStep(3)">← Back to Outcomes</button>
-      <button class="btn-secondary" onclick="savePlayConfigOnly()" style="background:#f0f7ff;color:#0078d4;border-color:#b3d4f5;">💾 Save Config Only</button>
-      <button class="btn-primary" onclick="finishQuestionsStep()">Continue to Accounts →</button>
+      <button class="btn-secondary" onclick="goToStep(3)">← Back to Rep Guidance</button>
+      <button class="btn-primary" onclick="goToStep(5)">Continue to Accounts →</button>
     </div>
   </div>
 
@@ -438,24 +370,8 @@
     <!-- Play summary bar -->
     <div class="play-summary-bar" id="play-summary-bar"></div>
 
-    <!-- Upload mode -->
-    <div style="font-size:13px;font-weight:600;margin-bottom:4px;color:#333;">Upload mode</div>
-    <div class="upload-mode-rows">
-      <label class="upload-mode-row safe">
-        <input type="radio" name="upload-mode" value="merge" checked onchange="updateStep5Context()">
-        <div>
-          <span class="mode-title">Add accounts</span>
-          <span class="mode-desc">New accounts added, existing updated, nothing removed</span>
-        </div>
-      </label>
-      <label class="upload-mode-row destructive">
-        <input type="radio" name="upload-mode" value="replace" onchange="updateStep5Context()">
-        <div>
-          <span class="mode-title">Replace all</span>
-          <span class="mode-desc">⚠ Removes all existing accounts for this play</span>
-        </div>
-      </label>
-    </div>
+    <!-- Upload mode (hidden — always merge, admin can replace via admin panel) -->
+    <input type="radio" name="upload-mode" value="merge" checked style="display:none;">
 
     <!-- Upload tabs -->
     <div class="upload-tabs">
@@ -526,22 +442,25 @@
 
     <!-- Step nav -->
     <div class="wizard-nav" style="margin-top:24px;">
-      <button class="btn-secondary" id="step5-back-btn" onclick="handleStep5Back()">← Back to Questions</button>
+      <button class="btn-secondary" id="step5-back-btn" onclick="handleStep5Back()">← Back to Outcomes</button>
       <button class="btn-secondary" onclick="goToStep(6)" style="margin-left:auto;">Skip — Review Without Accounts →</button>
     </div>
 
   </div><!-- /#step-5-panel -->
 
-  <!-- Step 6: Review & Launch -->
+  <!-- Step 6: Review & Submit -->
   <div class="wizard-panel" id="step-6-panel" style="display:none;">
-    <h3 style="margin:0 0 16px;font-size:18px;">📋 Review &amp; Launch</h3>
-    <p class="step-desc">Review your play configuration before saving.</p>
+    <h3 style="margin:0 0 16px;font-size:18px;">📋 Review &amp; Submit</h3>
+    <p class="step-desc">Review your play details below. When you submit, the play goes to admin for review and activation.</p>
     <div id="review-summary" style="font-size:14px;line-height:1.8;"></div>
+    <div style="margin-top:20px;padding:14px 16px;background:#fff3cd;border:1px solid #fbbf24;border-radius:8px;font-size:13px;color:#92400e;">
+      <strong>📬 What happens next:</strong> Your play will be saved as a draft and reviewed by an admin before going live to reps.
+    </div>
     <div class="wizard-nav" style="margin-top:24px;">
       <button class="btn-secondary" onclick="goToStep(5)">← Back to Accounts</button>
       <div style="display:flex;gap:10px;">
         <button class="btn-secondary" onclick="savePlayAsDraft()" style="background:#fff3cd;color:#92400e;border-color:#fbbf24;">💾 Save as Draft</button>
-        <button class="btn-success" onclick="launchPlay()">🚀 Launch as Active</button>
+        <button class="btn-success" onclick="submitPlayForReview()">📬 Submit for Admin Review</button>
       </div>
     </div>
   </div>
@@ -659,7 +578,7 @@
     });
     currentStep = n;
     if (n === 4) {
-      renderBoilerplateQuestions();
+      loadStep4();
     }
     if (n === 5) {
       const inner = document.getElementById('upload-status-inner');
@@ -682,18 +601,20 @@
   function populateSummaryBar() {
     if (!currentPlayDef) return;
     const outcomeCount = document.querySelectorAll('.outcome-cb:checked').length;
-    const goalLabel = getGoalLabel(selectedGoal);
     const productSel = document.getElementById('play-product');
     const product = productSel?.value === 'Other'
       ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
       : (productSel?.value || '');
+    const desiredOutcomeEl = document.getElementById('play-desired-outcome');
+    const desiredLabel = desiredOutcomeEl?.options[desiredOutcomeEl?.selectedIndex]?.text || '';
     const parts = [
       `<span class="psb-val">${esc(currentPlayDef.play_name)}</span>`,
-      `<span class="psb-sep">|</span>`,
-      `Goal: <span class="psb-val">${esc(goalLabel)}</span>`,
     ];
     if (product) {
       parts.push(`<span class="psb-sep">|</span>`, `Product: <span class="psb-val">${esc(product)}</span>`);
+    }
+    if (desiredLabel) {
+      parts.push(`<span class="psb-sep">|</span>`, `Goal: <span class="psb-val">${esc(desiredLabel)}</span>`);
     }
     if (currentPlayDef.target_persona) {
       parts.push(`<span class="psb-sep">|</span>`, `Persona: <span class="psb-val">${esc(currentPlayDef.target_persona)}</span>`);
@@ -1139,54 +1060,41 @@
 
   function onPlayNameInput(val) {
     document.querySelectorAll('.play-picker-row').forEach(el => el.classList.remove('selected'));
-    if (!_originalPlayId) _isExistingPlay = false;  // only treat as new if not editing existing
-    validatePlayStep();
-  }
-
-  function selectGoalSeg(btn) {
-    document.querySelectorAll('.goal-seg-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    selectedGoal = btn.dataset.goal;
-    validatePlayStep();
-  }
-
-  function selectGoal(goal) {
-    // Map legacy qualify_in/qualify_out to semantic values
-    const legacyMap = { qualify_in: 'interest', qualify_out: 'disqualification' };
-    const canonical = legacyMap[goal] || goal;
-    selectedGoal = canonical;
-    document.querySelectorAll('.goal-seg-btn').forEach(b => b.classList.remove('selected'));
-    const btn = document.querySelector(`.goal-seg-btn[data-goal="${canonical}"]`);
-    if (btn) btn.classList.add('selected');
+    if (!_originalPlayId) _isExistingPlay = false;
     validatePlayStep();
   }
 
   function validatePlayStep() {
     const name = document.getElementById('play-name-input').value.trim();
-    document.getElementById('btn-play-next').disabled = !(name && selectedGoal);
+    const desiredOutcome = document.getElementById('play-desired-outcome')?.value || '';
+    document.getElementById('btn-play-next').disabled = !(name && desiredOutcome);
   }
 
   function finishPlayStep() {
     if (!requireIngestAdmin()) return;
     const name = document.getElementById('play-name-input').value.trim();
-    if (!name || !selectedGoal) return;
+    const desiredOutcome = document.getElementById('play-desired-outcome')?.value || '';
+    if (!name || !desiredOutcome) return;
     const playId = (_isExistingPlay && _originalPlayId) ? _originalPlayId : slugify(name);
     const productSel = document.getElementById('play-product');
-    const product = productSel.value === 'Other' 
+    const product = productSel.value === 'Other'
       ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
       : productSel.value;
     currentPlayDef = {
       ...(currentPlayDef || {}),
-      play_id:        playId,
-      play_name:      name,
-      product:        product,
-      goal:           selectedGoal,
-      icp:            document.getElementById('play-icp').value.trim(),
-      target_persona: document.getElementById('play-persona').value.trim(),
-      elevator_pitch: document.getElementById('play-pitch').value.trim(),
-      why_it_matters: document.getElementById('play-why-it-matters').value.trim(),
-      instructions:   document.getElementById('play-instructions').value.trim(),
-      active:         currentPlayDef?.active ?? true
+      play_id:               playId,
+      play_name:             name,
+      product:               product,
+      desired_outcome:       desiredOutcome,
+      // keep goal for backward compat with existing plays
+      goal:                  currentPlayDef?.goal || desiredOutcome,
+      icp:                   document.getElementById('play-icp').value.trim(),
+      target_persona:        document.getElementById('play-persona').value.trim(),
+      elevator_pitch:        document.getElementById('play-pitch').value.trim(),
+      why_it_matters:        document.getElementById('play-why-it-matters').value.trim(),
+      competitive_positioning: document.getElementById('play-competitive')?.value?.trim() || '',
+      active:                currentPlayDef?.active ?? false,
+      pending_review:        true,
     };
     goToStep(3);
   }
@@ -1457,33 +1365,35 @@
 
   // ── Step 3: Identity Resolution ──────────────────────────────────────────
 
-  let _identityMap = null;
+  let _emailLookupCache = null;
 
   async function resolveAssignments(assignments) {
     try {
-      if (!_identityMap) _identityMap = await getRepIdentityMap();
+      if (!_emailLookupCache) _emailLookupCache = await loadEmailLookup();
     } catch(e) {
-      log('warn', 'Identity map unavailable — rep resolution skipped');
+      log('warn', 'Email lookup unavailable — rep resolution skipped');
       return assignments;
     }
-    if (!_identityMap || !_identityMap.reps) return assignments;
+    if (!_emailLookupCache || !_emailLookupCache.length) return assignments;
+
+    // Build a quick index: lowercase email → lookup row
+    const idx = {};
+    (_emailLookupCache || []).forEach(row => {
+      if (row.primary_email) idx[row.primary_email.toLowerCase()] = row;
+      if (row.upn) idx[row.upn.toLowerCase()] = row;
+    });
 
     let resolved = 0, unresolved = 0;
     const result = assignments.map(a => {
-      // Try by email/alias first
       const emailKey = (a.rep_sso_login || a.rep_email || '').toLowerCase();
-      let rep = emailKey ? resolveRepByEmail(emailKey, _identityMap) : null;
+      const row = emailKey ? idx[emailKey] : null;
 
-      // Fallback: try by name
-      if (!rep && a.rep_name) rep = resolveRepByName(a.rep_name, _identityMap);
-
-      if (rep) {
+      if (row) {
         resolved++;
         return {
           ...a,
-          rep_sso_login: rep.upn || a.rep_sso_login,
-          rep_name:      rep.display_name || a.rep_name,
-          rep_oid:       rep.oid || '',
+          rep_sso_login: row.primary_email || a.rep_sso_login,
+          rep_name:      row.display_name  || a.rep_name,
         };
       } else {
         unresolved++;
@@ -1491,8 +1401,8 @@
       }
     });
 
-    if (resolved > 0)   log('ok',   `Identity resolved: ${resolved} rep${resolved !== 1 ? 's' : ''} matched to identity map`);
-    if (unresolved > 0) log('warn', `${unresolved} row${unresolved !== 1 ? 's' : ''} could not be matched — verify rep email or name`);
+    if (resolved > 0)   log('ok',   `Identity resolved: ${resolved} rep${resolved !== 1 ? 's' : ''} matched via email-lookup.json`);
+    if (unresolved > 0) log('warn', `${unresolved} row${unresolved !== 1 ? 's' : ''} could not be matched — verify rep email in email-lookup.json`);
     return result;
   }
 
