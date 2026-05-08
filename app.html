@@ -578,7 +578,8 @@
       if (target) {
         target.classList.add('active');
         window.scrollTo(0, 0);
-        if (_screenHistory[_screenHistory.length - 1] !== id) {
+        // Don't push the loading screen into navigation history — it's transient
+        if (id !== 'screen-loading' && _screenHistory[_screenHistory.length - 1] !== id) {
           _screenHistory.push(id);
           history.pushState({ screen: id }, '', location.pathname);
         }
@@ -601,22 +602,24 @@
       const log = latestLogs[accountId];
 
       if (!log) {
-        return { status: null, statusLabel: 'Not Started', badgeClass: 'badge-not-started', lastDate: null };
+        return { status: null, statusLabel: 'Not Started', badgeClass: 'badge-not-started', lastDate: null, isManagerOverride: false, managerNote: '' };
       }
 
       const lastDate = log.submitted_at || log.submitted_date || null;
+      const isManagerOverride = log.manager_override === 'true';
+      const managerNote = log.manager_note || '';
 
       if (log.outcome === 'Interested') {
-        return { status: 'Interested', statusLabel: 'Interested', badgeClass: 'badge-won', lastDate };
+        return { status: 'Interested', statusLabel: 'Interested', badgeClass: 'badge-won', lastDate, isManagerOverride, managerNote };
       }
       if (log.outcome === 'Not Interested') {
-        return { status: 'Not Interested', statusLabel: 'Not Interested', badgeClass: 'badge-lost', lastDate };
+        return { status: 'Not Interested', statusLabel: 'Not Interested', badgeClass: 'badge-lost', lastDate, isManagerOverride, managerNote };
       }
       if (log.outcome === 'Would Not Engage') {
-        return { status: 'Would Not Engage', statusLabel: 'Would Not Engage', badgeClass: 'badge-wne', lastDate };
+        return { status: 'Would Not Engage', statusLabel: 'Would Not Engage', badgeClass: 'badge-wne', lastDate, isManagerOverride, managerNote };
       }
 
-      return { status: null, statusLabel: 'Not Started', badgeClass: 'badge-not-started', lastDate: null };
+      return { status: null, statusLabel: 'Not Started', badgeClass: 'badge-not-started', lastDate: null, isManagerOverride: false, managerNote: '' };
     }
 
     function isCompleted(accountId) {
@@ -639,13 +642,19 @@
 
     // Re-render the dashboard play cards from current in-memory data (no fetch).
     // Call this whenever navigating back to the dashboard so counts stay fresh.
-    function showDashboard() {
+    async function showDashboard() {
       if (_dashboardReady) {
-        renderPlayCards();          // re-render with latest latestLogs
+        renderPlayCards();             // re-render with latest latestLogs
         renderPointsCard(totalPoints); // re-render points in case submission happened
+        // Re-render leaderboard peek with current data (non-blocking)
+        if (_selectedLbPlay !== null) {
+          getLeaderboard(_selectedLbPlay).then(lbData => {
+            renderLeaderboardPeek(lbData, allPlays, _selectedLbPlay);
+          }).catch(() => {});
+        }
         showScreen('screen-dashboard');
       } else {
-        loadDashboard();            // first time or data not ready — full load
+        loadDashboard();               // first time or data not ready — full load
       }
     }
 
@@ -890,7 +899,7 @@
         if (engaged > 0) parts.push(`${engaged} Engaged`);
         if (interested > 0)    parts.push(`${interested} Interested 🏆`);
         if (notInterested > 0) parts.push(`${notInterested} Not Interested`);
-        if (wouldNotEngage > 0) parts.push(`<span style="color:#e65c00;font-weight:700;">${wouldNotEngage} Would Not Engage</span>`);
+        if (wouldNotEngage > 0) parts.push(`<span style="color:#ff6b35;font-weight:700;font-size:13px;">● ${wouldNotEngage} WNE</span>`);
         const metricsText = parts.join(' → ') || (targets > 0 ? 'No activity yet' : '');
 
         return `
@@ -1241,19 +1250,24 @@
       }
 
       const html = filtered.map(account => {
-        const { statusLabel, badgeClass, lastDate } = getAccountStatus(account.account_id);
+        const { statusLabel, badgeClass, lastDate, isManagerOverride, managerNote } = getAccountStatus(account.account_id);
         const region  = account.region  || '';
         const segment = account.segment || '';
         const meta    = [region, segment].filter(Boolean).join(' · ');
+        const wneStyle = badgeClass === 'badge-wne' ? ' style="background:#ff6b35;color:#fff;"' : '';
 
         return `
           <div class="account-row" data-account-id="${account.account_id}" style="cursor:pointer;">
             <div class="account-row-info">
               <div class="account-row-name">${account.account_name || account.name || account.account_id}</div>
               ${meta ? `<div class="account-row-meta">${meta}</div>` : ''}
+              ${isManagerOverride && managerNote ? `<div style="font-size:12px;color:#e67e22;margin-top:3px;">🔁 Manager note: ${escHtml(managerNote)}</div>` : ''}
             </div>
             <div class="account-row-right">
-              <span class="status-badge ${badgeClass}">${statusLabel}</span>
+              <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+                <span class="status-badge ${badgeClass}"${wneStyle}>${statusLabel}</span>
+                ${isManagerOverride ? '<span style="background:#e67e22;color:#fff;border-radius:10px;padding:2px 6px;font-size:11px;font-weight:700;">🔁</span>' : ''}
+              </div>
               <div class="account-row-date">${formatDate(lastDate)}</div>
             </div>
           </div>
@@ -1832,7 +1846,7 @@
 
     // Back: play detail → dashboard
     document.getElementById('btn-back-to-dashboard').addEventListener('click', () => {
-      goBack();
+      showDashboard();
     });
 
     // Back: log form → play detail (step-aware)
@@ -1921,6 +1935,11 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
+      // Show DEV banner only in non-production environments
+      const isProd = window.location.hostname === 'orange-smoke-04675d40f.7.azurestaticapps.net';
+      const devBanner = document.getElementById('dev-env-banner');
+      if (devBanner) devBanner.style.display = isProd ? 'none' : 'block';
+
       // Trap browser back button inside the app
       history.pushState({ screen: 'screen-dashboard' }, '', location.pathname);
       window.addEventListener('popstate', (e) => {

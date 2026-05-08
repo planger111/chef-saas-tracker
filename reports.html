@@ -513,7 +513,7 @@
                 <td class="r">${r.accounts.size}</td>
                 <td class="r" style="color:var(--green-600);">${r.interested}</td>
                 <td class="r" style="color:var(--red-600);">${r.notInterested}</td>
-                <td class="r" style="color:#f57c00;">${r.wouldNotEngage}</td>
+                <td class="r" style="color:#ff6b35; font-weight:700;">${r.wouldNotEngage}</td>
               </tr>`).join('')}</tbody>
             </table>
           ` : '<div class="empty">No engagement data yet</div>'}
@@ -606,15 +606,30 @@
     async function loadReports() {
       showScreen('screen-loading');
       allPlays = await getPlays();
+
       const assText = await getFileText(SP_ROOT + '/assignments.json');
-      allAssignments = assText ? (JSON.parse(assText).assignments || []).filter(a => a.active_flag !== false) : [];
+      try {
+        allAssignments = assText ? (JSON.parse(assText).assignments || []).filter(a => a.active_flag !== false) : [];
+      } catch (e) {
+        console.warn('reports: could not parse assignments.json:', e);
+        allAssignments = [];
+      }
 
       const sel = document.getElementById('play-select');
       sel.innerHTML = allPlays.map(p => `<option value="${p.play_id}">${p.play_name || p.play_id}</option>`).join('');
 
       if (allPlays.length > 0) {
         await loadPlayData(allPlays[0].play_id);
-        renderSnapshot(allPlays[0].play_id);
+        try {
+          renderSnapshot(allPlays[0].play_id);
+        } catch (renderErr) {
+          console.error('renderSnapshot error:', renderErr);
+          document.getElementById('report-content').innerHTML = `
+            <div style="text-align:center;padding:40px;color:var(--red-600);">
+              ⚠️ Error rendering report. Check console for details.<br>
+              <button onclick="location.reload()" style="margin-top:16px;padding:8px 20px;background:#0078d4;color:#fff;border:none;border-radius:8px;cursor:pointer;">↺ Retry</button>
+            </div>`;
+        }
       }
       showScreen('screen-reports');
     }
@@ -637,7 +652,16 @@
       if (!this.value) return;
       showScreen('screen-loading');
       await loadPlayData(this.value);
-      renderSnapshot(this.value);
+      try {
+        renderSnapshot(this.value);
+      } catch (renderErr) {
+        console.error('renderSnapshot error on play change:', renderErr);
+        document.getElementById('report-content').innerHTML = `
+          <div style="text-align:center;padding:40px;color:var(--red-600);">
+            ⚠️ Error rendering report. Check console for details.<br>
+            <button onclick="location.reload()" style="margin-top:16px;padding:8px 20px;background:#0078d4;color:#fff;border:none;border-radius:8px;cursor:pointer;">↺ Retry</button>
+          </div>`;
+      }
       showScreen('screen-reports');
     });
 

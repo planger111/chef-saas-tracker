@@ -304,56 +304,15 @@
 
   <!-- Step 4: Outcomes -->
   <div class="wizard-panel" id="step-4-panel" style="display:none;">
-    <p class="step-desc">Select which outcomes reps can log for this play. The reasons and next steps for each outcome are managed by admin in the Config tab.</p>
+    <p class="step-desc">Select which outcomes reps can log for this play, and configure which reasons to offer for each.</p>
 
-    <div id="outcomes-list">
-      <div class="outcome-row">
-        <label class="outcome-check" style="width:100%;cursor:pointer;">
-          <input type="checkbox" class="outcome-cb" data-outcome="Interested" checked>
-          <span class="outcome-label">Interested</span>
-          <span style="font-size:12px;color:#6b7280;margin-left:8px;font-weight:400;">Customer showed genuine interest</span>
-        </label>
-      </div>
-      <div class="outcome-row">
-        <label class="outcome-check" style="width:100%;cursor:pointer;">
-          <input type="checkbox" class="outcome-cb" data-outcome="Not Interested" checked>
-          <span class="outcome-label">Not Interested</span>
-          <span style="font-size:12px;color:#6b7280;margin-left:8px;font-weight:400;">Customer declined or passed</span>
-        </label>
-      </div>
-      <div class="outcome-row">
-        <label class="outcome-check" style="width:100%;cursor:pointer;">
-          <input type="checkbox" class="outcome-cb" data-outcome="Would Not Engage" checked>
-          <span class="outcome-label">Would Not Engage</span>
-          <span style="font-size:12px;color:#6b7280;margin-left:8px;font-weight:400;">Could not get a response or engagement</span>
-        </label>
-      </div>
-      <div class="outcome-row">
-        <label class="outcome-check" style="width:100%;cursor:pointer;">
-          <input type="checkbox" class="outcome-cb" data-outcome="Meeting Booked">
-          <span class="outcome-label">Meeting Booked</span>
-          <span style="font-size:12px;color:#6b7280;margin-left:8px;font-weight:400;">Follow-up meeting or demo scheduled</span>
-        </label>
-      </div>
-      <div class="outcome-row">
-        <label class="outcome-check" style="width:100%;cursor:pointer;">
-          <input type="checkbox" class="outcome-cb" data-outcome="Follow-Up Needed">
-          <span class="outcome-label">Follow-Up Needed</span>
-          <span style="font-size:12px;color:#6b7280;margin-left:8px;font-weight:400;">Customer needs more info or time</span>
-        </label>
-      </div>
-      <div class="outcome-row">
-        <label class="outcome-check" style="width:100%;cursor:pointer;">
-          <input type="checkbox" class="outcome-cb" data-outcome="Feedback Collected">
-          <span class="outcome-label">Feedback Collected</span>
-          <span style="font-size:12px;color:#6b7280;margin-left:8px;font-weight:400;">Valuable product or market feedback gathered</span>
-        </label>
-      </div>
+    <div id="outcomes-config-list" style="margin-bottom:16px;">
+      <div style="color:#9ca3af;font-size:13px;">Loading outcome options…</div>
     </div>
 
     <div class="wizard-nav">
       <button class="btn-secondary" onclick="goToStep(3)">← Back to Rep Guidance</button>
-      <button class="btn-primary" onclick="goToStep(5)">Continue to Accounts →</button>
+      <button class="btn-primary" onclick="finishOutcomesStep()">Continue to Accounts →</button>
     </div>
   </div>
 
@@ -460,7 +419,7 @@
       <button class="btn-secondary" onclick="goToStep(5)">← Back to Accounts</button>
       <div style="display:flex;gap:10px;">
         <button class="btn-secondary" onclick="savePlayAsDraft()" style="background:#fff3cd;color:#92400e;border-color:#fbbf24;">💾 Save as Draft</button>
-        <button class="btn-success" onclick="submitPlayForReview()">📬 Submit for Admin Review</button>
+        <button class="btn-success" id="btn-submit-review" onclick="submitPlayForReview()">📬 Submit for Admin Review</button>
       </div>
     </div>
   </div>
@@ -498,6 +457,8 @@
   function esc(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
+
+  function escHtml(s) { return esc(s); }
 
   function slugify(name) {
     return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -600,7 +561,9 @@
 
   function populateSummaryBar() {
     if (!currentPlayDef) return;
-    const outcomeCount = document.querySelectorAll('.outcome-cb:checked').length;
+    const outcomesIntake = currentPlayDef.outcomes_intake || {};
+    const outcomeCount = Object.values(outcomesIntake).filter(v => v.enabled).length
+      || document.querySelectorAll('[id^="outcome-cb-"]:checked').length;
     const productSel = document.getElementById('play-product');
     const product = productSel?.value === 'Other'
       ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
@@ -706,11 +669,11 @@
     if (_isExistingPlay && currentPlayDef) {
       banner.style.display = 'block';
       titleEl.textContent = 'Adding accounts to:';
-      const goalLabel = getGoalLabel(currentPlayDef.goal);
+      const outcomeLabel = currentPlayDef.desired_outcome || currentPlayDef.goal || '';
       playEl.innerHTML = `
         <strong style="color:#1a56db;">${esc(currentPlayDef.play_name)}</strong>
         <span style="font-family:monospace;font-size:11px;color:#888;margin-left:6px;">${esc(currentPlayDef.play_id)}</span>
-        <span style="color:#6b7280;margin-left:8px;">· Goal: ${goalLabel}</span>
+        <span style="color:#6b7280;margin-left:8px;">· Goal: ${esc(outcomeLabel)}</span>
         <span id="banner-acct-count" style="color:#6b7280;margin-left:8px;">· Loading targets…</span>
       `;
       loadPlayAccountCount(currentPlayDef.play_id).then(count => {
@@ -1032,7 +995,12 @@
     document.getElementById('play-persona').value = p.target_persona || '';
     document.getElementById('play-pitch').value   = p.elevator_pitch || '';
     document.getElementById('play-why-it-matters').value = p.why_it_matters || '';
-    document.getElementById('play-instructions').value = p.instructions || '';
+    const instrEl = document.getElementById('play-instructions');
+    if (instrEl) instrEl.value = p.instructions || '';
+    const compEl = document.getElementById('play-competitive');
+    if (compEl) compEl.value = p.competitive_positioning || '';
+    const desiredEl = document.getElementById('play-desired-outcome');
+    if (desiredEl && p.desired_outcome) desiredEl.value = p.desired_outcome;
     // Set product dropdown
     const productSel = document.getElementById('play-product');
     if (productSel) {
@@ -1050,7 +1018,6 @@
     }
     document.querySelectorAll('.play-picker-row').forEach(el => el.classList.remove('selected'));
     if (rowEl) rowEl.classList.add('selected');
-    if (p.goal) selectGoal(p.goal);
     _isExistingPlay = true;
     _originalPlayId = p.play_id;  // lock the ID — renaming never changes this
     currentPlayDef = { ...p };
@@ -1648,22 +1615,43 @@
     const product = productSel?.value === 'Other' 
       ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
       : (productSel?.value || '—');
-    const outcomeCount = document.querySelectorAll('.outcome-cb:checked').length;
-    const questionsConfig = getQuestionsConfig();
-    const totalQuestions = questionsConfig.boilerplate.length + questionsConfig.custom.length;
+
+    const desiredOutcome = currentPlayDef.desired_outcome || '';
+    const desiredLabel = (() => {
+      const sel = document.getElementById('play-desired-outcome');
+      if (sel && sel.value) return sel.options[sel.selectedIndex]?.text || desiredOutcome;
+      return desiredOutcome;
+    })();
+
+    const keyQuestions = currentPlayDef.key_questions || [];
+    const outcomesIntake = currentPlayDef.outcomes_intake || {};
+    const enabledOutcomes = Object.entries(outcomesIntake).filter(([, v]) => v.enabled);
     const acctCount = parsedAssignments.length;
-    const goalLabel = getGoalLabel(selectedGoal);
+
+    const questionsHtml = keyQuestions.length > 0
+      ? '<ul style="margin:4px 0 0;padding-left:18px;">' + keyQuestions.map(q => `<li>${esc(q)}</li>`).join('') + '</ul>'
+      : '<span style="color:#9ca3af;">None configured</span>';
+
+    const outcomesHtml = enabledOutcomes.length > 0
+      ? enabledOutcomes.map(([name, v]) =>
+          `${esc(name)} <span style="color:#6b7280;font-size:12px;">(${v.reasons.length} reason${v.reasons.length !== 1 ? 's' : ''})</span>`
+        ).join(', ')
+      : Object.keys(outcomesIntake).length === 0
+        ? '<span style="color:#d97706;">Not configured — go back to step 4</span>'
+        : '<span style="color:#9ca3af;">None enabled</span>';
+
     el.innerHTML = `
       <table style="width:100%;border-collapse:collapse;font-size:14px;">
-        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;width:160px;">Product</td><td style="padding:10px 8px;">${esc(product)}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;width:190px;">Product</td><td style="padding:10px 8px;">${esc(product)}</td></tr>
         <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Play Name</td><td style="padding:10px 8px;">${esc(currentPlayDef.play_name)}</td></tr>
         <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Play ID</td><td style="padding:10px 8px;font-family:monospace;font-size:12px;">${esc(currentPlayDef.play_id)}</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Goal</td><td style="padding:10px 8px;">${esc(goalLabel)}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Desired Outcome</td><td style="padding:10px 8px;">${esc(desiredLabel || '—')}</td></tr>
         <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Persona</td><td style="padding:10px 8px;">${esc(currentPlayDef.target_persona || '—')}</td></tr>
         <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Elevator Pitch</td><td style="padding:10px 8px;">${esc(currentPlayDef.elevator_pitch || '—')}</td></tr>
         <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Why It Matters</td><td style="padding:10px 8px;">${esc(currentPlayDef.why_it_matters || '—')}</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Outcomes</td><td style="padding:10px 8px;">${outcomeCount} configured</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Questions</td><td style="padding:10px 8px;">${totalQuestions} fields</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Competitive Positioning</td><td style="padding:10px 8px;">${esc(currentPlayDef.competitive_positioning || '—')}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;vertical-align:top;padding-top:12px;">Key Questions</td><td style="padding:10px 8px;">${questionsHtml}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Outcomes</td><td style="padding:10px 8px;">${outcomesHtml}</td></tr>
         <tr><td style="padding:10px 8px;font-weight:600;color:#555;">Accounts</td><td style="padding:10px 8px;">${acctCount > 0 ? acctCount + ' ready to upload' : '<span style="color:#d97706;">None — accounts can be added later</span>'}</td></tr>
       </table>
     `;
@@ -1751,17 +1739,221 @@
 
   function _buildOutcomesTree() {
     const tree = {};
-    const checked = Array.from(document.querySelectorAll('.outcome-cb:checked'));
-    for (const cb of checked) {
-      const label = cb.dataset.outcome;
-      const defaultOutcome = DEFAULT_PLAY_CONFIG.outcomes[label];
-      tree[label] = {
-        reasons: defaultOutcome ? [...defaultOutcome.reasons] : [],
-        next_steps: defaultOutcome ? [...defaultOutcome.next_steps] : [],
-        timing: defaultOutcome ? [...defaultOutcome.timing] : [],
-      };
+    // Prefer outcomes_intake captured via step 4
+    const outcomesIntake = (currentPlayDef && currentPlayDef.outcomes_intake) || {};
+    Object.entries(outcomesIntake).forEach(([label, cfg]) => {
+      if (cfg.enabled) {
+        tree[label] = { reasons: cfg.reasons || [], next_steps: [], timing: [] };
+      }
+    });
+    // Fallback: read checked outcome checkboxes from the rendered step 4
+    if (Object.keys(tree).length === 0) {
+      document.querySelectorAll('[id^="outcome-cb-"]:checked').forEach(cb => {
+        const label = cb.closest('div')?.querySelector('label')?.textContent?.trim() || '';
+        if (label) tree[label] = { reasons: [], next_steps: [], timing: [] };
+      });
     }
     return tree;
+  }
+
+  // ── Step 3: Key Questions ─────────────────────────────────────────────────
+
+  let _kqCounter = 0;
+
+  function addKeyQuestion(text) {
+    const id = 'kq-' + (++_kqCounter);
+    const container = document.getElementById('key-questions-list');
+    if (!container) return;
+    const row = document.createElement('div');
+    row.id = id;
+    row.style.cssText = 'display:flex; gap:8px; align-items:center; margin-bottom:8px;';
+    row.innerHTML = `
+      <input type="text" value="${esc(text || '')}" placeholder="e.g. What's your current patching process?"
+        style="flex:1; border:1px solid #d1d5db; border-radius:6px; padding:8px 10px; font-size:13px;">
+      <button onclick="removeKeyQuestion('${id}')" style="background:none; border:none; cursor:pointer; font-size:18px; color:#999; padding:0 4px;">×</button>
+    `;
+    container.appendChild(row);
+  }
+
+  function removeKeyQuestion(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  }
+
+  function getKeyQuestions() {
+    const container = document.getElementById('key-questions-list');
+    if (!container) return [];
+    return Array.from(container.querySelectorAll('input[type="text"]'))
+      .map(inp => inp.value.trim())
+      .filter(v => v.length > 0);
+  }
+
+  function finishRepGuidanceStep() {
+    currentPlayDef = { ...(currentPlayDef || {}), key_questions: getKeyQuestions() };
+    goToStep(4);
+  }
+
+  // ── Step 4: Outcomes with Reasons ─────────────────────────────────────────
+
+  const DEFAULT_INTAKE_REASONS = {
+    'Interested': {
+      description: 'Customer wants to move forward',
+      reasons: ['Requested demo', 'Requested pricing', 'Referred to partner', 'Active evaluation']
+    },
+    'Not Interested': {
+      description: 'Customer declined for now',
+      reasons: ['Already using competitor', 'Budget constraints', 'Not the right time', 'Not a priority', 'Other']
+    },
+    'Would Not Engage': {
+      description: 'Customer would not engage with rep',
+      reasons: ["Tried 5+ times, going away", 'Partner-led only', "Can't find right person", 'Other']
+    }
+  };
+
+  async function loadStep4() {
+    let globalReasons = null;
+    try {
+      const text = await getFileText(SP_ROOT + '/response-options.json');
+      if (text) {
+        const opts = JSON.parse(text);
+        const global = (opts.response_sets || []).find(s => s.response_set_id === 'GLOBAL_DEFAULTS');
+        if (global) globalReasons = global;
+      }
+    } catch(e) {}
+    renderStep4(globalReasons);
+  }
+
+  function renderStep4(globalConfig) {
+    const container = document.getElementById('outcomes-config-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const outcomes = globalConfig
+      ? (globalConfig.outcomes || Object.keys(DEFAULT_INTAKE_REASONS))
+      : Object.keys(DEFAULT_INTAKE_REASONS);
+
+    const outcomeDefs = globalConfig
+      ? globalConfig.outcome_map || DEFAULT_INTAKE_REASONS
+      : DEFAULT_INTAKE_REASONS;
+
+    outcomes.forEach(outcomeName => {
+      const def = outcomeDefs[outcomeName] || {};
+      const reasons = def.reasons || DEFAULT_INTAKE_REASONS[outcomeName]?.reasons || [];
+      const safeId = outcomeName.replace(/\s+/g, '-').toLowerCase();
+
+      const card = document.createElement('div');
+      card.style.cssText = 'border:1px solid #e5e7eb; border-radius:8px; padding:14px 16px; margin-bottom:12px;';
+      card.innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+          <input type="checkbox" id="outcome-cb-${safeId}" checked
+            onchange="toggleOutcomeSection(this, '${esc(outcomeName)}')"
+            style="width:16px; height:16px; cursor:pointer;">
+          <label for="outcome-cb-${safeId}" style="font-size:14px; font-weight:700; cursor:pointer;">${esc(outcomeName)}</label>
+          <span style="font-size:12px; color:#777;">${esc(def.description || '')}</span>
+        </div>
+        <div id="outcome-reasons-${safeId}" style="padding-left:26px;">
+          <div style="font-size:12px; color:#555; margin-bottom:6px; font-weight:600;">Reasons to offer reps:</div>
+          <div id="reason-list-${safeId}">
+            ${reasons.map(r => `
+              <label style="display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:13px; cursor:pointer;">
+                <input type="checkbox" checked value="${esc(r)}"> ${esc(r)}
+              </label>
+            `).join('')}
+          </div>
+          <button onclick="addIntakeReason('${esc(outcomeName)}', '${safeId}')"
+            style="background:none; border:1px dashed #aaa; padding:4px 12px; border-radius:6px; font-size:12px; color:#555; cursor:pointer; margin-top:4px;">
+            + Add a reason
+          </button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function toggleOutcomeSection(cb, outcomeName) {
+    const safeId = outcomeName.replace(/\s+/g, '-').toLowerCase();
+    const section = document.getElementById('outcome-reasons-' + safeId);
+    if (section) section.style.opacity = cb.checked ? '1' : '0.4';
+  }
+
+  function addIntakeReason(outcomeName, safeId) {
+    const listEl = document.getElementById('reason-list-' + safeId);
+    if (!listEl) return;
+    const wrapper = document.createElement('label');
+    wrapper.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:13px;';
+    const inputId = 'new-reason-' + Date.now();
+    wrapper.innerHTML = `
+      <input type="checkbox" checked>
+      <input type="text" id="${inputId}" placeholder="New reason…"
+        style="flex:1; border:1px solid #d1d5db; border-radius:4px; padding:4px 8px; font-size:12px;">
+    `;
+    listEl.appendChild(wrapper);
+    wrapper.querySelector('input[type="text"]').focus();
+  }
+
+  function getIntakeOutcomesConfig() {
+    const container = document.getElementById('outcomes-config-list');
+    if (!container) return {};
+    const config = {};
+    container.querySelectorAll('[id^="outcome-cb-"]').forEach(cb => {
+      const safeId = cb.id.replace('outcome-cb-', '');
+      const label = cb.closest('div').querySelector('label');
+      const outcomeName = label ? label.textContent.trim() : safeId;
+      const reasonList = document.getElementById('reason-list-' + safeId);
+      const reasons = [];
+      if (reasonList) {
+        reasonList.querySelectorAll('label').forEach(lbl => {
+          const checkEl = lbl.querySelector('input[type="checkbox"]');
+          const textEl = lbl.querySelector('input[type="text"]');
+          const reasonText = textEl ? textEl.value.trim() : (checkEl ? checkEl.value : '');
+          if (reasonText && checkEl && checkEl.checked) reasons.push(reasonText);
+        });
+      }
+      config[outcomeName] = { enabled: cb.checked, reasons };
+    });
+    return config;
+  }
+
+  function finishOutcomesStep() {
+    currentPlayDef = { ...(currentPlayDef || {}), outcomes_intake: getIntakeOutcomesConfig() };
+    goToStep(5);
+  }
+
+  // ── Step 6: Submit for Admin Review ───────────────────────────────────────
+
+  async function submitPlayForReview() {
+    const btn = document.getElementById('btn-submit-review');
+    if (btn) btn.disabled = true;
+    try {
+      currentPlayDef.active = false;
+      currentPlayDef.pending_review = true;
+      currentPlayDef.submitted_by = currentUser?.username || currentUser?.mail || 'unknown';
+      currentPlayDef.submitted_at = new Date().toISOString();
+
+      let playsConfig = { plays: [] };
+      try { playsConfig = await getPlaysConfig(); if (!playsConfig?.plays) playsConfig = { plays: [] }; } catch(e) {}
+      const existingIdx = playsConfig.plays.findIndex(p => p.play_id === currentPlayDef.play_id);
+      if (existingIdx >= 0) playsConfig.plays[existingIdx] = { ...playsConfig.plays[existingIdx], ...currentPlayDef };
+      else playsConfig.plays.push(currentPlayDef);
+      await savePlaysConfig(playsConfig);
+
+      try { await logActivity(currentUser, 'play_submitted_for_review', `Submitted for review: ${currentPlayDef.play_name} (${currentPlayDef.play_id})`); } catch(e) {}
+
+      const reviewPanel = document.getElementById('step-6-panel');
+      if (reviewPanel) {
+        reviewPanel.innerHTML = `
+          <div style="text-align:center; padding:40px 20px;">
+            <div style="font-size:48px; margin-bottom:16px;">✅</div>
+            <h2 style="color:#107c10; margin-bottom:8px;">Play Submitted for Review</h2>
+            <p style="color:#555; font-size:14px;">An admin will review your play brief and activate it. You'll be notified when it goes live.</p>
+            <button onclick="location.href='admin.html'" style="margin-top:20px; background:#0078d4; color:#fff; border:none; padding:10px 24px; border-radius:6px; font-size:14px; cursor:pointer;">Go to Admin</button>
+          </div>
+        `;
+      }
+    } catch(e) {
+      alert('Failed to submit: ' + e.message);
+      if (btn) btn.disabled = false;
+    }
   }
 </script>
 </body>

@@ -893,7 +893,7 @@ function calculatePoints(outcome, nextStepType, data) {
 
 // ─── CSV helpers ──────────────────────────────────────────────────────────
 
-const CSV_HEADERS = ["id","submitted_at","play_id","play_name","account_id","account_name","rep_email","rep_name","interaction_type","outcome","reason_label","reason_code","next_step_type","timing","contact_level","notes","call_date","points_earned","manager_override","override_by"];
+const CSV_HEADERS = ["id","submitted_at","play_id","play_name","account_id","account_name","rep_email","rep_name","interaction_type","outcome","reason_label","reason_code","next_step_type","timing","contact_level","notes","call_date","points_earned","manager_override","override_by","manager_note","previous_outcome"];
 
 function csvEscape(val) {
   val = val !== undefined && val !== null ? String(val) : "";
@@ -953,6 +953,57 @@ async function logEngagement(fields) {
     ? existing.trimEnd() + "\n" + toCsvRow(entry)
     : CSV_HEADERS.join(",") + "\n" + toCsvRow(entry);
   await putFile(filePath, csv, "text/csv");
+  return entry;
+}
+
+// ─── Manager override (append-only status reset) ──────────────────────────
+
+/**
+ * Write a manager override entry into a play's engagement CSV.
+ * This resets the account to 'Not Started' by appending a new log row with
+ * manager_override=true. Never modifies or deletes existing entries.
+ *
+ * @param {string} playId
+ * @param {string} accountId  - the account's account_id (CRM_ID)
+ * @param {string} managerEmail
+ * @param {string} managerNote  - reason / instructions for the rep
+ * @param {string} previousOutcome  - the outcome being overridden (for audit trail)
+ */
+async function writeManagerOverride(playId, accountId, managerEmail, managerNote, previousOutcome) {
+  const safePlayId = (playId || 'engagements').replace(/[^a-z0-9]/gi, '_');
+  const filePath = SP_ROOT + '/' + safePlayId + '_engagements.csv';
+
+  const entry = {};
+  CSV_HEADERS.forEach(h => entry[h] = '');
+  entry.id               = Date.now().toString();
+  entry.submitted_at     = new Date().toISOString();
+  entry.play_id          = playId;
+  entry.account_id       = accountId;
+  entry.rep_email        = managerEmail;
+  entry.outcome          = 'Not Started';
+  entry.manager_override = 'true';
+  entry.override_by      = managerEmail;
+  entry.manager_note     = (managerNote || '').replace(/,/g, ';').replace(/\n/g, ' ');
+  entry.previous_outcome = (previousOutcome || '').replace(/,/g, ';');
+
+  const MAX_RETRIES = 4;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const { text: existing, eTag } = await getFileWithETag(filePath);
+    const csv = (existing && existing.trim())
+      ? existing.trimEnd() + '\n' + toCsvRow(entry)
+      : CSV_HEADERS.join(',') + '\n' + toCsvRow(entry);
+
+    const ok = await putFileWithETag(filePath, csv, 'text/csv', eTag);
+    if (ok) return entry;
+
+    await new Promise(r => setTimeout(r, 300 + Math.random() * 700));
+  }
+  // Final fallback — force write
+  const { text: existing } = await getFileWithETag(filePath);
+  const csv = (existing && existing.trim())
+    ? existing.trimEnd() + '\n' + toCsvRow(entry)
+    : CSV_HEADERS.join(',') + '\n' + toCsvRow(entry);
+  await putFile(filePath, csv, 'text/csv');
   return entry;
 }
 
@@ -1224,6 +1275,93 @@ async function createSnapshot({ label = '', type = 'manual', triggeredBy = '' } 
   await putFile(snapshotPath + '/manifest.json', JSON.stringify(manifest, null, 2), 'application/json');
 
   return manifest;
+}
+
+// ─── Auto-archive ─────────────────────────────────────────────────────────
+
+/**
+ * Called on admin app load. If it's been more than 23 hours since the last
+ * auto-archive, silently create a dated snapshot. Non-blocking — errors are swallowed.
+ */
+async function autoArchiveIfNeeded() {
+  try {
+    const metaPath = SNAPSHOT_ROOT + '/_last_auto_archive.json';
+    let lastTs = null;
+    try {
+      const text = await getFileText(metaPath);
+      if (text) lastTs = JSON.parse(text).timestamp;
+    } catch(e) {}
+
+    const now = Date.now();
+    const twentyThreeHours = 23 * 60 * 60 * 1000;
+    if (lastTs && (now - new Date(lastTs).getTime()) < twentyThreeHours) {
+      console.log('[AutoArchive] Skipping — last archive was', Math.round((now - new Date(lastTs).getTime()) / 3600000), 'hours ago');
+      return;
+    }
+
+    const label = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    console.log('[AutoArchive] Creating dated snapshot:', label);
+    await createDatedSnapshot(label);
+
+    await putFile(metaPath, JSON.stringify({ timestamp: new Date().toISOString(), label }), 'application/json');
+    console.log('[AutoArchive] Done.');
+  } catch(e) {
+    console.warn('[AutoArchive] Non-blocking error:', e.message);
+  }
+}
+
+/**
+ * Create a snapshot into a dated subfolder: snapshots/YYYY-MM-DD/
+ * Uses the same logic as createSnapshot() but with a dated path.
+ */
+async function createDatedSnapshot(label) {
+  const snapshotPath = SNAPSHOT_ROOT + '/' + label;
+
+  const coreFiles = [
+    { name: 'plays.json',            path: SP_ROOT + '/plays.json' },
+    { name: 'assignments.json',      path: SP_ROOT + '/assignments.json' },
+    { name: 'response-options.json', path: SP_ROOT + '/response-options.json' },
+    { name: 'email-lookup.json',     path: SP_ROOT + '/email-lookup.json' },
+    { name: 'activity_log.csv',      path: SP_ROOT + '/activity_log.csv' },
+    { name: 'rep_feedback.json',     path: SP_ROOT + '/rep_feedback.json' },
+    { name: 'play_briefs.json',      path: SP_ROOT + '/play_briefs.json' },
+  ];
+
+  let fileCount = 0;
+  for (const f of coreFiles) {
+    try {
+      const content = await getFileText(f.path);
+      if (!content) continue;
+      const ct = f.name.endsWith('.csv') ? 'text/csv' : 'application/json';
+      await putFile(snapshotPath + '/' + f.name, content, ct);
+      fileCount++;
+    } catch(e) {
+      console.warn(`[AutoArchive] Could not snapshot ${f.name}:`, e.message);
+    }
+  }
+
+  // Also snapshot any engagement CSVs
+  try {
+    const playsText = await getFileText(SP_ROOT + '/plays.json');
+    if (playsText) {
+      const playsData = JSON.parse(playsText);
+      const plays = playsData.plays || [];
+      for (const play of plays) {
+        const playId = (play.play_id || '').replace(/[^a-z0-9]/gi, '_');
+        if (!playId) continue;
+        try {
+          const content = await getFileText(SP_ROOT + '/' + playId + '_engagements.csv');
+          if (content) {
+            await putFile(snapshotPath + '/' + playId + '_engagements.csv', content, 'text/csv');
+            fileCount++;
+          }
+        } catch(e) {}
+      }
+    }
+  } catch(e) {}
+
+  console.log(`[AutoArchive] Snapshot complete: ${fileCount} files in snapshots/${label}/`);
+  return { label, fileCount };
 }
 
 async function listSnapshots() {
