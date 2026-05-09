@@ -407,6 +407,21 @@
   <script src="graph-api.js?v=11"></script>
   <script src="form-engine.js?v=10"></script>
 
+  <!-- TEAMS-DEV: Override MSAL redirectUri to land back on teams-dev.html, not root.
+       Root (index.html) doesn't call handleRedirectPromise(), so auth code is silently dropped.
+       Azure AD must have https://orange-smoke-04675d40f.7.azurestaticapps.net/teams-dev.html
+       registered as an allowed redirect URI. -->
+  <script>
+    (function() {
+      var _origGetMsalConfig = _getMsalConfig;
+      _getMsalConfig = function() {
+        var cfg = _origGetMsalConfig();
+        cfg.auth.redirectUri = window.location.origin + '/teams-dev.html';
+        return cfg;
+      };
+    })();
+  </script>
+
   <script>
     // ─────────────────────────────────────────────
     // LEVELS & POINTS
