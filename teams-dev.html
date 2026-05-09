@@ -1842,12 +1842,25 @@
           .forEach(k => sessionStorage.removeItem(k));
       } catch(_) {}
       try {
-        const account = await signIn();
-        if (account) {
-          currentUser = getCurrentUser();
-          await loadDashboard();
+        // TEAMS-DEV: Teams iframes the tab — redirect is blocked (redirect_in_iframe).
+        // Bypass signIn() and call loginPopup() directly when inside an iframe.
+        // In browser (top frame), fall through to normal signIn() redirect flow.
+        if (window.parent !== window) {
+          if (!_msalInstance) _msalInstance = new msal.PublicClientApplication(_getMsalConfig());
+          const response = await _msalInstance.loginPopup({ scopes: CONFIG.scopes });
+          if (response && response.account) {
+            _account = response.account;
+            currentUser = getCurrentUser();
+            await loadDashboard();
+          }
+        } else {
+          const account = await signIn();
+          if (account) {
+            currentUser = getCurrentUser();
+            await loadDashboard();
+          }
+          // redirect flow: signIn() returns null, page will reload — this is normal
         }
-        // redirect flow: signIn() returns null, page will reload — this is normal
       } catch (err) {
         console.error('[Teams DEV] Sign in error:', err);
         const msg = (err && (err.message || err.errorMessage || err.errorCode || String(err))) || 'Unknown error';
