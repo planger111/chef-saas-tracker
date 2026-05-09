@@ -1826,17 +1826,30 @@
 
     // Sign in
     document.getElementById('btn-sign-in').addEventListener('click', async () => {
+      // TEAMS-DEV: clear any stale MSAL session state before attempting login
+      // Stale interaction_in_progress state from a prior failed redirect silently blocks login
+      try {
+        Object.keys(sessionStorage)
+          .filter(k => k.startsWith('msal.') || k.includes('login.windows') || k.includes('login.microsoftonline'))
+          .forEach(k => sessionStorage.removeItem(k));
+      } catch(_) {}
       try {
         const account = await signIn();
         if (account) {
           currentUser = getCurrentUser();
           await loadDashboard();
         }
+        // redirect flow: signIn() returns null, page will reload — this is normal
       } catch (err) {
-        console.error('Sign in error:', err);
-        const msg = err && err.message ? err.message : '';
-        if (!msg) return; // redirect flow returns null, no error
-        alert('⚠️ Sign in failed. Please try again.\n\nError: ' + msg);
+        console.error('[Teams DEV] Sign in error:', err);
+        const msg = (err && (err.message || err.errorMessage || err.errorCode || String(err))) || 'Unknown error';
+        const note = document.querySelector('#screen-login .teams-auth-error') ||
+                     (() => { const d = document.createElement('p');
+                              d.className = 'teams-auth-error';
+                              d.style.cssText = 'color:#c0392b;font-size:13px;margin-top:12px;word-break:break-word;';
+                              document.getElementById('screen-login').querySelector('.login-card, .card, form, div')?.appendChild(d);
+                              return d; })();
+        if (note) note.textContent = '⚠️ Sign-in error: ' + msg;
       }
     });
 
@@ -1985,6 +1998,15 @@
       } catch (err) {
         console.error('Init error:', err);
         showScreen('screen-login');
+        // TEAMS-DEV: show init/redirect errors on the login screen so they're visible
+        const errMsg = (err && (err.message || err.errorMessage || err.errorCode || String(err))) || 'Unknown startup error';
+        const loginScreen = document.getElementById('screen-login');
+        if (loginScreen) {
+          const d = document.createElement('p');
+          d.style.cssText = 'color:#c0392b;font-size:12px;margin-top:10px;padding:8px;background:#fff0f0;border-radius:6px;word-break:break-word;';
+          d.textContent = '⚠️ Startup error (check console): ' + errMsg;
+          loginScreen.appendChild(d);
+        }
       }
     });
 
