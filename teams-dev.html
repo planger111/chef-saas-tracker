@@ -419,6 +419,14 @@
         cfg.auth.redirectUri = window.location.origin + '/teams-dev.html';
         return cfg;
       };
+
+      // TEAMS-DEV: Teams iframes the tab — MSAL redirect flow is blocked in iframes
+      // (error: redirect_in_iframe, window.parent !== window).
+      // Override _useRedirectFlow to use popup when in an iframe (Teams),
+      // keep redirect when in a top-level window (browser direct access).
+      _useRedirectFlow = function() {
+        return window.parent === window; // false inside Teams iframe → popup flow
+      };
     })();
   </script>
 
