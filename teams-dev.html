@@ -1,0 +1,2023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>[DEV] Sales Play Tracker — Teams</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* v2 log-form step indicator */
+    .log-step-indicator { display:flex; background:#f0f6ff; border-bottom:1px solid #d0e4f7; padding:8px 16px; gap:16px; font-size:12px; font-weight:600; color:#9ca3af; }
+    /* Pitch brief card */
+    .pitch-card { background:#eff6ff; border-left:4px solid #0078d4; border-radius:0 8px 8px 0; padding:14px 16px; margin-bottom:12px; font-size:14px; line-height:1.5; color:#1a1a1a; }
+    .pitch-card-label { font-size:11px; font-weight:700; color:#0078d4; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+    /* Admin notes callout */
+    .admin-notes-callout { background:#fffbeb; border-left:4px solid #f59e0b; border-radius:0 8px 8px 0; padding:12px 14px; margin-bottom:12px; font-size:13px; color:#78350f; }
+    /* ICP / Persona chips */
+    .play-meta-row { display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+    .play-meta-chip { background:#f3f4f6; border-radius:6px; padding:6px 10px; font-size:12px; flex:1; min-width:0; }
+    .play-meta-chip-label { font-weight:700; color:#374151; font-size:11px; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:2px; }
+    .play-meta-chip-value { color:#1a1a1a; font-size:13px; }
+    /* Pitch confidence star rating */
+    .star-rating-row { display:flex; gap:6px; margin-top:4px; }
+    .star-rating-row input[type="radio"] { display:none; }
+    .star-rating-row label { font-size:28px; color:#d1d5db; cursor:pointer; line-height:1; transition:color 0.1s; }
+    .star-rating-row label:hover { color:#f59e0b; }
+    .star-rating-row input[type="radio"]:checked + label { color:#f59e0b; }
+    /* Account header card inside form */
+    .account-header-card { background:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:12px 14px; margin-bottom:16px; }
+    .account-header-name { font-weight:700; font-size:16px; margin:0 0 4px; }
+    .account-header-meta { font-size:12px; color:#6b7280; }
+  </style>
+</head>
+<body>
+<div id="dev-env-banner" style="display:block;background:#e65c00;color:#fff;text-align:center;padding:7px 12px;font-size:13px;font-weight:700;letter-spacing:.03em;position:sticky;top:0;z-index:99999;border-bottom:2px solid #b34400;">
+  ⚠️ TEAMS DEV — Development version. Data goes to test folder, not production.
+</div>
+
+  <!-- ===================== SCREEN: LOADING ===================== -->
+  <div id="screen-loading" class="screen active">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:16px;">
+      <div class="spinner"></div>
+      <p class="loading-text">Loading…</p>
+    </div>
+  </div>
+
+  <!-- ===================== SCREEN: LOGIN ===================== -->
+  <div id="screen-login" class="screen">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:32px;text-align:center;gap:16px;">
+      <div style="font-size:56px;">🍴</div>
+      <h1 style="color:#0078d4;font-weight:bold;margin:0;">INFRA SalesPlay Tracker</h1>
+      <p style="margin:0;color:#555;font-size:15px;">Sales Play Tracker</p>
+      <div style="height:16px;"></div>
+      <button id="btn-sign-in" class="btn btn-primary btn-block">Sign In with Microsoft</button>
+      <p style="font-size:12px;color:#999;margin:0;">Use your Progress corporate account</p>
+    </div>
+  </div>
+
+  <!-- ===================== SCREEN: DASHBOARD ===================== -->
+  <div id="screen-dashboard" class="screen">
+    <!-- Header -->
+    <div class="header">
+      <span class="header-title">INFRA SalesPlay Tracker</span>
+      <a href="#" id="btn-sign-out-header" class="signout-link">Sign out</a>
+    </div>
+
+    <div id="bookmark-banner-wrap"></div>
+    <div class="dashboard-outer">
+
+      <!-- Rep hero card -->
+      <div class="rep-hero" id="rep-summary">
+        <div class="rep-hero-top">
+          <div class="rep-hero-identity">
+            <span class="rep-hero-greeting">👋 <strong id="wb-name">…</strong></span>
+            <span class="rep-hero-tier" id="wb-level"></span>
+          </div>
+          <div class="rep-hero-score">
+            <span class="rep-hero-pts" id="dashboard-total-points">0</span>
+            <span class="rep-hero-pts-unit">pts</span>
+          </div>
+        </div>
+        <div class="rep-hero-level-row">
+          <div class="rep-hero-badge">
+            <span id="dashboard-level-emoji">🌱</span>
+            <span id="dashboard-level-name">Rookie</span>
+          </div>
+          <span class="rep-hero-plays-sub"><span id="wb-plays">0</span> active plays</span>
+        </div>
+        <div class="rep-hero-progress">
+          <div class="rep-hero-bar-track">
+            <div class="rep-hero-bar-fill" id="rep-hero-level-bar" style="width:0%"></div>
+          </div>
+          <span class="rep-hero-bar-label" id="rep-hero-level-label">…</span>
+        </div>
+      </div>
+
+      <!-- Points breakdown -->
+      <details class="points-help-details">
+        <summary class="points-help-summary">How points are earned</summary>
+        <div style="background:#f8faff;border:1px solid #d0e4f7;border-radius:8px;padding:12px 14px;margin-top:6px;font-size:13px;">
+          <div style="display:grid;grid-template-columns:1fr auto;gap:6px 16px;align-items:center;">
+            <span>📞 Not Interested (logging the conversation)</span><strong style="text-align:right;color:#555;">15 pts</strong>
+            <span>✅ Interested</span><strong style="text-align:right;color:#0078d4;">30 pts</strong>
+            <span>✅ Interested + next step booked</span><strong style="text-align:right;color:#107c10;">45 pts</strong>
+          </div>
+          <div style="margin-top:10px;border-top:1px solid #d0e4f7;padding-top:10px;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center;">
+            <span>🌱</span><span><strong>Rookie</strong> — 0 pts</span>
+            <span>🎯</span><span><strong>Pitcher</strong> — 50 pts</span>
+            <span>⭐</span><span><strong>Pro</strong> — 150 pts</span>
+            <span>🥇</span><span><strong>Champion</strong> — 300 pts</span>
+            <span>🏆</span><span><strong>Legend</strong> — 500 pts</span>
+          </div>
+        </div>
+      </details>
+
+      <!-- Schedule alert (hidden by default) -->
+      <div class="schedule-alert" id="dashboard-schedule-alert" style="display:none;"></div>
+
+      <div class="dashboard-layout">
+        <div class="plays-section">
+          <!-- Greeting bar -->
+          <div id="greeting-bar"></div>
+          <!-- Demo banner — also shown when no assignment match found -->
+          <div id="demo-banner" class="demo-banner" style="display:none;">
+            <span class="demo-badge">DEMO MODE</span>
+            <span id="demo-banner-msg">You don't have any assigned accounts yet. Practice with these demo accounts — your manager will assign real accounts soon.</span>
+          </div>
+          <div class="section-header-row">
+            <span class="section-label">MY PLAYS</span>
+            <span class="section-sub" id="plays-count-sub"></span>
+          </div>
+          <div class="plays-grid" id="dashboard-plays-list">
+            <div style="text-align:center;color:#999;padding:24px;">Loading plays…</div>
+          </div>
+        </div>
+        <div class="leaderboard-section">
+          <!-- Leaderboard peek -->
+          <div class="section-label">LEADERBOARD</div>
+          <div class="leaderboard-peek" id="dashboard-leaderboard-peek">
+            <div style="text-align:center;color:#999;padding:16px;">Loading…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sign out link -->
+      <div style="text-align:center;margin-top:24px;margin-bottom:32px;">
+        <a href="#" id="btn-sign-out-bottom" style="font-size:13px;color:#999;text-decoration:none;">Log out</a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCREEN: PLAY DETAIL ===================== -->
+  <div id="screen-play-detail" class="screen">
+    <div class="header">
+      <button class="header-back btn btn-secondary" id="btn-back-to-dashboard">← Back</button>
+      <span class="header-title" id="play-detail-title">Play</span>
+      <button id="btn-play-info" onclick="showPlayInfo(currentPlay && currentPlay.play_id)" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:4px 10px;font-size:13px;cursor:pointer;color:#0078d4;font-weight:600;">ℹ Pitch Info</button>
+    </div>
+
+    <div style="padding:16px;max-width:480px;margin:0 auto;">
+
+      <!-- Filter tabs -->
+      <div class="filter-tabs" id="play-filter-tabs">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="not-started">Not Started</button>
+        <button class="filter-tab" data-filter="interested">Interested</button>
+        <button class="filter-tab" data-filter="not-interested">Not Interested</button>
+        <button class="filter-tab" data-filter="would-not-engage">Would Not Engage</button>
+      </div>
+
+      <div style="font-size:13px;color:#0078d4;font-weight:600;padding:8px 2px 4px;">👇 Tap an account to log a pitch</div>
+
+      <!-- Account list -->
+      <div id="play-account-list">
+        <div style="text-align:center;color:#999;padding:24px;">Loading accounts…</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCREEN: LOG FORM ===================== -->
+  <div id="screen-log-form" class="screen">
+    <div class="header">
+      <button class="header-back btn btn-secondary" id="btn-back-to-play">← Back</button>
+      <span class="header-title" id="log-form-title">Log Interaction</span>
+    </div>
+
+    <!-- Step indicator (2 steps) -->
+    <div class="log-step-indicator">
+      <span id="step-ind-1" style="color:#0078d4;font-weight:700;">1. Interaction</span>
+      <span>›</span>
+      <span id="step-ind-2">2. Details</span>
+    </div>
+
+    <div style="padding:16px;max-width:480px;margin:0 auto;">
+
+      <!-- STEP 1: Interaction -->
+      <div id="log-step-1">
+        <div id="log-form-account-header" class="account-header-card"></div>
+
+        <div class="form-group">
+          <label class="form-label">Interaction Type <span style="color:#d32f2f;">*</span></label>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;" id="interaction-type-options">
+            <!-- populated dynamically from response-options.json -->
+            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
+              <input type="radio" name="interaction-type" value="Call" style="width:18px;height:18px;accent-color:#0078d4;"> 📞 Call
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
+              <input type="radio" name="interaction-type" value="Email" style="width:18px;height:18px;accent-color:#0078d4;"> 📧 Email
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
+              <input type="radio" name="interaction-type" value="Text" style="width:18px;height:18px;accent-color:#0078d4;"> 💬 Text
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:16px;">
+          <label class="form-label">Outcome <span style="color:#d32f2f;">*</span></label>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
+            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
+              <input type="radio" name="outcome" value="Interested" style="width:18px;height:18px;accent-color:#0078d4;"> ✅ Interested
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
+              <input type="radio" name="outcome" value="Not Interested" style="width:18px;height:18px;accent-color:#0078d4;"> ❌ Not Interested
+            </label>
+            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
+              <input type="radio" name="outcome" value="Would Not Engage" style="width:18px;height:18px;accent-color:#0078d4;"> ⚠️ Would Not Engage
+            </label>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-block" id="btn-step1-next" style="margin-top:16px;">Next →</button>
+      </div>
+
+      <!-- STEP 2: Details -->
+      <div id="log-step-2" style="display:none;">
+        <div id="log-form-account-header-2" class="account-header-card"></div>
+
+        <!-- Interested fields -->
+        <div id="interested-fields">
+          <div class="form-group">
+            <label class="form-label">Interested Reason <span style="color:#e53e3e;">*</span></label>
+            <select class="form-control" id="field-interested-reason" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Next Step <span style="color:#e53e3e;">*</span></label>
+            <select class="form-control" id="field-next-step-type" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>
+              <option>Schedule follow-up</option>
+              <option>Send information</option>
+              <option>Introduce stakeholder</option>
+              <option>Revisit later</option>
+              <option>Create opportunity</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Timing</label>
+            <select class="form-control" id="field-timing" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>
+              <option>Now</option>
+              <option>This month</option>
+              <option>Next quarter</option>
+              <option>Later</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Not Interested fields -->
+        <div id="not-interested-fields" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Not Interested Reason <span style="color:#e53e3e;">*</span></label>
+            <select class="form-control" id="field-not-interested-reason" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Revisit Timing <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <select class="form-control" id="field-timing-ni" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>
+              <option>Now</option>
+              <option>This month</option>
+              <option>Next quarter</option>
+              <option>Later</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Would Not Engage fields -->
+        <div id="wne-fields" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Reason <span style="color:#e53e3e;">*</span></label>
+            <select class="form-control" id="field-wne-reason" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Next Step <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <select class="form-control" id="field-wne-next-step" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Timing <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <select class="form-control" id="field-wne-timing" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Always shown on step 2 -->
+        <div class="form-group" id="call-date-field-group">
+          <label class="form-label">Date of call / meeting <span style="font-weight:400;color:#888;">(optional)</span></label>
+          <input type="date" class="form-control" id="field-call-date" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;">
+        </div>
+        <div class="form-group" id="notes-field-group">
+          <label class="form-label">Notes <span style="font-weight:400;color:#888;">(optional)</span></label>
+          <textarea class="form-control" id="field-notes" rows="3" maxlength="500" placeholder="Any additional context…" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;resize:vertical;"></textarea>
+          <div id="notes-char-counter" style="font-size:12px;color:#6b7280;margin-top:4px;text-align:right;">0 / 500 characters</div>
+        </div>
+
+        <!-- Custom questions (populated per-play from play.questions.custom) -->
+        <div id="custom-questions-container"></div>
+
+        <button class="btn btn-primary btn-block" id="btn-submit-engagement" style="margin-top:8px;">Submit ✓</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCREEN: CONFIRM ===================== -->
+  <div id="screen-confirm" class="screen">
+    <div class="header">
+      <span class="header-title" id="confirm-header-title">✅ Submitted!</span>
+    </div>
+
+    <div style="padding:24px;max-width:480px;margin:0 auto;text-align:center;display:flex;flex-direction:column;gap:20px;align-items:center;">
+
+      <!-- All-done banner (hidden unless all targets complete) -->
+      <div id="confirm-all-done-banner" style="display:none;background:linear-gradient(135deg,#0078d4,#107c10);color:#fff;border-radius:12px;padding:20px 24px;width:100%;box-sizing:border-box;">
+        <div style="font-size:36px;margin-bottom:8px;">🎉🏆🎉</div>
+        <div style="font-size:20px;font-weight:800;margin-bottom:6px;">You Did It!</div>
+        <div style="font-size:14px;opacity:0.92;">You've pitched every account on your list.<br>Amazing work — you're a Legend!</div>
+      </div>
+
+      <!-- Account name -->
+      <div id="confirm-account-name" style="font-size:20px;font-weight:bold;color:#222;"></div>
+
+      <!-- Points earned callout -->
+      <div class="points-earned-callout">
+        <div class="points-earned-number" id="confirm-points-earned">+0 pts</div>
+        <div class="points-earned-label">Points Earned</div>
+      </div>
+
+      <!-- Qualitative feedback message -->
+      <div id="confirm-feedback-msg" style="display:none;background:#f0f7ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 18px;width:100%;box-sizing:border-box;font-size:15px;font-weight:600;color:#1e40af;text-align:center;"></div>
+
+      <!-- Level-up banner (hidden unless levelled up) -->
+      <div id="confirm-levelup-banner" style="display:none;background:#fff8e1;border:2px solid #ffd600;border-radius:10px;padding:14px 20px;width:100%;box-sizing:border-box;">
+        <div style="font-size:22px;margin-bottom:4px;" id="confirm-levelup-emoji"></div>
+        <div style="font-size:15px;font-weight:700;color:#555;" id="confirm-levelup-text"></div>
+      </div>
+
+      <!-- Level badge -->
+      <div class="level-badge" style="font-size:18px;">
+        <span class="level-emoji" id="confirm-level-emoji">🌱</span>
+        <span class="level-name" id="confirm-level-name">Rookie</span>
+      </div>
+
+      <!-- Total points -->
+      <div style="color:#555;font-size:15px;">
+        Total: <strong id="confirm-total-points">0</strong> pts
+      </div>
+
+      <!-- Back button -->
+      <button id="btn-back-to-accounts" class="btn btn-primary btn-block">Back to My Accounts</button>
+
+    </div>
+  </div>
+
+  <!-- ===================== SCREEN: LEADERBOARD ===================== -->
+  <div id="screen-leaderboard" class="screen">
+    <div class="header">
+      <button class="header-back btn btn-secondary" id="btn-back-to-dashboard-lb">← Back</button>
+      <span class="header-title">Leaderboard</span>
+    </div>
+
+    <div style="padding:16px;max-width:480px;margin:0 auto;">
+      <div id="leaderboard-list">
+        <div style="text-align:center;color:#999;padding:24px;">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ===================== SCRIPTS ===================== -->
+  <!-- TEAMS-DEV: Host mode flag + Teams JS SDK (CDN) -->
+  <script>window.APP_HOST = 'teams';</script>
+  <script src="https://res.cdn.office.net/teams-js/2.19.0/js/MicrosoftTeams.min.js" crossorigin="anonymous"></script>
+  <script src="msal-browser.js?v=10"></script>
+  <script src="config.js?v=11"></script>
+  <script src="msal-auth.js?v=12"></script>
+  <script src="graph-api.js?v=11"></script>
+  <script src="form-engine.js?v=10"></script>
+
+  <script>
+    // ─────────────────────────────────────────────
+    // LEVELS & POINTS
+    // ─────────────────────────────────────────────
+    function getLevel(totalPoints) {
+      if (totalPoints >= 500) return { name: 'Legend',   badge: '⭐', min: 500 };
+      if (totalPoints >= 300) return { name: 'Champion', badge: '🏆', min: 300 };
+      if (totalPoints >= 150) return { name: 'Pro',      badge: '🎯', min: 150 };
+      if (totalPoints >= 50)  return { name: 'Pitcher',  badge: '⚾', min: 50 };
+      return                         { name: 'Rookie',   badge: '🌱', min: 0 };
+    }
+
+    // ─────────────────────────────────────────────
+    // GOAL LABELS
+    // ─────────────────────────────────────────────
+    const GOAL_LABELS = {
+      feedback:        'Track Feedback',
+      interest:        'Track Interest',
+      meeting:         'Book Meeting',
+      disqualification:'Disqualify / Rule Out',
+      expansion:       'Drive Expansion',
+      qualify_in:      'Track Interest',
+      qualify_out:     'Disqualify / Rule Out',
+    };
+    function getGoalLabel(goal) { return GOAL_LABELS[goal] || goal || ''; }
+
+    // ─────────────────────────────────────────────
+    // STATE
+    // ─────────────────────────────────────────────
+    let currentUser    = null;  // {name, email}
+    let currentPlay    = null;  // {play_id, play_name}
+    let currentAccount = null;  // account object from loadRepAccounts
+    let repAccounts    = [];    // all accounts for this rep
+    let allPlays       = [];    // all plays
+    let latestLogs     = {};    // {[account_id]: log entry or null}
+    let totalPoints    = 0;
+    let lastPointsEarned = 0;
+    let lastSubmittedData = null;
+    let activeFilter   = 'all'; // 'all' | 'not-started' | 'interested' | 'not-interested'
+    let currentStep    = 1;     // current step in log form wizard (1|2)
+    let _dashboardReady = false; // true once dashboard play cards are rendered
+    let _selectedLbPlay = null;  // currently selected play for leaderboard
+    const _responseOptionsCache = {};  // keyed by response_set_id
+
+    // ─────────────────────────────────────────────
+    // UTILITIES
+    // ─────────────────────────────────────────────
+    function escHtml(str) {
+      return String(str === null || str === undefined ? '' : str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Shared account resolver: filters repAccounts by play_id with defensive fallback.
+    // If the play_id filter returns empty but accounts exist, returns ALL repAccounts
+    // (handles play_id mismatch between plays.json and assignments.json).
+    function getPlayAccounts(play) {
+      if (!play) return repAccounts;
+      const byPlayId = repAccounts.filter(a => a.play_id === play.play_id);
+      if (byPlayId.length > 0) return byPlayId;
+      // Fallback: play_id mismatch — show all accounts when this is the only play
+      if (allPlays.length <= 1 && repAccounts.length > 0) return repAccounts;
+      return byPlayId; // empty for genuinely unassigned plays in a multi-play dashboard
+    }
+
+    // Try play_assignments first (v2); fall back to target_accounts (v1)
+    async function loadRepAccounts(email, name, meta) {
+      try {
+        const assignments = await getPlayAssignments(email, meta || null);
+        if (assignments && assignments.length > 0) return assignments;
+      } catch (e) {
+        console.warn('getPlayAssignments failed, falling back to target_accounts:', e);
+        if (meta) meta.matchType = 'fallback';
+      }
+      return getRepAccounts(email, name);
+    }
+
+    // ─────────────────────────────────────────────
+    // RESPONSE OPTIONS — load + cache
+    // ─────────────────────────────────────────────
+    const DEFAULT_INTERESTED_OPTIONS = [
+      { reason_label: 'Lower total cost',          reason_code: '' },
+      { reason_label: 'Reduce ops overhead',       reason_code: '' },
+      { reason_label: 'Improve compliance posture',reason_code: '' },
+      { reason_label: 'Simplify upgrade path',     reason_code: '' },
+      { reason_label: 'SaaS flexibility',          reason_code: '' },
+      { reason_label: 'Better support model',      reason_code: '' },
+    ];
+    const DEFAULT_NOT_INTERESTED_OPTIONS = [
+      { reason_label: 'Cannot do SaaS',                  reason_code: '' },
+      { reason_label: 'No current pain',                  reason_code: '' },
+      { reason_label: 'Bad timing',                       reason_code: '' },
+      { reason_label: 'Budget issue',                     reason_code: '' },
+      { reason_label: 'Already solved elsewhere',         reason_code: '' },
+      { reason_label: 'Security / compliance concern',    reason_code: '' },
+      { reason_label: 'No authority / wrong contact',     reason_code: '' },
+    ];
+
+    let _formConfig = null;
+
+    async function loadFormConfig() {
+      if (_formConfig) return _formConfig;
+      try { _formConfig = await getFormConfig(); } catch(e) { _formConfig = null; }
+      return _formConfig || {
+        interaction_types: ["Call", "Email", "Text"],
+        next_step_types: ["Schedule follow-up", "Send information", "Introduce stakeholder", "Create opportunity", "Revisit later"],
+        timing_options: ["Now", "This month", "Next quarter", "Later"]
+      };
+    }
+
+    async function renderInteractionTypes() {
+      const config = await loadFormConfig();
+      const emojis = { "Call": "📞", "Email": "📧", "Text": "💬", "In-Person Meeting": "🤝" };
+      const container = document.getElementById('interaction-type-options');
+      container.innerHTML = config.interaction_types.map(t =>
+        `<label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
+          <input type="radio" name="interaction-type" value="${escHtml(t)}" style="width:18px;height:18px;accent-color:#0078d4;"> ${emojis[t] || '•'} ${escHtml(t)}
+        </label>`
+      ).join('');
+    }
+
+    async function renderNextStepOptions() {
+      const config = await loadFormConfig();
+      const sel = document.getElementById('field-next-step-type');
+      sel.innerHTML = '<option value="">— Select —</option>' +
+        config.next_step_types.map(t => `<option>${escHtml(t)}</option>`).join('');
+    }
+
+    async function renderTimingOptions() {
+      const config = await loadFormConfig();
+      const sel = document.getElementById('field-timing');
+      sel.innerHTML = '<option value="">— Select —</option>' +
+        config.timing_options.map(t => `<option>${escHtml(t)}</option>`).join('');
+    }
+
+    async function loadResponseOptionsForForm(account) {
+      const rsId = (account.response_set_id || '').toUpperCase();
+      if (!rsId) return { interested: DEFAULT_INTERESTED_OPTIONS, notInterested: DEFAULT_NOT_INTERESTED_OPTIONS };
+      if (_responseOptionsCache[rsId]) return _responseOptionsCache[rsId];
+
+      try {
+        const options = await getResponseOptions(rsId);
+        if (options && options.length > 0) {
+          const interested    = options.filter(o => (o.outcome_type || '').toLowerCase() === 'interested');
+          const notInterested = options.filter(o => (o.outcome_type || '').toLowerCase() === 'not interested');
+          const result = {
+            interested:    interested.length    > 0 ? interested    : DEFAULT_INTERESTED_OPTIONS,
+            notInterested: notInterested.length > 0 ? notInterested : DEFAULT_NOT_INTERESTED_OPTIONS,
+          };
+          _responseOptionsCache[rsId] = result;
+          return result;
+        }
+      } catch (e) {
+        console.warn('getResponseOptions failed, using defaults:', e);
+      }
+      return { interested: DEFAULT_INTERESTED_OPTIONS, notInterested: DEFAULT_NOT_INTERESTED_OPTIONS };
+    }
+
+    function buildReasonOptions(options) {
+      return '<option value="">— Select —</option>' +
+        options.map(o =>
+          `<option value="${escHtml(o.reason_label)}" data-reason-code="${escHtml(o.reason_code || '')}">${escHtml(o.reason_label)}</option>`
+        ).join('');
+    }
+
+    // ─────────────────────────────────────────────
+    // SCREEN MANAGEMENT
+    // ─────────────────────────────────────────────
+    let _screenHistory = ['screen-dashboard'];
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById(id);
+      if (target) {
+        target.classList.add('active');
+        window.scrollTo(0, 0);
+        if (_screenHistory[_screenHistory.length - 1] !== id) {
+          _screenHistory.push(id);
+          history.pushState({ screen: id }, '', location.pathname);
+        }
+      }
+    }
+    function goBack() {
+      if (_screenHistory.length > 1) {
+        _screenHistory.pop();
+        const prev = _screenHistory[_screenHistory.length - 1];
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById(prev);
+        if (target) { target.classList.add('active'); window.scrollTo(0, 0); }
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // ACCOUNT STATUS HELPERS
+    // ─────────────────────────────────────────────
+    function getAccountStatus(accountId) {
+      const log = latestLogs[accountId];
+
+      if (!log) {
+        return { status: null, statusLabel: 'Not Started', badgeClass: 'badge-not-started', lastDate: null };
+      }
+
+      const lastDate = log.submitted_at || log.submitted_date || null;
+
+      if (log.outcome === 'Interested') {
+        return { status: 'Interested', statusLabel: 'Interested', badgeClass: 'badge-won', lastDate };
+      }
+      if (log.outcome === 'Not Interested') {
+        return { status: 'Not Interested', statusLabel: 'Not Interested', badgeClass: 'badge-lost', lastDate };
+      }
+      if (log.outcome === 'Would Not Engage') {
+        return { status: 'Would Not Engage', statusLabel: 'Would Not Engage', badgeClass: 'badge-wne', lastDate };
+      }
+
+      return { status: null, statusLabel: 'Not Started', badgeClass: 'badge-not-started', lastDate: null };
+    }
+
+    function isCompleted(accountId) {
+      const log = latestLogs[accountId];
+      return !!(log && log.outcome);
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return 'Never';
+      try {
+        return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      } catch {
+        return dateStr;
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // DASHBOARD
+    // ─────────────────────────────────────────────
+
+    // Re-render the dashboard play cards from current in-memory data (no fetch).
+    // Call this whenever navigating back to the dashboard so counts stay fresh.
+    function showDashboard() {
+      if (_dashboardReady) {
+        renderPlayCards();          // re-render with latest latestLogs
+        renderPointsCard(totalPoints); // re-render points in case submission happened
+        showScreen('screen-dashboard');
+      } else {
+        loadDashboard();            // first time or data not ready — full load
+      }
+    }
+
+    async function loadDashboard() {
+      showScreen('screen-loading');
+      try {
+        currentUser = getCurrentUser();
+        const email = currentUser.email;
+        const name  = currentUser.name;
+
+        // Log the login attempt immediately (fire-and-forget) — captures raw token identity
+        // before any resolution happens so we always have a baseline record.
+        logIdentityEvent({
+          eventType:      'login_attempt',
+          repDisplayName: name,
+          rawIdentity:    email,
+          notes: 'token candidates: ' + (currentUser.emails || [email]).join(', '),
+        }).catch(() => {});
+
+        // Warm the Graph /me profile cache and email-lookup table in parallel — non-blocking,
+        // ensures both are cached before getEmailCandidates() runs during assignment matching.
+        fetchGraphUserProfile().catch(() => {});
+        loadEmailLookup().catch(() => {});
+
+        // Capture identity resolution metadata alongside the account fetch.
+        const identMeta = {};
+
+        // Fetch accounts + plays in parallel; fetch logs once after (avoids double CSV download)
+        const [accounts, plays] = await Promise.all([
+          loadRepAccounts(email, name, identMeta),
+          getPlays()
+        ]);
+
+        repAccounts = accounts || [];
+        allPlays    = plays    || [];
+        // TEAMS-DEV: ?demo=1 forces demo mode regardless of real assignments
+        if (window._teamsForceDemo) repAccounts = [];
+
+        // Reconcile allPlays with repAccounts: only show plays the rep is actually assigned to.
+        // Handles play_id mismatches between plays.json and assignments.json.
+        if (repAccounts.length > 0) {
+          const repPlayIds = new Set(repAccounts.map(a => a.play_id).filter(Boolean));
+          if (repPlayIds.size > 0) {
+            const matched = allPlays.filter(p => repPlayIds.has(p.play_id));
+            if (matched.length > 0) {
+              allPlays = matched; // normal case: play_ids align
+            } else {
+              // play_id mismatch — derive play list directly from assignments
+              const seen = new Set();
+              allPlays = repAccounts
+                .filter(a => a.play_id && !seen.has(a.play_id) && seen.add(a.play_id))
+                .map(a => ({ play_id: a.play_id, play_name: a.play_name || a.play_id }));
+            }
+          }
+        }
+
+        // No accounts assigned → activate demo mode (still need points for display)
+        if (repAccounts.length === 0) {
+          const points = await getRepPoints(email);
+          totalPoints = points || 0;
+          renderPointsCard(totalPoints);
+          const fn = name ? name.split(' ')[0] : 'there';
+          const wbN = document.getElementById('wb-name');  if (wbN)  wbN.textContent  = fn;
+          const wbLv = document.getElementById('wb-level'); if (wbLv) wbLv.textContent = `${getLevel(totalPoints).badge} ${getLevel(totalPoints).name}`;
+          showScreen('screen-dashboard');
+          await showDemoMode();
+          if (currentUser.oid) registerOID(currentUser.username, currentUser.oid).catch(() => {});
+          logActivity(currentUser, 'login', 'dashboard').catch(() => {});
+          // Identity mismatch — signed in but no assignments found
+          logIdentityEvent({
+            eventType:        'identity_mismatch',
+            repDisplayName:   name,
+            rawIdentity:      email,
+            resolvedIdentity: identMeta.resolvedIdentity || '',
+            matchType:        identMeta.matchType        || 'none',
+            candidates:       identMeta.candidates       || [],
+            assignmentCount:  0,
+            notes: 'No assignment rows matched any candidate identity',
+          }).catch(() => {});
+          return;
+        }
+
+        // Fetch all logs once — derive both points and latest-per-account from same data
+        const allRepLogs = await _getAllLogsForRep(email);
+        totalPoints = allRepLogs.reduce((sum, l) => sum + (Number(l.points_earned) || 0), 0);
+
+        // Build latest log map
+        const latestMap = {};
+        allRepLogs.forEach(log => {
+          const key = log.account_id; if (!key) return;
+          if (!latestMap[key] || log.submitted_at > (latestMap[key].submitted_at || '')) latestMap[key] = log;
+        });
+        const accountIds = repAccounts.map(a => a.account_id);
+        latestLogs = Object.fromEntries(accountIds.map(id => [id, latestMap[id] || null]));
+
+        // Populate welcome bar
+        const firstName = name ? name.split(' ')[0] : 'there';
+        const wbNameEl  = document.getElementById('wb-name');  if (wbNameEl)  wbNameEl.textContent  = firstName;
+        const wbLvl = getLevel(totalPoints);
+        const wbLevelEl = document.getElementById('wb-level'); if (wbLevelEl) wbLevelEl.textContent = `${wbLvl.badge} ${wbLvl.name}`;
+        const wbPtsEl   = document.getElementById('wb-points'); if (wbPtsEl)   wbPtsEl.textContent   = totalPoints.toLocaleString();
+        const wbPlaysEl = document.getElementById('wb-plays');  if (wbPlaysEl) wbPlaysEl.textContent = allPlays.length;
+
+        // Render points card
+        renderPointsCard(totalPoints);
+
+        // Always render the dashboard first — user must click a play to drill in
+        renderPlayCards();
+
+        // Render leaderboard peek (per-play)
+        _selectedLbPlay = allPlays.length > 0 ? allPlays[0].play_id : null;
+        const lbData = await getLeaderboard(_selectedLbPlay);
+        renderLeaderboardPeek(lbData, allPlays, _selectedLbPlay);
+
+        showScreen('screen-dashboard');
+
+        // Background: register OID silently after dashboard is shown (non-blocking)
+        if (currentUser.oid) {
+          registerOID(currentUser.username, currentUser.oid).catch(() => {});
+        }
+        // Background: log this login event (non-blocking)
+        logActivity(currentUser, 'login', 'dashboard').catch(() => {});
+        // Identity resolution success — log full details
+        logIdentityEvent({
+          eventType:        'login_success',
+          repDisplayName:   name,
+          rawIdentity:      email,
+          resolvedIdentity: identMeta.resolvedIdentity || email,
+          matchType:        identMeta.matchType        || 'fallback',
+          candidates:       identMeta.candidates       || [],
+          assignmentCount:  repAccounts.length,
+          notes: '',
+        }).catch(() => {});
+
+        // Show login greeting with staleness check (non-blocking)
+        try { showLoginGreeting(currentUser, allPlays, repAccounts); } catch(e) {}
+
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+        const msg = err && err.message ? err.message : '';
+
+        if (err && err.isSharePointAccessDenied) {
+          // Rep authenticated fine but their token lacks SharePoint permission.
+          // Show a clear, non-technical message; log the event for admin visibility.
+          console.warn('[Access] SharePoint 403 for endpoint:', err.failingEndpoint || 'unknown');
+          showError(
+            'You signed in successfully, but do not currently have access to the ' +
+            'SharePoint data required for this app.\n\n' +
+            'Please contact Infra Sales leadership to request access.'
+          );
+          const u = currentUser || {};
+          logIdentityEvent({
+            eventType:        'sharepoint_access_denied',
+            repDisplayName:   u.name  || '',
+            rawIdentity:      u.email || '',
+            resolvedIdentity: '',
+            matchType:        'none',
+            candidates:       [],
+            assignmentCount:  0,
+            notes: 'Graph 403 – endpoint: ' + (err.failingEndpoint || 'unknown'),
+          }).catch(() => {});
+
+        } else if (msg.includes('404') || msg.includes('does not exist') || msg.includes('itemNotFound')) {
+          showError('SharePoint data not found. Please run setup.html to initialize the ChefSaaS data files, then reload.');
+        } else {
+          showError('Failed to load dashboard. Please try again.\n\nError: ' + msg);
+        }
+      }
+    }
+
+    function renderPointsCard(pts) {
+      const level = getLevel(pts);
+      const THRESHOLDS = [
+        { name: 'Rookie',   badge: '🌱', min: 0   },
+        { name: 'Pitcher',  badge: '⚾', min: 50  },
+        { name: 'Pro',      badge: '🎯', min: 150 },
+        { name: 'Champion', badge: '🏆', min: 300 },
+        { name: 'Legend',   badge: '⭐', min: 500 },
+      ];
+      const idx  = THRESHOLDS.findIndex(l => l.name === level.name);
+      const next = THRESHOLDS[idx + 1];
+
+      document.getElementById('dashboard-total-points').textContent = pts.toLocaleString();
+      document.getElementById('dashboard-level-emoji').textContent  = level.badge;
+      document.getElementById('dashboard-level-name').textContent   = level.name;
+
+      const barEl   = document.getElementById('rep-hero-level-bar');
+      const labelEl = document.getElementById('rep-hero-level-label');
+      if (barEl && labelEl) {
+        if (next) {
+          const pct = Math.min(100, Math.round(((pts - level.min) / (next.min - level.min)) * 100));
+          barEl.style.width = pct + '%';
+          labelEl.textContent = `${(next.min - pts).toLocaleString()} pts to ${next.name} ${next.badge}`;
+        } else {
+          barEl.style.width = '100%';
+          labelEl.textContent = 'Maximum level — Legend! ⭐';
+        }
+      }
+    }
+
+    function renderPlayCards() {
+      const container = document.getElementById('dashboard-plays-list');
+      if (!allPlays.length) {
+        container.innerHTML = '<div style="text-align:center;color:#999;padding:24px;">No plays assigned yet — check back soon.</div>';
+        return;
+      }
+
+      const GOAL_ICONS = {
+        feedback: '📋', interest: '✅', meeting: '📅',
+        disqualification: '🚫', expansion: '🚀',
+        qualify_in: '✅', qualify_out: '🚫'
+      };
+
+      const html = allPlays.map(play => {
+        const playAccounts  = getPlayAccounts(play);
+        const targets       = playAccounts.length;
+        const engaged       = playAccounts.filter(a => !!latestLogs[a.account_id]).length;
+        const interested    = playAccounts.filter(a => {
+          const log = latestLogs[a.account_id];
+          return !!(log && log.outcome === 'Interested');
+        }).length;
+        const notInterested = playAccounts.filter(a => {
+          const log = latestLogs[a.account_id];
+          return !!(log && log.outcome === 'Not Interested');
+        }).length;
+        const wouldNotEngage = playAccounts.filter(a => {
+          const log = latestLogs[a.account_id];
+          return !!(log && log.outcome === 'Would Not Engage');
+        }).length;
+
+        const pct        = targets > 0 ? Math.round((engaged / targets) * 100) : 0;
+        const goalLabel  = getGoalLabel(play.goal);
+        const goalIcon   = GOAL_ICONS[play.goal] || '🎯';
+        const isDisqual  = play.goal === 'disqualification' || play.goal === 'qualify_out';
+        const goalCls    = isDisqual ? 'play-goal-tag-out' : 'play-goal-tag-in';
+        const barColor   = pct === 100 ? '#107c10' : '#0078d4';
+        const hasInfo    = play.icp || play.target_persona || play.elevator_pitch;
+
+        const summaryLine = targets > 0
+          ? `${engaged} of ${targets} account${targets !== 1 ? 's' : ''} engaged · ${pct}%`
+          : 'No accounts assigned';
+
+        const parts = [];
+        if (engaged > 0) parts.push(`${engaged} Engaged`);
+        if (interested > 0)    parts.push(`${interested} Interested 🏆`);
+        if (notInterested > 0) parts.push(`${notInterested} Not Interested`);
+        if (wouldNotEngage > 0) parts.push(`<span style="color:#e65c00;font-weight:700;">${wouldNotEngage} Would Not Engage</span>`);
+        const metricsText = parts.join(' → ') || (targets > 0 ? 'No activity yet' : '');
+
+        return `
+          <div class="play-card" data-play-id="${escHtml(play.play_id)}">
+            <div class="play-card-top">
+              <div class="play-card-name">${escHtml(play.play_name)}</div>
+              ${goalLabel ? `<span class="play-goal-tag ${goalCls}">${goalIcon} Goal — ${escHtml(goalLabel)}</span>` : ''}
+            </div>
+            <div class="play-card-summary">${escHtml(summaryLine)}</div>
+            <div class="play-progress-wrap">
+              <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%;background:${barColor};"></div></div>
+              <span class="play-pct" style="${pct === 100 ? 'color:#107c10;font-weight:700;' : ''}">${pct}%</span>
+            </div>
+            <div class="play-card-bottom">
+              <span class="play-card-metrics">${metricsText}</span>
+              ${hasInfo ? `<button class="play-info-link" onclick="event.stopPropagation();showPlayInfo('${escHtml(play.play_id)}')">ⓘ Info</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = html;
+      _dashboardReady = true;
+
+      container.querySelectorAll('.play-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const playId = card.dataset.playId;
+          const play   = allPlays.find(p => p.play_id === playId);
+          if (play) {
+            currentPlay  = play;
+            activeFilter = 'all';
+            loadPlayDetail(play);
+          }
+        });
+      });
+    }
+
+    function renderScheduleAlert() {
+      const alertEl = document.getElementById('dashboard-schedule-alert');
+      if (alertEl) alertEl.style.display = 'none';
+    }
+
+    function showPlayInfo(playId) {
+      const play = allPlays.find(p => p.play_id === playId);
+      if (!play) return;
+
+      // Compute live stats from rep data
+      const playAccts  = repAccounts.filter(a => a.play_id === playId);
+      const targets    = playAccts.length;
+      const engaged    = playAccts.filter(a => latestLogs[a.account_id]).length;
+      const interested = playAccts.filter(a => {
+        const log = latestLogs[a.account_id];
+        return !!(log && log.outcome === 'Interested');
+      }).length;
+
+      const goalLabel  = getGoalLabel(play.goal);
+      const isDisqual  = play.goal === 'disqualification' || play.goal === 'qualify_out';
+      const goalTagCls = isDisqual ? 'pi-goal-out' : 'pi-goal-in';
+      const GOAL_ICONS = { feedback:'📋', interest:'✅', meeting:'📅', disqualification:'🚫', expansion:'🚀', qualify_in:'✅', qualify_out:'🚫' };
+      const goalIcon   = GOAL_ICONS[play.goal] || '🎯';
+
+      const statsHtml = targets > 0 ? `
+        <div class="pi-stats-row">
+          <div class="pi-stat"><span class="pi-stat-val">${targets}</span><span class="pi-stat-lbl">Targets</span></div>
+          <div class="pi-stat"><span class="pi-stat-val">${engaged}</span><span class="pi-stat-lbl">Engaged</span></div>
+          <div class="pi-stat"><span class="pi-stat-val">${interested}</span><span class="pi-stat-lbl">Interested</span></div>
+        </div>` : '';
+
+      const overlay = document.createElement('div');
+      overlay.className = 'play-info-overlay';
+      overlay.innerHTML = `
+        <div class="play-info-sheet">
+          <div class="pi-header">
+            <strong class="pi-title">${escHtml(play.play_name)}</strong>
+            <button class="pi-close" onclick="this.closest('.play-info-overlay').remove()">✕</button>
+          </div>
+          ${goalLabel ? `<div class="pi-goal-badge ${goalTagCls}">${goalIcon} Goal — ${escHtml(goalLabel)}</div>` : ''}
+          ${statsHtml}
+          ${play.icp           ? `<div class="pi-field"><div class="pi-label">Ideal Customer Profile</div><div class="pi-value">${escHtml(play.icp)}</div></div>` : ''}
+          ${play.target_persona ? `<div class="pi-field"><div class="pi-label">Target Persona</div><div class="pi-value">${escHtml(play.target_persona)}</div></div>` : ''}
+          ${play.elevator_pitch ? `<div class="pi-field"><div class="pi-label">Elevator Pitch</div><div class="pi-pitch">${escHtml(play.elevator_pitch)}</div></div>` : ''}
+        </div>`;
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+    }
+
+    // ─────────────────────────────────────────────
+    // LEADERBOARD PEEK
+    // ─────────────────────────────────────────────
+    function renderLeaderboardPeek(data, plays, selectedPlayId) {
+      const container = document.getElementById('dashboard-leaderboard-peek');
+
+      // Play selector (only shows rep's assigned plays)
+      const playOpts = (plays || allPlays).map(p =>
+        `<option value="${p.play_id}" ${p.play_id === selectedPlayId ? 'selected' : ''}>${p.play_name || p.play_id}</option>`
+      ).join('');
+      const picker = `<select id="lb-peek-play-picker" style="width:100%;padding:6px 8px;font-size:13px;border:1px solid #d1d5db;border-radius:6px;margin-bottom:8px;background:#f9fafb;">${playOpts}</select>`;
+
+      if (!data || !data.length) {
+        container.innerHTML = `
+          <div class="lb-peek-header">
+            <span class="lb-peek-title">Top Reps</span>
+            <a href="#" id="view-full-leaderboard" class="lb-peek-link">Full leaderboard →</a>
+          </div>
+          ${picker}
+          <div style="text-align:center;color:#999;padding:12px;">No data yet for this play.</div>
+        `;
+        _wireLbPeekEvents();
+        return;
+      }
+
+      const top3    = data.slice(0, 3);
+      const userIdx = data.findIndex(r => r.email === currentUser.email);
+      const showUser = userIdx > 2;
+
+      const rankEmoji = ['🥇', '🥈', '🥉'];
+
+      const rowHtml = (entry, rank) => {
+        const level = getLevel(entry.totalPoints || 0);
+        const isMe  = entry.email === currentUser.email;
+        return `
+          <div class="lb-peek-row${isMe ? ' current-user' : ''}">
+            <span class="lb-peek-rank">${rank <= 3 ? rankEmoji[rank - 1] : rank}</span>
+            <span class="lb-peek-name">${entry.repName || entry.email}${isMe ? ' · you' : ''}</span>
+            <span class="lb-peek-pts">${(entry.totalPoints || 0).toLocaleString()}</span>
+          </div>
+        `;
+      };
+
+      let rows = top3.map((e, i) => rowHtml(e, i + 1)).join('');
+
+      if (showUser && userIdx >= 0) {
+        rows += `<div style="text-align:center;color:#bbb;font-size:11px;padding:2px 0;">•••</div>`;
+        rows += rowHtml(data[userIdx], userIdx + 1);
+      }
+
+      container.innerHTML = `
+        <div class="lb-peek-header">
+          <span class="lb-peek-title">Top Reps</span>
+          <a href="#" id="view-full-leaderboard" class="lb-peek-link">Full leaderboard →</a>
+        </div>
+        ${picker}
+        ${rows}
+      `;
+
+      _wireLbPeekEvents();
+    }
+
+    function _wireLbPeekEvents() {
+      const pickerEl = document.getElementById('lb-peek-play-picker');
+      if (pickerEl) {
+        pickerEl.addEventListener('change', async function() {
+          _selectedLbPlay = this.value;
+          const lbData = await getLeaderboard(_selectedLbPlay);
+          renderLeaderboardPeek(lbData, allPlays, _selectedLbPlay);
+        });
+      }
+      const fullLink = document.getElementById('view-full-leaderboard');
+      if (fullLink) {
+        fullLink.addEventListener('click', e => {
+          e.preventDefault();
+          loadLeaderboard(_selectedLbPlay);
+        });
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // FEATURE 1: LOGIN GREETING + STALENESS
+    // ─────────────────────────────────────────────
+    function showLoginGreeting(user, plays, assignments) {
+      const greetEl = document.getElementById('greeting-bar');
+      if (!greetEl) return;
+
+      const hour = new Date().getHours();
+      const timeGreet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+      greetEl.innerHTML = `<span class="greeting-inline">${timeGreet}, <strong>${user.name.split(' ')[0]}</strong></span>`;
+      greetEl.className = 'greeting-inline-bar';
+
+      // Staleness check: find oldest uploaded_at across this rep's accounts
+      const now = Date.now();
+      let staleMsg = '';
+      if (assignments && assignments.length > 0) {
+        const dates = assignments
+          .map(a => a.uploaded_at ? new Date(a.uploaded_at).getTime() : 0)
+          .filter(d => d > 0);
+        if (dates.length > 0) {
+          const oldest = Math.min(...dates);
+          const daysSince = Math.floor((now - oldest) / (1000 * 60 * 60 * 24));
+          if (daysSince > 30) {
+            staleMsg = `<span class="greeting-stale">⚠ Account list last updated ${daysSince} days ago — ask your manager to refresh.</span>`;
+          }
+        }
+      }
+      if (staleMsg) greetEl.insertAdjacentHTML('beforeend', staleMsg);
+    }
+
+    // ─────────────────────────────────────────────
+    // FEATURE 2: DEMO MODE
+    // ─────────────────────────────────────────────
+    // TEAMS-DEV: Richer inline demo dataset — 2 plays × 5 accounts, no SharePoint dependency
+    const DEMO_FALLBACK = {
+      plays: [
+        {
+          play_id: 'teams_demo_001',
+          play_name: 'Practice Play — Chef SaaS Infrastructure',
+          target_persona: 'IT Director / VP Infrastructure',
+          icp: 'Mid-market companies with manual infrastructure processes',
+          elevator_pitch: 'Chef automates infrastructure compliance and configuration at scale, reducing manual toil and eliminating drift across thousands of nodes.',
+          accounts: [
+            { account_id: 'TDEMO001', account_name: 'Acme Corp (Demo)',     rep_sso_login: 'demo', rep_name: 'Demo Rep', arr: '0', active: 'Yes' },
+            { account_id: 'TDEMO002', account_name: 'Widget Co (Demo)',     rep_sso_login: 'demo', rep_name: 'Demo Rep', arr: '0', active: 'Yes' },
+            { account_id: 'TDEMO003', account_name: 'Globex Inc (Demo)',    rep_sso_login: 'demo', rep_name: 'Demo Rep', arr: '0', active: 'Yes' },
+            { account_id: 'TDEMO004', account_name: 'Initech LLC (Demo)',   rep_sso_login: 'demo', rep_name: 'Demo Rep', arr: '0', active: 'Yes' },
+            { account_id: 'TDEMO005', account_name: 'Umbrella Corp (Demo)', rep_sso_login: 'demo', rep_name: 'Demo Rep', arr: '0', active: 'Yes' },
+          ]
+        },
+        {
+          play_id: 'teams_demo_002',
+          play_name: 'Practice Play — Compliance & Audit',
+          target_persona: 'CISO / Compliance Officer',
+          icp: 'Regulated industries with audit and compliance requirements',
+          elevator_pitch: 'Chef InSpec delivers continuous compliance scanning and audit-ready reporting across hybrid and cloud environments.',
+          accounts: [
+            { account_id: 'TDEMO006', account_name: 'First National Bank (Demo)',  rep_sso_login: 'demo', rep_name: 'Demo Rep', arr: '0', active: 'Yes' },
+            { account_id: 'TDEMO007', account_name: 'HealthCorp Systems (Demo)',   rep_sso_login: 'demo', rep_name: 'Demo Rep', arr: '0', active: 'Yes' },
+            { account_id: 'TDEMO008', account_name: 'GovTech Solutions (Demo)',    rep_sso_login: 'demo', rep_name: 'Demo Rep', arr: '0', active: 'Yes' },
+            { account_id: 'TDEMO009', account_name: 'Pacific Insurance (Demo)',    rep_sso_login: 'demo', rep_name: 'Demo Rep', arr: '0', active: 'Yes' },
+            { account_id: 'TDEMO010', account_name: 'Meridian Capital (Demo)',     rep_sso_login: 'demo', rep_name: 'Demo Rep', arr: '0', active: 'Yes' },
+          ]
+        }
+      ]
+    };
+
+    // TEAMS-DEV: showDemoMode — inline data only, no SharePoint fetch, supports ?demo=0
+    async function showDemoMode() {
+      // ?demo=0: disable demo fallback
+      if (window._teamsDisableDemo) {
+        showScreen('screen-dashboard');
+        const container = document.getElementById('dashboard-plays-list');
+        if (container) container.innerHTML = '<div style="padding:32px;text-align:center;color:#888;font-size:14px;">No accounts assigned. Demo mode disabled (?demo=0).</div>';
+        return;
+      }
+
+      // Show prominent Teams demo banner
+      const banner = document.getElementById('demo-banner');
+      if (banner) {
+        banner.style.display = 'flex';
+        banner.style.background = '#1a56db';
+        banner.style.borderBottom = '2px solid #1144bb';
+        const msgEl = document.getElementById('demo-banner-msg');
+        if (msgEl) {
+          msgEl.innerHTML = '🎮 <strong>DEMO MODE</strong> — Explore the full experience with practice accounts. Nothing is saved to production. Add <code>?demo=0</code> to URL to disable.';
+        }
+      }
+
+      // TEAMS-DEV: Always use inline DEMO_FALLBACK — never fetch from SharePoint
+      window._demoMode = true;
+      window._demoData = DEMO_FALLBACK;
+      renderDemoPlayCards(DEMO_FALLBACK.plays);
+    }
+
+    // TEAMS-DEV: appendToDemoLog suppressed — demo engagements NOT written to SharePoint
+    async function appendToDemoLog(row) {
+      console.log('[Teams DEV demo] Engagement (local only, not saved to SharePoint):',
+        row.outcome, '—', row.account_name);
+    }
+
+    function renderDemoPlayCards(demoPlays) {
+      const container = document.getElementById('dashboard-plays-list');
+      if (!container) return;
+      container.innerHTML = demoPlays.map(play => `
+        <div class="play-card demo-play-card" onclick="openDemoPlay('${escHtml(play.play_id)}')">
+          <div class="play-card-header">
+            <span class="play-card-name">${escHtml(play.play_name)}</span>
+          </div>
+          <div class="play-metrics-row">
+            <div class="play-metric"><span class="pm-val">${play.accounts ? play.accounts.length : 0}</span><span class="pm-lbl">Practice Accounts</span></div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openDemoPlay(playId) {
+      const demoData = window._demoData || DEMO_FALLBACK;
+      const play = demoData.plays.find(p => p.play_id === playId);
+      if (!play) return;
+
+      // Populate repAccounts with demo accounts for this play
+      repAccounts = (play.accounts || []).map(a => ({ ...a, play_id: play.play_id, play_name: play.play_name }));
+      currentPlay  = { play_id: play.play_id, play_name: play.play_name };
+      activeFilter = 'all';
+
+      document.getElementById('play-detail-title').textContent = play.play_name;
+      renderAccountList(repAccounts, 'all');
+      document.querySelectorAll('.filter-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.filter === 'all');
+      });
+      showScreen('screen-play-detail');
+    }
+
+    // ─────────────────────────────────────────────
+    // PLAY DETAIL
+    // ─────────────────────────────────────────────
+    async function loadPlayDetail(play, forceRefresh = false) {
+      showScreen('screen-loading');
+      try {
+        // Only re-fetch logs if explicitly refreshing (e.g. after submitting)
+        if (forceRefresh) {
+          const email = currentUser ? currentUser.email : null;
+          const accountIds = repAccounts.map(a => a.account_id);
+          const logs = await getLatestLogsForRep(email, accountIds);
+          if (logs) Object.assign(latestLogs, logs);
+        }
+
+        document.getElementById('play-detail-title').textContent = play.play_name;
+        const playAccounts = getPlayAccounts(play);
+        renderAccountList(playAccounts, activeFilter);
+
+        // Sync filter tabs UI
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+          tab.classList.toggle('active', tab.dataset.filter === activeFilter);
+        });
+
+        showScreen('screen-play-detail');
+      } catch (err) {
+        console.error('Play detail load error:', err);
+        showError('Failed to load play details. Please try again.');
+      }
+    }
+
+    function renderAccountList(accounts, filter) {
+      const container = document.getElementById('play-account-list');
+
+      // Apply filter
+      const filtered = accounts.filter(account => {
+        const { status } = getAccountStatus(account.account_id);
+
+        if (filter === 'all') return true;
+        if (filter === 'not-started')   return !status;
+        if (filter === 'interested')    return status === 'Interested';
+        if (filter === 'not-interested') return status === 'Not Interested';
+        if (filter === 'would-not-engage') return status === 'Would Not Engage';
+
+        return true;
+      });
+
+      if (!filtered.length) {
+        container.innerHTML = '<div style="text-align:center;color:#999;padding:24px;">No accounts match this filter.</div>';
+        return;
+      }
+
+      const html = filtered.map(account => {
+        const { statusLabel, badgeClass, lastDate } = getAccountStatus(account.account_id);
+        const region  = account.region  || '';
+        const segment = account.segment || '';
+        const meta    = [region, segment].filter(Boolean).join(' · ');
+
+        return `
+          <div class="account-row" data-account-id="${account.account_id}" style="cursor:pointer;">
+            <div class="account-row-info">
+              <div class="account-row-name">${account.account_name || account.name || account.account_id}</div>
+              ${meta ? `<div class="account-row-meta">${meta}</div>` : ''}
+            </div>
+            <div class="account-row-right">
+              <span class="status-badge ${badgeClass}">${statusLabel}</span>
+              <div class="account-row-date">${formatDate(lastDate)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = html;
+
+      // Bind click handlers
+      container.querySelectorAll('.account-row').forEach(row => {
+        row.addEventListener('click', () => {
+          const accountId = row.dataset.accountId;
+          const account   = repAccounts.find(a => a.account_id === accountId);
+          if (account) showLogForm(account, currentPlay);
+        });
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // LOG FORM — 2-STEP WIZARD
+    // ─────────────────────────────────────────────
+    async function showLogForm(account, play) {
+      currentAccount = account;
+      currentPlay    = play;
+      currentStep    = 1;
+
+      const accountName = account.account_name || account.name || account.account_id;
+      const persona  = account.target_persona || '';
+      const meta = [account.region || '', account.segment || '', persona].filter(Boolean).join(' · ');
+      const headerHtml = `<div class="account-header-name">${escHtml(accountName)}</div>${meta ? `<div class="account-header-meta">${escHtml(meta)}</div>` : ''}`;
+
+      document.getElementById('log-form-account-header').innerHTML   = headerHtml;
+      document.getElementById('log-form-account-header-2').innerHTML = headerHtml;
+
+      // Reset all fields
+      document.querySelectorAll('input[name="interaction-type"]').forEach(r => r.checked = false);
+      document.querySelectorAll('input[name="outcome"]').forEach(r => r.checked = false);
+      ['field-not-interested-reason', 'field-interested-reason', 'field-next-step-type', 'field-timing', 'field-timing-ni', 'field-wne-reason', 'field-wne-next-step', 'field-wne-timing'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+      const notesEl = document.getElementById('field-notes');
+      if (notesEl) notesEl.value = '';
+      const counter = document.getElementById('notes-char-counter');
+      if (counter) counter.textContent = '0 / 500 characters';
+      const dateEl = document.getElementById('field-call-date');
+      if (dateEl) dateEl.value = '';
+
+      goToLogStep(1);
+      showScreen('screen-log-form');
+
+      // Apply per-play question config (show/hide boilerplate fields, render custom questions)
+      applyPlayQuestions(play);
+
+      // Load all form options from SharePoint (cached after first call)
+      renderInteractionTypes();
+      renderNextStepOptions();
+      renderTimingOptions();
+      loadResponseOptionsForForm(account).then(({ interested, notInterested }) => {
+        document.getElementById('field-interested-reason').innerHTML     = buildReasonOptions(interested);
+        document.getElementById('field-not-interested-reason').innerHTML = buildReasonOptions(notInterested);
+      });
+
+      // Load WNE + per-play config options
+      const playId = (play || {}).play_id || account.play_id || '';
+      if (playId && typeof getPlayConfig === 'function') {
+        getPlayConfig(playId).then(pc => {
+          if (!pc || !pc.outcomes) return;
+          const wne = pc.outcomes['Would Not Engage'];
+          if (wne) {
+            const wneReasonSel = document.getElementById('field-wne-reason');
+            if (wneReasonSel) wneReasonSel.innerHTML = '<option value="">— Select —</option>' + (wne.reasons || []).map(r => `<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
+            const wneNextSel = document.getElementById('field-wne-next-step');
+            if (wneNextSel) wneNextSel.innerHTML = '<option value="">— Select —</option>' + (wne.next_steps || []).map(r => `<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
+            const wneTimingSel = document.getElementById('field-wne-timing');
+            if (wneTimingSel) wneTimingSel.innerHTML = '<option value="">— Select —</option>' + (wne.timing || []).map(r => `<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
+          }
+          // Also update NI timing from play config
+          const ni = pc.outcomes['Not Interested'];
+          if (ni && ni.timing) {
+            const niTimingSel = document.getElementById('field-timing-ni');
+            if (niTimingSel) niTimingSel.innerHTML = '<option value="">— Select —</option>' + ni.timing.map(r => `<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
+          }
+        }).catch(e => console.warn('[PlayConfig] Failed to load WNE config:', e));
+      }
+    }
+
+    // Apply per-play question config: show/hide boilerplate fields, render custom questions
+    function applyPlayQuestions(play) {
+      const q = play && play.questions;
+      const boilerplate = q ? (q.boilerplate || []) : ['notes', 'next_step', 'timing', 'revisit_timing'];
+
+      // Boilerplate field visibility
+      const notesGroup = document.getElementById('notes-field-group');
+      if (notesGroup) notesGroup.style.display = boilerplate.includes('notes') ? 'block' : 'none';
+
+      // next_step and timing live inside #interested-fields — show/hide individually
+      const nextStepGroup = document.getElementById('field-next-step-type')?.closest('.form-group');
+      if (nextStepGroup) nextStepGroup.style.display = boilerplate.includes('next_step') ? 'block' : 'none';
+      const timingGroup = document.getElementById('field-timing')?.closest('.form-group');
+      if (timingGroup) timingGroup.style.display = boilerplate.includes('timing') ? 'block' : 'none';
+
+      // revisit_timing lives inside #not-interested-fields
+      const revisitGroup = document.getElementById('field-timing-ni')?.closest('.form-group');
+      if (revisitGroup) revisitGroup.style.display = boilerplate.includes('revisit_timing') ? 'block' : 'none';
+
+      // Render custom questions
+      const container = document.getElementById('custom-questions-container');
+      if (!container) return;
+      const customQs = q ? (q.custom || []) : [];
+      if (customQs.length === 0) { container.innerHTML = ''; return; }
+      container.innerHTML = customQs.map(cq => {
+        const reqMark = cq.required ? ' <span style="color:#d32f2f;">*</span>' : '';
+        if (cq.type === 'yesno') {
+          return `<div class="form-group" data-custom-qid="${escHtml(cq.id)}">
+            <label class="form-label">${escHtml(cq.label)}${reqMark}</label>
+            <div style="display:flex;gap:10px;margin-top:6px;">
+              <label style="display:flex;align-items:center;gap:8px;font-size:15px;cursor:pointer;padding:10px 16px;border:1px solid #d1d5db;border-radius:8px;flex:1;">
+                <input type="radio" name="cq_${escHtml(cq.id)}" value="Yes" style="width:16px;height:16px;accent-color:#0078d4;"> Yes
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:15px;cursor:pointer;padding:10px 16px;border:1px solid #d1d5db;border-radius:8px;flex:1;">
+                <input type="radio" name="cq_${escHtml(cq.id)}" value="No" style="width:16px;height:16px;accent-color:#0078d4;"> No
+              </label>
+            </div>
+          </div>`;
+        }
+        if (cq.type === 'dropdown') {
+          const opts = (cq.options || []).map(o => `<option value="${escHtml(o)}">${escHtml(o)}</option>`).join('');
+          return `<div class="form-group" data-custom-qid="${escHtml(cq.id)}">
+            <label class="form-label">${escHtml(cq.label)}${reqMark}</label>
+            <select class="form-control" id="cq_${escHtml(cq.id)}" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>${opts}
+            </select>
+          </div>`;
+        }
+        // text default
+        return `<div class="form-group" data-custom-qid="${escHtml(cq.id)}">
+          <label class="form-label">${escHtml(cq.label)}${reqMark}</label>
+          <input type="text" class="form-control" id="cq_${escHtml(cq.id)}"
+                 style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;">
+        </div>`;
+      }).join('');
+    }
+
+    function goToLogStep(step) {
+      currentStep = step;
+      document.getElementById('log-step-1').style.display = step === 1 ? 'block' : 'none';
+      document.getElementById('log-step-2').style.display = step === 2 ? 'block' : 'none';
+
+      if (step === 2) {
+        // Show/hide outcome-specific fields based on step 1 selection
+        const outcome = document.querySelector('input[name="outcome"]:checked')?.value;
+        document.getElementById('interested-fields').style.display     = outcome === 'Interested'       ? 'block' : 'none';
+        document.getElementById('not-interested-fields').style.display = outcome === 'Not Interested'   ? 'block' : 'none';
+        document.getElementById('wne-fields').style.display            = outcome === 'Would Not Engage' ? 'block' : 'none';
+      }
+
+      const titles = { 1: 'Log Interaction', 2: 'Details' };
+      document.getElementById('log-form-title').textContent = titles[step] || 'Log Interaction';
+
+      ['step-ind-1', 'step-ind-2'].forEach((id, i) => {
+        const el = document.getElementById(id);
+        el.style.color      = (i + 1) === step ? '#0078d4' : '#9ca3af';
+        el.style.fontWeight = (i + 1) === step ? '700' : '400';
+      });
+
+      window.scrollTo(0, 0);
+    }
+
+    // ─────────────────────────────────────────────
+    // SUBMIT — log real customer interaction
+    // ─────────────────────────────────────────────
+
+    function collectCustomAnswers() {
+      const answers = {};
+      document.querySelectorAll('#custom-questions-container [data-custom-qid]').forEach(group => {
+        const qid = group.dataset.customQid;
+        const radio = group.querySelector(`input[name="cq_${qid}"]:checked`);
+        if (radio) { answers[qid] = radio.value; return; }
+        const sel = group.querySelector(`#cq_${qid}`);
+        if (sel) { answers[qid] = sel.value; return; }
+        const inp = group.querySelector(`input[type="text"]`);
+        if (inp) { answers[qid] = inp.value; }
+      });
+      return Object.keys(answers).length > 0 ? JSON.stringify(answers) : '';
+    }
+
+    function validateCustomAnswers() {
+      if (!currentPlay || !currentPlay.questions) return null;
+      for (const cq of (currentPlay.questions.custom || [])) {
+        if (!cq.required) continue;
+        const group = document.querySelector(`[data-custom-qid="${cq.id}"]`);
+        if (!group) continue;
+        if (cq.type === 'yesno') {
+          if (!group.querySelector(`input[name="cq_${cq.id}"]:checked`)) return `Please answer: "${cq.label}"`;
+        } else {
+          const el = group.querySelector(`#cq_${cq.id}`);
+          if (!el || !el.value.trim()) return `Please fill in: "${cq.label}"`;
+        }
+      }
+      return null;
+    }
+
+    async function submitEngagement() {
+      console.log("PATCH LIVE v5 - deployed app.html");
+      const interactionType = document.querySelector('input[name="interaction-type"]:checked')?.value;
+      const outcome         = document.querySelector('input[name="outcome"]:checked')?.value;
+
+      if (!interactionType) { alert('Please select an interaction type.'); return; }
+      if (!outcome)         { alert('Please select an outcome.'); return; }
+
+      const btn = document.getElementById('btn-submit-engagement');
+      btn.textContent = 'Submitting…';
+      btn.disabled    = true;
+
+      try {
+        const nextStepType = document.getElementById('field-next-step-type')?.value || '';
+
+        // Validate required fields by outcome (skip if field was hidden by play config)
+        const bq = currentPlay?.questions?.boilerplate || ['notes', 'next_step', 'timing', 'revisit_timing'];
+        if (outcome === 'Interested') {
+          const intReason = document.getElementById('field-interested-reason')?.value || '';
+          if (!intReason) { alert('Please select an Interested Reason.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
+          if (bq.includes('next_step') && !nextStepType) { alert('Please select a Next Step.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
+        }
+        if (outcome === 'Not Interested') {
+          const niReason = document.getElementById('field-not-interested-reason')?.value || '';
+          if (!niReason) { alert('Please select a Not Interested Reason.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
+        }
+        if (outcome === 'Would Not Engage') {
+          const wneReason = document.getElementById('field-wne-reason')?.value || '';
+          if (!wneReason) { alert('Please select a reason.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
+        }
+
+        // Validate required custom questions
+        const missingCustom = validateCustomAnswers();
+        if (missingCustom) { alert(missingCustom); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
+
+        // Derive reason select from outcome
+        const reasonSelect =
+          outcome === 'Interested'
+            ? document.getElementById('field-interested-reason')
+            : outcome === 'Not Interested'
+              ? document.getElementById('field-not-interested-reason')
+              : outcome === 'Would Not Engage'
+                ? document.getElementById('field-wne-reason')
+                : null;
+
+        const selectedOption = reasonSelect?.options?.[reasonSelect.selectedIndex];
+        const reasonLabel    = selectedOption?.text  || '';
+        const reasonCode     = reasonSelect?.value   || '';
+
+        const timingVal = outcome === 'Interested'
+          ? (document.getElementById('field-timing')?.value || '')
+          : outcome === 'Would Not Engage'
+            ? (document.getElementById('field-wne-timing')?.value || '')
+            : (document.getElementById('field-timing-ni')?.value || '');
+
+        const data = {
+          account_id:       currentAccount.account_id,
+          account_name:     currentAccount.account_name || currentAccount.name || currentAccount.account_id,
+          play_id:          (currentPlay || {}).play_id   || currentAccount.play_id   || '',
+          play_name:        (currentPlay || {}).play_name || currentAccount.play_name || '',
+          rep_email:        currentUser.email,
+          rep_name:         currentUser.name,
+          interaction_type: interactionType,
+          outcome,
+          reason_label:     reasonLabel,
+          reason_code:      reasonCode,
+          next_step_type:   outcome === 'Interested' ? nextStepType : outcome === 'Would Not Engage' ? (document.getElementById('field-wne-next-step')?.value || '') : '',
+          timing:           timingVal,
+          notes:            document.getElementById('field-notes')?.value || '',
+          call_date:        document.getElementById('field-call-date')?.value || '',
+          extra_json:       collectCustomAnswers(),
+        };
+
+        // Hard 25s timeout — prevents hanging forever if network/token stalls
+        const timeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), 25000)
+        );
+
+        // Demo mode: write to demo_log.csv instead of real motion_log
+        if (window._demoMode) {
+          try { await appendToDemoLog(data); } catch(e) { console.warn('Demo log write failed', e); }
+          lastPointsEarned = 0;
+          latestLogs[currentAccount.account_id] = { ...data, outcome };
+          lastSubmittedData = data;
+          showConfirm();
+          btn.textContent = 'Submit ✓';
+          btn.disabled    = false;
+          return;
+        }
+
+        await Promise.race([logEngagement(data), timeout]);
+
+        lastPointsEarned = calculatePoints(outcome, data.next_step_type, data);
+        totalPoints      = (totalPoints || 0) + lastPointsEarned;
+        latestLogs[currentAccount.account_id] = { ...data, outcome };
+        lastSubmittedData = data;
+        showConfirm();
+
+        // Fire-and-forget: log engagement to activity_log.csv so admin polling
+        // can detect high-value outcomes in near-real-time.
+        logActivity(currentUser, 'engagement',
+          `${outcome} — ${data.account_name} (${data.play_name})`
+        ).catch(() => {});
+
+      } catch (err) {
+        console.error('Submit error:', err);
+        const msg = err.message === 'timeout'
+          ? '⏱ Submit timed out — check your connection and try again.'
+          : '⚠️ Something went wrong submitting. Please try again.';
+        alert(msg);
+      } finally {
+        btn.textContent = 'Submit ✓';
+        btn.disabled    = false;
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // QUALITATIVE FEEDBACK
+    // ─────────────────────────────────────────────
+    function getQualitativeFeedback(data) {
+      const outcome = data.outcome || '';
+      const nextStep = (data.next_step_type || '').toLowerCase();
+      const reason = (data.reason_label || '').toLowerCase();
+      const notes = (data.notes || '').trim();
+
+      if (outcome === 'Interested') {
+        if (nextStep.includes('schedule follow-up') || nextStep.includes('create opportunity')) {
+          return '🔥 Strong opportunity — clear next step!';
+        }
+        if (reason.includes('active budget') || reason.includes('executive sponsor')) {
+          return '💰 High-value signal — great find!';
+        }
+        if (notes.length > 20) {
+          return '🧠 Good detail captured — this will help the team!';
+        }
+        return '✅ Logged — keep pushing!';
+      } else {
+        if (reason.includes('already have') || reason.includes('already solved')) {
+          return '🧠 Valuable intel captured — good to know the landscape!';
+        }
+        if (notes.length > 20) {
+          return '📋 Good context noted — useful for future outreach!';
+        }
+        return '✔ Logged — move on to the next one!';
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // CONFIRM SCREEN
+    // ─────────────────────────────────────────────
+    function showConfirm() {
+      const accountName = currentAccount.account_name || currentAccount.name || currentAccount.account_id;
+      const prevPoints  = totalPoints - lastPointsEarned;
+      const level       = getLevel(totalPoints);
+      const prevLevel   = getLevel(prevPoints);
+
+      document.getElementById('confirm-account-name').textContent  = accountName;
+      document.getElementById('confirm-points-earned').textContent = `+${lastPointsEarned} pts`;
+      document.getElementById('confirm-level-emoji').textContent   = level.badge;
+      document.getElementById('confirm-level-name').textContent    = level.name;
+      document.getElementById('confirm-total-points').textContent  = totalPoints.toLocaleString();
+
+      const feedbackEl = document.getElementById('confirm-feedback-msg');
+      if (feedbackEl && lastSubmittedData) {
+        feedbackEl.textContent = getQualitativeFeedback(lastSubmittedData);
+        feedbackEl.style.display = 'block';
+      }
+
+      // Check if ALL accounts for this play are now engaged
+      const playAccounts = repAccounts.filter(a => !currentPlay || a.play_id === currentPlay.play_id);
+      const allEngaged   = playAccounts.length > 0 && playAccounts.every(a => !!latestLogs[a.account_id]);
+      const allDoneBanner = document.getElementById('confirm-all-done-banner');
+      allDoneBanner.style.display = allEngaged ? 'block' : 'none';
+      document.getElementById('confirm-header-title').textContent = allEngaged ? '🏆 Complete!' : '✅ Submitted!';
+
+      // Check for level-up
+      const levelUpBanner = document.getElementById('confirm-levelup-banner');
+      if (level.name !== prevLevel.name) {
+        levelUpBanner.style.display = 'block';
+        document.getElementById('confirm-levelup-emoji').textContent = level.badge;
+        document.getElementById('confirm-levelup-text').textContent  = `Level Up! You're now a ${level.name}!`;
+      } else {
+        levelUpBanner.style.display = 'none';
+      }
+
+      // Countdown back to accounts
+      const btn = document.getElementById('btn-back-to-accounts');
+      let secs = allEngaged ? 5 : 3;
+      btn.textContent = `Back to My Accounts (${secs}s)`;
+      const interval = setInterval(() => {
+        secs--;
+        if (secs <= 0) {
+          clearInterval(interval);
+          btn.textContent = 'Back to My Accounts';
+          if (currentPlay) loadPlayDetail(currentPlay, true);
+          else showDashboard();
+        } else {
+          btn.textContent = `Back to My Accounts (${secs}s)`;
+        }
+      }, 1000);
+
+      showScreen('screen-confirm');
+      fireConfetti();
+      if (allEngaged) setTimeout(fireConfetti, 800);
+    }
+
+    // ─────────────────────────────────────────────
+    // CONFETTI 🎉
+    // ─────────────────────────────────────────────
+    function fireConfetti() {
+      const colors = ['#ff6b6b','#ffd93d','#6bcb77','#4d96ff','#ff922b','#cc5de8'];
+      const pieces = [];
+
+      for (let i = 0; i < 50; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left     = `${Math.random() * 100}%`;
+        piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.transform  = `rotate(${Math.random() * 360}deg)`;
+        piece.style.animationDuration = `${0.8 + Math.random() * 1.5}s`;
+        document.body.appendChild(piece);
+        pieces.push(piece);
+      }
+
+      // Clean up after 3 seconds
+      setTimeout(() => {
+        pieces.forEach(p => p.remove());
+      }, 3000);
+    }
+
+    // ─────────────────────────────────────────────
+    // LEADERBOARD (full)
+    // ─────────────────────────────────────────────
+    async function loadLeaderboard(playId) {
+      showScreen('screen-loading');
+      try {
+        const pid = playId || _selectedLbPlay || (allPlays.length > 0 ? allPlays[0].play_id : null);
+        _selectedLbPlay = pid;
+        const data = await getLeaderboard(pid);
+        renderFullLeaderboard(data || [], pid);
+        showScreen('screen-leaderboard');
+      } catch (err) {
+        console.error('Leaderboard load error:', err);
+        showError('Failed to load leaderboard.');
+      }
+    }
+
+    function renderFullLeaderboard(data, selectedPlayId) {
+      const container = document.getElementById('leaderboard-list');
+
+      // Play selector (only rep's assigned plays)
+      const playOpts = allPlays.map(p =>
+        `<option value="${p.play_id}" ${p.play_id === selectedPlayId ? 'selected' : ''}>${p.play_name || p.play_id}</option>`
+      ).join('');
+      const picker = `<select id="lb-full-play-picker" style="width:100%;padding:10px;font-size:14px;border:1px solid #d1d5db;border-radius:8px;margin-bottom:16px;background:#f9fafb;">${playOpts}</select>`;
+
+      // Filter out reps with no assigned accounts
+      const qualified = (data || []).filter(e => (e.assignedAccounts || 0) > 0);
+
+      if (!qualified.length) {
+        container.innerHTML = picker + '<div style="text-align:center;color:#999;padding:24px;">No data yet for this play.</div>';
+        _wireLbFullPickerEvent();
+        return;
+      }
+
+      const MIN_LOGGED = 4;
+      const rankEmoji = ['🥇', '🥈', '🥉'];
+      const rifTaunts = ['😬','😅','👀','🫣','💀','🙈','😰','🤡'];
+
+      const html = qualified.map((entry, idx) => {
+        const rank    = idx + 1;
+        const pts     = entry.totalPoints || 0;
+        const ppa     = entry.pointsPerAccount || 0;
+        const level   = getLevel(pts);
+        const isMe    = entry.email === currentUser.email;
+        const noScore = pts === 0;
+        const taunt   = rifTaunts[idx % rifTaunts.length];
+        const engaged = entry.engagedAccounts || entry.completedAccounts || 0;
+        const assigned = entry.assignedAccounts || 0;
+        const interested = entry.interestedAccounts || 0;
+        const pct     = engaged > 0 ? Math.round((interested / engaged) * 100) : 0;
+        const engCount = entry.totalEngagements || 0;
+        const lastAct = entry.lastActivity ? _formatRelativeDate(entry.lastActivity) : '';
+        const belowMin = engaged < MIN_LOGGED && !noScore;
+        const isComplete = entry.isComplete;
+        const rankStr = noScore ? taunt : (belowMin ? '🔒' : (rank <= 3 ? rankEmoji[rank - 1] : String(rank)));
+        const coveragePct = assigned > 0 ? Math.round((engaged / assigned) * 100) : 0;
+
+        return `
+          <div class="leaderboard-row${isMe ? ' current-user' : ''}" style="${noScore ? 'opacity:0.75;' : belowMin ? 'opacity:0.85;' : ''}">
+            <div class="leaderboard-rank">${rankStr}</div>
+            <div class="leaderboard-info">
+              <div class="leaderboard-name">${entry.repName || entry.email}${isMe ? ' 👈 you' : ''}${isComplete ? ' <span style="background:#dcfce7;color:#15803d;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:600;">✓ COMPLETE</span>' : ''}</div>
+              <div class="leaderboard-level" style="${noScore ? 'color:#e53e3e;font-weight:600;' : ''}">${noScore ? '😶 No Score — Too busy to sell I guess...' : belowMin ? `🔒 Log ${MIN_LOGGED - engaged} more to qualify (${engaged}/${MIN_LOGGED})` : `${level.badge} ${level.name}`}</div>
+              ${noScore ? '' : `<div style="font-size:11px;color:#6b7280;margin-top:2px;">${engCount} touch${engCount !== 1 ? 'es' : ''} · ${engaged}/${assigned} accounts (${coveragePct}%) · ${interested} interested (${pct}%)${lastAct ? ' · ' + lastAct : ''}</div>`}
+            </div>
+            <div class="leaderboard-right">
+              <div class="leaderboard-points" style="${noScore ? 'color:#e53e3e;' : ''}">${ppa} pts/acct</div>
+              <div class="leaderboard-accounts">${pts.toLocaleString()} total</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.innerHTML = picker + html;
+      _wireLbFullPickerEvent();
+    }
+
+    function _formatRelativeDate(isoStr) {
+      try {
+        const d = new Date(isoStr);
+        const now = new Date();
+        const diffMs = now - d;
+        const diffDays = Math.floor(diffMs / 86400000);
+        if (diffDays === 0) return 'today';
+        if (diffDays === 1) return 'yesterday';
+        if (diffDays < 7) return diffDays + 'd ago';
+        if (diffDays < 30) return Math.floor(diffDays / 7) + 'w ago';
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      } catch(e) { return ''; }
+    }
+
+    function _wireLbFullPickerEvent() {
+      const el = document.getElementById('lb-full-play-picker');
+      if (el) {
+        el.addEventListener('change', function() {
+          loadLeaderboard(this.value);
+        });
+      }
+    }
+
+    // ─────────────────────────────────────────────
+    // ERROR HELPER
+    // ─────────────────────────────────────────────
+    function showError(msg) {
+      // Show login screen with error message as a simple fallback
+      showScreen('screen-login');
+      const note = document.querySelector('#screen-login p:last-child');
+      if (note) note.textContent = `⚠️ ${msg}`;
+    }
+
+    // ─────────────────────────────────────────────
+    // EVENT LISTENERS
+    // ─────────────────────────────────────────────
+
+    // Sign in
+    document.getElementById('btn-sign-in').addEventListener('click', async () => {
+      try {
+        const account = await signIn();
+        if (account) {
+          currentUser = getCurrentUser();
+          await loadDashboard();
+        }
+      } catch (err) {
+        console.error('Sign in error:', err);
+        const msg = err && err.message ? err.message : '';
+        if (!msg) return; // redirect flow returns null, no error
+        alert('⚠️ Sign in failed. Please try again.\n\nError: ' + msg);
+      }
+    });
+
+    // Sign out (header button)
+    document.getElementById('btn-sign-out-header').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await signOut();
+    });
+
+    // Sign out (bottom link)
+    document.getElementById('btn-sign-out-bottom').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await signOut();
+    });
+
+    // Back: play detail → dashboard
+    document.getElementById('btn-back-to-dashboard').addEventListener('click', () => {
+      goBack();
+    });
+
+    // Back: log form → play detail (step-aware)
+    document.getElementById('btn-back-to-play').addEventListener('click', () => {
+      if (currentStep > 1) {
+        goToLogStep(currentStep - 1);
+      } else if (currentPlay) {
+        activeFilter = 'all';
+        renderAccountList(getPlayAccounts(currentPlay), activeFilter);
+        document.querySelectorAll('.filter-tab').forEach(t => {
+          t.classList.toggle('active', t.dataset.filter === 'all');
+        });
+        showScreen('screen-play-detail');
+      }
+    });
+
+    // Back: leaderboard → dashboard
+    document.getElementById('btn-back-to-dashboard-lb').addEventListener('click', () => {
+      showDashboard();
+    });
+
+    // Back to accounts (confirm screen)
+    document.getElementById('btn-back-to-accounts').addEventListener('click', () => {
+      if (currentPlay) {
+        loadPlayDetail(currentPlay, true);
+      } else {
+        showDashboard();
+      }
+    });
+
+    // Filter tabs
+    document.getElementById('play-filter-tabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.filter-tab');
+      if (!tab) return;
+
+      activeFilter = tab.dataset.filter;
+
+      document.querySelectorAll('.filter-tab').forEach(t => {
+        t.classList.toggle('active', t === tab);
+      });
+
+      renderAccountList(repAccounts.filter(a => !currentPlay || a.play_id === currentPlay.play_id), activeFilter);
+    });
+
+    // Log form — step 1 → step 2 (validates required fields first)
+    document.getElementById('btn-step1-next').addEventListener('click', () => {
+      const interactionType = document.querySelector('input[name="interaction-type"]:checked')?.value;
+      const outcome         = document.querySelector('input[name="outcome"]:checked')?.value;
+      if (!interactionType) { alert('Please select an interaction type.'); return; }
+      if (!outcome)         { alert('Please select an outcome.'); return; }
+      goToLogStep(2);
+    });
+
+    // Log form — submit engagement (step 2)
+    document.getElementById('btn-submit-engagement').addEventListener('click', submitEngagement);
+    document.getElementById('field-notes').addEventListener('input', function() {
+      const counter = document.getElementById('notes-char-counter');
+      if (counter) counter.textContent = this.value.length + ' / 500 characters';
+    });
+
+    // ─────────────────────────────────────────────
+    // INIT
+    // ─────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // ONBOARDING + BOOKMARK BANNER
+    // ─────────────────────────────────────────────
+    function showOnboardingIfNeeded() {
+      if (localStorage.getItem('tracker_onboarded')) return;
+      const modal = document.getElementById('onboarding-modal');
+      if (modal) modal.style.display = 'flex';
+    }
+
+    function showBookmarkBannerIfNeeded() {
+      if (window.APP_HOST === 'teams') return; // Not applicable inside Teams
+      if (localStorage.getItem('tracker_bookmark_dismissed')) return;
+      const wrap = document.getElementById('bookmark-banner-wrap');
+      if (!wrap) return;
+      wrap.innerHTML = `
+        <div class="bookmark-banner">
+          <span class="bookmark-banner-text">📌 Bookmark this page — on mobile: Share → Add to Home Screen</span>
+          <button id="btn-dismiss-bookmark" class="bookmark-banner-dismiss">✕</button>
+        </div>`;
+      document.getElementById('btn-dismiss-bookmark').addEventListener('click', () => {
+        localStorage.setItem('tracker_bookmark_dismissed', '1');
+        wrap.innerHTML = '';
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Trap browser back button inside the app
+      history.pushState({ screen: 'screen-dashboard' }, '', location.pathname);
+      window.addEventListener('popstate', (e) => {
+        if (e.state && e.state.screen) {
+          goBack();
+        } else {
+          // Fell past our history stack — re-anchor to prevent leaving the app
+          history.pushState({ screen: _screenHistory[_screenHistory.length - 1] || 'screen-dashboard' }, '', location.pathname);
+        }
+      });
+
+      const onboardBtn = document.getElementById('btn-onboarding-done');
+      if (onboardBtn) {
+        onboardBtn.addEventListener('click', () => {
+          localStorage.setItem('tracker_onboarded', '1');
+          document.getElementById('onboarding-modal').style.display = 'none';
+        });
+      }
+      try {
+        await initAuth();
+        const user = getCurrentUser();
+        if (user) {
+          currentUser = user;
+          if (typeof seedDevDataIfNeeded === 'function') await seedDevDataIfNeeded();
+          // TEAMS-DEV: Parse ?demo=1 / ?demo=0 before loading dashboard
+          const _tdp = new URLSearchParams(window.location.search);
+          window._teamsForceDemo   = _tdp.get('demo') === '1';
+          window._teamsDisableDemo = _tdp.get('demo') === '0';
+          await loadDashboard();
+          showOnboardingIfNeeded();
+          showBookmarkBannerIfNeeded();
+          // TEAMS-DEV: Notify Teams that the tab is ready
+          if (window.APP_HOST === 'teams' && window.microsoftTeams) {
+            microsoftTeams.app.initialize().catch(() => {});
+          }
+        } else {
+          showScreen('screen-login');
+        }
+      } catch (err) {
+        console.error('Init error:', err);
+        showScreen('screen-login');
+      }
+    });
+
+  </script>
+
+  <!-- ===================== ONBOARDING MODAL ===================== -->
+  <div id="onboarding-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:20px;max-width:440px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <!-- Scrollable content -->
+      <div style="overflow-y:auto;padding:32px 28px 16px;flex:1;">
+        <div style="text-align:center;margin-bottom:20px;">
+          <div style="font-size:48px;margin-bottom:10px;">🍴</div>
+          <h2 style="margin:0 0 8px;font-size:21px;color:#0078d4;font-weight:800;">Welcome to the INFRA SalesPlay Tracker! 🚀</h2>
+          <p style="margin:0;color:#555;font-size:14px;line-height:1.5;">Log your pitches, earn points, compete with your team.</p>
+        </div>
+        <div style="background:#f0f7ff;border-radius:12px;padding:14px 16px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#0078d4;margin-bottom:8px;">How Points Work</div>
+          <div style="display:grid;grid-template-columns:1fr auto;gap:5px 12px;align-items:center;font-size:14px;">
+            <span>📞 Not Interested (logged)</span><strong style="text-align:right;color:#555;">15 pts</strong>
+            <span>✅ Interested</span><strong style="text-align:right;color:#0078d4;">30 pts</strong>
+            <span>✅ Interested + next step booked</span><strong style="text-align:right;color:#107c10;">45 pts</strong>
+          </div>
+        </div>
+        <div style="background:#f8faff;border-radius:12px;padding:14px 16px;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:8px;">Your Level Journey</div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;flex-wrap:wrap;gap:4px;">
+            <span>🌱 Rookie <span style="color:#aaa">0</span></span>
+            <span>🎯 Pitcher <span style="color:#aaa">50</span></span>
+            <span>⭐ Pro <span style="color:#aaa">150</span></span>
+            <span>🥇 Champion <span style="color:#aaa">300</span></span>
+            <span>🏆 Legend <span style="color:#aaa">500</span></span>
+          </div>
+        </div>
+        <div style="background:#fffbeb;border:2px solid #fcd34d;border-radius:12px;padding:12px 16px;text-align:center;">
+          <div style="font-size:20px;margin-bottom:2px;">🎁</div>
+          <div style="font-weight:700;font-size:14px;color:#78350f;">Top 3 reps win a special prize!</div>
+        </div>
+      </div>
+      <!-- Sticky button always visible -->
+      <div style="padding:16px 28px 24px;border-top:1px solid #f0f0f0;">
+        <button id="btn-onboarding-done" style="width:100%;padding:15px;background:linear-gradient(135deg,#0078d4,#0056b3);color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;">Let's go! →</button>
+      </div>
+    </div>
+  </div>
+
+
+<footer class="security-footer">
+  INFRA SalesPlay Tracker — Progress Software Proprietary &amp; Confidential &nbsp;·&nbsp; Progress employees only &nbsp;<a href="security.html" class="sec-footer-link">Security &amp; Privacy</a>
+</footer>
+</body>
+</html>

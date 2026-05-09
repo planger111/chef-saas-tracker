@@ -1,0 +1,44 @@
+{
+  "$schema": "https://developer.microsoft.com/en-us/json-schemas/teams/v1.17/MicrosoftTeams.schema.json",
+  "manifestVersion": "1.17",
+  "version": "0.0.1",
+  "id": "e6064372-7949-4ded-8f08-883ab6d1f3a1",
+  "developer": {
+    "name": "Progress Software (DEV)",
+    "websiteUrl": "https://orange-smoke-04675d40f.7.azurestaticapps.net",
+    "privacyUrl": "https://orange-smoke-04675d40f.7.azurestaticapps.net/security.html",
+    "termsOfUseUrl": "https://orange-smoke-04675d40f.7.azurestaticapps.net/security.html"
+  },
+  "icons": {
+    "color": "color.png",
+    "outline": "outline.png"
+  },
+  "name": {
+    "short": "SalesPlay DEV",
+    "full": "Sales Play Tracker DEV"
+  },
+  "description": {
+    "short": "DEV \u2014 Rep-only INFRA sales play tracker",
+    "full": "DEVELOPMENT VERSION \u2014 INFRA Sales Play Tracker for Progress reps. Log pitches, earn points, view leaderboard. Rep experience only. NOT for production use."
+  },
+  "accentColor": "#0078d4",
+  "staticTabs": [
+    {
+      "entityId": "salesplay-rep-tab",
+      "name": "My Plays",
+      "contentUrl": "https://orange-smoke-04675d40f.7.azurestaticapps.net/teams-dev.html",
+      "websiteUrl": "https://orange-smoke-04675d40f.7.azurestaticapps.net/teams-dev.html",
+      "scopes": [
+        "personal"
+      ]
+    }
+  ],
+  "permissions": [
+    "identity",
+    "messageTeamMembers"
+  ],
+  "validDomains": [
+    "orange-smoke-04675d40f.7.azurestaticapps.net"
+  ],
+  "showLoadingIndicator": true
+}
