@@ -127,76 +127,34 @@
       </div>
     </div>
 
-    <!-- Section 4: Rep Instructions -->
+    <!-- Section 4: Rep Guidance -->
     <div class="intake-card">
-      <h2>4. Rep Instructions</h2>
+      <h2>4. Rep Guidance</h2>
       <div class="intake-field">
-        <label>What Should the Rep Do? <span class="req">*</span></label>
-        <textarea id="intake-instructions" rows="4" placeholder="Step-by-step: what should the rep say/do when they reach the customer?"></textarea>
-      </div>
-      <div class="intake-field">
-        <label>Key Questions to Ask</label>
+        <label>Key Questions for Reps to Ask</label>
         <div class="intake-list-builder" id="lb-questions">
           <div class="items" id="lb-questions-items"></div>
           <div class="add-row">
-            <input type="text" id="lb-questions-input" placeholder="Add a question" onkeydown="if(event.key==='Enter'){addListItem('questions');event.preventDefault()}" />
+            <input type="text" id="lb-questions-input" placeholder="e.g. What's your current patching process?" onkeydown="if(event.key==='Enter'){addListItem('questions');event.preventDefault()}" />
             <button onclick="addListItem('questions')">+ Add</button>
           </div>
         </div>
-        <div class="hint">Questions reps should ask during the conversation.</div>
+        <div class="hint">Questions reps should ask during the conversation. Skip if unsure — sales can add these later.</div>
       </div>
     </div>
 
     <!-- Section 5: Expected Outcomes -->
     <div class="intake-card">
       <h2>5. Expected Outcomes</h2>
-      <div class="intake-field">
-        <label>Interested — Likely Reasons</label>
-        <div class="intake-list-builder" id="lb-interested">
-          <div class="items" id="lb-interested-items"></div>
-          <div class="add-row">
-            <input type="text" id="lb-interested-input" placeholder="e.g. Wants a demo" onkeydown="if(event.key==='Enter'){addListItem('interested');event.preventDefault()}" />
-            <button onclick="addListItem('interested')">+ Add</button>
-          </div>
-        </div>
-      </div>
-      <div class="intake-field">
-        <label>Not Interested — Likely Reasons</label>
-        <div class="intake-list-builder" id="lb-not-interested">
-          <div class="items" id="lb-not-interested-items"></div>
-          <div class="add-row">
-            <input type="text" id="lb-not-interested-input" placeholder="e.g. Already using competitor" onkeydown="if(event.key==='Enter'){addListItem('not-interested');event.preventDefault()}" />
-            <button onclick="addListItem('not-interested')">+ Add</button>
-          </div>
-        </div>
-      </div>
-      <div class="intake-field">
-        <label>Suggested Next Steps (if interested)</label>
-        <textarea id="intake-next-steps" rows="3" placeholder="e.g. Schedule a demo, send trial link, connect with SE"></textarea>
+      <p style="font-size:13px;color:#64748b;margin:0 0 14px;">Check the reasons you expect for each outcome. These come from the standard config — uncheck any that don't apply and add custom ones if needed.</p>
+      <div id="intake-outcomes-container">
+        <div style="font-size:13px;color:#9ca3af;">Loading outcome options…</div>
       </div>
     </div>
 
-    <!-- Section 6: Accounts -->
+    <!-- Section 6: Wrap-up -->
     <div class="intake-card">
-      <h2>6. Target Accounts (Optional)</h2>
-      <div class="intake-field">
-        <label>Do you have a target account list?</label>
-        <textarea id="intake-accounts" rows="4" placeholder="Paste account names, one per line, or describe the segment (e.g. 'All Chef on-prem customers with ARR > $50k')"></textarea>
-        <div class="hint">The sales team can also upload accounts later via CSV.</div>
-      </div>
-      <div class="intake-field">
-        <label>Estimated Account Count</label>
-        <input type="number" id="intake-account-count" placeholder="e.g. 150" min="0" />
-      </div>
-    </div>
-
-    <!-- Section 7: Additional -->
-    <div class="intake-card">
-      <h2>7. Additional Context</h2>
-      <div class="intake-field">
-        <label>Collateral / Resources</label>
-        <textarea id="intake-collateral" rows="3" placeholder="Links to one-pagers, decks, battlecards, etc."></textarea>
-      </div>
+      <h2>6. Wrap-up</h2>
       <div class="intake-field">
         <label>Timing / Urgency</label>
         <select id="intake-urgency">
@@ -208,8 +166,12 @@
         </select>
       </div>
       <div class="intake-field">
-        <label>Anything Else?</label>
-        <textarea id="intake-notes" rows="3" placeholder="Any other context the sales team should know."></textarea>
+        <label>Estimated Account Count</label>
+        <input type="number" id="intake-account-count" placeholder="e.g. 150" min="0" />
+      </div>
+      <div class="intake-field">
+        <label>Additional Notes</label>
+        <textarea id="intake-notes" rows="3" placeholder="Links to collateral, any other context for the sales team, etc."></textarea>
       </div>
     </div>
 
@@ -238,8 +200,8 @@
 <script src="msal-auth.js?v=12"></script>
 <script src="graph-api.js?v=11"></script>
 <script>
-  // ── List builders state ──
-  const _listData = { questions: [], interested: [], 'not-interested': [] };
+  // ── List builder (key questions only) ──
+  const _listData = { questions: [] };
 
   function addListItem(listId) {
     const input = document.getElementById('lb-' + listId + '-input');
@@ -255,10 +217,87 @@
   }
   function renderList(listId) {
     const wrap = document.getElementById('lb-' + listId + '-items');
+    if (!wrap) return;
     if (_listData[listId].length === 0) { wrap.innerHTML = ''; return; }
     wrap.innerHTML = _listData[listId].map((v, i) =>
       `<div class="item"><span>• ${escHtml(v)}</span><button onclick="removeListItem('${listId}',${i})" title="Remove">✕</button></div>`
     ).join('');
+  }
+
+  // ── Outcomes from config ──
+  const DEFAULT_INTAKE_REASONS = {
+    'Interested':        ['Requested demo', 'Requested pricing', 'Referred to partner', 'Active evaluation'],
+    'Not Interested':    ['Already using competitor', 'Budget constraints', 'Not the right time', 'Not a priority', 'Other'],
+    'Would Not Engage':  ['Tried 5+ times, going away', 'Partner-led only', "Can't find right person", 'Other']
+  };
+
+  async function loadOutcomesSection() {
+    let reasonMap = null;
+    try {
+      const text = await getFileText(SP_ROOT + '/response-options.json');
+      if (text) {
+        const opts = JSON.parse(text);
+        const global = (opts.response_sets || []).find(s => s.response_set_id === 'GLOBAL_DEFAULTS');
+        if (global && global.outcome_map) reasonMap = global.outcome_map;
+      }
+    } catch(e) {}
+
+    const map = reasonMap || DEFAULT_INTAKE_REASONS;
+    const container = document.getElementById('intake-outcomes-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    Object.entries(map).forEach(([outcomeName, reasons]) => {
+      const safeId = outcomeName.replace(/\s+/g, '-').toLowerCase();
+      const reasonList = Array.isArray(reasons) ? reasons : (reasons.reasons || []);
+      const card = document.createElement('div');
+      card.style.cssText = 'border:1px solid #e5e7eb; border-radius:8px; padding:12px 14px; margin-bottom:10px;';
+      card.innerHTML = `
+        <div style="font-size:14px; font-weight:700; margin-bottom:8px;">${escHtml(outcomeName)}</div>
+        <div id="intake-reason-list-${safeId}">
+          ${reasonList.map(r => `
+            <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:4px; cursor:pointer;">
+              <input type="checkbox" value="${escHtml(r)}" checked> ${escHtml(r)}
+            </label>`).join('')}
+        </div>
+        <button onclick="addIntakeOutcomeReason('${safeId}')"
+          style="background:none; border:1px dashed #aaa; padding:3px 10px; border-radius:5px; font-size:12px; color:#555; cursor:pointer; margin-top:4px;">
+          + Add reason
+        </button>`;
+      container.appendChild(card);
+    });
+  }
+
+  function addIntakeOutcomeReason(safeId) {
+    const list = document.getElementById('intake-reason-list-' + safeId);
+    if (!list) return;
+    const lbl = document.createElement('label');
+    lbl.style.cssText = 'display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:4px;';
+    lbl.innerHTML = `<input type="checkbox" checked>
+      <input type="text" placeholder="Custom reason…"
+        style="flex:1; border:1px solid #d1d5db; border-radius:4px; padding:3px 7px; font-size:12px;">`;
+    list.appendChild(lbl);
+    lbl.querySelector('input[type="text"]').focus();
+  }
+
+  function getOutcomesConfig() {
+    const container = document.getElementById('intake-outcomes-container');
+    if (!container) return {};
+    const config = {};
+    container.querySelectorAll('[id^="intake-reason-list-"]').forEach(list => {
+      const safeId = list.id.replace('intake-reason-list-', '');
+      const heading = list.previousElementSibling;
+      const outcomeName = heading ? heading.textContent.trim() : safeId;
+      const reasons = [];
+      list.querySelectorAll('label').forEach(lbl => {
+        const cb = lbl.querySelector('input[type="checkbox"]');
+        const txt = lbl.querySelector('input[type="text"]');
+        const val = txt ? txt.value.trim() : (cb ? cb.value : '');
+        if (val && cb && cb.checked) reasons.push(val);
+      });
+      config[outcomeName] = reasons;
+    });
+    return config;
   }
 
   // ── Product other toggle ──
@@ -275,6 +314,7 @@
         document.getElementById('intake-form').style.display = '';
         document.getElementById('intake-name').value = user.name || '';
         document.getElementById('intake-email').value = user.email || '';
+        loadOutcomesSection();
       } else {
         await signIn(); // triggers redirect — page reloads on return
       }
@@ -298,9 +338,8 @@
     const playName = document.getElementById('intake-play-name').value.trim();
     const description = document.getElementById('intake-description').value.trim();
     const why = document.getElementById('intake-why').value.trim();
-    const instructions = document.getElementById('intake-instructions').value.trim();
 
-    if (!name || !email || !product || !playName || !description || !why || !instructions) {
+    if (!name || !email || !product || !playName || !description || !why) {
       statusEl.innerHTML = '<span style="color:#dc2626;">Please fill in all required fields (marked with *).</span>';
       return;
     }
@@ -311,7 +350,7 @@
     const brief = {
       id: 'brief_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
       submitted_at: new Date().toISOString(),
-      status: 'Pending',
+      status: 'New',
       submitter_name: name,
       submitter_email: email,
       submitter_role: document.getElementById('intake-role').value.trim(),
@@ -322,15 +361,10 @@
       icp: document.getElementById('intake-icp').value.trim(),
       persona: document.getElementById('intake-persona').value.trim(),
       competitive: document.getElementById('intake-competitive').value.trim(),
-      instructions: instructions,
-      questions: [..._listData.questions],
-      interested_reasons: [..._listData.interested],
-      not_interested_reasons: [..._listData['not-interested']],
-      next_steps: document.getElementById('intake-next-steps').value.trim(),
-      accounts_text: document.getElementById('intake-accounts').value.trim(),
-      account_count: parseInt(document.getElementById('intake-account-count').value) || 0,
-      collateral: document.getElementById('intake-collateral').value.trim(),
+      key_questions: [..._listData.questions],
+      outcomes_intake: getOutcomesConfig(),
       urgency: document.getElementById('intake-urgency').value,
+      account_count: parseInt(document.getElementById('intake-account-count').value) || 0,
       notes: document.getElementById('intake-notes').value.trim(),
       manager_notes: '',
       reviewed_by: ''
@@ -360,17 +394,17 @@
   function resetForm() {
     document.getElementById('intake-success').style.display = 'none';
     document.getElementById('intake-form').style.display = '';
-    // Clear fields
     ['intake-play-name','intake-description','intake-why','intake-icp','intake-persona',
-     'intake-competitive','intake-instructions','intake-next-steps','intake-accounts',
-     'intake-account-count','intake-collateral','intake-notes'].forEach(id => {
-      document.getElementById(id).value = '';
+     'intake-competitive','intake-account-count','intake-notes'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
     });
     document.getElementById('intake-product').value = '';
     document.getElementById('intake-urgency').value = '';
-    _listData.questions = []; _listData.interested = []; _listData['not-interested'] = [];
-    renderList('questions'); renderList('interested'); renderList('not-interested');
+    _listData.questions = [];
+    renderList('questions');
     document.getElementById('intake-status').innerHTML = '';
+    loadOutcomesSection();
   }
 
   // Auto-login if already authenticated (or returning from redirect)
@@ -382,6 +416,7 @@
         document.getElementById('intake-form').style.display = '';
         document.getElementById('intake-name').value = account.name || '';
         document.getElementById('intake-email').value = account.username || '';
+        loadOutcomesSection();
       }
     } catch(e) { /* show login button */ }
   });
