@@ -178,39 +178,29 @@
   <div class="wizard-steps" id="wizard-steps" style="display:none;">
     <div class="wizard-step" id="ws-1">
       <span class="ws-num">1</span>
-      <span class="ws-label">Product</span>
+      <span class="ws-label">The Play</span>
     </div>
     <div class="wizard-connector"></div>
     <div class="wizard-step" id="ws-2">
       <span class="ws-num">2</span>
-      <span class="ws-label">Play Details</span>
+      <span class="ws-label">The Customer</span>
     </div>
     <div class="wizard-connector"></div>
     <div class="wizard-step" id="ws-3">
       <span class="ws-num">3</span>
-      <span class="ws-label">Rep Guidance</span>
+      <span class="ws-label">Outcomes</span>
     </div>
     <div class="wizard-connector"></div>
     <div class="wizard-step" id="ws-4">
       <span class="ws-num">4</span>
-      <span class="ws-label">Outcomes</span>
-    </div>
-    <div class="wizard-connector"></div>
-    <div class="wizard-step" id="ws-5">
-      <span class="ws-num">5</span>
-      <span class="ws-label">Accounts</span>
-    </div>
-    <div class="wizard-connector"></div>
-    <div class="wizard-step" id="ws-6">
-      <span class="ws-num">6</span>
-      <span class="ws-label">Review</span>
+      <span class="ws-label">Review &amp; Submit</span>
     </div>
   </div>
 
-  <!-- Step 1: Product -->
+  <!-- Step 1: The Play -->
   <div class="wizard-panel" id="step-1-panel" style="display:none;">
-    <h3 style="margin:0 0 16px;font-size:18px;">📦 Product / Solution</h3>
-    <p class="step-desc">Which product or solution is this play for?</p>
+    <h3 style="margin:0 0 16px;font-size:18px;">🎯 The Play</h3>
+    <p class="step-desc">Define the product and what this play is about.</p>
 
     <div class="form-row">
       <label>Product *</label>
@@ -226,16 +216,8 @@
 
     <div class="form-row" id="play-product-other-wrap" style="display:none;">
       <label>Custom Product Name *</label>
-      <input type="text" id="play-product-other" placeholder="Enter product name" />
+      <input type="text" id="play-product-other" placeholder="Enter product name" oninput="validatePlayStep()" />
     </div>
-
-    <div style="display:flex;justify-content:flex-end;">
-      <button class="btn-primary" id="btn-product-next" onclick="finishProductStep()" disabled>Continue to Basics →</button>
-    </div>
-  </div>
-
-  <!-- Step 2: Play Details -->
-  <div class="wizard-panel" id="step-2-panel" style="display:none;">
 
     <div class="form-row">
       <label>Play Name *</label>
@@ -247,25 +229,24 @@
 
     <div class="form-row">
       <label>Elevator Pitch / Description *</label>
-      <textarea id="play-pitch" rows="3" placeholder="What is this play about? What problem are we solving for customers?"></textarea>
+      <textarea id="play-pitch" rows="3" placeholder="What is this play about? What problem are we solving for customers?"
+                oninput="validatePlayStep()"></textarea>
     </div>
 
-    <div class="form-row">
-      <label>Why This Play Matters *</label>
-      <textarea id="play-why-it-matters" rows="2" placeholder="Why should reps prioritize this play? What's the business impact?"></textarea>
+    <div style="display:flex;justify-content:flex-end;">
+      <button class="btn-primary" id="btn-play-next" onclick="finishPlayStep()" disabled>Continue to The Customer →</button>
     </div>
+  </div>
+
+  <!-- Step 2: The Customer -->
+  <div class="wizard-panel" id="step-2-panel" style="display:none;">
+    <h3 style="margin:0 0 16px;font-size:18px;">👤 The Customer</h3>
+    <p class="step-desc">Define who this play targets and why they should care.</p>
 
     <div class="form-row">
-      <label>Desired Customer Outcome *</label>
-      <select id="play-desired-outcome" onchange="validatePlayStep()">
-        <option value="">— select desired outcome —</option>
-        <option value="get_meeting">Get a Meeting / Demo Booked</option>
-        <option value="qualify_interest">Qualify Interest / Identify Opportunity</option>
-        <option value="gather_feedback">Gather Feedback</option>
-        <option value="disqualify">Disqualify / Rule Out</option>
-        <option value="expansion">Drive Expansion / Upsell</option>
-      </select>
-      <div class="hint">What do we want the customer to agree to or do?</div>
+      <label>Why Does the Customer Care? *</label>
+      <textarea id="play-customer-value" rows="2" placeholder="What's the customer value prop? What problem does this solve for them?"></textarea>
+      <div class="hint">Focus on the customer's perspective — not why the rep should run the play.</div>
     </div>
 
     <div class="form-row">
@@ -284,26 +265,14 @@
     </div>
 
     <div style="display:flex;justify-content:space-between;">
-      <button class="btn-secondary" onclick="goToStep(1)">← Back to Product</button>
-      <button class="btn-primary" id="btn-play-next" onclick="finishPlayStep()" disabled>Continue to Rep Guidance →</button>
+      <button class="btn-secondary" onclick="goToStep(1)">← Back to The Play</button>
+      <button class="btn-primary" onclick="finishCustomerStep()">Continue to Outcomes →</button>
     </div>
   </div>
 
-  <!-- Step 3: Rep Guidance -->
+  <!-- Step 3: Outcomes -->
   <div class="wizard-panel" id="step-3-panel" style="display:none;">
-    <p class="step-desc">Add the key questions reps should ask when running this play. Keep it focused — 3 to 5 questions is ideal.</p>
-
-    <div id="key-questions-list" style="margin-bottom:14px;"></div>
-    <button class="btn-secondary" onclick="addKeyQuestion()" style="width:100%;font-size:13px;padding:9px;">+ Add Key Question</button>
-
-    <div class="wizard-nav" style="margin-top:20px;">
-      <button class="btn-secondary" onclick="goToStep(2)">← Back to Play Details</button>
-      <button class="btn-primary" onclick="finishRepGuidanceStep()">Continue to Outcomes →</button>
-    </div>
-  </div>
-
-  <!-- Step 4: Outcomes -->
-  <div class="wizard-panel" id="step-4-panel" style="display:none;">
+    <h3 style="margin:0 0 16px;font-size:18px;">📊 Outcomes</h3>
     <p class="step-desc">Select which outcomes reps can log for this play, and configure which reasons to offer for each.</p>
 
     <div id="outcomes-config-list" style="margin-bottom:16px;">
@@ -311,13 +280,14 @@
     </div>
 
     <div class="wizard-nav">
-      <button class="btn-secondary" onclick="goToStep(3)">← Back to Rep Guidance</button>
-      <button class="btn-primary" onclick="finishOutcomesStep()">Continue to Accounts →</button>
+      <button class="btn-secondary" onclick="goToStep(2)">← Back to The Customer</button>
+      <button class="btn-primary" onclick="finishOutcomesStep()">Continue to Review →</button>
     </div>
   </div>
 
-  <!-- Step 5: Accounts -->
-  <div class="wizard-panel" id="step-5-panel" style="display:none;">
+  <!-- Step 4: Accounts + Review -->
+  <div class="wizard-panel" id="step-4-panel" style="display:none;">
+    <h3 style="margin:0 0 16px;font-size:18px;">📋 Accounts &amp; Review</h3>
 
     <!-- Context banner (shown for existing plays) -->
     <div id="step3-context-banner" style="display:none;background:#f0f7ff;border:1px solid #c3dafe;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;">
@@ -332,97 +302,96 @@
     <!-- Upload mode (hidden — always merge, admin can replace via admin panel) -->
     <input type="radio" name="upload-mode" value="merge" checked style="display:none;">
 
-    <!-- Upload tabs -->
-    <div class="upload-tabs">
-      <button class="upload-tab active" id="tab-file-btn" onclick="switchUploadTab('file')">Upload File</button>
-      <button class="upload-tab" id="tab-paste-btn" onclick="switchUploadTab('paste')">Paste from Excel</button>
-    </div>
+    <!-- Account upload section -->
+    <div style="margin-bottom:28px;">
+      <h4 style="font-size:14px;font-weight:700;color:#374151;margin-bottom:12px;">Upload Accounts <span style="font-size:12px;font-weight:400;color:#6b7280;">(optional — can be added after admin review)</span></h4>
 
-    <!-- File upload panel -->
-    <div id="tab-file-panel">
-      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-        <div style="font-size:28px;">📂</div>
-        <strong>Click to select or drag your Excel file here</strong>
-        <p style="margin-top:6px;color:#555;font-size:13px;">account-upload-template.xlsx (or any .xlsx with the same columns)</p>
-        <p style="margin-top:4px;color:#888;font-size:12px;">Required columns: SFDC Account ID · Account Name · Rep Email · Rep Name</p>
-        <div style="margin-top:10px;font-size:12px;">
-          <a href="account-upload-template.xlsx" download style="color:#0078d4;" onclick="event.stopPropagation()">⬇ Download blank template</a>
+      <!-- Upload tabs -->
+      <div class="upload-tabs">
+        <button class="upload-tab active" id="tab-file-btn" onclick="switchUploadTab('file')">Upload File</button>
+        <button class="upload-tab" id="tab-paste-btn" onclick="switchUploadTab('paste')">Paste from Excel</button>
+      </div>
+
+      <!-- File upload panel -->
+      <div id="tab-file-panel">
+        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+          <div style="font-size:28px;">📂</div>
+          <strong>Click to select or drag your Excel file here</strong>
+          <p style="margin-top:6px;color:#555;font-size:13px;">account-upload-template.xlsx (or any .xlsx with the same columns)</p>
+          <p style="margin-top:4px;color:#888;font-size:12px;">Required columns: SFDC Account ID · Account Name · Rep Email · Rep Name</p>
+          <div style="margin-top:10px;font-size:12px;">
+            <a href="account-upload-template.xlsx" download style="color:#0078d4;" onclick="event.stopPropagation()">⬇ Download blank template</a>
+          </div>
+        </div>
+        <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+      </div>
+
+      <!-- Paste panel -->
+      <div id="tab-paste-panel" style="display:none;">
+        <p style="font-size:13px;color:#555;margin-bottom:8px;">Copy rows from Excel (including the header row) and paste below.</p>
+        <p style="font-size:12px;color:#888;margin-bottom:8px;">Required columns: <strong>SFDC Account ID, Account Name, Rep Email, Rep Name</strong>. Rep Email should be the rep's official Progress work email — the system will automatically match aliases.</p>
+        <textarea id="paste-area" rows="8" placeholder="Paste your Excel rows here…"
+                  style="width:100%;padding:10px;border:2px dashed #0078d4;border-radius:8px;font-size:13px;font-family:monospace;resize:vertical;"></textarea>
+        <div style="margin-top:10px;display:flex;gap:10px;">
+          <button class="btn-primary" onclick="handlePaste()">Parse Pasted Data</button>
+          <button class="btn-secondary" onclick="document.getElementById('paste-area').value=''">Clear</button>
         </div>
       </div>
-      <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
-    </div>
 
-    <!-- Paste panel -->
-    <div id="tab-paste-panel" style="display:none;">
-      <p style="font-size:13px;color:#555;margin-bottom:8px;">Copy rows from Excel (including the header row) and paste below.</p>
-      <p style="font-size:12px;color:#888;margin-bottom:8px;">Required columns: <strong>SFDC Account ID, Account Name, Rep Email, Rep Name</strong>. Rep Email should be the rep's official Progress work email — the system will automatically match aliases.</p>
-      <textarea id="paste-area" rows="8" placeholder="Paste your Excel rows here…"
-                style="width:100%;padding:10px;border:2px dashed #0078d4;border-radius:8px;font-size:13px;font-family:monospace;resize:vertical;"></textarea>
-      <div style="margin-top:10px;display:flex;gap:10px;">
-        <button class="btn-primary" onclick="handlePaste()">Parse Pasted Data</button>
-        <button class="btn-secondary" onclick="document.getElementById('paste-area').value=''">Clear</button>
+      <!-- Validation bar (shown after parse) -->
+      <div class="validation-bar" id="validation-bar" style="display:none;margin-top:14px;">
+        <span class="vb-stat ok"   id="vb-total"></span>
+        <span class="vb-stat ok"   id="vb-valid"></span>
+        <span class="vb-stat warn" id="vb-missing"></span>
+        <span class="vb-stat err"  id="vb-dupes"></span>
+        <span class="vb-stat info" id="vb-new"></span>
+      </div>
+
+      <!-- Warning banner -->
+      <div id="ingest-warnings" style="display:none;background:#fffbeb;border:2px solid #fcd34d;border-radius:8px;padding:12px 16px;font-size:13px;"></div>
+
+      <!-- Preview & Upload (revealed after parse) -->
+      <div class="preview-section hidden" id="preview-card">
+        <h3>Preview &amp; Upload</h3>
+        <div class="summary-grid" id="summary-grid"></div>
+        <div style="overflow-x:auto;margin-top:16px;">
+          <table class="preview-table" id="preview-table">
+            <thead><tr>
+              <th>Account</th><th>Rep SSO Login</th><th>Rep Name</th><th>ARR</th><th>Active</th>
+            </tr></thead>
+            <tbody id="preview-body"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:20px;display:flex;gap:12px;align-items:center;justify-content:flex-end;">
+          <span style="font-size:13px;color:#555;">Uploads account assignments to SharePoint now.</span>
+          <button class="btn-success" id="btn-upload" onclick="doUpload()" disabled>🚀 Upload Accounts</button>
+        </div>
+      </div>
+
+      <!-- Upload status -->
+      <div class="upload-status" id="upload-status" style="display:none;">
+        <div id="upload-status-inner"></div>
       </div>
     </div>
 
-    <!-- Validation bar (shown after parse) -->
-    <div class="validation-bar" id="validation-bar" style="display:none;margin-top:14px;">
-      <span class="vb-stat ok"   id="vb-total"></span>
-      <span class="vb-stat ok"   id="vb-valid"></span>
-      <span class="vb-stat warn" id="vb-missing"></span>
-      <span class="vb-stat err"  id="vb-dupes"></span>
-      <span class="vb-stat info" id="vb-new"></span>
-    </div>
-
-    <!-- Warning banner -->
-    <div id="ingest-warnings" style="display:none;background:#fffbeb;border:2px solid #fcd34d;border-radius:8px;padding:12px 16px;font-size:13px;"></div>
-
-    <!-- Preview & Upload (revealed after parse) -->
-    <div class="preview-section hidden" id="preview-card">
-      <h3>Preview &amp; Upload</h3>
-      <div class="summary-grid" id="summary-grid"></div>
-      <div style="overflow-x:auto;margin-top:16px;">
-        <table class="preview-table" id="preview-table">
-          <thead><tr>
-            <th>Account</th><th>Rep SSO Login</th><th>Rep Name</th><th>ARR</th><th>Active</th>
-          </tr></thead>
-          <tbody id="preview-body"></tbody>
-        </table>
-      </div>
-      <div style="margin-top:20px;display:flex;gap:12px;align-items:center;justify-content:flex-end;">
-        <span style="font-size:13px;color:#555;">Saves the play definition and account list to SharePoint.</span>
-        <button class="btn-success" id="btn-upload" onclick="doUpload()" disabled>🚀 Launch Play</button>
+    <!-- Review summary -->
+    <div style="border-top:2px solid #e5e7eb;padding-top:20px;">
+      <h4 style="font-size:15px;font-weight:700;color:#374151;margin-bottom:8px;">📋 Play Summary</h4>
+      <p class="step-desc">Review your play details below. When you submit, the play goes to admin for review and activation.</p>
+      <div id="review-summary" style="font-size:14px;line-height:1.8;"></div>
+      <div style="margin-top:16px;padding:14px 16px;background:#fff3cd;border:1px solid #fbbf24;border-radius:8px;font-size:13px;color:#92400e;">
+        <strong>📬 What happens next:</strong> Your play will be saved as a draft and reviewed by an admin before going live to reps.
       </div>
     </div>
 
-    <!-- Upload status (replaces monospace log) -->
-    <div class="upload-status" id="upload-status" style="display:none;">
-      <div id="upload-status-inner"></div>
-    </div>
-
-    <!-- Step nav -->
     <div class="wizard-nav" style="margin-top:24px;">
-      <button class="btn-secondary" id="step5-back-btn" onclick="handleStep5Back()">← Back to Outcomes</button>
-      <button class="btn-secondary" onclick="goToStep(6)" style="margin-left:auto;">Skip — Review Without Accounts →</button>
-    </div>
-
-  </div><!-- /#step-5-panel -->
-
-  <!-- Step 6: Review & Submit -->
-  <div class="wizard-panel" id="step-6-panel" style="display:none;">
-    <h3 style="margin:0 0 16px;font-size:18px;">📋 Review &amp; Submit</h3>
-    <p class="step-desc">Review your play details below. When you submit, the play goes to admin for review and activation.</p>
-    <div id="review-summary" style="font-size:14px;line-height:1.8;"></div>
-    <div style="margin-top:20px;padding:14px 16px;background:#fff3cd;border:1px solid #fbbf24;border-radius:8px;font-size:13px;color:#92400e;">
-      <strong>📬 What happens next:</strong> Your play will be saved as a draft and reviewed by an admin before going live to reps.
-    </div>
-    <div class="wizard-nav" style="margin-top:24px;">
-      <button class="btn-secondary" onclick="goToStep(5)">← Back to Accounts</button>
+      <button class="btn-secondary" id="step4-back-btn" onclick="handleStep4Back()">← Back to Outcomes</button>
       <div style="display:flex;gap:10px;">
         <button class="btn-secondary" onclick="savePlayAsDraft()" style="background:#fff3cd;color:#92400e;border-color:#fbbf24;">💾 Save as Draft</button>
         <button class="btn-success" id="btn-submit-review" onclick="submitPlayForReview()">📬 Submit for Admin Review</button>
       </div>
     </div>
-  </div>
+  </div><!-- /#step-4-panel -->
 
 </main>
 
@@ -526,11 +495,11 @@
   let currentStep = 0;
 
   function goToStep(n) {
-    ['step-1-panel','step-2-panel','step-3-panel','step-4-panel','step-5-panel','step-6-panel'].forEach((id, i) => {
+    ['step-1-panel','step-2-panel','step-3-panel','step-4-panel'].forEach((id, i) => {
       const el = document.getElementById(id);
       if (el) el.style.display = (i + 1 === n) ? 'block' : 'none';
     });
-    [1, 2, 3, 4, 5, 6].forEach(i => {
+    [1, 2, 3, 4].forEach(i => {
       const ws = document.getElementById('ws-' + i);
       if (!ws) return;
       ws.classList.remove('active', 'done');
@@ -538,23 +507,21 @@
       else if (i === n) ws.classList.add('active');
     });
     currentStep = n;
-    if (n === 4) {
-      loadStep4();
+    if (n === 3) {
+      loadStep3();
     }
-    if (n === 5) {
+    if (n === 4) {
       const inner = document.getElementById('upload-status-inner');
       if (inner) inner.innerHTML = '';
       const statusEl = document.getElementById('upload-status');
       if (statusEl) statusEl.style.display = 'none';
       populateSummaryBar();
-      updateStep5Context();
-      const backBtn = document.getElementById('step5-back-btn');
+      updateStep4Context();
+      buildReviewSummary();
+      const backBtn = document.getElementById('step4-back-btn');
       if (backBtn && _urlMode === 'accounts') {
         backBtn.textContent = '← Back to Admin';
       }
-    }
-    if (n === 6) {
-      buildReviewSummary();
     }
     window.scrollTo(0, 0);
   }
@@ -568,16 +535,16 @@
     const product = productSel?.value === 'Other'
       ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
       : (productSel?.value || '');
-    const desiredOutcomeEl = document.getElementById('play-desired-outcome');
-    const desiredLabel = desiredOutcomeEl?.options[desiredOutcomeEl?.selectedIndex]?.text || '';
+    const pitch = currentPlayDef.pitch || currentPlayDef.elevator_pitch || '';
     const parts = [
       `<span class="psb-val">${esc(currentPlayDef.play_name)}</span>`,
     ];
     if (product) {
       parts.push(`<span class="psb-sep">|</span>`, `Product: <span class="psb-val">${esc(product)}</span>`);
     }
-    if (desiredLabel) {
-      parts.push(`<span class="psb-sep">|</span>`, `Goal: <span class="psb-val">${esc(desiredLabel)}</span>`);
+    if (pitch) {
+      const shortPitch = pitch.length > 60 ? pitch.substring(0, 60) + '…' : pitch;
+      parts.push(`<span class="psb-sep">|</span>`, `<span class="psb-val" style="font-style:italic;font-weight:400;">${esc(shortPitch)}</span>`);
     }
     if (currentPlayDef.target_persona) {
       parts.push(`<span class="psb-sep">|</span>`, `Persona: <span class="psb-val">${esc(currentPlayDef.target_persona)}</span>`);
@@ -655,25 +622,23 @@
     document.getElementById('wizard-steps').style.display = 'flex';
     if (_urlMode === 'accounts') {
       finishPlayStep();
-      setTimeout(() => goToStep(5), 0);
+      setTimeout(() => goToStep(4), 0);
     } else {
       goToStep(1);
     }
   }
 
-  // Update Step 5 context banner based on whether this is an existing play
-  function updateStep5Context() {
+  // Update Step 4 context banner based on whether this is an existing play
+  function updateStep4Context() {
     const banner = document.getElementById('step3-context-banner');
     const titleEl = document.getElementById('step3-context-title');
     const playEl  = document.getElementById('step3-context-play');
     if (_isExistingPlay && currentPlayDef) {
       banner.style.display = 'block';
       titleEl.textContent = 'Adding accounts to:';
-      const outcomeLabel = currentPlayDef.desired_outcome || currentPlayDef.goal || '';
       playEl.innerHTML = `
         <strong style="color:#1a56db;">${esc(currentPlayDef.play_name)}</strong>
         <span style="font-family:monospace;font-size:11px;color:#888;margin-left:6px;">${esc(currentPlayDef.play_id)}</span>
-        <span style="color:#6b7280;margin-left:8px;">· Goal: ${esc(outcomeLabel)}</span>
         <span id="banner-acct-count" style="color:#6b7280;margin-left:8px;">· Loading targets…</span>
       `;
       loadPlayAccountCount(currentPlayDef.play_id).then(count => {
@@ -689,7 +654,7 @@
       if (_isExistingPlay) {
         btn.textContent = mode === 'replace' ? '↩ Replace Targets' : '➕ Add Targets';
       } else {
-        btn.textContent = '🚀 Launch Play';
+        btn.textContent = '🚀 Upload Accounts';
       }
     }
   }
@@ -739,7 +704,7 @@
     document.getElementById('fast-path-picker-panel').style.display = 'none';
     document.getElementById('wizard-steps').style.display = 'flex';
     finishPlayStep();
-    setTimeout(() => goToStep(5), 0);
+    setTimeout(() => goToStep(4), 0);
   }
 
   async function loadPlayAccountCount(playId) {
@@ -751,11 +716,11 @@
     } catch(e) { return 0; }
   }
 
-  function handleStep5Back() {
+  function handleStep4Back() {
     if (_urlMode === 'accounts') {
       window.location.href = 'admin.html';
     } else {
-      goToStep(4);
+      goToStep(3);
     }
   }
 
@@ -862,7 +827,7 @@
     if (!requireIngestAdmin()) return;
     if (!currentPlayDef) { log('err', 'No play defined. Go back to Step 1.'); return; }
     currentPlayDef.questions = getQuestionsConfig();
-    goToStep(5);
+    goToStep(4);
   }
 
   function toggleFormPreview() {
@@ -932,7 +897,7 @@
   async function savePlayConfigOnly() {
     if (!requireIngestAdmin()) return;
     const name = document.getElementById('play-name-input').value.trim();
-    if (!name || !selectedGoal) { log('err', 'Play name and goal are required.'); return; }
+    if (!name) { log('err', 'Play name is required.'); return; }
 
     const btn = document.getElementById('btn-save-config-only');
     btn.disabled = true;
@@ -945,12 +910,12 @@
       product:        document.getElementById('play-product')?.value === 'Other' 
                         ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
                         : (document.getElementById('play-product')?.value || ''),
-      goal:           selectedGoal,
-      icp:            document.getElementById('play-icp').value.trim(),
-      target_persona: document.getElementById('play-persona').value.trim(),
-      elevator_pitch: document.getElementById('play-pitch').value.trim(),
-      why_it_matters: document.getElementById('play-why-it-matters')?.value?.trim() || '',
-      instructions:   document.getElementById('play-instructions')?.value?.trim() || '',
+      goal:           currentPlayDef?.goal || '',
+      icp:            document.getElementById('play-icp')?.value?.trim() || '',
+      target_persona: document.getElementById('play-persona')?.value?.trim() || '',
+      elevator_pitch: document.getElementById('play-pitch')?.value?.trim() || '',
+      customer_value: document.getElementById('play-customer-value')?.value?.trim() || currentPlayDef?.customer_value || '',
+      competitive_positioning: document.getElementById('play-competitive')?.value?.trim() || currentPlayDef?.competitive_positioning || '',
       active:         true,
       outcomes:       getOutcomesConfig(),
       questions:      currentPlayDef?.questions || getQuestionsConfig(),
@@ -993,14 +958,11 @@
     document.getElementById('play-name-input').value = p.play_name;
     document.getElementById('play-icp').value     = p.icp || '';
     document.getElementById('play-persona').value = p.target_persona || '';
-    document.getElementById('play-pitch').value   = p.elevator_pitch || '';
-    document.getElementById('play-why-it-matters').value = p.why_it_matters || '';
-    const instrEl = document.getElementById('play-instructions');
-    if (instrEl) instrEl.value = p.instructions || '';
+    document.getElementById('play-pitch').value   = p.elevator_pitch || p.pitch || '';
+    const customerValueEl = document.getElementById('play-customer-value');
+    if (customerValueEl) customerValueEl.value = p.customer_value || p.why_it_matters || '';
     const compEl = document.getElementById('play-competitive');
     if (compEl) compEl.value = p.competitive_positioning || '';
-    const desiredEl = document.getElementById('play-desired-outcome');
-    if (desiredEl && p.desired_outcome) desiredEl.value = p.desired_outcome;
     // Set product dropdown
     const productSel = document.getElementById('play-product');
     if (productSel) {
@@ -1019,9 +981,8 @@
     document.querySelectorAll('.play-picker-row').forEach(el => el.classList.remove('selected'));
     if (rowEl) rowEl.classList.add('selected');
     _isExistingPlay = true;
-    _originalPlayId = p.play_id;  // lock the ID — renaming never changes this
+    _originalPlayId = p.play_id;
     currentPlayDef = { ...p };
-    loadQuestionsFromPlay(currentPlayDef);
     validatePlayStep();
   }
 
@@ -1032,36 +993,46 @@
   }
 
   function validatePlayStep() {
-    const name = document.getElementById('play-name-input').value.trim();
-    const desiredOutcome = document.getElementById('play-desired-outcome')?.value || '';
-    document.getElementById('btn-play-next').disabled = !(name && desiredOutcome);
+    const name = document.getElementById('play-name-input')?.value?.trim() || '';
+    const pitch = document.getElementById('play-pitch')?.value?.trim() || '';
+    const product = document.getElementById('play-product')?.value || '';
+    const otherVal = product === 'Other' ? (document.getElementById('play-product-other')?.value?.trim() || '') : 'ok';
+    const btn = document.getElementById('btn-play-next');
+    if (btn) btn.disabled = !(name && pitch && product && otherVal);
   }
 
   function finishPlayStep() {
     if (!requireIngestAdmin()) return;
     const name = document.getElementById('play-name-input').value.trim();
-    const desiredOutcome = document.getElementById('play-desired-outcome')?.value || '';
-    if (!name || !desiredOutcome) return;
-    const playId = (_isExistingPlay && _originalPlayId) ? _originalPlayId : slugify(name);
+    const pitch = document.getElementById('play-pitch')?.value?.trim() || '';
     const productSel = document.getElementById('play-product');
     const product = productSel.value === 'Other'
       ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
       : productSel.value;
+    if (!name || !pitch || !product) return;
+    const playId = (_isExistingPlay && _originalPlayId) ? _originalPlayId : slugify(name);
     currentPlayDef = {
       ...(currentPlayDef || {}),
-      play_id:               playId,
-      play_name:             name,
-      product:               product,
-      desired_outcome:       desiredOutcome,
-      // keep goal for backward compat with existing plays
-      goal:                  currentPlayDef?.goal || desiredOutcome,
-      icp:                   document.getElementById('play-icp').value.trim(),
-      target_persona:        document.getElementById('play-persona').value.trim(),
-      elevator_pitch:        document.getElementById('play-pitch').value.trim(),
-      why_it_matters:        document.getElementById('play-why-it-matters').value.trim(),
+      play_id:        playId,
+      play_name:      name,
+      product:        product,
+      pitch:          pitch,
+      elevator_pitch: pitch,
+      active:         currentPlayDef?.active ?? false,
+      pending_review: true,
+    };
+    goToStep(2);
+  }
+
+  function finishCustomerStep() {
+    if (!requireIngestAdmin()) return;
+    if (!currentPlayDef) { return; }
+    currentPlayDef = {
+      ...currentPlayDef,
+      customer_value:          document.getElementById('play-customer-value')?.value?.trim() || '',
+      icp:                     document.getElementById('play-icp').value.trim(),
+      target_persona:          document.getElementById('play-persona').value.trim(),
       competitive_positioning: document.getElementById('play-competitive')?.value?.trim() || '',
-      active:                currentPlayDef?.active ?? false,
-      pending_review:        true,
     };
     goToStep(3);
   }
@@ -1566,7 +1537,7 @@
         log('warn', 'Could not seed response options: ' + e.message);
       }
 
-      markStepDone(5);
+      markStepDone(4);
       const actionLabel = _isExistingPlay
         ? (document.querySelector('input[name="upload-mode"]:checked')?.value === 'replace' ? 'Targets Replaced' : 'Targets Added')
         : 'Play Launched';
@@ -1592,22 +1563,11 @@
   function onProductSelect() {
     const sel = document.getElementById('play-product');
     const otherWrap = document.getElementById('play-product-other-wrap');
-    const btn = document.getElementById('btn-product-next');
     if (otherWrap) otherWrap.style.display = sel.value === 'Other' ? 'block' : 'none';
-    if (btn) btn.disabled = !sel.value;
+    validatePlayStep();
   }
 
-  function finishProductStep() {
-    const sel = document.getElementById('play-product');
-    if (!sel.value) return;
-    if (sel.value === 'Other') {
-      const otherVal = document.getElementById('play-product-other')?.value?.trim();
-      if (!otherVal) { alert('Please enter a product name.'); return; }
-    }
-    goToStep(2);
-  }
-
-  // ── Step 6: Review & Launch ───────────────────────────────────────────────
+  // ── Step 4: Review & Launch ───────────────────────────────────────────────
   function buildReviewSummary() {
     const el = document.getElementById('review-summary');
     if (!el || !currentPlayDef) { if (el) el.innerHTML = '<p style="color:#999;">No play defined yet.</p>'; return; }
@@ -1616,28 +1576,16 @@
       ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
       : (productSel?.value || '—');
 
-    const desiredOutcome = currentPlayDef.desired_outcome || '';
-    const desiredLabel = (() => {
-      const sel = document.getElementById('play-desired-outcome');
-      if (sel && sel.value) return sel.options[sel.selectedIndex]?.text || desiredOutcome;
-      return desiredOutcome;
-    })();
-
-    const keyQuestions = currentPlayDef.key_questions || [];
     const outcomesIntake = currentPlayDef.outcomes_intake || {};
     const enabledOutcomes = Object.entries(outcomesIntake).filter(([, v]) => v.enabled);
     const acctCount = parsedAssignments.length;
-
-    const questionsHtml = keyQuestions.length > 0
-      ? '<ul style="margin:4px 0 0;padding-left:18px;">' + keyQuestions.map(q => `<li>${esc(q)}</li>`).join('') + '</ul>'
-      : '<span style="color:#9ca3af;">None configured</span>';
 
     const outcomesHtml = enabledOutcomes.length > 0
       ? enabledOutcomes.map(([name, v]) =>
           `${esc(name)} <span style="color:#6b7280;font-size:12px;">(${v.reasons.length} reason${v.reasons.length !== 1 ? 's' : ''})</span>`
         ).join(', ')
       : Object.keys(outcomesIntake).length === 0
-        ? '<span style="color:#d97706;">Not configured — go back to step 4</span>'
+        ? '<span style="color:#d97706;">Not configured — go back to step 3</span>'
         : '<span style="color:#9ca3af;">None enabled</span>';
 
     el.innerHTML = `
@@ -1645,14 +1593,13 @@
         <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;width:190px;">Product</td><td style="padding:10px 8px;">${esc(product)}</td></tr>
         <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Play Name</td><td style="padding:10px 8px;">${esc(currentPlayDef.play_name)}</td></tr>
         <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Play ID</td><td style="padding:10px 8px;font-family:monospace;font-size:12px;">${esc(currentPlayDef.play_id)}</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Desired Outcome</td><td style="padding:10px 8px;">${esc(desiredLabel || '—')}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Elevator Pitch</td><td style="padding:10px 8px;">${esc(currentPlayDef.pitch || currentPlayDef.elevator_pitch || '—')}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Customer Value</td><td style="padding:10px 8px;">${esc(currentPlayDef.customer_value || '—')}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">ICP</td><td style="padding:10px 8px;">${esc(currentPlayDef.icp || '—')}</td></tr>
         <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Persona</td><td style="padding:10px 8px;">${esc(currentPlayDef.target_persona || '—')}</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Elevator Pitch</td><td style="padding:10px 8px;">${esc(currentPlayDef.elevator_pitch || '—')}</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Why It Matters</td><td style="padding:10px 8px;">${esc(currentPlayDef.why_it_matters || '—')}</td></tr>
         <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Competitive Positioning</td><td style="padding:10px 8px;">${esc(currentPlayDef.competitive_positioning || '—')}</td></tr>
-        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;vertical-align:top;padding-top:12px;">Key Questions</td><td style="padding:10px 8px;">${questionsHtml}</td></tr>
         <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Outcomes</td><td style="padding:10px 8px;">${outcomesHtml}</td></tr>
-        <tr><td style="padding:10px 8px;font-weight:600;color:#555;">Accounts</td><td style="padding:10px 8px;">${acctCount > 0 ? acctCount + ' ready to upload' : '<span style="color:#d97706;">None — accounts can be added later</span>'}</td></tr>
+        <tr><td style="padding:10px 8px;font-weight:600;color:#555;">Accounts</td><td style="padding:10px 8px;">${acctCount > 0 ? acctCount + ' ready to upload' : '<span style="color:#d97706;">None — can be added after admin review</span>'}</td></tr>
       </table>
     `;
   }
@@ -1671,8 +1618,8 @@
 
   async function _saveAndLaunchPlay(isActive) {
     const btn = isActive 
-      ? document.querySelector('#step-6-panel .btn-success')
-      : document.querySelector('#step-6-panel .btn-secondary[onclick*="savePlayAsDraft"]');
+      ? document.querySelector('#step-4-panel .btn-success')
+      : document.querySelector('#step-4-panel .btn-secondary[onclick*="savePlayAsDraft"]');
     if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving…'; }
 
     try {
@@ -1687,8 +1634,7 @@
       const playDef = {
         ...currentPlayDef,
         product:        product,
-        why_it_matters: document.getElementById('play-why-it-matters')?.value?.trim() || currentPlayDef.why_it_matters || '',
-        instructions:   document.getElementById('play-instructions')?.value?.trim() || currentPlayDef.instructions || '',
+        customer_value: document.getElementById('play-customer-value')?.value?.trim() || currentPlayDef.customer_value || '',
         outcomes:       outcomesConfig,
         questions:      questionsConfig,
         active:         isActive,
@@ -1730,7 +1676,7 @@
 
       const label = isActive ? '✅ Play Launched!' : '✅ Draft Saved!';
       if (btn) { btn.textContent = label; btn.style.background = '#107c10'; btn.style.color = '#fff'; }
-      markStepDone(6);
+      markStepDone(4);
     } catch(e) {
       alert('Save failed: ' + e.message);
       if (btn) { btn.disabled = false; btn.textContent = isActive ? '🚀 Launch as Active' : '💾 Save as Draft'; }
@@ -1756,44 +1702,7 @@
     return tree;
   }
 
-  // ── Step 3: Key Questions ─────────────────────────────────────────────────
-
-  let _kqCounter = 0;
-
-  function addKeyQuestion(text) {
-    const id = 'kq-' + (++_kqCounter);
-    const container = document.getElementById('key-questions-list');
-    if (!container) return;
-    const row = document.createElement('div');
-    row.id = id;
-    row.style.cssText = 'display:flex; gap:8px; align-items:center; margin-bottom:8px;';
-    row.innerHTML = `
-      <input type="text" value="${esc(text || '')}" placeholder="e.g. What's your current patching process?"
-        style="flex:1; border:1px solid #d1d5db; border-radius:6px; padding:8px 10px; font-size:13px;">
-      <button onclick="removeKeyQuestion('${id}')" style="background:none; border:none; cursor:pointer; font-size:18px; color:#999; padding:0 4px;">×</button>
-    `;
-    container.appendChild(row);
-  }
-
-  function removeKeyQuestion(id) {
-    const el = document.getElementById(id);
-    if (el) el.remove();
-  }
-
-  function getKeyQuestions() {
-    const container = document.getElementById('key-questions-list');
-    if (!container) return [];
-    return Array.from(container.querySelectorAll('input[type="text"]'))
-      .map(inp => inp.value.trim())
-      .filter(v => v.length > 0);
-  }
-
-  function finishRepGuidanceStep() {
-    currentPlayDef = { ...(currentPlayDef || {}), key_questions: getKeyQuestions() };
-    goToStep(4);
-  }
-
-  // ── Step 4: Outcomes with Reasons ─────────────────────────────────────────
+  // ── Step 3: Outcomes with Reasons ─────────────────────────────────────────
 
   const DEFAULT_INTAKE_REASONS = {
     'Interested': {
@@ -1810,7 +1719,7 @@
     }
   };
 
-  async function loadStep4() {
+  async function loadStep3() {
     let globalReasons = null;
     try {
       const text = await getFileText(SP_ROOT + '/response-options.json');
@@ -1820,10 +1729,10 @@
         if (global) globalReasons = global;
       }
     } catch(e) {}
-    renderStep4(globalReasons);
+    renderStep3(globalReasons);
   }
 
-  function renderStep4(globalConfig) {
+  function renderStep3(globalConfig) {
     const container = document.getElementById('outcomes-config-list');
     if (!container) return;
     container.innerHTML = '';
@@ -1916,7 +1825,7 @@
 
   function finishOutcomesStep() {
     currentPlayDef = { ...(currentPlayDef || {}), outcomes_intake: getIntakeOutcomesConfig() };
-    goToStep(5);
+    goToStep(4);
   }
 
   // ── Step 6: Submit for Admin Review ───────────────────────────────────────
@@ -1939,7 +1848,7 @@
 
       try { await logActivity(currentUser, 'play_submitted_for_review', `Submitted for review: ${currentPlayDef.play_name} (${currentPlayDef.play_id})`); } catch(e) {}
 
-      const reviewPanel = document.getElementById('step-6-panel');
+      const reviewPanel = document.getElementById('step-4-panel');
       if (reviewPanel) {
         reviewPanel.innerHTML = `
           <div style="text-align:center; padding:40px 20px;">
