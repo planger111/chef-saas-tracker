@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Signing in…</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+           display: flex; align-items: center; justify-content: center;
+           height: 100vh; margin: 0; background: #f3f2f1; }
+    .msg { text-align: center; color: #333; }
+    .msg p { font-size: 15px; margin: 8px 0; }
+    .msg small { color: #888; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="msg">
+    <p>🔐 Signing in…</p>
+    <small>You can close this window if it doesn't redirect.</small>
+  </div>
+
+  <script src="msal-browser.js?v=10"></script>
+  <script src="config.js?v=11"></script>
+  <script src="https://res.cdn.office.net/teams-js/2.19.0/js/MicrosoftTeams.min.js" crossorigin="anonymous"></script>
+  <script>
+    // teams-auth.html — Teams auth popup helper for teams-dev.html (DEV ONLY)
+    //
+    // Flow:
+    //   1. teams-dev.html calls microsoftTeams.authentication.authenticate({ url: '/teams-auth.html' })
+    //   2. Teams opens THIS page as a managed popup (top frame — redirect allowed here)
+    //   3. First visit: loginRedirect() → navigates to Microsoft
+    //   4. Return visit (with auth hash): handleRedirectPromise() → notifySuccess()
+    //   5. teams-dev.html reloads → finds account in localStorage → loads dashboard
+    //
+    // Azure AD redirect URI required:
+    //   https://orange-smoke-04675d40f.7.azurestaticapps.net/teams-auth.html
+
+    (async function () {
+      try { await microsoftTeams.app.initialize(); } catch (_) {}
+
+      const msalConfig = {
+        auth: {
+          clientId:                  CONFIG.clientId,
+          authority:                 'https://login.microsoftonline.com/' + CONFIG.tenantId,
+          redirectUri:               window.location.origin + '/teams-auth.html',
+          navigateToLoginRequestUrl: false,   // stay on this page after auth hash is processed
+        },
+        cache: {
+          cacheLocation:        'localStorage',   // shared with main window after reload
+          storeAuthStateInCookie: false,
+        },
+      };
+
+      try {
+        const msalInstance = new msal.PublicClientApplication(msalConfig);
+
+        // Check for pending redirect (return from Microsoft login)
+        const response = await msalInstance.handleRedirectPromise();
+        if (response && response.account) {
+          microsoftTeams.authentication.notifySuccess('auth_complete');
+          return;
+        }
+
+        // Already signed in?
+        const accounts = msalInstance.getAllAccounts();
+        if (accounts.length > 0) {
+          microsoftTeams.authentication.notifySuccess('auth_complete');
+          return;
+        }
+
+        // First visit — start redirect (redirect IS allowed here; this is a top-level popup)
+        await msalInstance.loginRedirect({
+          scopes:      CONFIG.scopes,
+          redirectUri: window.location.origin + '/teams-auth.html',
+        });
+
+      } catch (err) {
+        console.error('[teams-auth] Error:', err);
+        microsoftTeams.authentication.notifyFailure(err.message || String(err) || 'Auth error');
+      }
+    })();
+  </script>
+</body>
+</html>

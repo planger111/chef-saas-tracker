@@ -417,15 +417,15 @@
       _getMsalConfig = function() {
         var cfg = _origGetMsalConfig();
         cfg.auth.redirectUri = window.location.origin + '/teams-dev.html';
+        // Use localStorage so the teams-auth.html popup and this page share the MSAL cache.
+        // After popup auth completes, page reloads and MSAL finds the account here.
+        cfg.cache.cacheLocation = 'localStorage';
         return cfg;
       };
 
-      // TEAMS-DEV: Teams iframes the tab — MSAL redirect flow is blocked in iframes
-      // (error: redirect_in_iframe, window.parent !== window).
-      // Override _useRedirectFlow to use popup when in an iframe (Teams),
-      // keep redirect when in a top-level window (browser direct access).
+      // _useRedirectFlow override kept for acquireToken fallback paths (not sign-in)
       _useRedirectFlow = function() {
-        return window.parent === window; // false inside Teams iframe → popup flow
+        return window.parent === window;
       };
     })();
   </script>
@@ -814,6 +814,13 @@
         const msg = err && err.message ? err.message : '';
 
         if (err && err.isSharePointAccessDenied) {
+          // TEAMS-DEV: If running in Teams and demo isn't explicitly disabled,
+          // fall into demo mode on SharePoint 403 instead of showing an error wall.
+          if (window.APP_HOST === 'teams' && !window._teamsDisableDemo) {
+            console.warn('[Teams DEV] SharePoint 403 — falling back to demo mode');
+            await showDemoMode();
+            return;
+          }
           // Rep authenticated fine but their token lacks SharePoint permission.
           // Show a clear, non-technical message; log the event for admin visibility.
           console.warn('[Access] SharePoint 403 for endpoint:', err.failingEndpoint || 'unknown');
@@ -1834,42 +1841,52 @@
 
     // Sign in
     document.getElementById('btn-sign-in').addEventListener('click', async () => {
-      // TEAMS-DEV: clear any stale MSAL session state before attempting login
-      // Stale interaction_in_progress state from a prior failed redirect silently blocks login
+      // Clear stale MSAL state (both sessionStorage and localStorage)
       try {
-        Object.keys(sessionStorage)
-          .filter(k => k.startsWith('msal.') || k.includes('login.windows') || k.includes('login.microsoftonline'))
-          .forEach(k => sessionStorage.removeItem(k));
+        [sessionStorage, localStorage].forEach(store => {
+          Object.keys(store)
+            .filter(k => k.startsWith('msal.') || k.includes('login.microsoftonline'))
+            .forEach(k => store.removeItem(k));
+        });
       } catch(_) {}
+
       try {
-        // TEAMS-DEV: Teams iframes the tab — redirect is blocked (redirect_in_iframe).
-        // Bypass signIn() and call loginPopup() directly when inside an iframe.
-        // In browser (top frame), fall through to normal signIn() redirect flow.
         if (window.parent !== window) {
-          if (!_msalInstance) _msalInstance = new msal.PublicClientApplication(_getMsalConfig());
-          const response = await _msalInstance.loginPopup({ scopes: CONFIG.scopes });
-          if (response && response.account) {
-            _account = response.account;
-            currentUser = getCurrentUser();
-            await loadDashboard();
-          }
+          // ── TEAMS PATH ──────────────────────────────────────────────────────────
+          // window.open is blocked in Teams webview. Use microsoftTeams.authentication.authenticate()
+          // which opens a Teams-managed popup at teams-auth.html.
+          // That page does MSAL redirect (allowed — it's a top frame), stores account in
+          // localStorage, then calls notifySuccess. We reload to pick it up.
+          await microsoftTeams.app.initialize().catch(() => {});
+          await microsoftTeams.authentication.authenticate({
+            url:    window.location.origin + '/teams-auth.html',
+            width:  600,
+            height: 535,
+          });
+          // Popup completed — account is in localStorage. Reload to reinitialize MSAL.
+          window.location.reload();
         } else {
+          // ── BROWSER PATH ─────────────────────────────────────────────────────────
           const account = await signIn();
           if (account) {
             currentUser = getCurrentUser();
             await loadDashboard();
           }
-          // redirect flow: signIn() returns null, page will reload — this is normal
+          // redirect flow returns null — page reloads on redirect return, this is normal
         }
       } catch (err) {
         console.error('[Teams DEV] Sign in error:', err);
         const msg = (err && (err.message || err.errorMessage || err.errorCode || String(err))) || 'Unknown error';
-        const note = document.querySelector('#screen-login .teams-auth-error') ||
-                     (() => { const d = document.createElement('p');
-                              d.className = 'teams-auth-error';
-                              d.style.cssText = 'color:#c0392b;font-size:13px;margin-top:12px;word-break:break-word;';
-                              document.getElementById('screen-login').querySelector('.login-card, .card, form, div')?.appendChild(d);
-                              return d; })();
+        let note = document.querySelector('#screen-login .teams-auth-error');
+        if (!note) {
+          note = document.createElement('p');
+          note.className = 'teams-auth-error';
+          note.style.cssText = 'color:#c0392b;font-size:13px;margin-top:12px;word-break:break-word;';
+          const container = document.querySelector('#screen-login .card') ||
+                            document.querySelector('#screen-login div') ||
+                            document.getElementById('screen-login');
+          if (container) container.appendChild(note);
+        }
         if (note) note.textContent = '⚠️ Sign-in error: ' + msg;
       }
     });
