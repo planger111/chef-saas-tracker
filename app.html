@@ -719,7 +719,7 @@
           const wbLv = document.getElementById('wb-level'); if (wbLv) wbLv.textContent = `${getLevel(totalPoints).badge} ${getLevel(totalPoints).name}`;
           showScreen('screen-dashboard');
           await showDemoMode();
-          if (currentUser.oid) registerOID(currentUser.username, currentUser.oid).catch(() => {});
+          if (currentUser.oid) { /* OID registration removed — identity via email-lookup.json */ }
           logActivity(currentUser, 'login', 'dashboard').catch(() => {});
           // Identity mismatch — signed in but no assignments found
           logIdentityEvent({
@@ -769,10 +769,6 @@
 
         showScreen('screen-dashboard');
 
-        // Background: register OID silently after dashboard is shown (non-blocking)
-        if (currentUser.oid) {
-          registerOID(currentUser.username, currentUser.oid).catch(() => {});
-        }
         // Background: log this login event (non-blocking)
         logActivity(currentUser, 'login', 'dashboard').catch(() => {});
         // Identity resolution success — log full details
