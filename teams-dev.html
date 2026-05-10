@@ -2026,9 +2026,20 @@
           await loadDashboard();
           showOnboardingIfNeeded();
           showBookmarkBannerIfNeeded();
-          // TEAMS-DEV: Notify Teams that the tab is ready
+          // TEAMS-DEV: Notify Teams that the tab is ready + register back button handler
           if (window.APP_HOST === 'teams' && window.microsoftTeams) {
             microsoftTeams.app.initialize().catch(() => {});
+            // Register Teams native back button handler (mobile + desktop Teams chrome).
+            // Without this, Teams back button exits the tab instead of going to dashboard.
+            try {
+              microsoftTeams.pages.backStack.registerBackButtonHandler(() => {
+                if (_screenHistory.length > 1) {
+                  goBack();
+                  return true; // we handled it — don't let Teams navigate away
+                }
+                return false; // at root screen — let Teams handle (exits tab)
+              });
+            } catch (_) {}
           }
         } else {
           showScreen('screen-login');
