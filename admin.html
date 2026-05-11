@@ -2124,16 +2124,14 @@ Let's go! 🚀`;
         const correctionsTabBtn = document.getElementById('tab-btn-corrections');
         if (correctionsTabBtn) correctionsTabBtn.style.display = '';
       }
-      // Hide owner-only tabs for managers
+      // Managers also get Snapshots (view only) — hide dangerous restore buttons
       if (role === 'manager') {
-        OWNER_ONLY_TABS.forEach(tab => {
-          const btn = document.querySelector(`.admin-tab[data-tab="${tab}"]`);
-          if (btn) btn.style.display = 'none';
-        });
-        // Hide destructive buttons
-        ['btn-export-all'].forEach(id => {
+        const snapshotsTabBtn = document.getElementById('tab-btn-snapshots');
+        if (snapshotsTabBtn) snapshotsTabBtn.style.display = '';
+        // Hide destructive buttons within snapshots tab
+        ['btn-restore-snapshot', 'btn-danger-reset'].forEach(id => {
           const el = document.getElementById(id);
-          // keep export for managers — hide upload only
+          if (el) el.style.display = 'none';
         });
         const uploadLink = document.querySelector('a[href="ingest.html"]');
         if (uploadLink) uploadLink.style.display = 'none';
