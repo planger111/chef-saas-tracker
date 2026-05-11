@@ -2014,6 +2014,19 @@
         });
       }
       try {
+        // TEAMS-DEV: Clear stale MSAL interaction state before initAuth.
+        // After the teams-auth.html popup flow + page reload, MSAL sometimes leaves
+        // an interaction.status key in localStorage that causes interaction_in_progress
+        // when loadDashboard() tries to acquire tokens.
+        if (window.APP_HOST === 'teams') {
+          try {
+            Object.keys(localStorage)
+              .filter(k => k.startsWith('msal.') && (
+                k.includes('interaction') || k.includes('.request.') || k.includes('temporaryCache')
+              ))
+              .forEach(k => localStorage.removeItem(k));
+          } catch (_) {}
+        }
         await initAuth();
         const user = getCurrentUser();
         if (user) {
