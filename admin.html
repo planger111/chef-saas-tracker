@@ -1713,18 +1713,20 @@
       for (const key of _overrideSelected) {
         const [playId, accountId] = key.split('::');
         try {
-          // Get current outcome for audit trail
+          // Get current outcome and rep email for audit trail
           let prevOutcome = '';
+          let repEmail = '';
           try {
             const row = (_allAssignmentsData || []).find(a =>
               (a.play_id || a.play_name || '') === playId &&
               (a.account_id || a.crm_id || '') === accountId);
             prevOutcome = row ? (row.latest_outcome || row.outcome || '') : '';
+            repEmail    = row ? (row.rep_sso_login || row.rep_email || '') : '';
           } catch(e) {}
 
           await writeManagerOverride(playId, accountId,
             currentUser ? (currentUser.username || currentUser.mail || currentUser.email || '') : '',
-            note, prevOutcome);
+            repEmail, note, prevOutcome);
           done++;
         } catch(e) {
           console.error('[Override] Failed for', key, e.message);
@@ -2128,11 +2130,13 @@ Let's go! 🚀`;
       if (role === 'manager') {
         const snapshotsTabBtn = document.getElementById('tab-btn-snapshots');
         if (snapshotsTabBtn) snapshotsTabBtn.style.display = '';
-        // Hide destructive buttons within snapshots tab
-        ['btn-restore-snapshot', 'btn-danger-reset'].forEach(id => {
+        // Hide all destructive/write actions within the snapshots tab
+        ['btn-restore-snapshot', 'btn-danger-reset', 'btn-save-snapshot', 'btn-undo-reset'].forEach(id => {
           const el = document.getElementById(id);
           if (el) el.style.display = 'none';
         });
+        // Also hide Save Snapshot button by onclick attribute (it has no id)
+        document.querySelectorAll('button[onclick="doSaveSnapshot()"]').forEach(b => b.style.display = 'none');
         const uploadLink = document.querySelector('a[href="ingest.html"]');
         if (uploadLink) uploadLink.style.display = 'none';
       }

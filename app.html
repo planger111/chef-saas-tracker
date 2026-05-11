@@ -1214,7 +1214,9 @@
           const email = currentUser ? currentUser.email : null;
           const accountIds = repAccounts.map(a => a.account_id);
           const logs = await getLatestLogsForRep(email, accountIds);
-          if (logs) Object.assign(latestLogs, logs);
+          // Don't overwrite a non-null in-memory entry with null — SP write propagation
+          // can lag a few seconds, causing the just-submitted log to vanish on refresh.
+          if (logs) Object.entries(logs).forEach(([id, v]) => { if (v !== null) latestLogs[id] = v; });
         }
 
         document.getElementById('play-detail-title').textContent = play.play_name;

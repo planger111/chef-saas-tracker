@@ -969,7 +969,7 @@ async function logEngagement(fields) {
  * @param {string} managerNote  - reason / instructions for the rep
  * @param {string} previousOutcome  - the outcome being overridden (for audit trail)
  */
-async function writeManagerOverride(playId, accountId, managerEmail, managerNote, previousOutcome) {
+async function writeManagerOverride(playId, accountId, managerEmail, repEmail, managerNote, previousOutcome) {
   const safePlayId = (playId || 'engagements').replace(/[^a-z0-9]/gi, '_');
   const filePath = SP_ROOT + '/' + safePlayId + '_engagements.csv';
 
@@ -979,7 +979,8 @@ async function writeManagerOverride(playId, accountId, managerEmail, managerNote
   entry.submitted_at     = new Date().toISOString();
   entry.play_id          = playId;
   entry.account_id       = accountId;
-  entry.rep_email        = managerEmail;
+  // rep_email must be the ASSIGNED REP's email so the rep's log filter finds this row
+  entry.rep_email        = (repEmail || managerEmail || '').toLowerCase();
   entry.outcome          = 'Not Started';
   entry.manager_override = 'true';
   entry.override_by      = managerEmail;
