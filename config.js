@@ -34,6 +34,7 @@ const CONFIG = (() => {
     scopes: [
       "https://graph.microsoft.com/Sites.ReadWrite.All",
       "https://graph.microsoft.com/User.Read",
+      "https://graph.microsoft.com/User.ReadBasic.All",
     ],
   };
 })();

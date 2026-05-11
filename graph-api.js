@@ -421,6 +421,25 @@ async function fetchGraphUserProfile() {
   return _graphUserProfile;
 }
 
+// ─── Manager: Direct Reports ──────────────────────────────────────────────
+// Returns [{email, name}] for the signed-in user's direct reports.
+// Requires User.ReadBasic.All scope. Gracefully returns [] on any failure.
+
+async function getDirectReports() {
+  try {
+    const data = await _graphFetch('/me/directReports?$select=mail,userPrincipalName,displayName');
+    return (data && data.value ? data.value : [])
+      .map(u => ({
+        email: (u.mail || u.userPrincipalName || '').toLowerCase(),
+        name:  u.displayName || u.mail || u.userPrincipalName || '',
+      }))
+      .filter(u => u.email);
+  } catch(e) {
+    console.warn('[DirectReports] Failed:', e.message);
+    return [];
+  }
+}
+
 // ─── Email Lookup table (from "EMAIL LookUP for SSO.xlsx") ────────────────
 // This file is the authoritative rep identity map maintained by the admin.
 // Each entry has { primary_email, upn (optional), name, notes }.
