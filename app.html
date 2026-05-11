@@ -619,7 +619,16 @@
         return { status: 'Would Not Engage', statusLabel: 'Would Not Engage', badgeClass: 'badge-wne', lastDate, isManagerOverride, managerNote };
       }
 
-      return { status: null, statusLabel: 'Not Started', badgeClass: 'badge-not-started', lastDate: null, isManagerOverride: false, managerNote: '' };
+      // Log exists but outcome is unrecognized (e.g. 'Not Started' from a manager override).
+      // Still pass through isManagerOverride and managerNote so the 🔁 badge renders.
+      return {
+        status: null,
+        statusLabel: 'Not Started',
+        badgeClass: 'badge-not-started',
+        lastDate: log.submitted_at || log.submitted_date || null,
+        isManagerOverride: log.manager_override === 'true',
+        managerNote: log.manager_note || '',
+      };
     }
 
     function isCompleted(accountId) {
@@ -1846,6 +1855,7 @@
     });
 
     // Back: log form → play detail (step-aware)
+    // Use goBack() on step 1 to avoid pushing a duplicate history entry for screen-play-detail.
     document.getElementById('btn-back-to-play').addEventListener('click', () => {
       if (currentStep > 1) {
         goToLogStep(currentStep - 1);
@@ -1855,7 +1865,7 @@
         document.querySelectorAll('.filter-tab').forEach(t => {
           t.classList.toggle('active', t.dataset.filter === 'all');
         });
-        showScreen('screen-play-detail');
+        goBack();
       }
     });
 
@@ -1902,6 +1912,53 @@
       const counter = document.getElementById('notes-char-counter');
       if (counter) counter.textContent = this.value.length + ' / 500 characters';
     });
+
+    // ─────────────────────────────────────────────
+    // REP FEEDBACK MODAL
+    // ─────────────────────────────────────────────
+    function openFeedbackModal() {
+      const modal = document.getElementById('feedback-modal');
+      if (modal) {
+        document.getElementById('feedback-text').value = '';
+        document.getElementById('feedback-char-counter').textContent = '0 / 500 characters';
+        document.getElementById('feedback-submit-status').textContent = '';
+        modal.style.display = 'flex';
+      }
+    }
+    function closeFeedbackModal() {
+      const modal = document.getElementById('feedback-modal');
+      if (modal) modal.style.display = 'none';
+    }
+    async function submitFeedback() {
+      const text = (document.getElementById('feedback-text')?.value || '').trim();
+      if (!text) { alert('Please enter your feedback.'); return; }
+      const btn = document.getElementById('feedback-submit-btn');
+      const statusEl = document.getElementById('feedback-submit-status');
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      try {
+        let existing = [];
+        try {
+          const raw = await getFileText(`${SP_ROOT}/rep_feedback.json`);
+          if (raw) existing = JSON.parse(raw);
+        } catch(e) { /* file may not exist yet */ }
+        existing.push({
+          submitted_at: new Date().toISOString(),
+          rep_email:    currentUser?.email || '',
+          rep_name:     currentUser?.name  || '',
+          feedback:     text,
+        });
+        await writeJsonFile('rep_feedback.json', existing);
+        statusEl.textContent = '✅ Thanks for your feedback!';
+        setTimeout(closeFeedbackModal, 1500);
+      } catch(e) {
+        console.error('Feedback submit error:', e);
+        statusEl.textContent = '⚠️ Failed to send — please try again.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send Feedback';
+      }
+    }
 
     // ─────────────────────────────────────────────
     // INIT
@@ -2014,6 +2071,34 @@
     </div>
   </div>
 
+
+  <!-- ===================== REP FEEDBACK BUTTON + MODAL ===================== -->
+  <button id="feedback-float-btn" onclick="openFeedbackModal()"
+    style="position:fixed;bottom:24px;right:24px;width:48px;height:48px;border-radius:50%;
+           background:#7c3aed;color:#fff;border:none;font-size:22px;cursor:pointer;
+           z-index:8000;box-shadow:0 4px 16px rgba(0,0,0,0.25);">?</button>
+
+  <div id="feedback-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+       z-index:9000;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:24px 20px;
+                box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <strong style="font-size:17px;color:#1a1a1a;">💬 Send Feedback</strong>
+        <button onclick="closeFeedbackModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6b7280;">✕</button>
+      </div>
+      <p style="font-size:13px;color:#555;margin:0 0 12px;">Questions, bugs, or ideas? Let us know.</p>
+      <textarea id="feedback-text" rows="5" maxlength="500"
+        placeholder="Type your feedback here…"
+        oninput="document.getElementById('feedback-char-counter').textContent=this.value.length+' / 500 characters'"
+        style="width:100%;padding:10px 12px;font-size:15px;border:1px solid #d1d5db;border-radius:8px;
+               resize:vertical;box-sizing:border-box;"></textarea>
+      <div id="feedback-char-counter" style="font-size:12px;color:#6b7280;text-align:right;margin-top:4px;">0 / 500 characters</div>
+      <button id="feedback-submit-btn" onclick="submitFeedback()"
+        style="width:100%;margin-top:12px;padding:13px;background:#7c3aed;color:#fff;border:none;
+               border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;">Send Feedback</button>
+      <div id="feedback-submit-status" style="text-align:center;font-size:13px;margin-top:8px;color:#555;"></div>
+    </div>
+  </div>
 
 <footer class="security-footer">
   INFRA SalesPlay Tracker — Progress Software Proprietary &amp; Confidential &nbsp;·&nbsp; Progress employees only &nbsp;<a href="security.html" class="sec-footer-link">Security &amp; Privacy</a>
