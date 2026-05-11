@@ -113,7 +113,7 @@
     <!-- Section 3: Goals & Outcomes -->
     <div class="intake-card">
       <h2>3. Goals &amp; Outcomes</h2>
-      <p style="font-size:13px;color:#64748b;margin:0 0 14px;">What outcomes are you trying to drive? Check the ones that apply and select which reasons reps are likely to hear.</p>
+      <p style="font-size:13px;color:#64748b;margin:0 0 14px;">Configure the outcomes reps can log. Click any outcome to expand it and customize the reasons, next steps, and timing options reps will see.</p>
       <div id="intake-outcomes-container">
         <div style="font-size:13px;color:#9ca3af;">Loading outcome options…</div>
       </div>
@@ -216,59 +216,112 @@
   }
 
   // ── Outcomes from config ──
-  const DEFAULT_INTAKE_REASONS = {
-    'Interested':       ['Requested demo','Requested pricing','Referred to partner','Active evaluation'],
-    'Not Interested':   ['Already using competitor','Budget constraints','Not the right time','Not a priority','Other'],
-    'Would Not Engage': ["Tried 5+ times, going away","Partner-led only","Can't find right person","Other"]
+  const DEFAULT_INTAKE_CONFIG = {
+    'Interested': {
+      reasons:    ['Requested demo','Requested pricing','Referred to partner','Active evaluation'],
+      next_steps: ['Schedule follow-up','Send information','Introduce stakeholder','Create opportunity','Revisit later'],
+      timing:     ['This week','This month','Next quarter','Later this year']
+    },
+    'Not Interested': {
+      reasons:    ['Already using competitor','Budget constraints','Not the right time','Not a priority','No use case','Other'],
+      timing:     ['30 days','90 days','6 months','Next year','Never']
+    },
+    'Would Not Engage': {
+      reasons:    ["Tried 5+ times, going away","Partner-led only","Can't find right person","Not the right contact","Other"],
+      next_steps: ['Flag for partner','Try different contact','Remove from list'],
+      timing:     ['Revisit in 6 months','Revisit next year','Remove permanently']
+    }
   };
 
   async function loadOutcomes() {
-    let map = DEFAULT_INTAKE_REASONS;
+    let cfg = DEFAULT_INTAKE_CONFIG;
     try {
       const text = await getFileText(SP_ROOT + '/response-options.json');
       if (text) {
         const opts = JSON.parse(text);
         const global = (opts.response_sets||[]).find(s => s.response_set_id === 'GLOBAL_DEFAULTS');
-        if (global && global.outcome_map) map = global.outcome_map;
+        if (global && global.outcome_config) cfg = global.outcome_config;
+        else if (global && global.outcome_map) {
+          // upgrade old format
+          cfg = {};
+          Object.entries(global.outcome_map).forEach(([k,v]) => {
+            cfg[k] = { reasons: Array.isArray(v) ? v : (v.reasons || []) };
+          });
+        }
       }
     } catch(e) {}
-    renderOutcomes(map);
+    renderOutcomes(cfg);
   }
 
-  function renderOutcomes(map) {
+  const OUTCOME_ICONS = { 'Interested': '✅', 'Not Interested': '❌', 'Would Not Engage': '⚠️' };
+
+  function makeSubSection(sid, sectionKey, label, items) {
+    if (!items || items.length === 0) return '';
+    const checkboxes = items.map(r => `
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:4px;cursor:pointer;">
+        <input type="checkbox" data-field="${sectionKey}" value="${escHtml(r)}" checked style="width:14px;height:14px;"> ${escHtml(r)}
+      </label>`).join('');
+    return `
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#6366f1;margin-bottom:6px;">${label}</div>
+        <div id="${sid}-${sectionKey}">
+          ${checkboxes}
+          <button type="button" onclick="addOutcomeItem('${sid}','${sectionKey}')"
+            style="background:none;border:1px dashed #cbd5e1;padding:2px 10px;border-radius:5px;font-size:12px;color:#64748b;cursor:pointer;margin-top:2px;">
+            + Add</button>
+        </div>
+      </div>`;
+  }
+
+  function renderOutcomes(cfg) {
     const container = document.getElementById('intake-outcomes-container');
     if (!container) return;
     container.innerHTML = '';
-    Object.entries(map).forEach(([name, val]) => {
-      const reasons = Array.isArray(val) ? val : (val.reasons || []);
-      const sid = name.replace(/\s+/g,'-').toLowerCase();
+    Object.entries(cfg).forEach(([name, val]) => {
+      const reasons    = Array.isArray(val) ? val : (val.reasons    || []);
+      const next_steps = Array.isArray(val) ? []  : (val.next_steps || []);
+      const timing     = Array.isArray(val) ? []  : (val.timing     || []);
+      const sid = 'oc-' + name.replace(/\s+/g,'-').toLowerCase();
+      const icon = OUTCOME_ICONS[name] || '•';
+
       const card = document.createElement('div');
-      card.style.cssText = 'border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;margin-bottom:10px;';
+      card.style.cssText = 'border:1px solid #e5e7eb;border-radius:10px;margin-bottom:10px;overflow:hidden;';
       card.innerHTML = `
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-          <input type="checkbox" id="oc-${sid}" checked style="width:16px;height:16px;cursor:pointer;">
-          <label for="oc-${sid}" style="font-size:14px;font-weight:700;cursor:pointer;">${escHtml(name)}</label>
+        <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#f8fafc;cursor:pointer;"
+             onclick="toggleOutcome('${sid}')">
+          <input type="checkbox" id="${sid}-enabled" checked onclick="event.stopPropagation()"
+            style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
+          <label for="${sid}-enabled" style="font-size:14px;font-weight:700;cursor:pointer;flex:1;margin:0;"
+            onclick="event.stopPropagation()">${icon} ${escHtml(name)}</label>
+          <span id="${sid}-arrow" style="color:#94a3b8;font-size:12px;transition:transform 0.2s;">▼</span>
         </div>
-        <div id="rl-${sid}" style="padding-left:26px;">
-          ${reasons.map(r=>`<label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:4px;cursor:pointer;">
-            <input type="checkbox" value="${escHtml(r)}" checked> ${escHtml(r)}</label>`).join('')}
-          <button onclick="addOutcomeReason('${sid}')"
-            style="background:none;border:1px dashed #ccc;padding:3px 10px;border-radius:5px;font-size:12px;color:#555;cursor:pointer;margin-top:4px;">
-            + Add reason</button>
+        <div id="${sid}-body" style="padding:14px 16px;border-top:1px solid #e5e7eb;">
+          ${makeSubSection(sid, 'reasons',    'If they say yes, reason was…', reasons)}
+          ${next_steps.length ? makeSubSection(sid, 'next_steps', 'Next step options', next_steps) : ''}
+          ${timing.length     ? makeSubSection(sid, 'timing',     'Timing options',    timing)     : ''}
         </div>`;
       container.appendChild(card);
     });
   }
 
-  function addOutcomeReason(sid) {
-    const list = document.getElementById('rl-' + sid);
-    if (!list) return;
+  function toggleOutcome(sid) {
+    const body  = document.getElementById(sid + '-body');
+    const arrow = document.getElementById(sid + '-arrow');
+    if (!body) return;
+    const open = body.style.display !== 'none';
+    body.style.display  = open ? 'none' : '';
+    arrow.style.transform = open ? 'rotate(-90deg)' : '';
+  }
+
+  function addOutcomeItem(sid, field) {
+    const container = document.getElementById(sid + '-' + field);
+    if (!container) return;
     const lbl = document.createElement('label');
     lbl.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:4px;';
-    lbl.innerHTML = `<input type="checkbox" checked>
-      <input type="text" placeholder="Custom reason…"
+    lbl.innerHTML = `<input type="checkbox" data-field="${field}" checked style="width:14px;height:14px;">
+      <input type="text" placeholder="Custom…"
         style="flex:1;border:1px solid #d1d5db;border-radius:4px;padding:3px 7px;font-size:12px;">`;
-    list.insertBefore(lbl, list.lastElementChild); // before the "+ Add" button
+    container.insertBefore(lbl, container.lastElementChild);
     lbl.querySelector('input[type="text"]').focus();
   }
 
@@ -276,21 +329,22 @@
     const container = document.getElementById('intake-outcomes-container');
     if (!container) return {};
     const config = {};
-    container.querySelectorAll('[id^="oc-"]').forEach(cb => {
-      const sid = cb.id.replace('oc-','');
-      const heading = cb.nextElementSibling;
-      const name = heading ? heading.textContent.trim() : sid;
-      const list = document.getElementById('rl-' + sid);
-      const reasons = [];
-      if (list) {
-        list.querySelectorAll('label').forEach(lbl => {
-          const rcb = lbl.querySelector('input[type="checkbox"]');
+    container.querySelectorAll('[id$="-enabled"]').forEach(cb => {
+      const sid   = cb.id.replace('-enabled','');
+      const name  = cb.nextElementSibling?.textContent?.trim().replace(/^[✅❌⚠️]\s*/,'') || sid;
+      const body  = document.getElementById(sid + '-body');
+      const result = { enabled: cb.checked, reasons: [], next_steps: [], timing: [] };
+      ['reasons','next_steps','timing'].forEach(field => {
+        const sec = document.getElementById(sid + '-' + field);
+        if (!sec) return;
+        sec.querySelectorAll('label').forEach(lbl => {
+          const fcb = lbl.querySelector('input[type="checkbox"]');
           const txt = lbl.querySelector('input[type="text"]');
-          const val = txt ? txt.value.trim() : (rcb ? rcb.value : '');
-          if (val && rcb && rcb.checked) reasons.push(val);
+          const val = txt ? txt.value.trim() : (fcb ? fcb.value : '');
+          if (val && fcb && fcb.checked) result[field].push(val);
         });
-      }
-      config[name] = { enabled: cb.checked, reasons };
+      });
+      config[name] = result;
     });
     return config;
   }
