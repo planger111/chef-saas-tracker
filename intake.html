@@ -54,6 +54,12 @@
       <p>Submit a play brief for the sales team to review and launch.</p>
     </div>
 
+    <!-- Process banner -->
+    <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;color:#4c1d95;line-height:1.6;">
+      <strong style="font-size:14px;">📋 How this works</strong><br>
+      Fill out the form below and submit. Your brief goes to <strong>Kathy Faria</strong> for review — she'll reach out to discuss, finalize the account list, and coordinate launch. Questions? <a href="mailto:faria@progress.com" style="color:#6366f1;font-weight:600;">faria@progress.com</a>
+    </div>
+
     <!-- Submitter identity (auto-filled, read-only) -->
     <div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#1e40af;">
       Submitting as: <strong id="intake-submitter-name-display"></strong>
@@ -220,16 +226,18 @@
     'Interested': {
       reasons:    ['Requested demo','Requested pricing','Referred to partner','Active evaluation'],
       next_steps: ['Schedule follow-up','Send information','Introduce stakeholder','Create opportunity','Revisit later'],
-      timing:     ['This week','This month','Next quarter','Later this year']
+      timing:     ['This week','This month','Next quarter','Later this year'],
+      freeform:   true
     },
     'Not Interested': {
       reasons:    ['Already using competitor','Budget constraints','Not the right time','Not a priority','No use case','Other'],
-      timing:     ['30 days','90 days','6 months','Next year','Never']
+      freeform:   true
     },
     'Would Not Engage': {
       reasons:    ["Tried 5+ times, going away","Partner-led only","Can't find right person","Not the right contact","Other"],
       next_steps: ['Flag for partner','Try different contact','Remove from list'],
-      timing:     ['Revisit in 6 months','Revisit next year','Remove permanently']
+      timing:     ['Revisit in 6 months','Revisit next year','Remove permanently'],
+      freeform:   true
     }
   };
 
@@ -281,6 +289,7 @@
       const reasons    = Array.isArray(val) ? val : (val.reasons    || []);
       const next_steps = Array.isArray(val) ? []  : (val.next_steps || []);
       const timing     = Array.isArray(val) ? []  : (val.timing     || []);
+      const freeform   = Array.isArray(val) ? false : (val.freeform !== false);
       const sid = 'oc-' + name.replace(/\s+/g,'-').toLowerCase();
       const icon = OUTCOME_ICONS[name] || '•';
 
@@ -299,6 +308,12 @@
           ${makeSubSection(sid, 'reasons',    'If they say yes, reason was…', reasons)}
           ${next_steps.length ? makeSubSection(sid, 'next_steps', 'Next step options', next_steps) : ''}
           ${timing.length     ? makeSubSection(sid, 'timing',     'Timing options',    timing)     : ''}
+          <div style="margin-top:4px;">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+              <input type="checkbox" id="${sid}-freeform" ${freeform ? 'checked' : ''} style="width:14px;height:14px;">
+              Allow rep to enter freeform notes for this outcome
+            </label>
+          </div>
         </div>`;
       container.appendChild(card);
     });
@@ -332,8 +347,8 @@
     container.querySelectorAll('[id$="-enabled"]').forEach(cb => {
       const sid   = cb.id.replace('-enabled','');
       const name  = cb.nextElementSibling?.textContent?.trim().replace(/^[✅❌⚠️]\s*/,'') || sid;
-      const body  = document.getElementById(sid + '-body');
-      const result = { enabled: cb.checked, reasons: [], next_steps: [], timing: [] };
+      const result = { enabled: cb.checked, reasons: [], next_steps: [], timing: [],
+                       freeform: !!(document.getElementById(sid + '-freeform')?.checked) };
       ['reasons','next_steps','timing'].forEach(field => {
         const sec = document.getElementById(sid + '-' + field);
         if (!sec) return;
