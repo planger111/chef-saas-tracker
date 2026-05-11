@@ -708,6 +708,7 @@
                 <option value="all">All</option>
                 <option value="New" selected>New</option>
                 <option value="Reviewed">Reviewed</option>
+                <option value="Approved">Approved</option>
                 <option value="Resolved">Resolved</option>
               </select>
               <button onclick="loadPlayBriefsTab()" style="padding:6px 14px;background:#f1f5f9;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;margin-left:4px;">⟳ Refresh</button>
@@ -3887,7 +3888,7 @@ Let's go! 🚀`;
         return;
       }
       container.innerHTML = filtered.map(b => {
-        const statusColor = { New: '#f59e0b', Reviewed: '#0078d4', Resolved: '#16a34a' }[b.status] || '#94a3b8';
+        const statusColor = { New: '#f59e0b', Reviewed: '#0078d4', Approved: '#16a34a', Resolved: '#94a3b8' }[b.status] || '#94a3b8';
         const urgencyLabel = b.urgency ? `<span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fef3c7;color:#92400e;margin-left:6px;">${escHtml(b.urgency)}</span>` : '';
         return `
         <details style="border:1px solid #e2e8f0;border-radius:10px;margin-bottom:12px;background:#fff;overflow:hidden;">
@@ -3914,18 +3915,27 @@ Let's go! 🚀`;
             ${briefField('Interested Reasons', (b.interested_reasons || []).length > 0 ? b.interested_reasons.map(r => '• ' + escHtml(r)).join('<br>') : '—')}
             ${briefField('Not Interested Reasons', (b.not_interested_reasons || []).length > 0 ? b.not_interested_reasons.map(r => '• ' + escHtml(r)).join('<br>') : '—')}
             ${briefField('Next Steps', escHtml(b.next_steps || '—'))}
-            ${briefField('Target Accounts', escHtml(b.accounts_text || '—') + (b.account_count ? ` (est. ${b.account_count})` : ''))}
+            ${briefField('Target Accounts', b.target_account_count ? `~${escHtml(String(b.target_account_count))} accounts` : '—')}
             ${briefField('Collateral', escHtml(b.collateral || '—'))}
             ${briefField('Urgency', escHtml(b.urgency || '—'))}
             ${briefField('Notes', escHtml(b.notes || '—'))}
             <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0;">
               <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <select id="brief-status-${b.id}" style="padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
-                  ${['New','Reviewed','Resolved'].map(s => `<option value="${s}" ${b.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+                  ${['New','Reviewed','Approved','Resolved'].map(s => `<option value="${s}" ${b.status === s ? 'selected' : ''}>${s}</option>`).join('')}
                 </select>
                 <input id="brief-notes-${b.id}" placeholder="Manager notes..." value="${escHtml(b.manager_notes || '')}" style="flex:1;min-width:180px;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;" />
                 <button onclick="updateBrief('${b.id}')" style="padding:4px 12px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">Save</button>
-                ${b.status === 'Approved' ? `<a href="ingest.html" target="_blank" style="padding:4px 12px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:12px;text-decoration:none;cursor:pointer;">→ Create Play</a>` : ''}
+                ${b.status !== 'Approved' && b.status !== 'Resolved' ? `<button onclick="approveBrief('${b.id}')" style="padding:4px 12px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">✅ Approve</button>` : ''}
+              </div>
+              ${b.status === 'Approved' ? `
+              <div style="margin-top:10px;padding:10px 14px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:13px;">
+                <strong style="color:#16a34a;">✅ Approved</strong> — Next steps:
+                <ol style="margin:6px 0 0 16px;padding:0;color:#374151;line-height:1.7;">
+                  <li>Kathy to collect target account list from <strong>${escHtml(b.submitter_name || b.submitter_email || 'submitter')}</strong>${b.target_account_count ? ` (~${b.target_account_count} accounts)` : ''}</li>
+                  <li><a href="ingest.html" target="_blank" style="color:#6366f1;font-weight:600;">Open Play Wizard →</a> to create the play and upload accounts</li>
+                </ol>
+              </div>` : ''}
               </div>
             </div>
           </div>
@@ -3940,7 +3950,22 @@ Let's go! 🚀`;
       </div>`;
     }
 
-    async function updateBrief(id) {
+    async function approveBrief(id) {
+      const brief = _briefsData.find(b => b.id === id);
+      if (!brief) return;
+      brief.status = 'Approved';
+      brief.reviewed_by = currentUser ? (currentUser.email || currentUser.username || '') : '';
+      brief.approved_at = new Date().toISOString();
+      try {
+        await writeJsonFile('play_briefs.json', { submissions: _briefsData });
+        filterBriefs();
+      } catch(e) {
+        console.error('Approve brief error:', e);
+        alert('Failed to approve brief');
+      }
+    }
+
+
       const brief = _briefsData.find(b => b.id === id);
       if (!brief) return;
       brief.status = document.getElementById('brief-status-' + id).value;
