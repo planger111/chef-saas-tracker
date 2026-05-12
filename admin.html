@@ -838,7 +838,7 @@
   </div><!-- /#play-edit-modal -->
 
   <script src="msal-browser.js?v=10"></script>
-  <script defer src="https://unpkg.com/xlsx@0.20.1/dist/xlsx.full.min.js"></script>
+  <script src="xlsx.full.min.js"></script>
   <script src="config.js?v=11"></script>
   <script src="msal-auth.js?v=12"></script>
   <script src="graph-api.js?v=11"></script>
@@ -3990,6 +3990,7 @@ Let's go! 🚀`;
     }
 
 
+    async function updateBrief(id) {
       const brief = _briefsData.find(b => b.id === id);
       if (!brief) return;
       brief.status = document.getElementById('brief-status-' + id).value;
