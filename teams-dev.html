@@ -1851,13 +1851,10 @@
 
     // Sign in
     document.getElementById('btn-sign-in').addEventListener('click', async () => {
-      // Clear stale MSAL state (both sessionStorage and localStorage)
+      // Clear only the MSAL interaction lock before signing in — not the full cache
       try {
-        [sessionStorage, localStorage].forEach(store => {
-          Object.keys(store)
-            .filter(k => k.startsWith('msal.') || k.includes('login.microsoftonline'))
-            .forEach(k => store.removeItem(k));
-        });
+        localStorage.removeItem('msal.' + CONFIG.clientId + '.interaction.status');
+        sessionStorage.removeItem('msal.' + CONFIG.clientId + '.interaction.status');
       } catch(_) {}
 
       try {
@@ -2030,12 +2027,11 @@
         // when loadDashboard() tries to acquire tokens.
         if (window.APP_HOST === 'teams') {
           try {
-            // Preserve account and token keys; clear everything else (interaction, request,
-            // state, nonce, temporaryCache). This prevents interaction_in_progress errors
-            // caused by stale MSAL state left over from the teams-auth.html popup flow.
-            Object.keys(localStorage)
-              .filter(k => k.startsWith('msal.') && !k.includes('token') && !k.includes('account'))
-              .forEach(k => localStorage.removeItem(k));
+            // Only clear the specific MSAL interaction lock key.
+            // Broad clearing (previous approach) accidentally wiped account entity keys
+            // (keys like msal.{clientId}.uid.utid-login.ms... don't contain 'token'/'account')
+            // which silently logged the user out on every page load.
+            localStorage.removeItem('msal.' + CONFIG.clientId + '.interaction.status');
           } catch (_) {}
         }
         await initAuth();
