@@ -2175,7 +2175,6 @@ Let's go! 🚀`;
         }
         const user = getCurrentUser();
         currentUser = user;
-        if (typeof seedDevDataIfNeeded === 'function') await seedDevDataIfNeeded();
         if (user) document.getElementById("admin-user-name").textContent = user.name;
 
         // Check role — try all email candidates from the token
@@ -2201,11 +2200,14 @@ Let's go! 🚀`;
           return;
         }
         applyRoleUI(role);
-        showScreen("screen-main");
+        showScreen("screen-main");  // show UI immediately — don't block on data/seed
 
         // Start browser notification permission request + polling (owner + managers)
         requestNotifPermission();
         startAlertPolling();
+
+        // Dev seed runs after screen is visible so it never blocks the loading spinner
+        if (typeof seedDevDataIfNeeded === 'function') await seedDevDataIfNeeded();
 
         _allData = await getMotionLog({});
         await populateFilterDropdowns(_allData);
