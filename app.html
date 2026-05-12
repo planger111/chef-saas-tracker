@@ -719,6 +719,7 @@
         }
 
         // No accounts assigned → fall through to demo mode
+        if (repAccounts.length === 0) {
           const points = await getRepPoints(email);
           totalPoints = points || 0;
           renderPointsCard(totalPoints);
