@@ -34,7 +34,8 @@ const CONFIG = (() => {
     scopes: [
       "https://graph.microsoft.com/Sites.ReadWrite.All",
       "https://graph.microsoft.com/User.Read",
-      "https://graph.microsoft.com/User.ReadBasic.All",
+      // User.ReadBasic.All (for manager directReports) requires admin consent —
+      // requested incrementally in getDirectReports() instead of at login.
     ],
   };
 })();
