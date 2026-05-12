@@ -2152,8 +2152,17 @@ Let's go! 🚀`;
     }
 
     (async () => {
+      // Safety net: if something hangs, force the screen visible after 12s
+      const _loadingTimeout = setTimeout(() => {
+        console.error('[Admin] Startup timed out after 12s — forcing screen-main');
+        showScreen("screen-main");
+        const rb = document.getElementById("results-body");
+        if (rb) rb.innerHTML = `<tr><td colspan="12" class="no-results" style="color:#d32f2f;">Startup timed out. Try reloading. Check browser console for details.</td></tr>`;
+      }, 12000);
+
       // ── Startup guard: verify MSAL library loaded before doing anything ──
       if (typeof msal === 'undefined' || typeof msal.PublicClientApplication === 'undefined') {
+        clearTimeout(_loadingTimeout);
         document.body.innerHTML = `
           <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;flex-direction:column;gap:16px;color:#d32f2f;">
             <div style="font-size:48px;">⚠️</div>
@@ -2168,8 +2177,11 @@ Let's go! 🚀`;
         return;
       }
       try {
+        console.log('[Admin] initAuth start');
         const account = await initAuth();
+        console.log('[Admin] initAuth done, account:', account?.username);
         if (!account) {
+          clearTimeout(_loadingTimeout);
           signIn();
           return;
         }
@@ -2186,6 +2198,7 @@ Let's go! 🚀`;
         let role = emailCandidates.map(e => ADMIN_ROLES[e]).find(r => r);
         if (!role) {
           // Not an admin at all — block access
+          clearTimeout(_loadingTimeout);
           console.warn('[Admin] Access denied. Candidates:', emailCandidates, 'Known roles:', Object.keys(ADMIN_ROLES));
           document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">
             <div style="text-align:center;padding:40px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);max-width:400px;">
@@ -2199,6 +2212,8 @@ Let's go! 🚀`;
           </div>`;
           return;
         }
+        clearTimeout(_loadingTimeout);
+        console.log('[Admin] Role confirmed:', role, '— showing screen-main');
         applyRoleUI(role);
         showScreen("screen-main");  // show UI immediately — don't block on data/seed
 
