@@ -2094,53 +2094,35 @@ Let's go! 🚀`;
     // owner  : full access — all tabs + destructive actions
     // manager: read-only — Activity Log, Leaderboard, Coverage, Broadcast, Health
     const ADMIN_ROLES = {
-      'langer@progress.com':         'owner',
-      'philip.langer@progress.com':  'owner',
-      'planger@progress.com':        'owner',
-      'phil.langer@progress.com':    'owner',
-      'kathleen.faria@progress.com': 'manager',
-      'faria@progress.com':          'manager',
-      'kfaria@progress.com':         'manager',
-      'k.faria@progress.com':        'manager',
-      'kathy.faria@progress.com':    'manager',
-      'scheaney@progress.com':       'manager',
+      'langer@progress.com':           'owner',
+      'philip.langer@progress.com':    'owner',
+      'planger@progress.com':          'owner',
+      'phil.langer@progress.com':      'owner',
+      'kathleen.faria@progress.com':   'manager',
+      'faria@progress.com':            'manager',
+      'kfaria@progress.com':           'manager',
+      'k.faria@progress.com':          'manager',
+      'kathy.faria@progress.com':      'manager',
+      'scheaney@progress.com':         'manager',
+      'sara.scheaney@progress.com':    'manager',
     };
-    const MANAGER_TABS    = ['activity-log','leaderboard','coverage','message','health','config','plays','accounts'];
-    const OWNER_ONLY_TABS = [];
+    const OWNER_ONLY_TABS = ['identity', 'access-log']; // only adding managers is owner-only
 
     let currentAdminRole = null;
 
     function applyRoleUI(role) {
       currentAdminRole = role;
-      // Show activity-log-user tab only for owner
-      if (role === 'owner') {
-        const alUserTab = document.getElementById('tab-btn-activity-log-user');
-        if (alUserTab) alUserTab.style.display = '';
-        const demoTabBtn = document.getElementById('tab-btn-demo-activity');
-        if (demoTabBtn) demoTabBtn.style.display = '';
-        const snapshotsTabBtn = document.getElementById('tab-btn-snapshots');
-        if (snapshotsTabBtn) snapshotsTabBtn.style.display = '';
-        const identityTabBtn = document.getElementById('tab-btn-identity');
-        if (identityTabBtn) identityTabBtn.style.display = '';
-        const accessLogTabBtn = document.getElementById('tab-btn-access-log');
-        if (accessLogTabBtn) accessLogTabBtn.style.display = '';
-        const correctionsTabBtn = document.getElementById('tab-btn-corrections');
-        if (correctionsTabBtn) correctionsTabBtn.style.display = '';
-      }
-      // Managers also get Snapshots (view only) — hide dangerous restore buttons
+      // Unhide all tabs for everyone first
+      document.querySelectorAll('.admin-tab').forEach(btn => btn.style.display = '');
+
+      // Owner-only: identity tab (add/remove managers) and access log
       if (role === 'manager') {
-        const snapshotsTabBtn = document.getElementById('tab-btn-snapshots');
-        if (snapshotsTabBtn) snapshotsTabBtn.style.display = '';
-        // Hide all destructive/write actions within the snapshots tab
-        ['btn-restore-snapshot', 'btn-danger-reset', 'btn-save-snapshot', 'btn-undo-reset'].forEach(id => {
-          const el = document.getElementById(id);
-          if (el) el.style.display = 'none';
+        OWNER_ONLY_TABS.forEach(tab => {
+          const btn = document.getElementById('tab-btn-' + tab) || document.querySelector(`.admin-tab[data-tab="${tab}"]`);
+          if (btn) btn.style.display = 'none';
         });
-        // Also hide Save Snapshot button by onclick attribute (it has no id)
-        document.querySelectorAll('button[onclick="doSaveSnapshot()"]').forEach(b => b.style.display = 'none');
-        const uploadLink = document.querySelector('a[href="ingest.html"]');
-        if (uploadLink) uploadLink.style.display = 'none';
       }
+
       // Add role badge next to name
       const nameEl = document.getElementById('admin-user-name');
       if (nameEl) {
