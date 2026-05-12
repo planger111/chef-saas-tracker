@@ -420,6 +420,8 @@
   const _urlParams  = new URLSearchParams(location.search);
   const _urlPlayId  = _urlParams.get('play');
   const _urlMode    = _urlParams.get('mode') || 'full'; // 'full' | 'config' | 'accounts'
+  const _urlBriefId = _urlParams.get('brief');
+  let   _briefPrefill = null; // brief object when launched from Play Briefs tab
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -572,6 +574,19 @@
     document.getElementById('auth-status').textContent = '✅ Signed in as ' + (currentUser.username || currentUser.email);
     document.getElementById('btn-signin').disabled = true;
     await loadExistingPlays();
+
+    // If launched from an approved play brief, pre-fill the wizard
+    if (_urlBriefId) {
+      try {
+        const raw = await getFileText(SP_ROOT + '/play_briefs.json');
+        if (raw) {
+          const briefs = JSON.parse(raw);
+          _briefPrefill = (briefs.submissions || []).find(b => b.id === _urlBriefId) || null;
+        }
+      } catch(e) { console.warn('[Brief prefill] Could not load brief:', e); }
+      if (_briefPrefill) prefillFromBrief(_briefPrefill);
+    }
+
     deepLinkPlay();
     if (!_urlPlayId && _urlMode !== 'accounts') {
       document.getElementById('wizard-steps').style.display = 'flex';
@@ -579,6 +594,47 @@
     } else if (!_urlPlayId) {
       // fast-path without play: showFastPathPicker() handles display
     }
+  }
+
+  function prefillFromBrief(b) {
+    const banner = document.getElementById('brief-prefill-banner');
+    if (banner) {
+      banner.style.display = 'block';
+      banner.innerHTML = `📋 <strong>Pre-filled from play brief:</strong> "${esc(b.play_name || '')}" submitted by ${esc(b.submitter_name || b.submitter_email || '?')}. Review each step and adjust before launching.`;
+    }
+    // Step 1
+    const nameEl = document.getElementById('play-name-input');
+    if (nameEl) nameEl.value = b.play_name || '';
+    const pitchEl = document.getElementById('play-pitch');
+    if (pitchEl) pitchEl.value = b.pitch || '';
+    // Product dropdown
+    if (b.product) {
+      const productSel = document.getElementById('play-product');
+      if (productSel) {
+        const opt = Array.from(productSel.options).find(o => o.value.toLowerCase() === (b.product || '').toLowerCase());
+        if (opt) {
+          productSel.value = opt.value;
+        } else {
+          productSel.value = 'Other';
+          const otherInput = document.getElementById('play-product-other');
+          const otherWrap  = document.getElementById('play-product-other-wrap');
+          if (otherInput) otherInput.value = b.product;
+          if (otherWrap)  otherWrap.style.display = 'block';
+        }
+        onProductSelect?.();
+      }
+    }
+    // Step 2
+    const cvEl = document.getElementById('play-customer-value');
+    if (cvEl) cvEl.value = b.customer_value || '';
+    const icpEl = document.getElementById('play-icp');
+    if (icpEl) icpEl.value = b.icp || '';
+    const personaEl = document.getElementById('play-persona');
+    if (personaEl) personaEl.value = b.persona || '';
+    const compEl = document.getElementById('play-competitive');
+    if (compEl) compEl.value = b.competitive || '';
+    // Trigger validation so Next button enables
+    validatePlayStep?.();
   }
 
   window.addEventListener('load', async () => {
@@ -1638,6 +1694,7 @@
         outcomes:       outcomesConfig,
         questions:      questionsConfig,
         active:         isActive,
+        source_brief_id: _urlBriefId || currentPlayDef.source_brief_id || undefined,
         config: {
           outcomes: _buildOutcomesTree(),
         }
@@ -1673,6 +1730,24 @@
       }
 
       try { await logActivity(currentUser, isActive ? 'play_launched' : 'play_draft_saved', `${isActive ? 'Launched' : 'Saved draft'}: ${playDef.play_name} (${playDef.play_id})`); } catch(e) {}
+
+      // Mark the source brief as Resolved and link back the play_id
+      if (_urlBriefId && isActive) {
+        try {
+          const raw = await getFileText(SP_ROOT + '/play_briefs.json');
+          if (raw) {
+            const bData = JSON.parse(raw);
+            const bidx = (bData.submissions || []).findIndex(b => b.id === _urlBriefId);
+            if (bidx >= 0) {
+              bData.submissions[bidx].status     = 'Resolved';
+              bData.submissions[bidx].resolved_play_id = playDef.play_id;
+              bData.submissions[bidx].resolved_at = new Date().toISOString();
+              bData.submissions[bidx].resolved_by = currentUser?.username || currentUser?.name || '';
+              await writeJsonFile('play_briefs.json', bData);
+            }
+          }
+        } catch(e) { console.warn('[Brief resolve] Could not mark brief resolved:', e); }
+      }
 
       const label = isActive ? '✅ Play Launched!' : '✅ Draft Saved!';
       if (btn) { btn.textContent = label; btn.style.background = '#107c10'; btn.style.color = '#fff'; }
@@ -1729,10 +1804,10 @@
         if (global) globalReasons = global;
       }
     } catch(e) {}
-    renderStep3(globalReasons);
+    renderStep3(globalReasons, _briefPrefill?.outcomes_intake || null);
   }
 
-  function renderStep3(globalConfig) {
+  function renderStep3(globalConfig, briefOutcomes) {
     const container = document.getElementById('outcomes-config-list');
     if (!container) return;
     container.innerHTML = '';
@@ -1747,25 +1822,37 @@
 
     outcomes.forEach(outcomeName => {
       const def = outcomeDefs[outcomeName] || {};
-      const reasons = def.reasons || DEFAULT_INTAKE_REASONS[outcomeName]?.reasons || [];
+      const briefDef = briefOutcomes ? (briefOutcomes[outcomeName] || {}) : null;
+      const isEnabled = briefDef ? (briefDef.enabled !== false) : true;
+
+      // Merge default reasons + brief reasons (brief reasons take priority)
+      const defaultReasons = def.reasons || DEFAULT_INTAKE_REASONS[outcomeName]?.reasons || [];
+      const briefReasons   = briefDef?.reasons || [];
+      // All default reasons + any brief reasons not already in defaults
+      const allReasons = [...defaultReasons];
+      briefReasons.forEach(r => { if (!allReasons.includes(r)) allReasons.push(r); });
+      // A reason is pre-checked if it's in brief reasons (when brief exists), else all checked
+      const isChecked = r => briefDef ? briefReasons.includes(r) : true;
+
       const safeId = outcomeName.replace(/\s+/g, '-').toLowerCase();
 
       const card = document.createElement('div');
-      card.style.cssText = 'border:1px solid #e5e7eb; border-radius:8px; padding:14px 16px; margin-bottom:12px;';
+      card.style.cssText = `border:1px solid ${isEnabled ? '#e5e7eb' : '#f3f4f6'}; border-radius:8px; padding:14px 16px; margin-bottom:12px;`;
       card.innerHTML = `
         <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
-          <input type="checkbox" id="outcome-cb-${safeId}" checked
+          <input type="checkbox" id="outcome-cb-${safeId}" ${isEnabled ? 'checked' : ''}
             onchange="toggleOutcomeSection(this, '${esc(outcomeName)}')"
             style="width:16px; height:16px; cursor:pointer;">
           <label for="outcome-cb-${safeId}" style="font-size:14px; font-weight:700; cursor:pointer;">${esc(outcomeName)}</label>
           <span style="font-size:12px; color:#777;">${esc(def.description || '')}</span>
+          ${briefDef ? `<span style="font-size:11px; color:#6366f1; margin-left:auto;">📋 from brief</span>` : ''}
         </div>
-        <div id="outcome-reasons-${safeId}" style="padding-left:26px;">
+        <div id="outcome-reasons-${safeId}" style="padding-left:26px; ${!isEnabled ? 'opacity:0.4;' : ''}">
           <div style="font-size:12px; color:#555; margin-bottom:6px; font-weight:600;">Reasons to offer reps:</div>
           <div id="reason-list-${safeId}">
-            ${reasons.map(r => `
+            ${allReasons.map(r => `
               <label style="display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:13px; cursor:pointer;">
-                <input type="checkbox" checked value="${esc(r)}"> ${esc(r)}
+                <input type="checkbox" ${isChecked(r) ? 'checked' : ''} value="${esc(r)}"> ${esc(r)}
               </label>
             `).join('')}
           </div>
