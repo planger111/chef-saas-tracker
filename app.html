@@ -189,7 +189,8 @@
           <div class="pb-label">💬 Elevator Pitch</div>
           <div class="pb-summary" id="pb-summary"></div>
         </div>
-        <div class="pb-chevron" id="pb-chevron">▾</div>
+        <button id="pb-more-btn" onclick="event.stopPropagation();togglePitchExpand()" style="background:#dbeafe;border:none;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;color:#1a56db;cursor:pointer;flex-shrink:0;white-space:nowrap;">More ▾</button>
+        <div class="pb-chevron" id="pb-chevron" style="display:none;">▾</div>
       </div>
       <div class="pb-body" id="pb-body">
         <div class="pb-body-inner" id="pb-body-inner"></div>
@@ -947,7 +948,10 @@
           <div class="play-card" data-play-id="${escHtml(play.play_id)}">
             <div class="play-card-top">
               <div class="play-card-name">${escHtml(play.play_name)}</div>
-              ${goalLabel ? `<span class="play-goal-tag ${goalCls}">${goalIcon} Goal — ${escHtml(goalLabel)}</span>` : ''}
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                ${hasInfo ? `<button class="play-info-link" onclick="event.stopPropagation();openPlayWithPitch('${escHtml(play.play_id)}')">ⓘ</button>` : ''}
+                ${goalLabel ? `<span class="play-goal-tag ${goalCls}">${goalIcon} ${escHtml(goalLabel)}</span>` : ''}
+              </div>
             </div>
             <div class="play-card-summary">${escHtml(summaryLine)}</div>
             <div class="play-progress-wrap">
@@ -956,7 +960,6 @@
             </div>
             <div class="play-card-bottom">
               <span class="play-card-metrics">${metricsText}</span>
-              ${hasInfo ? `<button class="play-info-link" onclick="event.stopPropagation();showPlayInfo('${escHtml(play.play_id)}')">ⓘ Info</button>` : ''}
             </div>
           </div>
         `;
@@ -986,6 +989,20 @@
     function showPlayInfo(playId) {
       // Replaced: now scrolls to and opens the inline pitch brief card instead of a modal
       focusPitchBrief();
+    }
+
+    // Opens a play AND immediately expands the pitch brief (from dashboard ⓘ button)
+    function openPlayWithPitch(playId) {
+      const play = allPlays.find(p => p.play_id === playId);
+      if (!play) return;
+      currentPlay  = play;
+      activeFilter = 'all';
+      loadPlayDetail(play).then(() => {
+        const body = document.getElementById('pb-body');
+        if (body && !body.classList.contains('open')) togglePitchExpand();
+        const card = document.getElementById('pitch-brief-card');
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     }
 
     // ─────────────────────────────────────────────
@@ -1206,10 +1223,12 @@
     function togglePitchExpand() {
       const body    = document.getElementById('pb-body');
       const chevron = document.getElementById('pb-chevron');
+      const moreBtn = document.getElementById('pb-more-btn');
       if (!body) return;
       const isOpen = body.classList.contains('open');
       body.classList.toggle('open', !isOpen);
       if (chevron) chevron.classList.toggle('open', !isOpen);
+      if (moreBtn) moreBtn.textContent = isOpen ? 'More ▾' : 'Less ▴';
     }
 
     function focusPitchBrief() {
@@ -1247,7 +1266,9 @@
       const fullPitch = pitch && pitch.length > summaryText.length;
       const hasExtra  = fullPitch || valueProps.length || icp || persona || why || keyQs.length || objections.length || instructions;
       const chevron   = document.getElementById('pb-chevron');
-      if (chevron) chevron.style.display = hasExtra ? '' : 'none';
+      const moreBtn   = document.getElementById('pb-more-btn');
+      if (chevron) chevron.style.display = 'none'; // using More button instead
+      if (moreBtn) moreBtn.style.display = hasExtra ? '' : 'none';
 
       // Build body sections
       const sec = (label, html) =>
@@ -1273,9 +1294,11 @@
       document.getElementById('pb-body-inner').innerHTML = body;
 
       // Always start collapsed when loading a new play
-      const bodyEl = document.getElementById('pb-body');
+      const bodyEl  = document.getElementById('pb-body');
+      const moreBtn = document.getElementById('pb-more-btn');
       bodyEl.classList.remove('open');
       if (chevron) chevron.classList.remove('open');
+      if (moreBtn) moreBtn.textContent = 'More ▾';
     }
 
     // renderPitchCard is an alias kept for any legacy call sites
