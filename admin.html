@@ -3902,21 +3902,28 @@ Let's go! 🚀`;
             <div style="font-size:11px;color:#94a3b8;">${b.submitted_at ? new Date(b.submitted_at).toLocaleDateString() : ''} by ${escHtml(b.submitter_name || b.submitter_email || '?')}</div>
           </summary>
           <div style="padding:0 16px 16px;border-top:1px solid #f0f0f0;">
-            ${briefField('Submitter', `${escHtml(b.submitter_name || '')} (${escHtml(b.submitter_email || '')}) — ${escHtml(b.submitter_role || '')}`)}
+            ${briefField('Submitter', `${escHtml(b.submitter_name || '')} <span style="color:#6b7280;">${escHtml(b.submitter_email || '')}</span>`)}
             ${briefField('Product', escHtml(b.product || ''))}
             ${briefField('Play Name', escHtml(b.play_name || ''))}
-            ${briefField('Description', escHtml(b.description || ''))}
-            ${briefField('Why It Matters', escHtml(b.why_it_matters || ''))}
+            ${briefField('Elevator Pitch', escHtml(b.pitch || ''))}
+            ${briefField('Why Customer Cares', escHtml(b.customer_value || ''))}
             ${briefField('ICP', escHtml(b.icp || ''))}
-            ${briefField('Persona', escHtml(b.persona || ''))}
+            ${briefField('Target Persona', escHtml(b.persona || ''))}
             ${briefField('Competitive Positioning', escHtml(b.competitive || ''))}
-            ${briefField('Rep Instructions', escHtml(b.instructions || ''))}
-            ${briefField('Questions', (b.questions || []).length > 0 ? b.questions.map(q => '• ' + escHtml(q)).join('<br>') : '—')}
-            ${briefField('Interested Reasons', (b.interested_reasons || []).length > 0 ? b.interested_reasons.map(r => '• ' + escHtml(r)).join('<br>') : '—')}
-            ${briefField('Not Interested Reasons', (b.not_interested_reasons || []).length > 0 ? b.not_interested_reasons.map(r => '• ' + escHtml(r)).join('<br>') : '—')}
-            ${briefField('Next Steps', escHtml(b.next_steps || '—'))}
+            ${briefField('Key Questions for Reps', (b.key_questions || []).length > 0 ? b.key_questions.map(q => `• ${escHtml(q)}`).join('<br>') : '—')}
+            ${briefField('Outcomes Config', (() => {
+              const oc = b.outcomes_intake;
+              if (!oc || typeof oc !== 'object') return '—';
+              return Object.entries(oc).filter(([,v]) => v && v.enabled !== false).map(([name, v]) => {
+                const parts = [];
+                if ((v.reasons||[]).length)    parts.push(`${v.reasons.length} reason${v.reasons.length>1?'s':''}`);
+                if ((v.next_steps||[]).length) parts.push(`${v.next_steps.length} next step${v.next_steps.length>1?'s':''}`);
+                if ((v.timing||[]).length)     parts.push(`${v.timing.length} timing`);
+                if (v.freeform) parts.push('freeform');
+                return `<div style="margin-bottom:2px;"><strong>${escHtml(name)}</strong> — ${parts.join(', ') || 'enabled'}</div>`;
+              }).join('') || '—';
+            })())}
             ${briefField('Target Accounts', b.target_account_count ? `~${escHtml(String(b.target_account_count))} accounts` : '—')}
-            ${briefField('Collateral', escHtml(b.collateral || '—'))}
             ${briefField('Urgency', escHtml(b.urgency || '—'))}
             ${briefField('Notes', escHtml(b.notes || '—'))}
             <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0;">
@@ -3933,7 +3940,7 @@ Let's go! 🚀`;
                 <strong style="color:#16a34a;">✅ Approved</strong> — Next steps:
                 <ol style="margin:6px 0 0 16px;padding:0;color:#374151;line-height:1.7;">
                   <li>Kathy to collect target account list from <strong>${escHtml(b.submitter_name || b.submitter_email || 'submitter')}</strong>${b.target_account_count ? ` (~${b.target_account_count} accounts)` : ''}</li>
-                  <li><a href="ingest.html" target="_blank" style="color:#6366f1;font-weight:600;">Open Play Wizard →</a> to create the play and upload accounts</li>
+                  <li><a href="ingest.html?brief=${encodeURIComponent(b.id)}" target="_blank" style="color:#6366f1;font-weight:600;">Open Play Wizard → Pre-filled from this brief</a></li>
                 </ol>
               </div>` : ''}
               </div>
