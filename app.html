@@ -157,10 +157,32 @@
     <div class="header">
       <button class="header-back btn btn-secondary" id="btn-back-to-dashboard">← Back</button>
       <span class="header-title" id="play-detail-title">Play</span>
-      <button id="btn-play-info" onclick="showPlayInfo(currentPlay && currentPlay.play_id)" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:4px 10px;font-size:13px;cursor:pointer;color:#0078d4;font-weight:600;">ℹ Pitch Info</button>
+      <div style="width:80px;"></div><!-- spacer to keep title centered -->
     </div>
 
-    <div style="padding:16px;max-width:480px;margin:0 auto;">
+    <div style="padding:12px 16px 0;max-width:480px;margin:0 auto;">
+
+      <!-- Elevator pitch card — always visible, tap to expand -->
+      <div id="play-pitch-card" style="background:#eff6ff;border-left:4px solid #0078d4;border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:12px;cursor:pointer;user-select:none;" onclick="togglePitchExpand()">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+          <div style="flex:1;">
+            <div style="font-size:11px;font-weight:700;color:#0078d4;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">💬 Elevator Pitch</div>
+            <div id="play-pitch-text" style="font-size:13px;line-height:1.5;color:#1a1a1a;"></div>
+          </div>
+          <div id="play-pitch-chevron" style="font-size:14px;color:#0078d4;flex-shrink:0;margin-top:2px;">▼</div>
+        </div>
+        <!-- Expanded details -->
+        <div id="play-pitch-expanded" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid #c3d9f7;">
+          <div id="play-pitch-icp" style="margin-bottom:8px;"></div>
+          <div id="play-pitch-persona" style="margin-bottom:8px;"></div>
+          <div id="play-pitch-why" style="margin-bottom:8px;"></div>
+          <div id="play-pitch-questions" style="margin-bottom:4px;"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="padding:0 16px 16px;max-width:480px;margin:0 auto;">
 
       <!-- Filter tabs -->
       <div class="filter-tabs" id="play-filter-tabs">
@@ -1206,6 +1228,52 @@
     // ─────────────────────────────────────────────
     // PLAY DETAIL
     // ─────────────────────────────────────────────
+    function togglePitchExpand() {
+      const expanded = document.getElementById('play-pitch-expanded');
+      const chevron  = document.getElementById('play-pitch-chevron');
+      if (!expanded) return;
+      const isOpen = expanded.style.display !== 'none';
+      expanded.style.display = isOpen ? 'none' : 'block';
+      chevron.textContent = isOpen ? '▼' : '▲';
+    }
+
+    function renderPitchCard(play) {
+      const card = document.getElementById('play-pitch-card');
+      if (!play) { if (card) card.style.display = 'none'; return; }
+
+      const pitch   = play.elevator_pitch || play.description || '';
+      const icp     = play.icp || '';
+      const persona = play.target_persona || '';
+      const why     = play.why_it_matters || '';
+      const qs      = (play.key_questions || []).filter(Boolean);
+
+      // Hide card entirely if no pitch info at all
+      if (!pitch && !icp && !persona && !why && !qs.length) {
+        if (card) card.style.display = 'none';
+        return;
+      }
+      if (card) card.style.display = '';
+
+      const el = v => s => `<div style="margin-bottom:6px;"><span style="font-size:11px;font-weight:700;color:#0078d4;text-transform:uppercase;letter-spacing:0.4px;">${v}</span><div style="font-size:13px;line-height:1.5;color:#1a1a1a;margin-top:2px;">${s}</div></div>`;
+
+      document.getElementById('play-pitch-text').textContent = pitch || (icp ? 'Tap ▼ for pitch details' : '');
+      document.getElementById('play-pitch-icp').innerHTML     = icp     ? el('Ideal Customer')(escHtml(icp))     : '';
+      document.getElementById('play-pitch-persona').innerHTML = persona ? el('Target Persona')(escHtml(persona)) : '';
+      document.getElementById('play-pitch-why').innerHTML     = why     ? el('Why They Care')(escHtml(why))      : '';
+      document.getElementById('play-pitch-questions').innerHTML = qs.length
+        ? el('Key Questions')(`<ul style="margin:4px 0 0 16px;padding:0;">${qs.map(q => `<li style="margin-bottom:3px;">${escHtml(q)}</li>`).join('')}</ul>`)
+        : '';
+
+      // Collapse back to default when switching plays
+      document.getElementById('play-pitch-expanded').style.display = 'none';
+      document.getElementById('play-pitch-chevron').textContent = '▼';
+
+      // Hide expand chevron if nothing extra to show
+      const hasExtra = icp || persona || why || qs.length;
+      document.getElementById('play-pitch-chevron').style.display = hasExtra ? '' : 'none';
+      if (card) card.style.cursor = hasExtra ? 'pointer' : 'default';
+    }
+
     async function loadPlayDetail(play, forceRefresh = false) {
       showScreen('screen-loading');
       try {
@@ -1220,6 +1288,7 @@
         }
 
         document.getElementById('play-detail-title').textContent = play.play_name;
+        renderPitchCard(play);
         const playAccounts = getPlayAccounts(play);
         renderAccountList(playAccounts, activeFilter);
 
