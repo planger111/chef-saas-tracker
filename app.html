@@ -14,6 +14,28 @@
     /* Pitch brief card */
     .pitch-card { background:#eff6ff; border-left:4px solid #0078d4; border-radius:0 8px 8px 0; padding:14px 16px; margin-bottom:12px; font-size:14px; line-height:1.5; color:#1a1a1a; }
     .pitch-card-label { font-size:11px; font-weight:700; color:#0078d4; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+
+    /* Pitch Brief card */
+    #pitch-brief-card { background:#fff; border:1px solid #dbeafe; border-radius:12px; margin:0 16px 12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,120,212,.07); }
+    #pitch-brief-card .pb-header { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; cursor:pointer; user-select:none; background:#eff6ff; gap:10px; }
+    #pitch-brief-card .pb-header:active { background:#dbeafe; }
+    #pitch-brief-card .pb-label { font-size:11px; font-weight:700; color:#0078d4; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
+    #pitch-brief-card .pb-summary { font-size:13px; line-height:1.5; color:#1e293b; }
+    #pitch-brief-card .pb-chevron { font-size:16px; color:#0078d4; flex-shrink:0; transition:transform 0.25s ease; }
+    #pitch-brief-card .pb-chevron.open { transform:rotate(180deg); }
+    #pitch-brief-card .pb-body { max-height:0; overflow:hidden; transition:max-height 0.3s ease; }
+    #pitch-brief-card .pb-body.open { max-height:1200px; }
+    #pitch-brief-card .pb-body-inner { padding:14px; border-top:1px solid #dbeafe; }
+    #pitch-brief-card .pb-section { margin-bottom:14px; }
+    #pitch-brief-card .pb-section:last-child { margin-bottom:0; }
+    #pitch-brief-card .pb-section-label { font-size:11px; font-weight:700; color:#0078d4; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px; }
+    #pitch-brief-card .pb-section-val { font-size:13px; line-height:1.6; color:#1e293b; }
+    #pitch-brief-card .pb-list { margin:4px 0 0 16px; padding:0; font-size:13px; line-height:1.7; color:#1e293b; }
+    #pitch-brief-card .pb-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+    #pitch-brief-card .pb-tag { background:#e8f0fe; color:#1a56db; border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
+    #pitch-brief-card .pb-obj { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; margin-bottom:8px; }
+    #pitch-brief-card .pb-obj-q { font-size:12px; font-weight:700; color:#374151; margin-bottom:4px; }
+    #pitch-brief-card .pb-obj-a { font-size:13px; color:#4b5563; line-height:1.5; }
     /* Admin notes callout */
     .admin-notes-callout { background:#fffbeb; border-left:4px solid #f59e0b; border-radius:0 8px 8px 0; padding:12px 14px; margin-bottom:12px; font-size:13px; color:#78350f; }
     /* ICP / Persona chips */
@@ -157,29 +179,21 @@
     <div class="header">
       <button class="header-back btn btn-secondary" id="btn-back-to-dashboard">← Back</button>
       <span class="header-title" id="play-detail-title">Play</span>
-      <div style="width:80px;"></div><!-- spacer to keep title centered -->
+      <button id="btn-play-info" onclick="focusPitchBrief()" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:4px 10px;font-size:13px;cursor:pointer;color:#0078d4;font-weight:600;">💬 Pitch</button>
     </div>
 
-    <div style="padding:12px 16px 0;max-width:480px;margin:0 auto;">
-
-      <!-- Elevator pitch card — always visible, tap to expand -->
-      <div id="play-pitch-card" style="background:#eff6ff;border-left:4px solid #0078d4;border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:12px;cursor:pointer;user-select:none;" onclick="togglePitchExpand()">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-          <div style="flex:1;">
-            <div style="font-size:11px;font-weight:700;color:#0078d4;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">💬 Elevator Pitch</div>
-            <div id="play-pitch-text" style="font-size:13px;line-height:1.5;color:#1a1a1a;"></div>
-          </div>
-          <div id="play-pitch-chevron" style="font-size:14px;color:#0078d4;flex-shrink:0;margin-top:2px;">▼</div>
+    <!-- Pitch Brief Card — rendered by renderPitchBrief(play) -->
+    <div id="pitch-brief-card" style="display:none;">
+      <div class="pb-header" onclick="togglePitchExpand()">
+        <div style="flex:1;min-width:0;">
+          <div class="pb-label">💬 Elevator Pitch</div>
+          <div class="pb-summary" id="pb-summary"></div>
         </div>
-        <!-- Expanded details -->
-        <div id="play-pitch-expanded" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid #c3d9f7;">
-          <div id="play-pitch-icp" style="margin-bottom:8px;"></div>
-          <div id="play-pitch-persona" style="margin-bottom:8px;"></div>
-          <div id="play-pitch-why" style="margin-bottom:8px;"></div>
-          <div id="play-pitch-questions" style="margin-bottom:4px;"></div>
-        </div>
+        <div class="pb-chevron" id="pb-chevron">▾</div>
       </div>
-
+      <div class="pb-body" id="pb-body">
+        <div class="pb-body-inner" id="pb-body-inner"></div>
+      </div>
     </div>
 
     <div style="padding:0 16px 16px;max-width:480px;margin:0 auto;">
@@ -970,47 +984,8 @@
     }
 
     function showPlayInfo(playId) {
-      const play = allPlays.find(p => p.play_id === playId);
-      if (!play) return;
-
-      // Compute live stats from rep data
-      const playAccts  = repAccounts.filter(a => a.play_id === playId);
-      const targets    = playAccts.length;
-      const engaged    = playAccts.filter(a => latestLogs[a.account_id]).length;
-      const interested = playAccts.filter(a => {
-        const log = latestLogs[a.account_id];
-        return !!(log && log.outcome === 'Interested');
-      }).length;
-
-      const goalLabel  = getGoalLabel(play.goal);
-      const isDisqual  = play.goal === 'disqualification' || play.goal === 'qualify_out';
-      const goalTagCls = isDisqual ? 'pi-goal-out' : 'pi-goal-in';
-      const GOAL_ICONS = { feedback:'📋', interest:'✅', meeting:'📅', disqualification:'🚫', expansion:'🚀', qualify_in:'✅', qualify_out:'🚫' };
-      const goalIcon   = GOAL_ICONS[play.goal] || '🎯';
-
-      const statsHtml = targets > 0 ? `
-        <div class="pi-stats-row">
-          <div class="pi-stat"><span class="pi-stat-val">${targets}</span><span class="pi-stat-lbl">Targets</span></div>
-          <div class="pi-stat"><span class="pi-stat-val">${engaged}</span><span class="pi-stat-lbl">Engaged</span></div>
-          <div class="pi-stat"><span class="pi-stat-val">${interested}</span><span class="pi-stat-lbl">Interested</span></div>
-        </div>` : '';
-
-      const overlay = document.createElement('div');
-      overlay.className = 'play-info-overlay';
-      overlay.innerHTML = `
-        <div class="play-info-sheet">
-          <div class="pi-header">
-            <strong class="pi-title">${escHtml(play.play_name)}</strong>
-            <button class="pi-close" onclick="this.closest('.play-info-overlay').remove()">✕</button>
-          </div>
-          ${goalLabel ? `<div class="pi-goal-badge ${goalTagCls}">${goalIcon} Goal — ${escHtml(goalLabel)}</div>` : ''}
-          ${statsHtml}
-          ${play.icp           ? `<div class="pi-field"><div class="pi-label">Ideal Customer Profile</div><div class="pi-value">${escHtml(play.icp)}</div></div>` : ''}
-          ${play.target_persona ? `<div class="pi-field"><div class="pi-label">Target Persona</div><div class="pi-value">${escHtml(play.target_persona)}</div></div>` : ''}
-          ${play.elevator_pitch ? `<div class="pi-field"><div class="pi-label">Elevator Pitch</div><div class="pi-pitch">${escHtml(play.elevator_pitch)}</div></div>` : ''}
-        </div>`;
-      document.body.appendChild(overlay);
-      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+      // Replaced: now scrolls to and opens the inline pitch brief card instead of a modal
+      focusPitchBrief();
     }
 
     // ─────────────────────────────────────────────
@@ -1229,50 +1204,82 @@
     // PLAY DETAIL
     // ─────────────────────────────────────────────
     function togglePitchExpand() {
-      const expanded = document.getElementById('play-pitch-expanded');
-      const chevron  = document.getElementById('play-pitch-chevron');
-      if (!expanded) return;
-      const isOpen = expanded.style.display !== 'none';
-      expanded.style.display = isOpen ? 'none' : 'block';
-      chevron.textContent = isOpen ? '▼' : '▲';
+      const body    = document.getElementById('pb-body');
+      const chevron = document.getElementById('pb-chevron');
+      if (!body) return;
+      const isOpen = body.classList.contains('open');
+      body.classList.toggle('open', !isOpen);
+      if (chevron) chevron.classList.toggle('open', !isOpen);
     }
 
-    function renderPitchCard(play) {
-      const card = document.getElementById('play-pitch-card');
-      if (!play) { if (card) card.style.display = 'none'; return; }
-
-      const pitch   = play.elevator_pitch || play.description || '';
-      const icp     = play.icp || '';
-      const persona = play.target_persona || '';
-      const why     = play.why_it_matters || '';
-      const qs      = (play.key_questions || []).filter(Boolean);
-
-      // Hide card entirely if no pitch info at all
-      if (!pitch && !icp && !persona && !why && !qs.length) {
-        if (card) card.style.display = 'none';
-        return;
-      }
-      if (card) card.style.display = '';
-
-      const el = v => s => `<div style="margin-bottom:6px;"><span style="font-size:11px;font-weight:700;color:#0078d4;text-transform:uppercase;letter-spacing:0.4px;">${v}</span><div style="font-size:13px;line-height:1.5;color:#1a1a1a;margin-top:2px;">${s}</div></div>`;
-
-      document.getElementById('play-pitch-text').textContent = pitch || (icp ? 'Tap ▼ for pitch details' : '');
-      document.getElementById('play-pitch-icp').innerHTML     = icp     ? el('Ideal Customer')(escHtml(icp))     : '';
-      document.getElementById('play-pitch-persona').innerHTML = persona ? el('Target Persona')(escHtml(persona)) : '';
-      document.getElementById('play-pitch-why').innerHTML     = why     ? el('Why They Care')(escHtml(why))      : '';
-      document.getElementById('play-pitch-questions').innerHTML = qs.length
-        ? el('Key Questions')(`<ul style="margin:4px 0 0 16px;padding:0;">${qs.map(q => `<li style="margin-bottom:3px;">${escHtml(q)}</li>`).join('')}</ul>`)
-        : '';
-
-      // Collapse back to default when switching plays
-      document.getElementById('play-pitch-expanded').style.display = 'none';
-      document.getElementById('play-pitch-chevron').textContent = '▼';
-
-      // Hide expand chevron if nothing extra to show
-      const hasExtra = icp || persona || why || qs.length;
-      document.getElementById('play-pitch-chevron').style.display = hasExtra ? '' : 'none';
-      if (card) card.style.cursor = hasExtra ? 'pointer' : 'default';
+    function focusPitchBrief() {
+      const card = document.getElementById('pitch-brief-card');
+      if (!card || card.style.display === 'none') return;
+      const body = document.getElementById('pb-body');
+      if (body && !body.classList.contains('open')) togglePitchExpand();
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+
+    function renderPitchBrief(play) {
+      const card = document.getElementById('pitch-brief-card');
+      if (!card) return;
+
+      const pitch        = (play.elevator_pitch    || play.description       || '').trim();
+      const icp          = (play.icp               || '').trim();
+      const persona      = (play.target_persona    || play.persona_notes     || '').trim();
+      const why          = (play.why_it_matters    || play.pitch_details     || '').trim();
+      const instructions = (play.instructions      || play.next_step_guidance|| '').trim();
+      const valueProps   = (play.value_props        || []).filter(Boolean);
+      const keyQs        = (play.key_questions      || play.discovery_questions || []).filter(Boolean);
+      const objections   = (play.objection_handling || []).filter(Boolean);
+
+      const hasContent = pitch || icp || persona || why || valueProps.length || keyQs.length || objections.length || instructions;
+      if (!hasContent) { card.style.display = 'none'; return; }
+      card.style.display = '';
+
+      // Compact: first 2 sentences of pitch
+      const sentences  = pitch ? (pitch.match(/[^.!?]+[.!?]+/g) || [pitch]) : [];
+      const summaryText = sentences.length
+        ? sentences.slice(0, 2).join(' ').trim()
+        : (icp ? `Targeting: ${icp}` : 'Tap ▾ for pitch guidance');
+      document.getElementById('pb-summary').textContent = summaryText;
+
+      const fullPitch = pitch && pitch.length > summaryText.length;
+      const hasExtra  = fullPitch || valueProps.length || icp || persona || why || keyQs.length || objections.length || instructions;
+      const chevron   = document.getElementById('pb-chevron');
+      if (chevron) chevron.style.display = hasExtra ? '' : 'none';
+
+      // Build body sections
+      const sec = (label, html) =>
+        `<div class="pb-section"><div class="pb-section-label">${label}</div><div class="pb-section-val">${html}</div></div>`;
+      const list = items =>
+        `<ul class="pb-list">${items.map(i => `<li>${escHtml(i)}</li>`).join('')}</ul>`;
+      const objHtml = objections.map(o =>
+        typeof o === 'object' && o.q
+          ? `<div class="pb-obj"><div class="pb-obj-q">🙋 ${escHtml(o.q)}</div><div class="pb-obj-a">${escHtml(o.a || '')}</div></div>`
+          : `<div class="pb-obj"><div class="pb-obj-a">${escHtml(String(o))}</div></div>`
+      ).join('');
+
+      let body = '';
+      if (fullPitch)         body += sec('Full Pitch',             `<div style="line-height:1.6;">${escHtml(pitch)}</div>`);
+      if (valueProps.length) body += sec('Key Value Propositions', list(valueProps));
+      if (icp)               body += sec('Ideal Customer Profile', escHtml(icp));
+      if (persona)           body += sec('Target Buyer / Persona', escHtml(persona));
+      if (why)               body += sec('Why They Care',          escHtml(why));
+      if (keyQs.length)      body += sec('Discovery Questions',    list(keyQs));
+      if (objections.length) body += `<div class="pb-section"><div class="pb-section-label">Common Objections</div>${objHtml}</div>`;
+      if (instructions)      body += sec('Recommended Next Steps', escHtml(instructions));
+
+      document.getElementById('pb-body-inner').innerHTML = body;
+
+      // Always start collapsed when loading a new play
+      const bodyEl = document.getElementById('pb-body');
+      bodyEl.classList.remove('open');
+      if (chevron) chevron.classList.remove('open');
+    }
+
+    // renderPitchCard is an alias kept for any legacy call sites
+    function renderPitchCard(play) { renderPitchBrief(play); }
 
     async function loadPlayDetail(play, forceRefresh = false) {
       showScreen('screen-loading');
@@ -1288,7 +1295,7 @@
         }
 
         document.getElementById('play-detail-title').textContent = play.play_name;
-        renderPitchCard(play);
+        renderPitchBrief(play);
         const playAccounts = getPlayAccounts(play);
         renderAccountList(playAccounts, activeFilter);
 
