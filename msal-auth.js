@@ -51,19 +51,6 @@ async function initAuth() {
     }
   }
 
-  // If no cached account (e.g. new tab, sessionStorage cleared), try silent SSO.
-  // Azure AD's browser session cookie lets this succeed without user interaction
-  // when the user is already signed into any other page on the same tenant.
-  if (!_account) {
-    try {
-      const silentResult = await _msalInstance.ssoSilent({ scopes: CONFIG.scopes });
-      if (silentResult?.account) _account = silentResult.account;
-    } catch (ssoErr) {
-      // Silent SSO failed — user will need to click sign-in button
-      console.info("Silent SSO unavailable, manual sign-in required:", ssoErr.errorCode || ssoErr.message);
-    }
-  }
-
   return _account;
 }
 
