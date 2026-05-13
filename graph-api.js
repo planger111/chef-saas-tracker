@@ -717,6 +717,10 @@ async function getPlayConfig(playId) {
     // Merge with defaults for any missing keys
     return _mergePlayConfig(play.config);
   }
+  // Middle-tier fallback: outcomes_intake has the same structure as config.outcomes
+  if (play && play.outcomes_intake && Object.keys(play.outcomes_intake).length > 0) {
+    return _mergePlayConfig({ outcomes: play.outcomes_intake });
+  }
   // Fall back to building config from response-options.json
   const rsId = _toResponseSetId(playId);
   try {

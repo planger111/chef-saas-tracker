@@ -981,6 +981,12 @@
       let playsConfig = { plays: [] };
       try { playsConfig = await getPlaysConfig(); if (!playsConfig?.plays) playsConfig = { plays: [] }; } catch(e) {}
       const idx = playsConfig.plays.findIndex(p => p.play_id === playId);
+      // Build config.outcomes — prefer freshly-built tree, fall back to existing saved config
+      const builtOutcomes = _buildOutcomesTree();
+      const existingConfigOutcomes = idx >= 0 ? playsConfig.plays[idx]?.config?.outcomes : null;
+      playDef.config = {
+        outcomes: Object.keys(builtOutcomes).length > 0 ? builtOutcomes : (existingConfigOutcomes || {}),
+      };
       if (idx >= 0) playsConfig.plays[idx] = { ...playsConfig.plays[idx], ...playDef };
       else playsConfig.plays.push(playDef);
       await savePlaysConfig(playsConfig);
