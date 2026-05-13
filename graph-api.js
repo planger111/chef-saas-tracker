@@ -752,14 +752,16 @@ function _mergePlayConfig(playConfig) {
   if (playConfig.outcomes) {
     for (const ot of OUTCOME_TYPES) {
       if (playConfig.outcomes[ot]) {
-        if (playConfig.outcomes[ot].reasons) merged.outcomes[ot].reasons = playConfig.outcomes[ot].reasons;
-        if (playConfig.outcomes[ot].next_steps) merged.outcomes[ot].next_steps = playConfig.outcomes[ot].next_steps;
-        if (playConfig.outcomes[ot].timing) merged.outcomes[ot].timing = playConfig.outcomes[ot].timing;
+        const oc = playConfig.outcomes[ot];
+        if (oc.label)              merged.outcomes[ot].label      = oc.label;
+        if (oc.reasons?.length)    merged.outcomes[ot].reasons    = oc.reasons;
+        if (oc.next_steps?.length) merged.outcomes[ot].next_steps = oc.next_steps;
+        if (oc.timing?.length)     merged.outcomes[ot].timing     = oc.timing;
       }
     }
   }
-  if (playConfig.questions) merged.questions = playConfig.questions;
-  if (playConfig.instructions) merged.instructions = playConfig.instructions;
+  if (playConfig.questions)      merged.questions      = playConfig.questions;
+  if (playConfig.instructions)   merged.instructions   = playConfig.instructions;
   if (playConfig.why_it_matters) merged.why_it_matters = playConfig.why_it_matters;
   return merged;
 }

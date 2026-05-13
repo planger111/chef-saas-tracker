@@ -1637,9 +1637,10 @@
     const acctCount = parsedAssignments.length;
 
     const outcomesHtml = enabledOutcomes.length > 0
-      ? enabledOutcomes.map(([name, v]) =>
-          `${esc(name)} <span style="color:#6b7280;font-size:12px;">(${v.reasons.length} reason${v.reasons.length !== 1 ? 's' : ''})</span>`
-        ).join(', ')
+      ? enabledOutcomes.map(([name, v]) => {
+          const displayName = (v.label && v.label !== name) ? `${esc(v.label)} <span style="color:#9ca3af;font-size:11px;">(${esc(name)})</span>` : esc(name);
+          return `${displayName} <span style="color:#6b7280;font-size:12px;">(${v.reasons.length} reason${v.reasons.length !== 1 ? 's' : ''})</span>`;
+        }).join(', ')
       : Object.keys(outcomesIntake).length === 0
         ? '<span style="color:#d97706;">Not configured — go back to step 3</span>'
         : '<span style="color:#9ca3af;">None enabled</span>';
@@ -1760,18 +1761,26 @@
 
   function _buildOutcomesTree() {
     const tree = {};
-    // Prefer outcomes_intake captured via step 4
+    // Prefer outcomes_intake captured via finishOutcomesStep()
     const outcomesIntake = (currentPlayDef && currentPlayDef.outcomes_intake) || {};
-    Object.entries(outcomesIntake).forEach(([label, cfg]) => {
-      if (cfg.enabled) {
-        tree[label] = { reasons: cfg.reasons || [], next_steps: [], timing: [] };
-      }
+    Object.entries(outcomesIntake).forEach(([outcomeName, cfg]) => {
+      if (!cfg.enabled) return;
+      const entry = {};
+      // Label: only store if different from the default name
+      if (cfg.label && cfg.label !== outcomeName) entry.label = cfg.label;
+      // Only include non-empty arrays so _mergePlayConfig falls back to defaults
+      if (cfg.reasons?.length)    entry.reasons    = cfg.reasons;
+      if (cfg.next_steps?.length) entry.next_steps = cfg.next_steps;
+      if (cfg.timing?.length)     entry.timing     = cfg.timing;
+      tree[outcomeName] = entry;
     });
-    // Fallback: read checked outcome checkboxes from the rendered step 4
+    // Fallback: read checked outcome checkboxes from the rendered step 3
     if (Object.keys(tree).length === 0) {
       document.querySelectorAll('[id^="outcome-cb-"]:checked').forEach(cb => {
-        const label = cb.closest('div')?.querySelector('label')?.textContent?.trim() || '';
-        if (label) tree[label] = { reasons: [], next_steps: [], timing: [] };
+        const safeId = cb.id.replace('outcome-cb-', '');
+        const span = cb.closest('div')?.querySelector('span[style*="font-weight:700"]');
+        const name = span ? span.textContent.trim() : safeId;
+        if (name) tree[name] = {};
       });
     }
     return tree;
@@ -1804,7 +1813,29 @@
         if (global) globalReasons = global;
       }
     } catch(e) {}
-    renderStep3(globalReasons, _briefPrefill?.outcomes_intake || null);
+    // Prefer brief prefill, then existing intake, then convert from play.config.outcomes tree
+    const existingOutcomes = _briefPrefill?.outcomes_intake
+      || currentPlayDef?.outcomes_intake
+      || (currentPlayDef?.config?.outcomes ? _configOutcomesToIntake(currentPlayDef.config.outcomes) : null);
+    renderStep3(globalReasons, existingOutcomes);
+  }
+
+  // Convert play.config.outcomes tree format → outcomes_intake format for editing
+  function _configOutcomesToIntake(configOutcomes) {
+    const intake = {};
+    for (const name of OUTCOME_TYPES) {
+      const oc = configOutcomes[name] || {};
+      const isPresent = name in configOutcomes;
+      intake[name] = {
+        enabled:    isPresent,
+        label:      oc.label      || name,
+        reasons:    oc.reasons    || [],
+        next_steps: oc.next_steps || [],
+        timing:     oc.timing     || []
+      };
+    }
+    return intake;
+  }
   }
 
   function renderStep3(globalConfig, briefOutcomes) {
@@ -1825,40 +1856,102 @@
       const briefDef = briefOutcomes ? (briefOutcomes[outcomeName] || {}) : null;
       const isEnabled = briefDef ? (briefDef.enabled !== false) : true;
 
-      // Merge default reasons + brief reasons (brief reasons take priority)
+      // Current custom label (from brief or default)
+      const currentLabel = briefDef?.label || outcomeName;
+
+      // Merge default reasons + brief reasons
       const defaultReasons = def.reasons || DEFAULT_INTAKE_REASONS[outcomeName]?.reasons || [];
       const briefReasons   = briefDef?.reasons || [];
-      // All default reasons + any brief reasons not already in defaults
       const allReasons = [...defaultReasons];
       briefReasons.forEach(r => { if (!allReasons.includes(r)) allReasons.push(r); });
-      // A reason is pre-checked if it's in brief reasons (when brief exists), else all checked
-      const isChecked = r => briefDef ? briefReasons.includes(r) : true;
+      const isReasonChecked = r => briefDef ? briefReasons.includes(r) : true;
+
+      // Merge default next_steps + brief next_steps
+      const defaultNextSteps = DEFAULT_PLAY_CONFIG?.outcomes?.[outcomeName]?.next_steps || [];
+      const briefNextSteps   = briefDef?.next_steps || defaultNextSteps;
+      const allNextSteps = [...defaultNextSteps];
+      briefNextSteps.forEach(s => { if (!allNextSteps.includes(s)) allNextSteps.push(s); });
+      const isNextStepChecked = s => briefDef?.next_steps ? briefNextSteps.includes(s) : true;
+
+      // Merge default timing + brief timing
+      const defaultTiming = DEFAULT_PLAY_CONFIG?.outcomes?.[outcomeName]?.timing || [];
+      const briefTiming   = briefDef?.timing || defaultTiming;
+      const allTiming = [...defaultTiming];
+      briefTiming.forEach(t => { if (!allTiming.includes(t)) allTiming.push(t); });
+      const isTimingChecked = t => briefDef?.timing ? briefTiming.includes(t) : true;
 
       const safeId = outcomeName.replace(/\s+/g, '-').toLowerCase();
+      const opac = !isEnabled ? 'opacity:0.4;' : '';
 
       const card = document.createElement('div');
       card.style.cssText = `border:1px solid ${isEnabled ? '#e5e7eb' : '#f3f4f6'}; border-radius:8px; padding:14px 16px; margin-bottom:12px;`;
+      card.dataset.outcomeId = safeId;
+
+      // Header row
       card.innerHTML = `
-        <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
           <input type="checkbox" id="outcome-cb-${safeId}" ${isEnabled ? 'checked' : ''}
             onchange="toggleOutcomeSection(this, '${esc(outcomeName)}')"
             style="width:16px; height:16px; cursor:pointer;">
-          <label for="outcome-cb-${safeId}" style="font-size:14px; font-weight:700; cursor:pointer;">${esc(outcomeName)}</label>
-          <span style="font-size:12px; color:#777;">${esc(def.description || '')}</span>
-          ${briefDef ? `<span style="font-size:11px; color:#6366f1; margin-left:auto;">📋 from brief</span>` : ''}
+          <span style="font-size:14px; font-weight:700;">${esc(outcomeName)}</span>
+          <span style="font-size:12px; color:#777; flex:1;">${esc(def.description || '')}</span>
+          ${briefDef ? `<span style="font-size:11px; color:#6366f1;">📋 from brief</span>` : ''}
         </div>
-        <div id="outcome-reasons-${safeId}" style="padding-left:26px; ${!isEnabled ? 'opacity:0.4;' : ''}">
+
+        <!-- Label rename -->
+        <div id="outcome-label-group-${safeId}" style="padding-left:26px; margin-bottom:12px; ${opac}">
+          <div style="font-size:12px; color:#555; margin-bottom:4px; font-weight:600;">Display name shown to reps:</div>
+          <input type="text" id="outcome-label-${safeId}" value="${esc(currentLabel)}"
+            placeholder="${esc(outcomeName)}"
+            style="width:100%; max-width:320px; border:1px solid #d1d5db; border-radius:6px; padding:6px 10px; font-size:13px;">
+          <div style="font-size:11px; color:#999; margin-top:2px;">Leave blank to use the default name</div>
+        </div>
+
+        <!-- Reasons -->
+        <div id="outcome-reasons-${safeId}" style="padding-left:26px; margin-bottom:12px; ${opac}">
           <div style="font-size:12px; color:#555; margin-bottom:6px; font-weight:600;">Reasons to offer reps:</div>
           <div id="reason-list-${safeId}">
             ${allReasons.map(r => `
               <label style="display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:13px; cursor:pointer;">
-                <input type="checkbox" ${isChecked(r) ? 'checked' : ''} value="${esc(r)}"> ${esc(r)}
+                <input type="checkbox" ${isReasonChecked(r) ? 'checked' : ''} value="${esc(r)}"> ${esc(r)}
               </label>
             `).join('')}
           </div>
           <button onclick="addIntakeReason('${esc(outcomeName)}', '${safeId}')"
             style="background:none; border:1px dashed #aaa; padding:4px 12px; border-radius:6px; font-size:12px; color:#555; cursor:pointer; margin-top:4px;">
             + Add a reason
+          </button>
+        </div>
+
+        <!-- Next Steps -->
+        <div id="outcome-nextsteps-${safeId}" style="padding-left:26px; margin-bottom:12px; ${opac}">
+          <div style="font-size:12px; color:#555; margin-bottom:6px; font-weight:600;">Next steps to offer reps:</div>
+          <div id="nextstep-list-${safeId}">
+            ${allNextSteps.map(s => `
+              <label style="display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:13px; cursor:pointer;">
+                <input type="checkbox" ${isNextStepChecked(s) ? 'checked' : ''} value="${esc(s)}"> ${esc(s)}
+              </label>
+            `).join('')}
+          </div>
+          <button onclick="addIntakeListItem('nextstep-list-${safeId}', 'New next step…')"
+            style="background:none; border:1px dashed #aaa; padding:4px 12px; border-radius:6px; font-size:12px; color:#555; cursor:pointer; margin-top:4px;">
+            + Add a next step
+          </button>
+        </div>
+
+        <!-- Timing -->
+        <div id="outcome-timing-${safeId}" style="padding-left:26px; ${opac}">
+          <div style="font-size:12px; color:#555; margin-bottom:6px; font-weight:600;">Timing options to offer reps:</div>
+          <div id="timing-list-${safeId}">
+            ${allTiming.map(t => `
+              <label style="display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:13px; cursor:pointer;">
+                <input type="checkbox" ${isTimingChecked(t) ? 'checked' : ''} value="${esc(t)}"> ${esc(t)}
+              </label>
+            `).join('')}
+          </div>
+          <button onclick="addIntakeListItem('timing-list-${safeId}', 'New timing option…')"
+            style="background:none; border:1px dashed #aaa; padding:4px 12px; border-radius:6px; font-size:12px; color:#555; cursor:pointer; margin-top:4px;">
+            + Add a timing option
           </button>
         </div>
       `;
@@ -1868,8 +1961,11 @@
 
   function toggleOutcomeSection(cb, outcomeName) {
     const safeId = outcomeName.replace(/\s+/g, '-').toLowerCase();
-    const section = document.getElementById('outcome-reasons-' + safeId);
-    if (section) section.style.opacity = cb.checked ? '1' : '0.4';
+    const opac = cb.checked ? '1' : '0.4';
+    ['outcome-label-group', 'outcome-reasons', 'outcome-nextsteps', 'outcome-timing'].forEach(prefix => {
+      const el = document.getElementById(prefix + '-' + safeId);
+      if (el) el.style.opacity = opac;
+    });
   }
 
   function addIntakeReason(outcomeName, safeId) {
@@ -1887,27 +1983,59 @@
     wrapper.querySelector('input[type="text"]').focus();
   }
 
+  function addIntakeListItem(listId, placeholder) {
+    const listEl = document.getElementById(listId);
+    if (!listEl) return;
+    const wrapper = document.createElement('label');
+    wrapper.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:13px;';
+    wrapper.innerHTML = `
+      <input type="checkbox" checked>
+      <input type="text" placeholder="${esc(placeholder || 'New item…')}"
+        style="flex:1; border:1px solid #d1d5db; border-radius:4px; padding:4px 8px; font-size:12px;">
+    `;
+    listEl.appendChild(wrapper);
+    wrapper.querySelector('input[type="text"]').focus();
+  }
+
   function getIntakeOutcomesConfig() {
     const container = document.getElementById('outcomes-config-list');
     if (!container) return {};
     const config = {};
     container.querySelectorAll('[id^="outcome-cb-"]').forEach(cb => {
       const safeId = cb.id.replace('outcome-cb-', '');
-      const label = cb.closest('div').querySelector('label');
-      const outcomeName = label ? label.textContent.trim() : safeId;
-      const reasonList = document.getElementById('reason-list-' + safeId);
-      const reasons = [];
-      if (reasonList) {
-        reasonList.querySelectorAll('label').forEach(lbl => {
-          const checkEl = lbl.querySelector('input[type="checkbox"]');
-          const textEl = lbl.querySelector('input[type="text"]');
-          const reasonText = textEl ? textEl.value.trim() : (checkEl ? checkEl.value : '');
-          if (reasonText && checkEl && checkEl.checked) reasons.push(reasonText);
-        });
-      }
-      config[outcomeName] = { enabled: cb.checked, reasons };
+      // Outcome name from the static span (not a label element to avoid confusion)
+      const headerSpan = cb.closest('div')?.querySelector('span[style*="font-weight:700"]');
+      const outcomeName = headerSpan ? headerSpan.textContent.trim() : safeId;
+
+      // Custom label
+      const labelInput = document.getElementById('outcome-label-' + safeId);
+      const label = labelInput ? labelInput.value.trim() : '';
+
+      // Reasons
+      const reasons = _collectListItems('reason-list-' + safeId);
+
+      // Next steps
+      const next_steps = _collectListItems('nextstep-list-' + safeId);
+
+      // Timing
+      const timing = _collectListItems('timing-list-' + safeId);
+
+      config[outcomeName] = { enabled: cb.checked, label: label || outcomeName, reasons, next_steps, timing };
     });
     return config;
+  }
+
+  function _collectListItems(listId) {
+    const listEl = document.getElementById(listId);
+    if (!listEl) return [];
+    const items = [];
+    listEl.querySelectorAll('label').forEach(lbl => {
+      const checkEl = lbl.querySelector('input[type="checkbox"]');
+      const textEl  = lbl.querySelector('input[type="text"]');
+      const text = textEl ? textEl.value.trim() : (checkEl ? checkEl.value : '');
+      if (text && checkEl && checkEl.checked) items.push(text);
+    });
+    return items;
   }
 
   function finishOutcomesStep() {
