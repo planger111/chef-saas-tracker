@@ -31,6 +31,23 @@ const CONFIG = (() => {
     isProd,
     dataFolder,
 
+    // Role-based access — shared across admin.html, ingest.html, reports.html
+    // Roles: 'owner' (full access), 'manager' (manage plays + reps), 'product' (play content only, no account upload)
+    // To grant access: add the user's Progress SSO email here with their role.
+    ADMIN_ROLES: {
+      'langer@progress.com':           'owner',
+      'philip.langer@progress.com':    'owner',
+      'planger@progress.com':          'owner',
+      'phil.langer@progress.com':      'owner',
+      'kathleen.faria@progress.com':   'manager',
+      'faria@progress.com':            'manager',
+      'kfaria@progress.com':           'manager',
+      'k.faria@progress.com':          'manager',
+      'kathy.faria@progress.com':      'manager',
+      'scheaney@progress.com':         'manager',
+      'sara.scheaney@progress.com':    'manager',
+    },
+
     // Leave these as-is
     graphBaseUrl: "https://graph.microsoft.com/v1.0",
     scopes: [

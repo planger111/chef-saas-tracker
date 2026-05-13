@@ -2558,19 +2558,7 @@ Let's go! 🚀`;
     // ── Role-based access control ─────────────────────────────────────────────
     // owner  : full access — all tabs + destructive actions
     // manager: read-only — Activity Log, Leaderboard, Coverage, Broadcast, Health
-    const ADMIN_ROLES = {
-      'langer@progress.com':           'owner',
-      'philip.langer@progress.com':    'owner',
-      'planger@progress.com':          'owner',
-      'phil.langer@progress.com':      'owner',
-      'kathleen.faria@progress.com':   'manager',
-      'faria@progress.com':            'manager',
-      'kfaria@progress.com':           'manager',
-      'k.faria@progress.com':          'manager',
-      'kathy.faria@progress.com':      'manager',
-      'scheaney@progress.com':         'manager',
-      'sara.scheaney@progress.com':    'manager',
-    };
+    const ADMIN_ROLES = CONFIG.ADMIN_ROLES;
     const OWNER_ONLY_TABS = ['identity', 'access-log']; // only adding managers is owner-only
 
     let currentAdminRole = null;
