@@ -815,11 +815,31 @@
         <textarea id="edit-play-description" rows="3" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
       </div>
       <div style="margin-bottom:14px;">
-        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Why It Matters</label>
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Ideal Customer Profile (ICP)</label>
+        <textarea id="edit-play-icp" rows="2" placeholder="Who is this play targeting? (e.g. Mid-market Chef customers running 3.x)" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Target Persona / Buyer</label>
+        <textarea id="edit-play-persona" rows="2" placeholder="e.g. IT Director, Infrastructure Lead" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Why It Matters / Why They Care</label>
         <textarea id="edit-play-why" rows="3" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
       </div>
       <div style="margin-bottom:14px;">
-        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Rep Instructions</label>
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Key Value Propositions <span style="font-weight:400;color:#9ca3af;">(one per line)</span></label>
+        <textarea id="edit-play-valueprops" rows="4" placeholder="Security patches included&#10;SaaS — no infrastructure to manage&#10;Faster upgrades" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Competitive Positioning</label>
+        <textarea id="edit-play-competitive" rows="2" placeholder="e.g. vs Puppet, Ansible — our differentiator is..." style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Discovery Questions <span style="font-weight:400;color:#9ca3af;">(one per line)</span></label>
+        <textarea id="edit-play-questions" rows="4" placeholder="What version of Chef are you running today?&#10;How long does a typical upgrade cycle take?" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Rep Instructions / Next Steps</label>
         <textarea id="edit-play-instructions" rows="3" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
       </div>
       <div style="margin-bottom:20px;">
@@ -1462,7 +1482,12 @@
       document.getElementById('edit-play-id').value = play.play_id;
       document.getElementById('edit-play-name').value = play.play_name || '';
       document.getElementById('edit-play-description').value = play.elevator_pitch || '';
-      document.getElementById('edit-play-why').value = play.why_it_matters || '';
+      document.getElementById('edit-play-icp').value        = play.icp || '';
+      document.getElementById('edit-play-persona').value    = play.target_persona || play.persona_notes || '';
+      document.getElementById('edit-play-why').value        = play.why_it_matters || '';
+      document.getElementById('edit-play-valueprops').value = (play.value_props || []).filter(Boolean).join('\n');
+      document.getElementById('edit-play-competitive').value= play.competitive_positioning || '';
+      document.getElementById('edit-play-questions').value  = (play.key_questions || play.discovery_questions || []).filter(Boolean).join('\n');
       document.getElementById('edit-play-instructions').value = play.instructions || '';
 
       // Product dropdown
@@ -1561,11 +1586,16 @@
           : productSel.value;
 
         // Update play — play_id is IMMUTABLE
-        play.play_name = name;
-        play.product = product;
+        play.play_name    = name;
+        play.product      = product;
         play.elevator_pitch = document.getElementById('edit-play-description').value.trim();
+        play.icp            = document.getElementById('edit-play-icp').value.trim();
+        play.target_persona = document.getElementById('edit-play-persona').value.trim();
         play.why_it_matters = document.getElementById('edit-play-why').value.trim();
-        play.instructions = document.getElementById('edit-play-instructions').value.trim();
+        play.value_props    = document.getElementById('edit-play-valueprops').value.split('\n').map(s=>s.trim()).filter(Boolean);
+        play.competitive_positioning = document.getElementById('edit-play-competitive').value.trim();
+        play.key_questions  = document.getElementById('edit-play-questions').value.split('\n').map(s=>s.trim()).filter(Boolean);
+        play.instructions   = document.getElementById('edit-play-instructions').value.trim();
         play.active = _editPlayActive;
 
         await savePlaysConfig(config);
