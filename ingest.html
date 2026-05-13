@@ -1019,16 +1019,23 @@
     if (customerValueEl) customerValueEl.value = p.customer_value || p.why_it_matters || '';
     const compEl = document.getElementById('play-competitive');
     if (compEl) compEl.value = p.competitive_positioning || '';
-    // Set product dropdown
+    // Set product dropdown — try exact match first, then case-insensitive
     const productSel = document.getElementById('play-product');
     if (productSel) {
-      const productOpts = Array.from(productSel.options).map(o => o.value);
-      if (p.product && productOpts.includes(p.product)) {
-        productSel.value = p.product;
-      } else if (p.product) {
+      const rawProduct = (p.product || '').trim();
+      const productOpts = Array.from(productSel.options);
+      const exactMatch = productOpts.find(o => o.value === rawProduct);
+      const ciMatch   = !exactMatch && rawProduct
+        ? productOpts.find(o => o.value.toLowerCase() === rawProduct.toLowerCase())
+        : null;
+      if (exactMatch) {
+        productSel.value = exactMatch.value;
+      } else if (ciMatch) {
+        productSel.value = ciMatch.value;
+      } else if (rawProduct) {
         productSel.value = 'Other';
         const otherInput = document.getElementById('play-product-other');
-        if (otherInput) otherInput.value = p.product;
+        if (otherInput) otherInput.value = rawProduct;
         const otherWrap = document.getElementById('play-product-other-wrap');
         if (otherWrap) otherWrap.style.display = 'block';
       }
