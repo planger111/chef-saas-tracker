@@ -1012,8 +1012,8 @@
     existingPlays.forEach(p => {
       const goalLabel = getGoalLabel(p.goal);
       const row = document.createElement('label');
+      row.className = 'play-picker-row';
       row.innerHTML = `<input type="radio" name="play-picker" value="${esc(p.play_id)}"> <span class="ppr-name">${esc(p.play_name)}</span><span class="ppr-meta">· ${goalLabel}</span>`;
-      row.addEventListener('click', () => loadExistingPlay(p, row));
       wrap.appendChild(row);
     });
   }
