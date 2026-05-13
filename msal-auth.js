@@ -2,6 +2,7 @@
 
 let _msalInstance = null;
 let _account = null;
+let _lastRedirectError = null;
 
 // Always use redirect flow — works universally across mobile, desktop, Teams,
 // embedded browsers, and popup contexts. Popup flow caused block_nested_popups
@@ -31,13 +32,15 @@ async function initAuth() {
   }
 
   // Handle any pending redirect (in case redirect flow was used previously)
+  _lastRedirectError = null;
   try {
     const response = await _msalInstance.handleRedirectPromise();
     if (response && response.account) {
       _account = response.account;
     }
   } catch (err) {
-    console.warn("MSAL redirect error (safe to ignore on popup flow):", err);
+    _lastRedirectError = err;
+    console.warn("MSAL redirect error:", err);
   }
 
   // Check cache for existing account
@@ -45,6 +48,19 @@ async function initAuth() {
     const accounts = _msalInstance.getAllAccounts();
     if (accounts.length > 0) {
       _account = accounts[0];
+    }
+  }
+
+  // If no cached account (e.g. new tab, sessionStorage cleared), try silent SSO.
+  // Azure AD's browser session cookie lets this succeed without user interaction
+  // when the user is already signed into any other page on the same tenant.
+  if (!_account) {
+    try {
+      const silentResult = await _msalInstance.ssoSilent({ scopes: CONFIG.scopes });
+      if (silentResult?.account) _account = silentResult.account;
+    } catch (ssoErr) {
+      // Silent SSO failed — user will need to click sign-in button
+      console.info("Silent SSO unavailable, manual sign-in required:", ssoErr.errorCode || ssoErr.message);
     }
   }
 
@@ -125,6 +141,12 @@ async function getAccessToken() {
     }
     throw err;
   }
+}
+
+// Returns the last error from handleRedirectPromise() (e.g. admin consent denied).
+// Callers can use this to show actionable UI after initAuth() if no account was found.
+function getLastRedirectError() {
+  return _lastRedirectError;
 }
 
 function getCurrentUser() {
