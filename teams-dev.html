@@ -412,6 +412,15 @@
        Azure AD must have https://orange-smoke-04675d40f.7.azurestaticapps.net/teams-dev.html
        registered as an allowed redirect URI. -->
   <script>
+    // Hide loading spinner immediately if ?demo=1 — prevents flash before DOMContentLoaded
+    if (new URLSearchParams(window.location.search).get('demo') === '1') {
+      document.addEventListener('DOMContentLoaded', function() {
+        var s = document.getElementById('screen-loading');
+        if (s) s.className = 'screen';
+      });
+    }
+  </script>
+  <script>
     (function() {
       var _origGetMsalConfig = _getMsalConfig;
       _getMsalConfig = function() {
@@ -2064,6 +2073,16 @@
     }
     // ──────────────────────────────────────────────────────────────────────────
 
+    const params = new URLSearchParams(window.location.search);
+    const FORCE_DEMO = params.get('demo') === '1';
+
+    if (FORCE_DEMO) {
+      console.log('[Teams DEV] FORCE DEMO MODE — skipping all auth, Graph, and MSAL');
+      document.addEventListener('DOMContentLoaded', () => {
+        showDemoMode();
+      });
+    } else {
+
     document.addEventListener('DOMContentLoaded', async () => {
       // Trap browser back button inside the app
       history.pushState({ screen: 'screen-dashboard' }, '', location.pathname);
@@ -2153,7 +2172,9 @@
           loginScreen.appendChild(d);
         }
       }
-    });
+    }); // end DOMContentLoaded
+
+    } // end else (non-demo mode)
 
   </script>
 
