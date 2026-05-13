@@ -84,10 +84,143 @@
     .rp-item .rp-email { color: #6b7280; font-size: 12px; }
     .rp-item .rp-hl { background: #fef08a; border-radius: 2px; padding: 0 1px; }
     .rp-empty { padding: 12px; text-align: center; color: #aaa; font-size: 13px; }
+
+    /* ── Primary nav tabs ──────────────────────────────────── */
+    .admin-primary-tabs {
+      display: flex; align-items: center; background: #fff;
+      border-bottom: 2px solid #e2e8f0; padding: 0 16px; gap: 2px;
+      overflow-x: auto; flex-shrink: 0;
+    }
+    .admin-primary-tab {
+      padding: 10px 16px; border: none; background: none; cursor: pointer;
+      font-size: 13px; font-weight: 600; color: #64748b; border-radius: 0;
+      white-space: nowrap; transition: color 0.15s; border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+    }
+    .admin-primary-tab.active { color: #0078d4; border-bottom-color: #0078d4; }
+    .admin-primary-tab:hover:not(.active) { color: #1e293b; background: #f8fafc; }
+
+    /* ── Sub-tab bar ───────────────────────────────────────── */
+    .sub-tab-bar {
+      display: flex; align-items: center; gap: 4px;
+      background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+      padding: 8px 16px; margin: -16px -16px 16px; flex-wrap: wrap;
+    }
+    .sub-tab {
+      padding: 5px 14px; border: 1px solid transparent; background: none;
+      cursor: pointer; font-size: 13px; font-weight: 600; color: #64748b;
+      border-radius: 6px; white-space: nowrap; transition: all 0.15s;
+    }
+    .sub-tab.active { background: #fff; border-color: #d1d5db; color: #1e293b; box-shadow: 0 1px 3px rgba(0,0,0,.07); }
+    .sub-tab:hover:not(.active) { background: #e8f0fe; color: #0078d4; }
+
+    /* ── Breadcrumb ────────────────────────────────────────── */
+    .breadcrumb-bar {
+      display: flex; align-items: center; gap: 10px;
+      background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+      padding: 8px 16px; margin: -16px -16px 16px;
+    }
+    .breadcrumb-back {
+      background: none; border: none; color: #0078d4; cursor: pointer;
+      font-size: 13px; font-weight: 600; padding: 4px 8px; border-radius: 5px;
+    }
+    .breadcrumb-back:hover { background: #e8f0fe; }
+    .breadcrumb-current { font-size: 13px; color: #374151; font-weight: 600; }
+
+    /* ── Overview KPI cards ─────────────────────────────────── */
+    .ov-kpi-row {
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 28px;
+    }
+    @media (max-width: 700px) { .ov-kpi-row { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 400px) { .ov-kpi-row { grid-template-columns: repeat(2, 1fr); } }
+    .ov-kpi-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 14px 12px; text-align: center;
+    }
+    .ov-kpi-num { font-size: 28px; font-weight: 800; color: #1a1a2e; line-height: 1; margin-bottom: 4px; }
+    .ov-kpi-lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #9ca3af; }
+    .ov-kpi-engaged     .ov-kpi-num { color: #0078d4; }
+    .ov-kpi-interested  .ov-kpi-num { color: #107c10; }
+    .ov-kpi-ni          .ov-kpi-num { color: #d32f2f; }
+    .ov-kpi-wne         .ov-kpi-num { color: #d97706; }
+    .ov-kpi-notyet      .ov-kpi-num { color: #9ca3af; }
+
+    /* ── Overview play cards ────────────────────────────────── */
+    .ov-section-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+      color: #6b7280; margin-bottom: 12px;
+    }
+    .ov-play-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-bottom: 8px;
+    }
+    .ov-play-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px;
+    }
+    .ov-play-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+    .ov-play-name { font-size: 14px; font-weight: 700; color: #1a1a2e; line-height: 1.35; }
+    .ov-play-pct { font-size: 20px; font-weight: 800; color: #0078d4; flex-shrink: 0; }
+    .ov-progress-track { height: 6px; background: #f1f5f9; border-radius: 3px; margin-bottom: 10px; overflow: hidden; }
+    .ov-progress-fill { height: 100%; background: #0078d4; border-radius: 3px; transition: width 0.4s ease; }
+    .ov-play-stats { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: #6b7280; margin-bottom: 12px; }
+    .ov-view-btn {
+      background: #f0f7ff; color: #0078d4; border: 1px solid #c3dafe; padding: 5px 12px;
+      border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; width: 100%;
+    }
+    .ov-view-btn:hover { background: #dbeafe; }
+
+    /* ── Overview recent activity ───────────────────────────── */
+    .ov-recent-list { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .ov-recent-row {
+      display: grid; grid-template-columns: 90px 160px 1fr 120px; gap: 12px;
+      align-items: center; padding: 8px 14px; font-size: 13px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .ov-recent-row:last-child { border-bottom: none; }
+    .ov-recent-row:nth-child(even) { background: #fafafa; }
+    .ov-recent-date { color: #9ca3af; font-size: 12px; }
+    .ov-recent-rep { font-weight: 600; color: #374151; }
+    .ov-recent-acct { color: #4b5563; }
+    @media (max-width: 600px) { .ov-recent-row { grid-template-columns: 80px 1fr; } }
+
+    /* ── Admin Tools cards ──────────────────────────────────── */
+    .at-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px;
+    }
+    .at-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 18px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .at-card-icon { font-size: 24px; }
+    .at-card-title { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+    .at-card-desc { font-size: 13px; color: #6b7280; line-height: 1.5; flex: 1; }
+    .at-card-btn {
+      margin-top: 8px; background: #f0f7ff; color: #0078d4; border: 1px solid #c3dafe;
+      padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+      text-align: left;
+    }
+    .at-card-btn:hover { background: #dbeafe; }
+
+    /* ── More dropdown in header ───────────────────────────── */
+    .more-dropdown { position: relative; }
+    .more-menu {
+      display: none; position: absolute; top: calc(100% + 6px); right: 0;
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.14); min-width: 200px; z-index: 500;
+      padding: 4px 0; overflow: hidden;
+    }
+    .more-menu button, .more-menu a {
+      display: block; width: 100%; padding: 9px 16px; background: none; border: none;
+      text-align: left; font-size: 13px; color: #374151; cursor: pointer; text-decoration: none;
+    }
+    .more-menu button:hover, .more-menu a:hover { background: #f0f7ff; color: #0078d4; }
+    .more-menu-divider { height: 1px; background: #e2e8f0; margin: 4px 0; }
+
+    /* ── Admin tab panels — add padding ────────────────────── */
+    .admin-tab-panel { padding: 16px; }
   </style>
 </head>
 <body>
-<div id="dev-env-banner" style="display:block;background:#e65c00;color:#fff;text-align:center;padding:7px 12px;font-size:13px;font-weight:700;letter-spacing:.03em;position:sticky;top:0;z-index:99999;border-bottom:2px solid #b34400;">
+<div id="dev-env-banner" style="display:block;background:#e65c00;color:#fff;text-align:center;padding:4px 12px;font-size:12px;font-weight:600;letter-spacing:.03em;position:sticky;top:0;z-index:99999;border-bottom:1px solid #b34400;">
   ⚠️ DEV ENVIRONMENT — Changes go to test data, not production
 </div>
 
@@ -113,26 +246,37 @@
         <div class="admin-header-right">
           <div class="admin-user-name-block"><span id="admin-user-name"></span></div>
           <a href="app.html" class="admin-nav-link">Home</a>
-          <a href="reports.html" class="admin-nav-link admin-nav-btn" title="View play reports" style="background:#166534;">Reports</a>
           <a href="ingest.html" class="admin-nav-link admin-nav-btn" title="Create a brand new play from scratch">New Play</a>
           <a href="ingest.html?mode=accounts" class="admin-nav-link admin-nav-btn" title="Add accounts to an existing play" style="background:#1e40af;">Add Accounts</a>
-          <div class="export-dropdown">
-            <button class="admin-nav-btn admin-nav-btn-secondary" onclick="toggleExportMenu(this)">Export ▾</button>
-            <div class="export-menu" style="display:none;">
-              <button onclick="exportAll();closeExportMenu()">Export All (CSV)</button>
-              <button id="btn-csv-drop" onclick="document.getElementById('btn-csv').click();closeExportMenu()">Export Filtered (CSV)</button>
-              <button id="btn-excel-drop" onclick="document.getElementById('btn-excel').click();closeExportMenu()">Export Filtered (Excel)</button>
+          <div class="more-dropdown">
+            <button class="admin-nav-btn admin-nav-btn-secondary" onclick="toggleMoreMenu(this)">More ▾</button>
+            <div class="more-menu" id="more-menu">
+              <button onclick="exportAll();closeMoreMenu()">Export All (CSV)</button>
+              <button id="btn-csv-drop" onclick="document.getElementById('btn-csv').click();closeMoreMenu()">Export Filtered (CSV)</button>
+              <button id="btn-excel-drop" onclick="document.getElementById('btn-excel').click();closeMoreMenu()">Export Filtered (Excel)</button>
+              <div class="more-menu-divider"></div>
+              <button onclick="openMessageModal();closeMoreMenu()">📣 Message Team</button>
             </div>
           </div>
-          <button class="admin-nav-btn" onclick="openMessageModal()" title="Send message to team" style="background:#92400e;">📣 Message</button>
           <a href="#" id="btn-sign-out" class="admin-nav-link signout">Sign out</a>
           <!-- Hidden for JS compatibility -->
           <button id="btn-export-all" style="display:none;"></button>
         </div>
       </div>
 
-      <!-- Tab Navigation -->
-      <div class="admin-tabs">
+      <!-- Primary Tab Navigation -->
+      <div class="admin-primary-tabs">
+        <button class="admin-primary-tab active" data-tab="overview">📊 Overview</button>
+        <button class="admin-primary-tab" data-tab="activity-log">📋 Activity</button>
+        <button class="admin-primary-tab" data-tab="leaderboard">🏆 Leaderboard</button>
+        <button class="admin-primary-tab" data-tab="coverage">🗺 Coverage</button>
+        <button class="admin-primary-tab" data-tab="plays">🎯 Plays</button>
+        <button class="admin-primary-tab" data-tab="accounts">🏢 Accounts</button>
+        <button class="admin-primary-tab" data-tab="admin-tools">⚙️ Admin Tools</button>
+      </div>
+
+      <!-- Legacy tab nav — hidden, kept for applyRoleUI() JS compatibility -->
+      <div class="admin-tabs" style="display:none;">
         <!-- Engagement -->
         <button class="admin-tab active" data-tab="activity-log">Activity Log</button>
         <button class="admin-tab" data-tab="activity-log-user" id="tab-btn-activity-log-user" style="display:none;">My Activity</button>
@@ -157,8 +301,24 @@
         <button class="admin-tab" data-tab="demo-activity" id="tab-btn-demo-activity" style="display:none;">Demo Activity</button>
       </div>
 
+      <!-- Overview Tab Panel -->
+      <div id="tab-overview" class="admin-tab-panel">
+        <div id="overview-content">
+          <div style="text-align:center;padding:48px;"><div class="spinner"></div></div>
+        </div>
+      </div>
+
       <!-- Activity Log Tab Panel -->
-      <div id="tab-activity-log" class="admin-tab-panel">
+      <div id="tab-activity-log" class="admin-tab-panel" style="display:none;">
+
+      <!-- Activity sub-nav -->
+      <div class="sub-tab-bar">
+        <button class="sub-tab active" id="sub-btn-activity" onclick="switchActivitySubTab('activity-log')">Activity Log</button>
+        <button class="sub-tab" id="sub-btn-my-activity" onclick="switchActivitySubTab('activity-log-user')">My Activity</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('btn-csv').click()">Export CSV</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('btn-excel').click()">Export Excel</button>
+      </div>
 
       <!-- Play Funnel Summary -->
       <div id="admin-funnel-wrap" style="margin-bottom:16px;"></div>
@@ -288,6 +448,10 @@
 
       <!-- ── Response Options Config Tab ── -->
       <div id="tab-config" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('plays')" class="breadcrumb-back">← Plays</button>
+          <span class="breadcrumb-current">Response Config</span>
+        </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;">
           <div style="font-size:13px;color:#555;">Configure outcomes, reasons, next steps, and timing for each play. Changes are saved per-play to SharePoint.</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -316,6 +480,11 @@
 
       <!-- ── Plays Management Tab ── -->
       <div id="tab-plays" class="admin-tab-panel" style="display:none;">
+        <div class="sub-tab-bar">
+          <button class="sub-tab active" onclick="showAdminTab('plays')">All Plays</button>
+          <button class="sub-tab" onclick="showAdminTab('play-briefs')">Play Briefs</button>
+          <button class="sub-tab" onclick="showAdminTab('config')">Response Config</button>
+        </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
           <div style="font-size:13px;color:#555;">All active sales plays. Export engagement data or delete a play and all its assignments.</div>
           <div style="display:flex;gap:8px;">
@@ -448,6 +617,10 @@
 
 
       <div id="tab-health" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('admin-tools')" class="breadcrumb-back">← Admin Tools</button>
+          <span class="breadcrumb-current">System Health</span>
+        </div>
         <div id="health-check-content">
           <div style="text-align:center;padding:32px;"><div class="spinner"></div></div>
         </div>
@@ -455,6 +628,10 @@
 
       <!-- ── Coverage Report Tab ── -->
       <div id="tab-coverage" class="admin-tab-panel" style="display:none;">
+        <div class="sub-tab-bar">
+          <button class="sub-tab active" onclick="showAdminTab('coverage')">Coverage Map</button>
+          <button class="sub-tab" onclick="showAdminTab('rep-view')">Rep View</button>
+        </div>
         <div id="coverage-content">
           <div style="text-align:center;padding:32px;"><div class="spinner"></div></div>
         </div>
@@ -462,6 +639,10 @@
 
       <!-- ── Health Check Tab ── -->
       <div id="tab-activity-log-user" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('activity-log')" class="breadcrumb-back">← Activity</button>
+          <span class="breadcrumb-current">My Activity</span>
+        </div>
         <div class="admin-control-bar" style="margin-bottom:12px;">
           <select id="al-filter-user"><option value="">All Users</option></select>
           <input type="date" id="al-filter-start" title="From date" />
@@ -494,6 +675,10 @@
 
       <!-- Demo Activity Tab -->
       <div id="tab-demo-activity" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('admin-tools')" class="breadcrumb-back">← Admin Tools</button>
+          <span class="breadcrumb-current">Demo Activity</span>
+        </div>
         <div class="admin-control-bar" style="margin-bottom:12px;">
           <select id="demo-filter-user"><option value="">All Users</option></select>
           <input type="date" id="demo-filter-start" title="From date" />
@@ -534,6 +719,10 @@
 
       <!-- Snapshots Tab -->
       <div id="tab-snapshots" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('admin-tools')" class="breadcrumb-back">← Admin Tools</button>
+          <span class="breadcrumb-current">Snapshots / Restore</span>
+        </div>
 
         <!-- Actions row -->
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center;">
@@ -575,6 +764,10 @@
 
       <!-- Identity Tab (owner only) -->
       <div id="tab-identity" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('admin-tools')" class="breadcrumb-back">← Admin Tools</button>
+          <span class="breadcrumb-current">Identity / User Access</span>
+        </div>
         <div style="max-width:620px;">
 
           <!-- Section 1: Email Lookup Map (authoritative) -->
@@ -618,6 +811,10 @@
 
       <!-- Access Log Tab (owner only) -->
       <div id="tab-access-log" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('admin-tools')" class="breadcrumb-back">← Admin Tools</button>
+          <span class="breadcrumb-current">Access Log</span>
+        </div>
         <div style="margin-bottom:12px;">
           <p style="font-size:13px;color:#555;margin:0 0 10px;">
             Logs every login attempt, identity resolution, and assignment mismatch.
@@ -673,6 +870,10 @@
 
       <!-- ── Corrections Tab ── -->
       <div id="tab-corrections" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('admin-tools')" class="breadcrumb-back">← Admin Tools</button>
+          <span class="breadcrumb-current">Corrections Log</span>
+        </div>
         <h3 style="margin:0 0 4px;">Assignment Corrections Log</h3>
         <p style="font-size:13px;color:#555;margin:0 0 16px;">Full audit trail of all reassignments, deactivations, and reactivations. Use the Accounts tab to make corrections.</p>
         <button onclick="loadCorrectionsLog()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:7px 14px;border-radius:6px;font-size:13px;cursor:pointer;margin-bottom:16px;">🔄 Refresh</button>
@@ -700,6 +901,10 @@
 
       <!-- Play Briefs Tab Panel -->
       <div id="tab-play-briefs" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('plays')" class="breadcrumb-back">← Plays</button>
+          <span class="breadcrumb-current">Play Briefs</span>
+        </div>
         <div class="admin-card">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
             <h3 style="margin:0;">📋 Play Brief Submissions</h3>
@@ -722,6 +927,10 @@
 
       <!-- Rep View Tab Panel -->
       <div id="tab-rep-view" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('coverage')" class="breadcrumb-back">← Coverage</button>
+          <span class="breadcrumb-current">Rep View</span>
+        </div>
         <div style="background:#e8f4fd;border:1px solid #b3d9f2;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
           <span style="font-size:16px;">👁️</span>
           <span style="font-size:13px;color:#1a5276;font-weight:600;">Manager View</span>
@@ -737,6 +946,50 @@
           <div style="text-align:center;padding:48px;color:#aaa;font-size:14px;">Select a rep to view their plays and accounts</div>
         </div>
       </div><!-- /#tab-rep-view -->
+
+      <!-- Admin Tools Tab Panel -->
+      <div id="tab-admin-tools" class="admin-tab-panel" style="display:none;">
+        <h2 style="font-size:17px;font-weight:700;color:#1a1a2e;margin:0 0 4px;">Admin Tools</h2>
+        <p style="font-size:13px;color:#6b7280;margin:0 0 20px;">Lower-frequency tools and system management.</p>
+        <div class="at-grid">
+          <div class="at-card">
+            <div class="at-card-icon">🏥</div>
+            <div class="at-card-title">System Health</div>
+            <div class="at-card-desc">Check SharePoint connectivity, file status, and data integrity.</div>
+            <button class="at-card-btn" onclick="showAdminTab('health')">Open Health Check</button>
+          </div>
+          <div class="at-card" id="at-card-identity">
+            <div class="at-card-icon">👤</div>
+            <div class="at-card-title">Identity / User Access</div>
+            <div class="at-card-desc">Upload rep email lookup map and manage SSO identity matching.</div>
+            <button class="at-card-btn" onclick="showAdminTab('identity')">Open Identity</button>
+          </div>
+          <div class="at-card" id="at-card-access-log">
+            <div class="at-card-icon">🔍</div>
+            <div class="at-card-title">Access Log</div>
+            <div class="at-card-desc">View login attempts, identity mismatches, and access events.</div>
+            <button class="at-card-btn" onclick="showAdminTab('access-log')">Open Access Log</button>
+          </div>
+          <div class="at-card">
+            <div class="at-card-icon">📝</div>
+            <div class="at-card-title">Corrections Log</div>
+            <div class="at-card-desc">Audit trail of all rep reassignments, deactivations, and reactivations.</div>
+            <button class="at-card-btn" onclick="showAdminTab('corrections')">Open Corrections</button>
+          </div>
+          <div class="at-card">
+            <div class="at-card-icon">💾</div>
+            <div class="at-card-title">Snapshots / Restore</div>
+            <div class="at-card-desc">Save, browse, and restore system snapshots. Reset system data.</div>
+            <button class="at-card-btn" onclick="showAdminTab('snapshots')">Open Snapshots</button>
+          </div>
+          <div class="at-card">
+            <div class="at-card-icon">🎭</div>
+            <div class="at-card-title">Demo Activity</div>
+            <div class="at-card-desc">View and export activity from demo mode sessions.</div>
+            <button class="at-card-btn" onclick="showAdminTab('demo-activity')">Open Demo Activity</button>
+          </div>
+        </div>
+      </div><!-- /#tab-admin-tools -->
 
       <!-- ── Assignment Correction Modal ── -->
       <div id="correction-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;align-items:center;justify-content:center;">
@@ -1121,6 +1374,89 @@
     document.getElementById("btn-sign-out").addEventListener("click", (e) => {
       e.preventDefault();
       signOut();
+    });
+
+    // ── More dropdown (header) ─────────────────────────────────────────────
+    function toggleMoreMenu(btn) {
+      const menu = document.getElementById('more-menu');
+      if (!menu) return;
+      const isOpen = menu.style.display === 'block';
+      menu.style.display = isOpen ? 'none' : 'block';
+      if (!isOpen) {
+        setTimeout(() => document.addEventListener('click', _moreMenuOutsideClick, { once: true }), 0);
+      }
+    }
+    function closeMoreMenu() {
+      const menu = document.getElementById('more-menu');
+      if (menu) menu.style.display = 'none';
+    }
+    function _moreMenuOutsideClick(e) {
+      const menu = document.getElementById('more-menu');
+      if (menu && !menu.contains(e.target)) closeMoreMenu();
+    }
+
+    // ── Primary tab navigation ─────────────────────────────────────────────
+    const TAB_PRIMARY_MAP = {
+      'overview':           'overview',
+      'activity-log':       'activity-log',
+      'activity-log-user':  'activity-log',
+      'leaderboard':        'leaderboard',
+      'coverage':           'coverage',
+      'rep-view':           'coverage',
+      'plays':              'plays',
+      'play-briefs':        'plays',
+      'config':             'plays',
+      'accounts':           'accounts',
+      'admin-tools':        'admin-tools',
+      'health':             'admin-tools',
+      'identity':           'admin-tools',
+      'access-log':         'admin-tools',
+      'corrections':        'admin-tools',
+      'snapshots':          'admin-tools',
+      'demo-activity':      'admin-tools',
+    };
+
+    const TAB_LOAD_FNS = {
+      'leaderboard':       () => loadLeaderboardTab(),
+      'config':            () => loadConfigTab(),
+      'plays':             () => loadPlaysTab(),
+      'play-briefs':       () => loadPlayBriefsTab(),
+      'accounts':          () => loadAccountsTab(),
+      'health':            () => loadHealthTab(),
+      'coverage':          () => loadCoverageTab(),
+      'activity-log-user': () => loadActivityLog(),
+      'snapshots':         () => loadSnapshotsTab(),
+      'identity':          () => checkEmailLookupStatus(),
+      'access-log':        () => loadAccessLog(),
+      'corrections':       () => loadCorrectionsLog(),
+      'rep-view':          () => loadRepViewTab(),
+      'overview':          () => renderOverviewTab(),
+    };
+
+    function showAdminTab(tabId) {
+      document.querySelectorAll('.admin-tab-panel').forEach(p => p.style.display = 'none');
+      const panel = document.getElementById('tab-' + tabId);
+      if (panel) panel.style.display = 'block';
+      const primaryId = TAB_PRIMARY_MAP[tabId] || tabId;
+      document.querySelectorAll('.admin-primary-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === primaryId);
+      });
+      const loadFn = TAB_LOAD_FNS[tabId];
+      if (loadFn) loadFn();
+    }
+
+    function switchActivitySubTab(tabId) {
+      const btnActivity   = document.getElementById('sub-btn-activity');
+      const btnMyActivity = document.getElementById('sub-btn-my-activity');
+      if (btnActivity)   btnActivity.classList.toggle('active',   tabId === 'activity-log');
+      if (btnMyActivity) btnMyActivity.classList.toggle('active', tabId === 'activity-log-user');
+      showAdminTab(tabId);
+    }
+
+    document.querySelectorAll('.admin-primary-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        showAdminTab(tab.dataset.tab);
+      });
     });
 
     // Tab switching
@@ -2250,6 +2586,10 @@ Let's go! 🚀`;
           const btn = document.getElementById('tab-btn-' + tab) || document.querySelector(`.admin-tab[data-tab="${tab}"]`);
           if (btn) btn.style.display = 'none';
         });
+        const identityCard  = document.getElementById('at-card-identity');
+        const accessLogCard = document.getElementById('at-card-access-log');
+        if (identityCard)  identityCard.style.display  = 'none';
+        if (accessLogCard) accessLogCard.style.display = 'none';
       }
 
       // Add role badge next to name
@@ -2339,6 +2679,7 @@ Let's go! 🚀`;
         await populateFilterDropdowns(_allData);
         renderTable(_allData);
         renderAdminFunnel(_allData);
+        showAdminTab('overview');
       } catch (err) {
         console.error("Admin load error:", err);
         document.getElementById("results-body").innerHTML =
@@ -4113,6 +4454,101 @@ Let's go! 🚀`;
       } catch (e) {
         console.error('Update brief error:', e);
         alert('Failed to update brief');
+      }
+    }
+
+    // ── Overview Tab ──────────────────────────────────────────────────────
+    async function renderOverviewTab() {
+      const container = document.getElementById('overview-content');
+      if (!container) return;
+      container.innerHTML = '<div style="text-align:center;padding:48px;"><div class="spinner"></div></div>';
+      try {
+        const [allAssignments, plays] = await Promise.all([getPlayAssignments(null), getPlays()]);
+        const engagements = _allData;
+
+        const allAcctIds = new Set(allAssignments.map(a => a.account_id));
+        const globalLatest = {};
+        engagements.forEach(e => {
+          if (!allAcctIds.has(e.account_id)) return;
+          const prev = globalLatest[e.account_id];
+          if (!prev || e.submitted_at > prev.submitted_at) globalLatest[e.account_id] = e;
+        });
+        const gArr = Object.values(globalLatest);
+        const totalTargets    = allAssignments.length;
+        const totalEngaged    = gArr.length;
+        const totalInterested = gArr.filter(e => e.outcome === 'Interested').length;
+        const totalNI         = gArr.filter(e => e.outcome === 'Not Interested').length;
+        const totalWNE        = gArr.filter(e => e.outcome === 'Would Not Engage').length;
+        const totalNotYet     = totalTargets - totalEngaged;
+
+        const kpiCard = (num, lbl, cls = '') =>
+          `<div class="ov-kpi-card ${cls}"><div class="ov-kpi-num">${num}</div><div class="ov-kpi-lbl">${lbl}</div></div>`;
+
+        const kpiHtml = `<div class="ov-kpi-row">
+          ${kpiCard(totalTargets,    'Total Targets')}
+          ${kpiCard(totalEngaged,    'Engaged',        'ov-kpi-engaged')}
+          ${kpiCard(totalInterested, 'Interested',     'ov-kpi-interested')}
+          ${kpiCard(totalNI,         'Not Interested', 'ov-kpi-ni')}
+          ${kpiCard(totalWNE,        'WNE',            'ov-kpi-wne')}
+          ${kpiCard(totalNotYet,     'Not Yet',        'ov-kpi-notyet')}
+        </div>`;
+
+        const playStats = plays.map(play => {
+          const accts = allAssignments.filter(a => a.play_id === play.play_id);
+          const targets = accts.length;
+          const playAcctIds = new Set(accts.map(a => a.account_id));
+          const latest = {};
+          engagements.filter(e => e.play_id === play.play_id && playAcctIds.has(e.account_id)).forEach(e => {
+            const prev = latest[e.account_id];
+            if (!prev || e.submitted_at > prev.submitted_at) latest[e.account_id] = e;
+          });
+          const arr = Object.values(latest);
+          const engaged       = arr.length;
+          const interested    = arr.filter(e => e.outcome === 'Interested').length;
+          const notInterested = arr.filter(e => e.outcome === 'Not Interested').length;
+          const wne           = arr.filter(e => e.outcome === 'Would Not Engage').length;
+          const notYet        = targets - engaged;
+          const pct           = targets > 0 ? Math.round((engaged / targets) * 100) : 0;
+          return { play, targets, engaged, interested, notInterested, wne, notYet, pct };
+        }).filter(s => s.targets > 0);
+
+        const playCardsHtml = playStats.length ? `
+          <div class="ov-section-title">Play Progress</div>
+          <div class="ov-play-grid">
+            ${playStats.map(s => `
+              <div class="ov-play-card">
+                <div class="ov-play-header">
+                  <div class="ov-play-name">${escHtml(s.play.play_name)}</div>
+                  <span class="ov-play-pct">${s.pct}%</span>
+                </div>
+                <div class="ov-progress-track"><div class="ov-progress-fill" style="width:${s.pct}%"></div></div>
+                <div class="ov-play-stats">
+                  <span><strong>${s.targets}</strong> targets</span>
+                  <span style="color:#107c10"><strong>${s.interested}</strong> interested</span>
+                  <span style="color:#d32f2f"><strong>${s.notInterested}</strong> not interested</span>
+                  <span style="color:#d97706"><strong>${s.wne}</strong> WNE</span>
+                  <span style="color:#9ca3af"><strong>${s.notYet}</strong> not yet</span>
+                </div>
+                <button class="ov-view-btn" onclick="showAdminTab('activity-log')">View Activity →</button>
+              </div>`).join('')}
+          </div>` : '';
+
+        const recentHtml = engagements.length ? `
+          <div class="ov-section-title" style="margin-top:28px;">Recent Activity</div>
+          <div class="ov-recent-list">
+            ${engagements.slice(-5).reverse().map(r => `
+              <div class="ov-recent-row">
+                <span class="ov-recent-date">${escHtml(formatDate(r.submitted_at))}</span>
+                <span class="ov-recent-rep">${escHtml(r.rep_name || r.rep_email || '')}</span>
+                <span class="ov-recent-acct">${escHtml(r.account_name || '')}</span>
+                <span class="ov-recent-outcome" style="${r.outcome === 'Interested' ? 'color:#107c10;font-weight:700' : r.outcome === 'Not Interested' ? 'color:#d32f2f' : ''}">${escHtml(r.outcome || '')}</span>
+              </div>`).join('')}
+          </div>
+          <button style="margin-top:8px;background:none;border:none;color:#0078d4;font-size:13px;cursor:pointer;font-weight:600;" onclick="showAdminTab('activity-log')">View all activity →</button>` : '';
+
+        container.innerHTML = kpiHtml + playCardsHtml + recentHtml;
+      } catch (e) {
+        container.innerHTML = `<div style="color:#d32f2f;padding:24px;">Failed to load overview: ${escHtml(e.message)}</div>`;
       }
     }
 
