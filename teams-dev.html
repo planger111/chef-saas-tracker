@@ -1884,17 +1884,21 @@
       } catch (err) {
         console.error('[Teams DEV] Sign in error:', err);
         const msg = (err && (err.message || err.errorMessage || err.errorCode || String(err))) || 'Unknown error';
-        let note = document.querySelector('#screen-login .teams-auth-error');
-        if (!note) {
-          note = document.createElement('p');
-          note.className = 'teams-auth-error';
-          note.style.cssText = 'color:#c0392b;font-size:13px;margin-top:12px;word-break:break-word;';
-          const container = document.querySelector('#screen-login .card') ||
-                            document.querySelector('#screen-login div') ||
-                            document.getElementById('screen-login');
-          if (container) container.appendChild(note);
+        if (_isConsentError({ message: msg })) {
+          _showConsentError();
+        } else {
+          let note = document.querySelector('#screen-login .teams-auth-error');
+          if (!note) {
+            note = document.createElement('p');
+            note.className = 'teams-auth-error';
+            note.style.cssText = 'color:#c0392b;font-size:13px;margin-top:12px;word-break:break-word;';
+            const container = document.querySelector('#screen-login .card') ||
+                              document.querySelector('#screen-login div') ||
+                              document.getElementById('screen-login');
+            if (container) container.appendChild(note);
+          }
+          if (note) note.textContent = '⚠️ Sign-in error: ' + msg;
         }
-        if (note) note.textContent = '⚠️ Sign-in error: ' + msg;
       }
     });
 
@@ -2001,6 +2005,65 @@
       });
     }
 
+    // ── CONSENT ERROR HELPERS ─────────────────────────────────────────────────
+    // Detect Azure AD admin consent required errors (AADSTS codes, MSAL codes, tagged prefix)
+    function _isConsentError(err) {
+      if (!err) return false;
+      const msg = (err.message || err.errorMessage || String(err)).toLowerCase();
+      const code = (err.errorCode || '').toLowerCase();
+      return msg.startsWith('consent_required:') ||
+             msg.includes('aadsts65004') || msg.includes('aadsts90094') ||
+             msg.includes('aadsts90095') || msg.includes('aadsts65001') ||
+             msg.includes('admin_consent_required') || msg.includes('admin consent') ||
+             msg.includes('declined to consent') ||
+             code === 'consent_required' || code === 'access_denied';
+    }
+
+    // Show a clear, actionable admin consent panel on the login screen
+    function _showConsentError() {
+      const tenantId = CONFIG.tenantId;
+      const clientId = CONFIG.clientId;
+      const redirectUri = encodeURIComponent(window.location.origin);
+      const adminConsentUrl =
+        'https://login.microsoftonline.com/' + tenantId +
+        '/adminconsent?client_id=' + clientId +
+        '&redirect_uri=' + redirectUri;
+
+      const loginScreen = document.getElementById('screen-login');
+      if (!loginScreen) return;
+      const existing = loginScreen.querySelector('.consent-error-panel');
+      if (existing) existing.remove();
+
+      const panel = document.createElement('div');
+      panel.className = 'consent-error-panel';
+      panel.style.cssText = [
+        'background:#fff8e1;border:2px solid #f59e0b;border-radius:10px;',
+        'padding:16px;margin-top:16px;text-align:left;max-width:340px;',
+        'box-shadow:0 2px 8px rgba(0,0,0,.08);'
+      ].join('');
+      panel.innerHTML =
+        '<div style="font-weight:700;font-size:14px;color:#92400e;margin-bottom:8px;">⚠️ Admin Approval Required</div>' +
+        '<p style="font-size:13px;color:#78350f;margin:0 0 12px;line-height:1.5;">' +
+          'This app needs IT admin approval before reps can sign in. ' +
+          'An Azure AD admin must grant consent once for the whole org.' +
+        '</p>' +
+        '<div style="font-size:12px;color:#78350f;font-weight:600;margin-bottom:6px;">Admin consent URL:</div>' +
+        '<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:8px;font-size:11px;' +
+             'word-break:break-all;color:#555;margin-bottom:12px;">' + adminConsentUrl + '</div>' +
+        '<a href="' + adminConsentUrl + '" target="_blank" rel="noopener" ' +
+           'style="display:block;background:#0078d4;color:#fff;text-align:center;' +
+           'padding:10px;border-radius:6px;text-decoration:none;font-size:13px;font-weight:700;">' +
+          'Grant Admin Consent →' +
+        '</a>' +
+        '<p style="font-size:11px;color:#9ca3af;margin:10px 0 0;text-align:center;">' +
+          'After an admin grants consent, ask reps to sign in again.' +
+        '</p>';
+
+      const inner = loginScreen.querySelector('div') || loginScreen;
+      inner.appendChild(panel);
+    }
+    // ──────────────────────────────────────────────────────────────────────────
+
     document.addEventListener('DOMContentLoaded', async () => {
       // Trap browser back button inside the app
       history.pushState({ screen: 'screen-dashboard' }, '', location.pathname);
@@ -2021,6 +2084,14 @@
         });
       }
       try {
+        // FORCE_DEMO: bypass all auth/Graph when ?demo=1 is present
+        const FORCE_DEMO = new URLSearchParams(window.location.search).get('demo') === '1';
+        if (FORCE_DEMO) {
+          console.log('[Teams DEV] FORCE DEMO MODE — skipping auth and Graph entirely');
+          await showDemoMode();
+          return;
+        }
+
         // TEAMS-DEV: Clear stale MSAL interaction state before initAuth.
         // After the teams-auth.html popup flow + page reload, MSAL sometimes leaves
         // an interaction.status key in localStorage that causes interaction_in_progress
@@ -2063,6 +2134,11 @@
           }
         } else {
           showScreen('screen-login');
+          // Check if the redirect returned an admin consent error (browser path)
+          const redirectErr = typeof getLastRedirectError === 'function' ? getLastRedirectError() : null;
+          if (redirectErr && _isConsentError(redirectErr)) {
+            _showConsentError();
+          }
         }
       } catch (err) {
         console.error('Init error:', err);
