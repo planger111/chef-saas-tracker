@@ -1321,6 +1321,7 @@
 
         // Value props
         const valueProps = (play.value_props || []).filter(Boolean);
+        const competitive = (play.competitive_positioning || '').trim();
 
         // Discovery questions (supports both field names)
         const keyQs = (play.key_questions || play.discovery_questions || []).filter(Boolean);
@@ -1384,6 +1385,7 @@
         ${sec('Key Value Propositions', valueProps.length     ? listHtml(valueProps)                : '')}
         ${sec('Ideal Customer Profile', play.icp              ? play.icp                            : '')}
         ${sec('Target Persona / Buyer', play.target_persona   ? play.target_persona                 : play.persona_notes || '')}
+        ${sec('Competitive Positioning',competitive           ? competitive                         : '')}
         ${sec('Rep Instructions',       play.instructions     ? play.instructions                   : play.next_step_guidance || '')}
         ${sec('Discovery Questions',    keyQs.length          ? listHtml(keyQs)                     : '')}
         ${objections.length ? `<div class="section"><div class="section-label">Common Objections &amp; Responses</div><div class="section-value">${objHtml}</div></div>` : ''}

@@ -1247,12 +1247,13 @@
       const icp          = (play.icp               || '').trim();
       const persona      = (play.target_persona    || play.persona_notes     || '').trim();
       const why          = (play.why_it_matters    || play.pitch_details     || '').trim();
-      const instructions = (play.instructions      || play.next_step_guidance|| '').trim();
-      const valueProps   = (play.value_props        || []).filter(Boolean);
-      const keyQs        = (play.key_questions      || play.discovery_questions || []).filter(Boolean);
-      const objections   = (play.objection_handling || []).filter(Boolean);
+      const instructions   = (play.instructions         || play.next_step_guidance|| '').trim();
+      const competitive    = (play.competitive_positioning || '').trim();
+      const valueProps     = (play.value_props            || []).filter(Boolean);
+      const keyQs          = (play.key_questions          || play.discovery_questions || []).filter(Boolean);
+      const objections     = (play.objection_handling     || []).filter(Boolean);
 
-      const hasContent = pitch || icp || persona || why || valueProps.length || keyQs.length || objections.length || instructions;
+      const hasContent = pitch || icp || persona || why || competitive || valueProps.length || keyQs.length || objections.length || instructions;
       if (!hasContent) { card.style.display = 'none'; return; }
       card.style.display = '';
 
@@ -1264,7 +1265,7 @@
       document.getElementById('pb-summary').textContent = summaryText;
 
       const fullPitch = pitch && pitch.length > summaryText.length;
-      const hasExtra  = fullPitch || valueProps.length || icp || persona || why || keyQs.length || objections.length || instructions;
+      const hasExtra  = fullPitch || valueProps.length || icp || persona || why || competitive || keyQs.length || objections.length || instructions;
       const chevron   = document.getElementById('pb-chevron');
       const moreBtn   = document.getElementById('pb-more-btn');
       if (chevron) chevron.style.display = 'none'; // using More button instead
@@ -1287,6 +1288,7 @@
       if (icp)               body += sec('Ideal Customer Profile', escHtml(icp));
       if (persona)           body += sec('Target Buyer / Persona', escHtml(persona));
       if (why)               body += sec('Why They Care',          escHtml(why));
+      if (competitive)       body += sec('Competitive Positioning', escHtml(competitive));
       if (keyQs.length)      body += sec('Discovery Questions',    list(keyQs));
       if (objections.length) body += `<div class="pb-section"><div class="pb-section-label">Common Objections</div>${objHtml}</div>`;
       if (instructions)      body += sec('Recommended Next Steps', escHtml(instructions));
