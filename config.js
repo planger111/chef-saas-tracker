@@ -2,6 +2,8 @@
 // Fill in these 3 values after registering your Azure AD app
 // See README.md for step-by-step instructions
 
+const APP_VERSION = '2.1.0';
+
 const CONFIG = (() => {
   const host = window.location.hostname || '';
 
@@ -43,11 +45,21 @@ const CONFIG = (() => {
 // Dev environment banner — auto-injected on non-production hosts
 if (CONFIG.isDev) {
   document.addEventListener('DOMContentLoaded', () => {
-    const banner = document.createElement('div');
-    banner.id = 'dev-env-banner';
-    banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#ff6600;color:#fff;text-align:center;padding:4px 8px;font:bold 12px/1.4 system-ui;pointer-events:none;';
-    banner.textContent = `⚠️ DEV ENVIRONMENT — Data folder: ${CONFIG.dataFolder}`;
-    document.body.prepend(banner);
-    document.body.style.paddingTop = '28px';
+    // Update the existing static banner (present in every page's HTML) rather
+    // than prepending a second one.  Fall back to creating one if absent.
+    let banner = document.getElementById('dev-env-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'dev-env-banner';
+      banner.style.cssText = 'position:sticky;top:0;left:0;right:0;z-index:99999;border-bottom:2px solid #b34400;';
+      document.body.prepend(banner);
+    }
+    banner.style.background = '#e65c00';
+    banner.style.color = '#fff';
+    banner.style.textAlign = 'center';
+    banner.style.padding = '6px 12px';
+    banner.style.fontSize = '12px';
+    banner.style.fontWeight = '700';
+    banner.textContent = `⚠️ DEV  v${APP_VERSION}  —  Data: ${CONFIG.dataFolder}  —  Changes go to test data only`;
   });
 }
