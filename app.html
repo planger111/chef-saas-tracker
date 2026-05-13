@@ -1340,11 +1340,11 @@
       document.getElementById('pb-body-inner').innerHTML = body;
 
       // Always start collapsed when loading a new play
-      const bodyEl  = document.getElementById('pb-body');
-      const moreBtn = document.getElementById('pb-more-btn');
+      const bodyEl    = document.getElementById('pb-body');
+      const moreBtnEl = document.getElementById('pb-more-btn');
       bodyEl.classList.remove('open');
       if (chevron) chevron.classList.remove('open');
-      if (moreBtn) moreBtn.textContent = 'More ▾';
+      if (moreBtnEl) moreBtnEl.textContent = 'More ▾';
     }
 
     // renderPitchCard is an alias kept for any legacy call sites
