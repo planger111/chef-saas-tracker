@@ -1313,48 +1313,87 @@
         const GOAL_LABELS = { feedback:'Feedback', interest:'Generate Interest', meeting:'Book Meeting', disqualification:'Disqualify / Qualify Out', expansion:'Expansion', qualify_in:'Qualify In', qualify_out:'Qualify Out' };
         const goalLabel = GOAL_LABELS[play.goal] || play.goal || '';
 
+        const sec = (label, content) => content
+          ? `<div class="section"><div class="section-label">${label}</div><div class="section-value">${content}</div></div>`
+          : '';
+        const listHtml = arr => arr.length
+          ? `<ul>${arr.map(i => `<li>${i}</li>`).join('')}</ul>` : '';
+
+        // Value props
+        const valueProps = (play.value_props || []).filter(Boolean);
+
+        // Discovery questions (supports both field names)
+        const keyQs = (play.key_questions || play.discovery_questions || []).filter(Boolean);
+
+        // Objection handling
+        const objections = (play.objection_handling || []).filter(Boolean);
+        const objHtml = objections.map(o =>
+          typeof o === 'object' && o.q
+            ? `<div class="obj-row"><div class="obj-q">🙋 ${o.q}</div><div class="obj-a">${o.a || ''}</div></div>`
+            : `<div class="obj-row"><div class="obj-a">${String(o)}</div></div>`
+        ).join('');
+
+        // Outcomes config
         const outcomes = play.outcomes || {};
         const outcomeHtml = Object.entries(outcomes).filter(([,v]) => v && v.enabled !== false).map(([name, v]) => {
           const reasons   = (v.reasons   || []).filter(Boolean);
           const nextSteps = (v.next_steps || []).filter(Boolean);
           const timing    = (v.timing    || []).filter(Boolean);
-          return `<div style="margin-bottom:14px;">
-            <div style="font-weight:700;color:#0078d4;margin-bottom:4px;">${name}</div>
-            ${reasons.length   ? `<div><span style="font-weight:600;">Reasons:</span> ${reasons.join(' · ')}</div>` : ''}
-            ${nextSteps.length ? `<div><span style="font-weight:600;">Next Steps:</span> ${nextSteps.join(' · ')}</div>` : ''}
-            ${timing.length    ? `<div><span style="font-weight:600;">Timing:</span> ${timing.join(' · ')}</div>` : ''}
+          return `<div class="outcome-block">
+            <div class="outcome-name">${name}</div>
+            ${reasons.length   ? `<div><span class="field-key">Reasons:</span> ${reasons.join(' · ')}</div>` : ''}
+            ${nextSteps.length ? `<div><span class="field-key">Next Steps:</span> ${nextSteps.join(' · ')}</div>` : ''}
+            ${timing.length    ? `<div><span class="field-key">Timing:</span> ${timing.join(' · ')}</div>` : ''}
           </div>`;
         }).join('');
 
-        const keyQs = (play.key_questions || []).filter(Boolean);
-        const keyQHtml = keyQs.length ? `<ul style="margin:6px 0 0 18px;padding:0;">${keyQs.map(q => `<li style="margin-bottom:4px;">${q}</li>`).join('')}</ul>` : '';
-
         const win = window.open('', '_blank');
-        win.document.write(`<!DOCTYPE html><html><head><title>${play.play_name} — Play Brief</title>
+        win.document.write(`<!DOCTYPE html><html><head>
+        <title>${play.play_name} — Play Brief</title>
         <style>
-          body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 32px 40px; color: #1a1a1a; max-width: 760px; }
-          h1 { color: #0078d4; font-size: 24px; margin: 0 0 4px; }
-          .meta { font-size: 13px; color: #64748b; margin-bottom: 24px; }
-          .section { margin-bottom: 20px; border-left: 3px solid #0078d4; padding-left: 14px; }
-          .section-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #0078d4; margin-bottom: 4px; }
-          .section-value { font-size: 14px; line-height: 1.6; }
-          .goal-badge { display:inline-block; background:#e8f0fe; color:#1a56db; border-radius:20px; padding:4px 14px; font-size:13px; font-weight:700; margin-bottom:20px; }
-          .divider { border:none; border-top:1px solid #e2e8f0; margin: 20px 0; }
-          .footer { font-size:11px; color:#94a3b8; margin-top:32px; text-align:center; }
-          @media print { body { padding: 20px; } button { display:none; } }
+          * { box-sizing:border-box; }
+          body { font-family:'Segoe UI',Arial,sans-serif; margin:0; padding:36px 44px; color:#1a1a1a; max-width:800px; }
+          h1 { color:#0078d4; font-size:26px; margin:0 0 4px; font-weight:700; }
+          .meta { font-size:12px; color:#64748b; margin-bottom:8px; }
+          .goal-badge { display:inline-block; background:#e8f0fe; color:#1a56db; border-radius:20px; padding:4px 14px; font-size:13px; font-weight:700; margin-bottom:22px; }
+          .product-badge { display:inline-block; background:#f0fdf4; color:#15803d; border-radius:20px; padding:4px 14px; font-size:13px; font-weight:700; margin-bottom:22px; margin-left:8px; }
+          .section { margin-bottom:18px; border-left:4px solid #0078d4; padding-left:14px; }
+          .section-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#0078d4; margin-bottom:5px; }
+          .section-value { font-size:14px; line-height:1.65; }
+          ul { margin:6px 0 0 18px; padding:0; }
+          li { margin-bottom:4px; font-size:14px; line-height:1.5; }
+          .obj-row { background:#f8fafc; border:1px solid #e2e8f0; border-radius:7px; padding:10px 13px; margin-bottom:8px; }
+          .obj-q { font-size:13px; font-weight:700; color:#374151; margin-bottom:4px; }
+          .obj-a { font-size:13px; color:#4b5563; line-height:1.5; }
+          .field-key { font-weight:600; }
+          .divider { border:none; border-top:1px solid #e2e8f0; margin:22px 0; }
+          .outcome-block { margin-bottom:14px; font-size:13px; line-height:1.6; }
+          .outcome-name { font-weight:700; color:#0078d4; margin-bottom:3px; font-size:14px; }
+          .footer { font-size:11px; color:#94a3b8; margin-top:36px; padding-top:14px; border-top:1px solid #e2e8f0; text-align:center; }
+          .print-btn { background:#0078d4; color:#fff; border:none; padding:10px 28px; border-radius:7px; font-size:14px; cursor:pointer; margin-top:14px; }
+          @media print { .print-btn { display:none; } body { padding:20px; } }
         </style></head><body>
+
         <h1>${play.play_name}</h1>
-        <div class="meta">Play ID: ${play.play_id}${play.product ? ' &nbsp;·&nbsp; Product: ' + play.product : ''} &nbsp;·&nbsp; Generated ${new Date().toLocaleDateString()}</div>
-        ${goalLabel ? `<div class="goal-badge">🎯 Goal: ${goalLabel}</div>` : ''}
-        ${play.elevator_pitch ? `<div class="section"><div class="section-label">Elevator Pitch</div><div class="section-value">${play.elevator_pitch}</div></div>` : ''}
-        ${play.icp ? `<div class="section"><div class="section-label">Ideal Customer Profile</div><div class="section-value">${play.icp}</div></div>` : ''}
-        ${play.target_persona ? `<div class="section"><div class="section-label">Target Persona</div><div class="section-value">${play.target_persona}</div></div>` : ''}
-        ${play.why_it_matters ? `<div class="section"><div class="section-label">Why It Matters</div><div class="section-value">${play.why_it_matters}</div></div>` : ''}
-        ${play.instructions ? `<div class="section"><div class="section-label">Rep Instructions</div><div class="section-value">${play.instructions}</div></div>` : ''}
-        ${keyQs.length ? `<div class="section"><div class="section-label">Key Discovery Questions</div><div class="section-value">${keyQHtml}</div></div>` : ''}
-        ${outcomeHtml ? `<hr class="divider"><div class="section-label" style="margin-bottom:12px;">Outcome Options</div>${outcomeHtml}` : ''}
-        <div class="footer">INFRA SalesPlay Tracker — Progress Software Proprietary &amp; Confidential</div>
-        <br><button onclick="window.print()" style="background:#0078d4;color:#fff;border:none;padding:10px 24px;border-radius:6px;font-size:14px;cursor:pointer;margin-top:8px;">🖨 Print / Save as PDF</button>
+        <div class="meta">Play ID: <strong>${play.play_id}</strong> &nbsp;·&nbsp; Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div>
+        ${goalLabel   ? `<span class="goal-badge">🎯 ${goalLabel}</span>` : ''}
+        ${play.product? `<span class="product-badge">📦 ${play.product}</span>` : ''}
+
+        ${sec('Elevator Pitch',         play.elevator_pitch   ? play.elevator_pitch                 : '')}
+        ${sec('Why It Matters',         play.why_it_matters   ? play.why_it_matters                 : play.pitch_details || '')}
+        ${sec('Key Value Propositions', valueProps.length     ? listHtml(valueProps)                : '')}
+        ${sec('Ideal Customer Profile', play.icp              ? play.icp                            : '')}
+        ${sec('Target Persona / Buyer', play.target_persona   ? play.target_persona                 : play.persona_notes || '')}
+        ${sec('Rep Instructions',       play.instructions     ? play.instructions                   : play.next_step_guidance || '')}
+        ${sec('Discovery Questions',    keyQs.length          ? listHtml(keyQs)                     : '')}
+        ${objections.length ? `<div class="section"><div class="section-label">Common Objections &amp; Responses</div><div class="section-value">${objHtml}</div></div>` : ''}
+
+        ${outcomeHtml ? `<hr class="divider">
+          <div class="section-label" style="margin-bottom:14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#0078d4;">Outcome Options &amp; Rep Guidance</div>
+          ${outcomeHtml}` : ''}
+
+        <div class="footer">INFRA SalesPlay Tracker &nbsp;·&nbsp; Progress Software — Proprietary &amp; Confidential &nbsp;·&nbsp; Progress Employees Only</div>
+        <br><button class="print-btn" onclick="window.print()">🖨 Print / Save as PDF</button>
         </body></html>`);
         win.document.close();
       } catch(e) { alert('Could not generate PDF: ' + e.message); }
