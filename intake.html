@@ -300,8 +300,11 @@
              onclick="toggleOutcome('${sid}')">
           <input type="checkbox" id="${sid}-enabled" checked onclick="event.stopPropagation()"
             style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">
-          <label for="${sid}-enabled" style="font-size:14px;font-weight:700;cursor:pointer;flex:1;margin:0;"
-            onclick="event.stopPropagation()">${icon} ${escHtml(name)}</label>
+          <span style="font-size:16px;flex-shrink:0;">${icon}</span>
+          <input type="text" id="${sid}-label" value="${escHtml(name)}"
+            onclick="event.stopPropagation()"
+            style="flex:1;font-size:14px;font-weight:700;border:none;border-bottom:1px dashed #cbd5e1;background:transparent;padding:2px 4px;cursor:text;outline:none;min-width:0;"
+            placeholder="Outcome label…">
           <span id="${sid}-arrow" style="color:#94a3b8;font-size:12px;transition:transform 0.2s;">▼</span>
         </div>
         <div id="${sid}-body" style="padding:14px 16px;border-top:1px solid #e5e7eb;">
@@ -346,7 +349,8 @@
     const config = {};
     container.querySelectorAll('[id$="-enabled"]').forEach(cb => {
       const sid   = cb.id.replace('-enabled','');
-      const name  = cb.nextElementSibling?.textContent?.trim().replace(/^[✅❌⚠️]\s*/,'') || sid;
+      const labelEl = document.getElementById(sid + '-label');
+      const name  = labelEl ? labelEl.value.trim() : (cb.nextElementSibling?.textContent?.trim().replace(/^[✅❌⚠️•]\s*/,'') || sid);
       const result = { enabled: cb.checked, reasons: [], next_steps: [], timing: [],
                        freeform: !!(document.getElementById(sid + '-freeform')?.checked) };
       ['reasons','next_steps','timing'].forEach(field => {
