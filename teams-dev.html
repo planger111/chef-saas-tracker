@@ -190,7 +190,7 @@
   <!-- ===================== SCREEN: PLAY DETAIL ===================== -->
   <div id="screen-play-detail" class="screen">
     <div class="header">
-      <button class="header-back btn btn-secondary" id="btn-back-to-dashboard">← Back</button>
+      <button class="header-back btn btn-secondary" id="btn-back-to-dashboard">🏠 Home</button>
       <span class="header-title" id="play-detail-title">Play</span>
       <button id="btn-play-info" onclick="showPlayInfo(currentPlay && currentPlay.play_id)" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:4px 10px;font-size:13px;cursor:pointer;color:#0078d4;font-weight:600;">ℹ Pitch Info</button>
     </div>
@@ -219,7 +219,7 @@
   <!-- ===================== SCREEN: LOG FORM ===================== -->
   <div id="screen-log-form" class="screen">
     <div class="header">
-      <button class="header-back btn btn-secondary" id="btn-back-to-play">← Back</button>
+      <button class="header-back btn btn-secondary" id="btn-back-to-play">🏠 Home</button>
       <span class="header-title" id="log-form-title">Log Interaction</span>
     </div>
 
@@ -436,7 +436,7 @@
       </div>
 
       <!-- Back button -->
-      <button id="btn-back-to-accounts" class="btn btn-primary btn-block">Back to My Accounts</button>
+      <button id="btn-back-to-accounts" class="btn btn-primary btn-block">🏠 Back to Home</button>
 
     </div>
   </div>
@@ -444,7 +444,7 @@
   <!-- ===================== SCREEN: LEADERBOARD ===================== -->
   <div id="screen-leaderboard" class="screen">
     <div class="header">
-      <button class="header-back btn btn-secondary" id="btn-back-to-dashboard-lb">← Back</button>
+      <button class="header-back btn btn-secondary" id="btn-back-to-dashboard-lb">🏠 Home</button>
       <span class="header-title">Leaderboard</span>
     </div>
 
@@ -1457,10 +1457,6 @@
         else { ctxMeta.style.display = 'none'; }
       }
 
-      // Dynamic back button label
-      const backBtn = document.getElementById('btn-back-to-play');
-      if (backBtn) backBtn.textContent = playName ? `← ${playName}` : '← Back';
-
       // Reset all fields
       document.querySelectorAll('input[name="interaction-type"]').forEach(r => r.checked = false);
       document.querySelectorAll('input[name="outcome"]').forEach(r => r.checked = false);
@@ -2079,18 +2075,9 @@
       goBack();
     });
 
-    // Back: log form → play detail (step-aware)
+    // Home: log form → dashboard
     document.getElementById('btn-back-to-play').addEventListener('click', () => {
-      if (currentStep > 1) {
-        goToLogStep(currentStep - 1);
-      } else if (currentPlay) {
-        activeFilter = 'all';
-        renderAccountList(getPlayAccounts(currentPlay), activeFilter);
-        document.querySelectorAll('.filter-tab').forEach(t => {
-          t.classList.toggle('active', t.dataset.filter === 'all');
-        });
-        showScreen('screen-play-detail');
-      }
+      showDashboard();
     });
 
     // Back: leaderboard → dashboard
@@ -2098,13 +2085,9 @@
       showDashboard();
     });
 
-    // Back to accounts (confirm screen)
+    // Home: confirm screen → dashboard
     document.getElementById('btn-back-to-accounts').addEventListener('click', () => {
-      if (currentPlay) {
-        loadPlayDetail(currentPlay, true);
-      } else {
-        showDashboard();
-      }
+      showDashboard();
     });
 
     // Filter tabs
@@ -2231,27 +2214,10 @@
       console.log('[Teams DEV] FORCE DEMO MODE — skipping all auth, Graph, and MSAL');
       document.addEventListener('DOMContentLoaded', () => {
         // Wire all back buttons for demo mode navigation
-        document.getElementById('btn-back-to-dashboard').addEventListener('click', () => goBack());
-        document.getElementById('btn-back-to-play').addEventListener('click', () => {
-          if (currentStep > 1) {
-            goToLogStep(currentStep - 1);
-          } else if (currentPlay) {
-            activeFilter = 'all';
-            renderAccountList(getPlayAccounts(currentPlay), activeFilter);
-            document.querySelectorAll('.filter-tab').forEach(t => {
-              t.classList.toggle('active', t.dataset.filter === 'all');
-            });
-            showScreen('screen-play-detail');
-          }
-        });
+        document.getElementById('btn-back-to-dashboard').addEventListener('click', () => showDashboard());
+        document.getElementById('btn-back-to-play').addEventListener('click', () => showDashboard());
         document.getElementById('btn-back-to-dashboard-lb').addEventListener('click', () => showDashboard());
-        document.getElementById('btn-back-to-accounts').addEventListener('click', () => {
-          if (currentPlay) {
-            loadPlayDetail(currentPlay, true);
-          } else {
-            showDashboard();
-          }
-        });
+        document.getElementById('btn-back-to-accounts').addEventListener('click', () => showDashboard());
         // Ensure dev banner shows version number in demo mode
         const devBanner = document.getElementById('dev-env-banner');
         if (devBanner) {
