@@ -2,6 +2,7 @@
 
 let _msalInstance = null;
 let _account = null;
+let _lastRedirectError = null;
 
 // Always use redirect flow — works universally across mobile, desktop, Teams,
 // embedded browsers, and popup contexts. Popup flow caused block_nested_popups
@@ -16,6 +17,7 @@ function _getMsalConfig() {
       clientId: CONFIG.clientId,
       authority: `https://login.microsoftonline.com/${CONFIG.tenantId}`,
       redirectUri: window.location.origin,
+      navigateToLoginRequestUrl: true,
     },
     cache: {
       cacheLocation: "sessionStorage",
@@ -29,14 +31,30 @@ async function initAuth() {
     _msalInstance = new msal.PublicClientApplication(_getMsalConfig());
   }
 
-  // Handle any pending redirect (in case redirect flow was used previously)
+  // Handle any pending redirect (in case redirect flow was used previously).
+  // Wrap in a tight timeout — stale MSAL sessionStorage state (e.g. from a
+  // previous failed ssoSilent iframe) can cause handleRedirectPromise to hang
+  // indefinitely.  If it times out, clear all msal.* keys and carry on.
+  _lastRedirectError = null;
   try {
-    const response = await _msalInstance.handleRedirectPromise();
-    if (response && response.account) {
-      _account = response.account;
+    const redirectResult = await Promise.race([
+      _msalInstance.handleRedirectPromise(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('msal_timeout')), 5000))
+    ]);
+    if (redirectResult && redirectResult.account) {
+      _account = redirectResult.account;
     }
   } catch (err) {
-    console.warn("MSAL redirect error (safe to ignore on popup flow):", err);
+    if (err.message === 'msal_timeout') {
+      console.warn('MSAL handleRedirectPromise timed out — clearing stale state');
+      Object.keys(sessionStorage)
+        .filter(k => k.startsWith('msal.') || k.startsWith('msal|'))
+        .forEach(k => sessionStorage.removeItem(k));
+      _msalInstance = new msal.PublicClientApplication(_getMsalConfig());
+    } else {
+      _lastRedirectError = err;
+      console.warn("MSAL redirect error:", err);
+    }
   }
 
   // Check cache for existing account
@@ -124,6 +142,12 @@ async function getAccessToken() {
     }
     throw err;
   }
+}
+
+// Returns the last error from handleRedirectPromise() (e.g. admin consent denied).
+// Callers can use this to show actionable UI after initAuth() if no account was found.
+function getLastRedirectError() {
+  return _lastRedirectError;
 }
 
 function getCurrentUser() {

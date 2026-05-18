@@ -4,14 +4,16 @@ on:
   push:
     branches:
       - main
+      - dev/v2-upgrade
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build_and_deploy:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy
     steps:
@@ -30,6 +32,7 @@ jobs:
           output_location: ""     # no build step needed — plain HTML
           skip_app_build: true
           skip_deploy_on_missing_secrets: true
+          deployment_environment: ${{ github.ref_name == 'main' && 'production' || 'dev-preview' }}
 
   close_pull_request:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

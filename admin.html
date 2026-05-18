@@ -84,9 +84,145 @@
     .rp-item .rp-email { color: #6b7280; font-size: 12px; }
     .rp-item .rp-hl { background: #fef08a; border-radius: 2px; padding: 0 1px; }
     .rp-empty { padding: 12px; text-align: center; color: #aaa; font-size: 13px; }
+
+    /* ── Primary nav tabs ──────────────────────────────────── */
+    .admin-primary-tabs {
+      display: flex; align-items: center; background: #fff;
+      border-bottom: 2px solid #e2e8f0; padding: 0 16px; gap: 2px;
+      overflow-x: auto; flex-shrink: 0;
+    }
+    .admin-primary-tab {
+      padding: 10px 16px; border: none; background: none; cursor: pointer;
+      font-size: 13px; font-weight: 600; color: #64748b; border-radius: 0;
+      white-space: nowrap; transition: color 0.15s; border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+    }
+    .admin-primary-tab.active { color: #0078d4; border-bottom-color: #0078d4; }
+    .admin-primary-tab:hover:not(.active) { color: #1e293b; background: #f8fafc; }
+
+    /* ── Sub-tab bar ───────────────────────────────────────── */
+    .sub-tab-bar {
+      display: flex; align-items: center; gap: 4px;
+      background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+      padding: 8px 16px; margin: -16px -16px 16px; flex-wrap: wrap;
+    }
+    .sub-tab {
+      padding: 5px 14px; border: 1px solid transparent; background: none;
+      cursor: pointer; font-size: 13px; font-weight: 600; color: #64748b;
+      border-radius: 6px; white-space: nowrap; transition: all 0.15s;
+    }
+    .sub-tab.active { background: #fff; border-color: #d1d5db; color: #1e293b; box-shadow: 0 1px 3px rgba(0,0,0,.07); }
+    .sub-tab:hover:not(.active) { background: #e8f0fe; color: #0078d4; }
+
+    /* ── Breadcrumb ────────────────────────────────────────── */
+    .breadcrumb-bar {
+      display: flex; align-items: center; gap: 10px;
+      background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+      padding: 8px 16px; margin: -16px -16px 16px;
+    }
+    .breadcrumb-back {
+      background: none; border: none; color: #0078d4; cursor: pointer;
+      font-size: 13px; font-weight: 600; padding: 4px 8px; border-radius: 5px;
+    }
+    .breadcrumb-back:hover { background: #e8f0fe; }
+    .breadcrumb-current { font-size: 13px; color: #374151; font-weight: 600; }
+
+    /* ── Overview KPI cards ─────────────────────────────────── */
+    .ov-kpi-row {
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 28px;
+    }
+    @media (max-width: 700px) { .ov-kpi-row { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 400px) { .ov-kpi-row { grid-template-columns: repeat(2, 1fr); } }
+    .ov-kpi-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 14px 12px; text-align: center;
+    }
+    .ov-kpi-num { font-size: 28px; font-weight: 800; color: #1a1a2e; line-height: 1; margin-bottom: 4px; }
+    .ov-kpi-lbl { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #9ca3af; }
+    .ov-kpi-engaged     .ov-kpi-num { color: #0078d4; }
+    .ov-kpi-interested  .ov-kpi-num { color: #107c10; }
+    .ov-kpi-ni          .ov-kpi-num { color: #d32f2f; }
+    .ov-kpi-wne         .ov-kpi-num { color: #d97706; }
+    .ov-kpi-notyet      .ov-kpi-num { color: #9ca3af; }
+
+    /* ── Overview play cards ────────────────────────────────── */
+    .ov-section-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px;
+      color: #6b7280; margin-bottom: 12px;
+    }
+    .ov-play-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-bottom: 8px;
+    }
+    .ov-play-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px;
+    }
+    .ov-play-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+    .ov-play-name { font-size: 14px; font-weight: 700; color: #1a1a2e; line-height: 1.35; }
+    .ov-play-pct { font-size: 20px; font-weight: 800; color: #0078d4; flex-shrink: 0; }
+    .ov-progress-track { height: 6px; background: #f1f5f9; border-radius: 3px; margin-bottom: 10px; overflow: hidden; }
+    .ov-progress-fill { height: 100%; background: #0078d4; border-radius: 3px; transition: width 0.4s ease; }
+    .ov-play-stats { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: #6b7280; margin-bottom: 12px; }
+    .ov-view-btn {
+      background: #f0f7ff; color: #0078d4; border: 1px solid #c3dafe; padding: 5px 12px;
+      border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; width: 100%;
+    }
+    .ov-view-btn:hover { background: #dbeafe; }
+
+    /* ── Overview recent activity ───────────────────────────── */
+    .ov-recent-list { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    .ov-recent-row {
+      display: grid; grid-template-columns: 90px 160px 1fr 120px; gap: 12px;
+      align-items: center; padding: 8px 14px; font-size: 13px;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .ov-recent-row:last-child { border-bottom: none; }
+    .ov-recent-row:nth-child(even) { background: #fafafa; }
+    .ov-recent-date { color: #9ca3af; font-size: 12px; }
+    .ov-recent-rep { font-weight: 600; color: #374151; }
+    .ov-recent-acct { color: #4b5563; }
+    @media (max-width: 600px) { .ov-recent-row { grid-template-columns: 80px 1fr; } }
+
+    /* ── Admin Tools cards ──────────────────────────────────── */
+    .at-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px;
+    }
+    .at-card {
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      padding: 18px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .at-card-icon { font-size: 24px; }
+    .at-card-title { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+    .at-card-desc { font-size: 13px; color: #6b7280; line-height: 1.5; flex: 1; }
+    .at-card-btn {
+      margin-top: 8px; background: #f0f7ff; color: #0078d4; border: 1px solid #c3dafe;
+      padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;
+      text-align: left;
+    }
+    .at-card-btn:hover { background: #dbeafe; }
+
+    /* ── More dropdown in header ───────────────────────────── */
+    .more-dropdown { position: relative; }
+    .more-menu {
+      display: none; position: absolute; top: calc(100% + 6px); right: 0;
+      background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.14); min-width: 200px; z-index: 500;
+      padding: 4px 0; overflow: hidden;
+    }
+    .more-menu button, .more-menu a {
+      display: block; width: 100%; padding: 9px 16px; background: none; border: none;
+      text-align: left; font-size: 13px; color: #374151; cursor: pointer; text-decoration: none;
+    }
+    .more-menu button:hover, .more-menu a:hover { background: #f0f7ff; color: #0078d4; }
+    .more-menu-divider { height: 1px; background: #e2e8f0; margin: 4px 0; }
+
+    /* ── Admin tab panels — add padding ────────────────────── */
+    .admin-tab-panel { padding: 16px; }
   </style>
 </head>
 <body>
+<div id="dev-env-banner" style="display:block;background:#e65c00;color:#fff;text-align:center;padding:6px 12px;font-size:12px;font-weight:700;position:sticky;top:0;z-index:99999;border-bottom:2px solid #b34400;">
+  ⚠️ DEV — Loading…
+</div>
 
   <!-- Toast notification stack — fixed top-right, always on top -->
   <div id="toast-stack"></div>
@@ -108,45 +244,81 @@
       <div class="admin-header">
         <div class="admin-header-title" style="cursor:pointer;" onclick="window.location.href='app.html'" title="Go to Rep App">INFRA SalesPlay Tracker — Admin</div>
         <div class="admin-header-right">
-          <span id="admin-user-name" style="font-size:12px;color:#9ca3af;margin-right:8px;"></span>
+          <div class="admin-user-name-block"><span id="admin-user-name"></span></div>
           <a href="app.html" class="admin-nav-link">Home</a>
           <a href="ingest.html" class="admin-nav-link admin-nav-btn" title="Create a brand new play from scratch">New Play</a>
-          <a href="ingest.html?mode=accounts" class="admin-nav-link admin-nav-btn" title="Add accounts to an existing play" style="background:#e8f0fe;color:#1a56db;border-color:#c3d4f7;">Add Accounts</a>
-          <div class="export-dropdown">
-            <button class="admin-nav-btn admin-nav-btn-secondary" onclick="toggleExportMenu(this)">Export ▾</button>
-            <div class="export-menu" style="display:none;">
-              <button onclick="exportAll();closeExportMenu()">Export All (CSV)</button>
-              <button id="btn-csv-drop" onclick="document.getElementById('btn-csv').click();closeExportMenu()">Export Filtered (CSV)</button>
-              <button id="btn-excel-drop" onclick="document.getElementById('btn-excel').click();closeExportMenu()">Export Filtered (Excel)</button>
+          <a href="ingest.html?mode=accounts" class="admin-nav-link admin-nav-btn" title="Add accounts to an existing play" style="background:#1e40af;">Add Accounts</a>
+          <div class="more-dropdown">
+            <button class="admin-nav-btn admin-nav-btn-secondary" onclick="toggleMoreMenu(this)">More ▾</button>
+            <div class="more-menu" id="more-menu">
+              <button onclick="exportAll();closeMoreMenu()">Export All (CSV)</button>
+              <button id="btn-csv-drop" onclick="document.getElementById('btn-csv').click();closeMoreMenu()">Export Filtered (CSV)</button>
+              <button id="btn-excel-drop" onclick="document.getElementById('btn-excel').click();closeMoreMenu()">Export Filtered (Excel)</button>
+              <div class="more-menu-divider"></div>
+              <button onclick="openMessageModal();closeMoreMenu()">📣 Message Team</button>
             </div>
           </div>
-          <a href="#" id="btn-sign-out" class="admin-nav-link">Sign out</a>
+          <a href="#" id="btn-sign-out" class="admin-nav-link signout">Sign out</a>
           <!-- Hidden for JS compatibility -->
           <button id="btn-export-all" style="display:none;"></button>
         </div>
       </div>
 
-      <!-- Tab Navigation -->
-      <div class="admin-tabs">
+      <!-- Primary Tab Navigation -->
+      <div class="admin-primary-tabs">
+        <button class="admin-primary-tab active" data-tab="overview">📊 Overview</button>
+        <button class="admin-primary-tab" data-tab="activity-log">📋 Activity</button>
+        <button class="admin-primary-tab" data-tab="leaderboard">🏆 Leaderboard</button>
+        <button class="admin-primary-tab" data-tab="coverage">🗺 Coverage</button>
+        <button class="admin-primary-tab" data-tab="plays">🎯 Plays</button>
+        <button class="admin-primary-tab" data-tab="accounts">🏢 Accounts</button>
+        <button class="admin-primary-tab" data-tab="admin-tools">⚙️ Admin Tools</button>
+      </div>
+
+      <!-- Legacy tab nav — hidden, kept for applyRoleUI() JS compatibility -->
+      <div class="admin-tabs" style="display:none;">
+        <!-- Engagement -->
         <button class="admin-tab active" data-tab="activity-log">Activity Log</button>
+        <button class="admin-tab" data-tab="activity-log-user" id="tab-btn-activity-log-user" style="display:none;">My Activity</button>
         <button class="admin-tab" data-tab="leaderboard">Leaderboard</button>
-        <button class="admin-tab" data-tab="plays">Plays</button>
-        <button class="admin-tab" data-tab="accounts">Accounts</button>
         <button class="admin-tab" data-tab="coverage">Coverage</button>
-        <button class="admin-tab" data-tab="health">Health</button>
-        <button class="admin-tab" data-tab="broadcast">Broadcast</button>
-        <button class="admin-tab" data-tab="invite">Invite</button>
+        <button class="admin-tab" data-tab="rep-view">Rep View</button>
+        <span class="tab-divider"></span>
+        <!-- Plays -->
+        <button class="admin-tab" data-tab="plays">Plays</button>
+        <button class="admin-tab" data-tab="play-briefs">Play Briefs</button>
         <button class="admin-tab" data-tab="config">Config</button>
-        <button class="admin-tab" data-tab="activity-log-user" id="tab-btn-activity-log-user" style="display:none;">Activity Log</button>
-        <button class="admin-tab" data-tab="demo-activity" id="tab-btn-demo-activity" style="display:none;">Demo Activity</button>
-        <button class="admin-tab" data-tab="snapshots" id="tab-btn-snapshots" style="display:none;">Snapshots</button>
+        <span class="tab-divider"></span>
+        <!-- Accounts -->
+        <button class="admin-tab" data-tab="accounts">Accounts</button>
+        <button class="admin-tab" data-tab="health">Health</button>
+        <span class="tab-divider"></span>
+        <!-- System (owner-only, hidden until role loads) -->
         <button class="admin-tab" data-tab="identity" id="tab-btn-identity" style="display:none;">Identity</button>
         <button class="admin-tab" data-tab="access-log" id="tab-btn-access-log" style="display:none;">Access Log</button>
         <button class="admin-tab" data-tab="corrections" id="tab-btn-corrections" style="display:none;">Corrections</button>
+        <button class="admin-tab" data-tab="snapshots" id="tab-btn-snapshots" style="display:none;">Snapshots</button>
+        <button class="admin-tab" data-tab="demo-activity" id="tab-btn-demo-activity" style="display:none;">Demo Activity</button>
+      </div>
+
+      <!-- Overview Tab Panel -->
+      <div id="tab-overview" class="admin-tab-panel">
+        <div id="overview-content">
+          <div style="text-align:center;padding:48px;"><div class="spinner"></div></div>
+        </div>
       </div>
 
       <!-- Activity Log Tab Panel -->
-      <div id="tab-activity-log" class="admin-tab-panel">
+      <div id="tab-activity-log" class="admin-tab-panel" style="display:none;">
+
+      <!-- Activity sub-nav -->
+      <div class="sub-tab-bar">
+        <button class="sub-tab active" id="sub-btn-activity" onclick="switchActivitySubTab('activity-log')">Activity Log</button>
+        <button class="sub-tab" id="sub-btn-my-activity" onclick="switchActivitySubTab('activity-log-user')">My Activity</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('btn-csv').click()">Export CSV</button>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('btn-excel').click()">Export Excel</button>
+      </div>
 
       <!-- Play Funnel Summary -->
       <div id="admin-funnel-wrap" style="margin-bottom:16px;"></div>
@@ -276,32 +448,43 @@
 
       <!-- ── Response Options Config Tab ── -->
       <div id="tab-config" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('plays')" class="breadcrumb-back">← Plays</button>
+          <span class="breadcrumb-current">Response Config</span>
+        </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;">
-          <div style="font-size:13px;color:#555;">Edit response options reps see in the engagement form. Each play can have its own reasons. Changes save to SharePoint and take effect immediately.</div>
+          <div style="font-size:13px;color:#555;">Configure outcomes, reasons, next steps, and timing for each play. Changes are saved per-play to SharePoint.</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button onclick="resetPlayToStandard()" style="background:#fff8e1;color:#856404;border:1px solid #ffe082;padding:9px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;">↩ Reset This Play to Standard</button>
-            <button onclick="resetAllPlaysToStandard()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:9px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;">↩ Reset All Plays to Standard</button>
-            <button onclick="saveConfig()" style="background:#107c10;color:#fff;border:none;padding:9px 20px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;">💾 Save to SharePoint</button>
+            <button onclick="resetPlayToStandard()" style="background:#fff8e1;color:#856404;border:1px solid #ffe082;padding:9px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;">↩ Reset This Play</button>
+            <button onclick="resetAllPlaysToStandard()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:9px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;">↩ Reset All Plays</button>
+            <button id="config-save-btn" onclick="saveConfig()" style="background:#107c10;color:#fff;border:none;padding:9px 20px;border-radius:6px;font-weight:600;cursor:pointer;font-size:14px;transition:box-shadow 0.3s;">💾 Save to SharePoint</button>
           </div>
         </div>
 
-        <!-- Play picker for reasons -->
-        <div style="background:#f0f7ff;border:1px solid #d0e4f7;border-radius:8px;padding:12px 14px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-          <label style="font-size:13px;font-weight:600;white-space:nowrap;">Editing reasons for play:</label>
+        <!-- Play picker -->
+        <div style="background:#f0f7ff;border:1px solid #d0e4f7;border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <label style="font-size:13px;font-weight:600;white-space:nowrap;">Editing config for play:</label>
           <select id="config-play-picker" onchange="onPlayPickerChange()" style="flex:1;min-width:180px;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
             <option value="">Loading plays…</option>
           </select>
-          <span style="font-size:12px;color:#666;" id="config-response-set-label"></span>
         </div>
 
+        <!-- Dirty indicator -->
+        <div id="config-dirty-indicator" style="display:none;background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:8px 14px;font-size:13px;color:#856404;margin-bottom:12px;">⚠ Unsaved changes — click Save to apply</div>
+
         <div id="config-status" style="display:none;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:12px;"></div>
-        <div id="config-editor" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
+        <div id="config-editor" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;">
           <div style="text-align:center;color:#999;padding:32px;">Loading…</div>
         </div>
       </div><!-- /#tab-config -->
 
       <!-- ── Plays Management Tab ── -->
       <div id="tab-plays" class="admin-tab-panel" style="display:none;">
+        <div class="sub-tab-bar">
+          <button class="sub-tab active" onclick="showAdminTab('plays')">All Plays</button>
+          <button class="sub-tab" onclick="showAdminTab('play-briefs')">Play Briefs</button>
+          <button class="sub-tab" onclick="showAdminTab('config')">Response Config</button>
+        </div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
           <div style="font-size:13px;color:#555;">All active sales plays. Export engagement data or delete a play and all its assignments.</div>
           <div style="display:flex;gap:8px;">
@@ -324,6 +507,15 @@
           </div>
           <div id="quick-play-summary" style="display:none;margin-top:10px;font-size:12px;color:#555;"></div>
         </div>
+        <!-- Pre-launch utilities -->
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
+          <div style="font-size:13px;font-weight:700;color:#166534;margin-bottom:6px;">🔧 Pre-Launch Utilities</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <button onclick="repairPlayConfigs()" style="background:#dcfce7;color:#166534;border:1px solid #86efac;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">🔧 Repair Play Configs</button>
+            <span style="font-size:12px;color:#555;">Auto-populates <code>config.outcomes</code> for any play missing it — fixes dropdown inheritance without re-saving each play manually.</span>
+          </div>
+          <div id="repair-config-status" style="display:none;margin-top:10px;font-size:13px;padding:8px 12px;border-radius:6px;"></div>
+        </div>
         <!-- Danger Zone -->
         <details style="margin-bottom:16px;border:1px solid #fca5a5;border-radius:8px;overflow:hidden;">
           <summary style="padding:10px 14px;background:#fff5f5;color:#b91c1c;font-size:13px;font-weight:700;cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;">⚠ Danger Zone — Destructive Actions</summary>
@@ -332,6 +524,7 @@
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
               <button onclick="resetAllData()" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">🔄 Backup + Reset System</button>
               <button onclick="doUndoLastReset()" style="background:#fff3cd;color:#92400e;border:1px solid #fbbf24;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">↩ Undo Last Reset</button>
+              <button onclick="clearAllPlays()" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;padding:8px 14px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;">🗑️ Clear All Plays</button>
             </div>
             <p style="font-size:11px;color:#9ca3af;margin:10px 0 0;">Both actions require Owner role + typed confirmation. Go to the Snapshots tab to browse and restore any prior snapshot.</p>
           </div>
@@ -371,10 +564,17 @@
           <button onclick="loadAccountsTab()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:8px 14px;border-radius:6px;font-size:14px;cursor:pointer;">🔄 Refresh</button>
         </div>
         <div id="acct-summary" style="font-size:13px;color:#555;margin-bottom:10px;"></div>
+        <!-- Override action bar — shown when ≥1 account checked -->
+        <div id="override-action-bar" style="display:none; background:#fff3cd; border:1px solid #f0c040; border-radius:8px; padding:10px 14px; margin-bottom:12px; align-items:center; gap:12px;">
+          <span id="override-selected-count" style="font-weight:700; font-size:13px;"></span>
+          <button onclick="openOverrideModal()" style="background:#e67e22; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;">🔁 Override / Reset Status</button>
+          <button onclick="clearOverrideSelection()" style="background:none; border:1px solid #aaa; padding:7px 14px; border-radius:6px; font-size:12px; cursor:pointer;">✕ Clear</button>
+        </div>
         <div style="overflow-x:auto;">
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             <thead>
               <tr style="background:#f8f9fa;text-align:left;">
+                <th style="width:32px;padding:10px 4px;border-bottom:2px solid #e9ecef;text-align:center;"><input type="checkbox" id="override-master-cb" onchange="toggleAllOverrideCheckboxes(this)" title="Select all"></th>
                 <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Account Name</th>
                 <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">SFDC ID</th>
                 <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Rep</th>
@@ -386,54 +586,51 @@
               </tr>
             </thead>
             <tbody id="acct-body">
-              <tr><td colspan="8" style="padding:32px;text-align:center;color:#aaa;">Click the Accounts tab to load</td></tr>
+              <tr><td colspan="9" style="padding:32px;text-align:center;color:#aaa;">Click the Accounts tab to load</td></tr>
             </tbody>
           </table>
         </div>
       </div><!-- /#tab-accounts -->
 
-      <!-- ── Invite Tab ── -->
-      <div id="tab-invite" class="admin-tab-panel" style="display:none;">
-        <div style="max-width:680px;">
-          <h3 style="margin:0 0 4px;">Invite Your Reps</h3>
-          <p style="font-size:13px;color:#555;margin:0 0 20px;">Copy the message below and send it to your team to get them started.</p>
 
-          <!-- Editable prize field -->
-          <div style="background:#fff8e1;border:1px solid #ffe082;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-            <span style="font-size:13px;font-weight:600;white-space:nowrap;">🏆 Prize for top 3:</span>
-            <input id="prize-text" type="text" value="a special prize — TBD by your manager!" style="flex:1;min-width:200px;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;" oninput="rebuildInvite()">
+      <!-- Override Modal -->
+      <div id="override-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:12px; padding:28px 32px; max-width:480px; width:90%; box-shadow:0 8px 40px rgba(0,0,0,0.2);">
+          <h3 style="margin:0 0 8px; font-size:17px;">🔁 Override Account Status</h3>
+          <p style="font-size:13px; color:#555; margin-bottom:16px;">This will reset the selected accounts to <strong>Not Started</strong> and record a manager note. The rep will see the override badge and your note.</p>
+          <label style="font-size:13px; font-weight:600; display:block; margin-bottom:6px;">Manager Note (optional — shown to rep):</label>
+          <textarea id="override-note-input" rows="3" placeholder="e.g. Please re-engage — pitch the new pricing tier" style="width:100%; box-sizing:border-box; border:1px solid #d1d5db; border-radius:6px; padding:8px; font-size:13px; margin-bottom:16px;"></textarea>
+          <div style="display:flex; gap:10px; justify-content:flex-end;">
+            <button onclick="closeOverrideModal()" style="background:none; border:1px solid #aaa; padding:9px 18px; border-radius:6px; font-size:13px; cursor:pointer;">Cancel</button>
+            <button onclick="confirmOverride()" style="background:#e67e22; color:#fff; border:none; padding:9px 18px; border-radius:6px; font-size:13px; font-weight:700; cursor:pointer;">🔁 Confirm Override</button>
           </div>
+          <div id="override-modal-status" style="display:none; margin-top:12px; font-size:13px; font-weight:600;"></div>
+        </div>
+      </div>
 
-          <!-- Invite preview -->
-          <div id="invite-preview" style="background:#f8faff;border:1px solid #d0e4f7;border-radius:10px;padding:20px 24px;font-size:14px;line-height:1.7;white-space:pre-wrap;font-family:inherit;"></div>
-
-          <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;">
-            <button onclick="copyInvite()" style="background:#0078d4;color:#fff;border:none;padding:10px 22px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Message</button>
-            <span id="copy-confirm" style="font-size:13px;color:#107c10;align-self:center;display:none;">✓ Copied!</span>
+      <!-- Message Modal -->
+      <div id="message-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;align-items:center;justify-content:center;">
+        <div style="background:#fff;border-radius:12px;padding:28px;width:560px;max-width:95vw;box-shadow:0 8px 32px rgba(0,0,0,0.18);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <h3 style="margin:0;font-size:16px;">📣 Send a Message to Your Team</h3>
+            <button onclick="closeMessageModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6b7280;">✕</button>
           </div>
-
-          <!-- Points reference card -->
-          <div style="margin-top:28px;background:#fff;border:1px solid #e9ecef;border-radius:10px;padding:18px 20px;">
-            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#555;margin-bottom:12px;">Points Reference</div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;font-size:13px;margin-bottom:16px;">
-              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:#f8f9fa;border-radius:6px;"><span>📞 Not Interested</span><strong style="color:#555;">15 pts</strong></div>
-              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:#f8f9fa;border-radius:6px;"><span>✅ Interested</span><strong style="color:#0078d4;">30 pts</strong></div>
-              <div style="display:flex;justify-content:space-between;padding:8px 10px;background:#f8f9fa;border-radius:6px;"><span>✅ Interested + next step</span><strong style="color:#107c10;">45 pts</strong></div>
-            </div>
-            <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#555;margin-bottom:8px;">Levels</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:13px;">
-              <span style="padding:4px 10px;background:#f0f0f0;border-radius:20px;">🌱 Rookie — 0 pts</span>
-              <span style="padding:4px 10px;background:#f0f0f0;border-radius:20px;">🎯 Pitcher — 50 pts</span>
-              <span style="padding:4px 10px;background:#f0f0f0;border-radius:20px;">⭐ Pro — 150 pts</span>
-              <span style="padding:4px 10px;background:#f0f0f0;border-radius:20px;">🥇 Champion — 300 pts</span>
-              <span style="padding:4px 10px;background:#f0f0f0;border-radius:20px;">🏆 Legend — 500 pts</span>
-            </div>
+          <p style="font-size:13px;color:#555;margin:0 0 12px;">Edit below, then copy and paste into Teams.</p>
+          <textarea id="team-message" rows="10" style="width:100%;padding:12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;line-height:1.6;resize:vertical;box-sizing:border-box;font-family:inherit;"></textarea>
+          <div style="margin-top:12px;display:flex;gap:10px;align-items:center;">
+            <button onclick="copyTeamMessage()" style="background:#0078d4;color:#fff;border:none;padding:10px 22px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy to Teams</button>
+            <button onclick="resetTeamMessage()" style="background:#f3f4f6;color:#555;border:1px solid #d1d5db;padding:10px 16px;border-radius:6px;font-size:13px;cursor:pointer;">↩ Reset</button>
+            <span id="message-copy-confirm" style="font-size:13px;color:#107c10;display:none;">✓ Copied!</span>
           </div>
         </div>
-      </div><!-- /#tab-invite -->
+      </div>
 
-      <!-- ── Health Check Tab ── -->
+
       <div id="tab-health" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('admin-tools')" class="breadcrumb-back">← Admin Tools</button>
+          <span class="breadcrumb-current">System Health</span>
+        </div>
         <div id="health-check-content">
           <div style="text-align:center;padding:32px;"><div class="spinner"></div></div>
         </div>
@@ -441,60 +638,21 @@
 
       <!-- ── Coverage Report Tab ── -->
       <div id="tab-coverage" class="admin-tab-panel" style="display:none;">
+        <div class="sub-tab-bar">
+          <button class="sub-tab active" onclick="showAdminTab('coverage')">Coverage Map</button>
+          <button class="sub-tab" onclick="showAdminTab('rep-view')">Rep View</button>
+        </div>
         <div id="coverage-content">
           <div style="text-align:center;padding:32px;"><div class="spinner"></div></div>
         </div>
       </div><!-- /#tab-coverage -->
 
-      <!-- ── Broadcast Tab ── -->
-      <div id="tab-broadcast" class="admin-tab-panel" style="display:none;">
-        <div style="max-width:780px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
-            <h3 style="margin:0;">📣 Broadcast Update</h3>
-            <button onclick="loadBroadcastTab()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:8px 14px;border-radius:6px;font-size:14px;cursor:pointer;">🔄 Refresh</button>
-          </div>
-
-          <!-- Editable fields -->
-          <div style="background:#f8faff;border:1px solid #d0e4f7;border-radius:10px;padding:18px 20px;margin-bottom:16px;">
-            <div style="display:flex;flex-direction:column;gap:12px;">
-              <div>
-                <label style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;display:block;margin-bottom:4px;">Subject Line</label>
-                <input id="broadcast-subject" type="text" value="🏆 INFRA SalesPlay Tracker — Mid-Quarter Update" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;box-sizing:border-box;">
-              </div>
-              <div>
-                <label style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;display:block;margin-bottom:4px;">Opening Message</label>
-                <textarea id="broadcast-opening" rows="2" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;resize:vertical;box-sizing:border-box;">Great work this quarter! Here's where things stand:</textarea>
-              </div>
-              <div>
-                <label style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;display:block;margin-bottom:4px;">Closing Message</label>
-                <textarea id="broadcast-closing" rows="2" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;resize:vertical;box-sizing:border-box;">Keep up the great work. Every pitch counts! 💪</textarea>
-              </div>
-            </div>
-            <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;">
-              <button onclick="refreshBroadcastPreview()" style="background:#0078d4;color:#fff;border:none;padding:9px 18px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">🔄 Update Preview</button>
-              <button onclick="copyBroadcastMessage()" style="background:#107c10;color:#fff;border:none;padding:9px 18px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">📋 Copy Message</button>
-              <span id="broadcast-copy-confirm" style="font-size:13px;color:#107c10;align-self:center;display:none;">✓ Copied!</span>
-            </div>
-          </div>
-
-          <!-- Live leaderboard preview -->
-          <div style="margin-bottom:16px;">
-            <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:8px;">Live Leaderboard (Top 10)</div>
-            <div id="broadcast-leaderboard-preview" style="background:#fff;border:1px solid #e9ecef;border-radius:8px;overflow:hidden;">
-              <div style="text-align:center;padding:24px;color:#aaa;">Loading…</div>
-            </div>
-          </div>
-
-          <!-- Message preview -->
-          <div>
-            <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#555;margin-bottom:8px;">Message Preview</div>
-            <div id="broadcast-message-preview" style="background:#f8faff;border:1px solid #d0e4f7;border-radius:10px;padding:20px 24px;font-size:14px;line-height:1.7;white-space:pre-wrap;font-family:inherit;min-height:200px;"></div>
-          </div>
-        </div>
-      </div><!-- /#tab-broadcast -->
-
-      <!-- Activity Log (User Actions) Tab -->
+      <!-- ── Health Check Tab ── -->
       <div id="tab-activity-log-user" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('activity-log')" class="breadcrumb-back">← Activity</button>
+          <span class="breadcrumb-current">My Activity</span>
+        </div>
         <div class="admin-control-bar" style="margin-bottom:12px;">
           <select id="al-filter-user"><option value="">All Users</option></select>
           <input type="date" id="al-filter-start" title="From date" />
@@ -527,6 +685,10 @@
 
       <!-- Demo Activity Tab -->
       <div id="tab-demo-activity" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('admin-tools')" class="breadcrumb-back">← Admin Tools</button>
+          <span class="breadcrumb-current">Demo Activity</span>
+        </div>
         <div class="admin-control-bar" style="margin-bottom:12px;">
           <select id="demo-filter-user"><option value="">All Users</option></select>
           <input type="date" id="demo-filter-start" title="From date" />
@@ -567,6 +729,10 @@
 
       <!-- Snapshots Tab -->
       <div id="tab-snapshots" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('admin-tools')" class="breadcrumb-back">← Admin Tools</button>
+          <span class="breadcrumb-current">Snapshots / Restore</span>
+        </div>
 
         <!-- Actions row -->
         <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center;">
@@ -608,31 +774,13 @@
 
       <!-- Identity Tab (owner only) -->
       <div id="tab-identity" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('admin-tools')" class="breadcrumb-back">← Admin Tools</button>
+          <span class="breadcrumb-current">Identity / User Access</span>
+        </div>
         <div style="max-width:620px;">
 
-          <!-- Section 1: rep-identity.json (alias overrides) -->
-          <h3 style="margin:0 0 8px;font-size:15px;color:#1a1a2e;">Rep Alias Overrides (rep-identity.json)</h3>
-          <p style="font-size:13px;color:#555;margin-bottom:16px;">
-            Upload <code>rep-identity.json</code> to SharePoint to manually override alias matching for specific reps.
-            Once uploaded, reps will be matched automatically regardless of which email was used during account upload.
-          </p>
-
-          <div id="identity-current" style="background:#f8f9fa;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;margin-bottom:16px;font-size:13px;">
-            <strong>Current status:</strong> <span id="identity-status-text">Checking…</span>
-            <button onclick="checkIdentityFile()" style="margin-left:12px;background:none;border:none;color:#0078d4;cursor:pointer;font-size:12px;">↻ Refresh</button>
-          </div>
-
-          <label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px;">Select rep-identity.json to upload:</label>
-          <input type="file" id="identity-file-input" accept=".json" style="font-size:13px;margin-bottom:12px;">
-          <div id="identity-file-preview" style="display:none;font-size:12px;color:#555;background:#f0f7ff;border:1px solid #c3dafe;border-radius:6px;padding:8px 12px;margin-bottom:12px;"></div>
-          <button onclick="uploadIdentityFile()" id="btn-upload-identity" disabled
-            style="background:#0078d4;color:#fff;border:none;padding:10px 20px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">
-            ⬆️ Upload to SharePoint
-          </button>
-          <div id="identity-upload-status" style="display:none;margin-top:12px;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:600;"></div>
-
-          <!-- Section 2: Email Lookup Map (authoritative) -->
-          <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0 20px;">
+          <!-- Section 1: Email Lookup Map (authoritative) -->
           <h3 style="margin:0 0 8px;font-size:15px;color:#1a1a2e;">📧 Email Lookup Map — Authoritative Identity Source</h3>
           <p style="font-size:13px;color:#555;margin-bottom:8px;">
             This is the <strong>primary</strong> rep identity map. It comes from the
@@ -673,6 +821,10 @@
 
       <!-- Access Log Tab (owner only) -->
       <div id="tab-access-log" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('admin-tools')" class="breadcrumb-back">← Admin Tools</button>
+          <span class="breadcrumb-current">Access Log</span>
+        </div>
         <div style="margin-bottom:12px;">
           <p style="font-size:13px;color:#555;margin:0 0 10px;">
             Logs every login attempt, identity resolution, and assignment mismatch.
@@ -728,6 +880,10 @@
 
       <!-- ── Corrections Tab ── -->
       <div id="tab-corrections" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('admin-tools')" class="breadcrumb-back">← Admin Tools</button>
+          <span class="breadcrumb-current">Corrections Log</span>
+        </div>
         <h3 style="margin:0 0 4px;">Assignment Corrections Log</h3>
         <p style="font-size:13px;color:#555;margin:0 0 16px;">Full audit trail of all reassignments, deactivations, and reactivations. Use the Accounts tab to make corrections.</p>
         <button onclick="loadCorrectionsLog()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:7px 14px;border-radius:6px;font-size:13px;cursor:pointer;margin-bottom:16px;">🔄 Refresh</button>
@@ -751,6 +907,99 @@
           </table>
         </div>
       </div><!-- /#tab-corrections -->
+
+
+      <!-- Play Briefs Tab Panel -->
+      <div id="tab-play-briefs" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('plays')" class="breadcrumb-back">← Plays</button>
+          <span class="breadcrumb-current">Play Briefs</span>
+        </div>
+        <div class="admin-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;">📋 Play Brief Submissions</h3>
+            <div>
+              <select id="briefs-filter" onchange="filterBriefs()" style="padding:6px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
+                <option value="all" selected>All</option>
+                <option value="New">New</option>
+                <option value="Reviewed">Reviewed</option>
+                <option value="Approved">Approved</option>
+                <option value="Resolved">Resolved</option>
+              </select>
+              <button onclick="loadPlayBriefsTab()" style="padding:6px 14px;background:#f1f5f9;border:1px solid #d1d5db;border-radius:8px;cursor:pointer;font-size:13px;margin-left:4px;">⟳ Refresh</button>
+              <a href="intake.html" target="_blank" style="padding:6px 14px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:13px;text-decoration:none;display:inline-block;margin-left:4px;">📤 Share Intake Form</a>
+            </div>
+          </div>
+          <p style="font-size:12px;color:#9ca3af;margin:0 0 12px;">Product managers submit play briefs via the intake form. Review each submission line by line below.</p>
+          <div id="briefs-list" style="min-height:100px;"><div class="empty">Loading briefs...</div></div>
+        </div>
+      </div><!-- /#tab-play-briefs -->
+
+      <!-- Rep View Tab Panel -->
+      <div id="tab-rep-view" class="admin-tab-panel" style="display:none;">
+        <div class="breadcrumb-bar">
+          <button onclick="showAdminTab('coverage')" class="breadcrumb-back">← Coverage</button>
+          <span class="breadcrumb-current">Rep View</span>
+        </div>
+        <div style="background:#e8f4fd;border:1px solid #b3d9f2;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+          <span style="font-size:16px;">👁️</span>
+          <span style="font-size:13px;color:#1a5276;font-weight:600;">Manager View</span>
+          <span style="font-size:12px;color:#5b7d95;margin-left:4px;">— Read-only — viewing as manager</span>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label for="rep-view-select" style="font-size:13px;font-weight:600;color:#555;margin-right:8px;">Select Rep:</label>
+          <select id="rep-view-select" style="padding:8px 12px;border-radius:6px;border:1px solid #ccc;font-size:14px;min-width:280px;">
+            <option value="">— Choose a rep —</option>
+          </select>
+        </div>
+        <div id="rep-view-content">
+          <div style="text-align:center;padding:48px;color:#aaa;font-size:14px;">Select a rep to view their plays and accounts</div>
+        </div>
+      </div><!-- /#tab-rep-view -->
+
+      <!-- Admin Tools Tab Panel -->
+      <div id="tab-admin-tools" class="admin-tab-panel" style="display:none;">
+        <h2 style="font-size:17px;font-weight:700;color:#1a1a2e;margin:0 0 4px;">Admin Tools</h2>
+        <p style="font-size:13px;color:#6b7280;margin:0 0 20px;">Lower-frequency tools and system management.</p>
+        <div class="at-grid">
+          <div class="at-card">
+            <div class="at-card-icon">🏥</div>
+            <div class="at-card-title">System Health</div>
+            <div class="at-card-desc">Check SharePoint connectivity, file status, and data integrity.</div>
+            <button class="at-card-btn" onclick="showAdminTab('health')">Open Health Check</button>
+          </div>
+          <div class="at-card" id="at-card-identity">
+            <div class="at-card-icon">👤</div>
+            <div class="at-card-title">Identity / User Access</div>
+            <div class="at-card-desc">Upload rep email lookup map and manage SSO identity matching.</div>
+            <button class="at-card-btn" onclick="showAdminTab('identity')">Open Identity</button>
+          </div>
+          <div class="at-card" id="at-card-access-log">
+            <div class="at-card-icon">🔍</div>
+            <div class="at-card-title">Access Log</div>
+            <div class="at-card-desc">View login attempts, identity mismatches, and access events.</div>
+            <button class="at-card-btn" onclick="showAdminTab('access-log')">Open Access Log</button>
+          </div>
+          <div class="at-card">
+            <div class="at-card-icon">📝</div>
+            <div class="at-card-title">Corrections Log</div>
+            <div class="at-card-desc">Audit trail of all rep reassignments, deactivations, and reactivations.</div>
+            <button class="at-card-btn" onclick="showAdminTab('corrections')">Open Corrections</button>
+          </div>
+          <div class="at-card">
+            <div class="at-card-icon">💾</div>
+            <div class="at-card-title">Snapshots / Restore</div>
+            <div class="at-card-desc">Save, browse, and restore system snapshots. Reset system data.</div>
+            <button class="at-card-btn" onclick="showAdminTab('snapshots')">Open Snapshots</button>
+          </div>
+          <div class="at-card">
+            <div class="at-card-icon">🎭</div>
+            <div class="at-card-title">Demo Activity</div>
+            <div class="at-card-desc">View and export activity from demo mode sessions.</div>
+            <button class="at-card-btn" onclick="showAdminTab('demo-activity')">Open Demo Activity</button>
+          </div>
+        </div>
+      </div><!-- /#tab-admin-tools -->
 
       <!-- ── Assignment Correction Modal ── -->
       <div id="correction-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;align-items:center;justify-content:center;">
@@ -793,11 +1042,89 @@
           <div id="corr-msg" style="margin-top:12px;font-size:13px;min-height:18px;color:#d32f2f;"></div>
         </div>
       </div><!-- /#correction-modal -->
+
+  <!-- Play Edit Modal -->
+  <div id="play-edit-modal" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;overflow-y:auto;">
+    <div style="max-width:600px;margin:60px auto;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.2);padding:28px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h3 style="margin:0;font-size:18px;">✏️ Edit Play</h3>
+        <button onclick="closePlayEditModal()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666;line-height:1;">×</button>
+      </div>
+      <div id="play-edit-warning" style="display:none;background:#fff3cd;border:1px solid #fbbf24;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#92400e;"></div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Play ID <span style="font-weight:400;color:#9ca3af;">(immutable)</span></label>
+        <input type="text" id="edit-play-id" disabled style="width:100%;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;font-family:monospace;background:#f9fafb;color:#888;box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Play Name *</label>
+        <input type="text" id="edit-play-name" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;box-sizing:border-box;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Product / Solution</label>
+        <select id="edit-play-product" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;" onchange="onEditProductChange()">
+          <option value="">— none —</option>
+          <option value="Chef">Chef</option>
+          <option value="WhatsUp Gold">WhatsUp Gold</option>
+          <option value="Loadmaster">Loadmaster</option>
+          <option value="Flowmon">Flowmon</option>
+          <option value="Other">Other</option>
+        </select>
+        <div id="edit-product-other-wrap" style="display:none;margin-top:8px;">
+          <input type="text" id="edit-play-product-other" placeholder="Enter product name" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;box-sizing:border-box;">
+        </div>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Description / Elevator Pitch</label>
+        <textarea id="edit-play-description" rows="3" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Ideal Customer Profile (ICP)</label>
+        <textarea id="edit-play-icp" rows="2" placeholder="Who is this play targeting? (e.g. Mid-market Chef customers running 3.x)" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Target Persona / Buyer</label>
+        <textarea id="edit-play-persona" rows="2" placeholder="e.g. IT Director, Infrastructure Lead" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Why It Matters / Why They Care</label>
+        <textarea id="edit-play-why" rows="3" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Key Value Propositions <span style="font-weight:400;color:#9ca3af;">(one per line)</span></label>
+        <textarea id="edit-play-valueprops" rows="4" placeholder="Security patches included&#10;SaaS — no infrastructure to manage&#10;Faster upgrades" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Competitive Positioning</label>
+        <textarea id="edit-play-competitive" rows="2" placeholder="e.g. vs Puppet, Ansible — our differentiator is..." style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Discovery Questions <span style="font-weight:400;color:#9ca3af;">(one per line)</span></label>
+        <textarea id="edit-play-questions" rows="4" placeholder="What version of Chef are you running today?&#10;How long does a typical upgrade cycle take?" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Rep Instructions / Next Steps</label>
+        <textarea id="edit-play-instructions" rows="3" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;font-family:inherit;resize:vertical;box-sizing:border-box;"></textarea>
+      </div>
+      <div style="margin-bottom:20px;">
+        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Status</label>
+        <div style="display:flex;gap:0;border:1px solid #d1d5db;border-radius:8px;overflow:hidden;">
+          <button type="button" id="edit-status-draft" onclick="setEditPlayStatus(false)" style="flex:1;padding:9px;border:none;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#374151;border-right:1px solid #d1d5db;">Draft (Inactive)</button>
+          <button type="button" id="edit-status-active" onclick="setEditPlayStatus(true)" style="flex:1;padding:9px;border:none;background:#fff;cursor:pointer;font-size:13px;font-weight:600;color:#374151;">Active</button>
+        </div>
+      </div>
+      <div id="play-edit-status" style="display:none;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:12px;"></div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;">
+        <button onclick="closePlayEditModal()" style="background:#f3f4f6;color:#333;border:1px solid #d1d5db;padding:9px 18px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">Cancel</button>
+        <button id="edit-play-save-btn" onclick="savePlayEdit()" style="background:#0078d4;color:#fff;border:none;padding:9px 18px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;">💾 Save Changes</button>
+      </div>
+    </div>
+  </div><!-- /#play-edit-modal -->
+
   <script src="msal-browser.js?v=10"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-  <script src="config.js?v=10"></script>
-  <script src="msal-auth.js?v=11"></script>
-  <script src="graph-api.js?v=10"></script>
+  <script src="xlsx.full.min.js"></script>
+  <script src="config.js?v=11"></script>
+  <script src="msal-auth.js?v=12"></script>
+  <script src="graph-api.js?v=11"></script>
   <script src="export.js?v=10"></script>
 
   <script>
@@ -865,7 +1192,7 @@
       if (data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="9" class="no-results">No records found.</td></tr>';
       } else {
-        const outcomeColor = o => o === 'Interested' ? 'color:#107c10;font-weight:700' : o === 'Not Interested' ? 'color:#d32f2f' : '';
+        const outcomeColor = o => o === 'Interested' ? 'color:#107c10;font-weight:700' : o === 'Not Interested' ? 'color:#d32f2f' : o === 'Would Not Engage' ? 'color:#f57c00' : '';
         tbody.innerHTML = data.map(r => `<tr>
           <td style="white-space:nowrap;">${escHtml(formatDate(r.submitted_at))}</td>
           <td>${escHtml(r.rep_name || r.rep_email)}</td>
@@ -905,10 +1232,12 @@
           const latestArr  = Object.values(latest);
           const engaged    = latestArr.length;
           const interested = latestArr.filter(e => e.outcome === 'Interested').length;
+          const notInterested = latestArr.filter(e => e.outcome === 'Not Interested').length;
+          const wouldNotEngage = latestArr.filter(e => e.outcome === 'Would Not Engage').length;
           const pct        = targets > 0 ? Math.round((engaged / targets) * 100) : 0;
           const goalLabel  = getGoalLabel(play.goal);
           const goalColor  = play.goal === 'disqualification' || play.goal === 'qualify_out' ? '#d32f2f' : '#107c10';
-          return { play, targets, engaged, interested, pct, goalLabel, goalColor };
+          return { play, targets, engaged, interested, notInterested, wouldNotEngage, pct, goalLabel, goalColor };
         });
 
         if (playStats.length === 0) { wrap.innerHTML = ''; return; }
@@ -923,6 +1252,10 @@
             <span class="psr-stat"><strong>${s.engaged}</strong> engaged</span>
             <span class="psr-sep">·</span>
             <span class="psr-stat"><strong>${s.interested}</strong> interested</span>
+            <span class="psr-sep">·</span>
+            <span class="psr-stat"><strong>${s.notInterested}</strong> not interested</span>
+            <span class="psr-sep">·</span>
+            <span class="psr-stat"><strong>${s.wouldNotEngage}</strong> WNE</span>
             <span class="psr-sep">·</span>
             <span class="psr-stat"><strong>${s.targets - s.engaged}</strong> not yet</span>
           </div>
@@ -1053,6 +1386,89 @@
       signOut();
     });
 
+    // ── More dropdown (header) ─────────────────────────────────────────────
+    function toggleMoreMenu(btn) {
+      const menu = document.getElementById('more-menu');
+      if (!menu) return;
+      const isOpen = menu.style.display === 'block';
+      menu.style.display = isOpen ? 'none' : 'block';
+      if (!isOpen) {
+        setTimeout(() => document.addEventListener('click', _moreMenuOutsideClick, { once: true }), 0);
+      }
+    }
+    function closeMoreMenu() {
+      const menu = document.getElementById('more-menu');
+      if (menu) menu.style.display = 'none';
+    }
+    function _moreMenuOutsideClick(e) {
+      const menu = document.getElementById('more-menu');
+      if (menu && !menu.contains(e.target)) closeMoreMenu();
+    }
+
+    // ── Primary tab navigation ─────────────────────────────────────────────
+    const TAB_PRIMARY_MAP = {
+      'overview':           'overview',
+      'activity-log':       'activity-log',
+      'activity-log-user':  'activity-log',
+      'leaderboard':        'leaderboard',
+      'coverage':           'coverage',
+      'rep-view':           'coverage',
+      'plays':              'plays',
+      'play-briefs':        'plays',
+      'config':             'plays',
+      'accounts':           'accounts',
+      'admin-tools':        'admin-tools',
+      'health':             'admin-tools',
+      'identity':           'admin-tools',
+      'access-log':         'admin-tools',
+      'corrections':        'admin-tools',
+      'snapshots':          'admin-tools',
+      'demo-activity':      'admin-tools',
+    };
+
+    const TAB_LOAD_FNS = {
+      'leaderboard':       () => loadLeaderboardTab(),
+      'config':            () => loadConfigTab(),
+      'plays':             () => loadPlaysTab(),
+      'play-briefs':       () => loadPlayBriefsTab(),
+      'accounts':          () => loadAccountsTab(),
+      'health':            () => loadHealthTab(),
+      'coverage':          () => loadCoverageTab(),
+      'activity-log-user': () => loadActivityLog(),
+      'snapshots':         () => loadSnapshotsTab(),
+      'identity':          () => checkEmailLookupStatus(),
+      'access-log':        () => loadAccessLog(),
+      'corrections':       () => loadCorrectionsLog(),
+      'rep-view':          () => loadRepViewTab(),
+      'overview':          () => renderOverviewTab(),
+    };
+
+    function showAdminTab(tabId) {
+      document.querySelectorAll('.admin-tab-panel').forEach(p => p.style.display = 'none');
+      const panel = document.getElementById('tab-' + tabId);
+      if (panel) panel.style.display = 'block';
+      const primaryId = TAB_PRIMARY_MAP[tabId] || tabId;
+      document.querySelectorAll('.admin-primary-tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === primaryId);
+      });
+      const loadFn = TAB_LOAD_FNS[tabId];
+      if (loadFn) loadFn();
+    }
+
+    function switchActivitySubTab(tabId) {
+      const btnActivity   = document.getElementById('sub-btn-activity');
+      const btnMyActivity = document.getElementById('sub-btn-my-activity');
+      if (btnActivity)   btnActivity.classList.toggle('active',   tabId === 'activity-log');
+      if (btnMyActivity) btnMyActivity.classList.toggle('active', tabId === 'activity-log-user');
+      showAdminTab(tabId);
+    }
+
+    document.querySelectorAll('.admin-primary-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        showAdminTab(tab.dataset.tab);
+      });
+    });
+
     // Tab switching
     document.querySelectorAll('.admin-tab').forEach(tab => {
       tab.addEventListener('click', () => {
@@ -1068,15 +1484,15 @@
         if (tab.dataset.tab === 'config') loadConfigTab();
         if (tab.dataset.tab === 'plays') loadPlaysTab();
         if (tab.dataset.tab === 'accounts') loadAccountsTab();
-        if (tab.dataset.tab === 'invite') loadInviteTab();
-        if (tab.dataset.tab === 'health') loadHealthTab();
+        if (tab.dataset.tab === 'message') loadMessageTab();        if (tab.dataset.tab === 'health') loadHealthTab();
         if (tab.dataset.tab === 'coverage') loadCoverageTab();
-        if (tab.dataset.tab === 'broadcast') loadBroadcastTab();
         if (tab.dataset.tab === 'activity-log-user') loadActivityLog();
         if (tab.dataset.tab === 'snapshots') loadSnapshotsTab();
-        if (tab.dataset.tab === 'identity') { checkIdentityFile(); checkEmailLookupStatus(); }
+        if (tab.dataset.tab === 'identity') { checkEmailLookupStatus(); }
         if (tab.dataset.tab === 'access-log') loadAccessLog();
         if (tab.dataset.tab === 'corrections') loadCorrectionsLog();
+        if (tab.dataset.tab === 'rep-view') loadRepViewTab();
+        if (tab.dataset.tab === 'play-briefs') loadPlayBriefsTab();
       });
     });
 
@@ -1218,12 +1634,16 @@
             </td>
             <td style="padding:10px 8px;">
               <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                <button onclick="showPlayEditModal('${escHtml(p.play_id)}')"
+                  style="background:#e8f0fe;border:1px solid #c3d4f7;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;color:#1a56db;font-weight:600;">✏️ Quick Edit</button>
                 <a href="ingest.html?play=${escHtml(p.play_id)}&mode=config"
-                  style="background:#e8f0fe;border:1px solid #c3d4f7;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;text-decoration:none;color:#1a56db;">✏️ Edit Play</a>
+                  style="background:#f0f7ff;border:1px solid #c3d4f7;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;text-decoration:none;color:#1a56db;">🔧 Full Wizard</a>
                 <a href="ingest.html?play=${escHtml(p.play_id)}&mode=accounts"
                   style="background:#e8f5e9;border:1px solid #a7d7a9;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;text-decoration:none;color:#107c10;">➕ Add Targets</a>
                 <button onclick="exportPlayEngagements('${escHtml(p.play_id)}','${escHtml(p.play_name)}')"
                   style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;">⬇️ Export</button>
+                <button onclick="printPlayBrief('${escHtml(p.play_id)}')"
+                  style="background:#fdf4ff;border:1px solid #d8b4fe;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;color:#7c3aed;">📄 Play PDF</button>
                 <button onclick="togglePlayActive('${escHtml(p.play_id)}', ${!active})"
                   style="background:#f3f4f6;border:1px solid #d1d5db;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;">${active ? '⏸ Pause' : '▶ Activate'}</button>
                 <button onclick="deletePlay('${escHtml(p.play_id)}','${escHtml(p.play_name)}')"
@@ -1248,6 +1668,103 @@
         a.download = safeId + '_engagements.csv';
         a.click();
       } catch(e) { alert('Export failed: ' + e.message); }
+    }
+
+    async function printPlayBrief(playId) {
+      try {
+        const config = await getPlaysConfig();
+        const play = (config.plays || []).find(p => p.play_id === playId);
+        if (!play) { alert('Play not found'); return; }
+
+        const GOAL_LABELS = { feedback:'Feedback', interest:'Generate Interest', meeting:'Book Meeting', disqualification:'Disqualify / Qualify Out', expansion:'Expansion', qualify_in:'Qualify In', qualify_out:'Qualify Out' };
+        const goalLabel = GOAL_LABELS[play.goal] || play.goal || '';
+
+        const sec = (label, content) => content
+          ? `<div class="section"><div class="section-label">${label}</div><div class="section-value">${content}</div></div>`
+          : '';
+        const listHtml = arr => arr.length
+          ? `<ul>${arr.map(i => `<li>${i}</li>`).join('')}</ul>` : '';
+
+        // Value props
+        const valueProps = (play.value_props || []).filter(Boolean);
+        const competitive = (play.competitive_positioning || '').trim();
+
+        // Discovery questions (supports both field names)
+        const keyQs = (play.key_questions || play.discovery_questions || []).filter(Boolean);
+
+        // Objection handling
+        const objections = (play.objection_handling || []).filter(Boolean);
+        const objHtml = objections.map(o =>
+          typeof o === 'object' && o.q
+            ? `<div class="obj-row"><div class="obj-q">🙋 ${o.q}</div><div class="obj-a">${o.a || ''}</div></div>`
+            : `<div class="obj-row"><div class="obj-a">${String(o)}</div></div>`
+        ).join('');
+
+        // Outcomes config
+        const outcomes = play.outcomes || {};
+        const outcomeHtml = Object.entries(outcomes).filter(([,v]) => v && v.enabled !== false).map(([name, v]) => {
+          const reasons   = (v.reasons   || []).filter(Boolean);
+          const nextSteps = (v.next_steps || []).filter(Boolean);
+          const timing    = (v.timing    || []).filter(Boolean);
+          return `<div class="outcome-block">
+            <div class="outcome-name">${name}</div>
+            ${reasons.length   ? `<div><span class="field-key">Reasons:</span> ${reasons.join(' · ')}</div>` : ''}
+            ${nextSteps.length ? `<div><span class="field-key">Next Steps:</span> ${nextSteps.join(' · ')}</div>` : ''}
+            ${timing.length    ? `<div><span class="field-key">Timing:</span> ${timing.join(' · ')}</div>` : ''}
+          </div>`;
+        }).join('');
+
+        const win = window.open('', '_blank');
+        win.document.write(`<!DOCTYPE html><html><head>
+        <title>${play.play_name} — Play Brief</title>
+        <style>
+          * { box-sizing:border-box; }
+          body { font-family:'Segoe UI',Arial,sans-serif; margin:0; padding:36px 44px; color:#1a1a1a; max-width:800px; }
+          h1 { color:#0078d4; font-size:26px; margin:0 0 4px; font-weight:700; }
+          .meta { font-size:12px; color:#64748b; margin-bottom:8px; }
+          .goal-badge { display:inline-block; background:#e8f0fe; color:#1a56db; border-radius:20px; padding:4px 14px; font-size:13px; font-weight:700; margin-bottom:22px; }
+          .product-badge { display:inline-block; background:#f0fdf4; color:#15803d; border-radius:20px; padding:4px 14px; font-size:13px; font-weight:700; margin-bottom:22px; margin-left:8px; }
+          .section { margin-bottom:18px; border-left:4px solid #0078d4; padding-left:14px; }
+          .section-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#0078d4; margin-bottom:5px; }
+          .section-value { font-size:14px; line-height:1.65; }
+          ul { margin:6px 0 0 18px; padding:0; }
+          li { margin-bottom:4px; font-size:14px; line-height:1.5; }
+          .obj-row { background:#f8fafc; border:1px solid #e2e8f0; border-radius:7px; padding:10px 13px; margin-bottom:8px; }
+          .obj-q { font-size:13px; font-weight:700; color:#374151; margin-bottom:4px; }
+          .obj-a { font-size:13px; color:#4b5563; line-height:1.5; }
+          .field-key { font-weight:600; }
+          .divider { border:none; border-top:1px solid #e2e8f0; margin:22px 0; }
+          .outcome-block { margin-bottom:14px; font-size:13px; line-height:1.6; }
+          .outcome-name { font-weight:700; color:#0078d4; margin-bottom:3px; font-size:14px; }
+          .footer { font-size:11px; color:#94a3b8; margin-top:36px; padding-top:14px; border-top:1px solid #e2e8f0; text-align:center; }
+          .print-btn { background:#0078d4; color:#fff; border:none; padding:10px 28px; border-radius:7px; font-size:14px; cursor:pointer; margin-top:14px; }
+          @media print { .print-btn { display:none; } body { padding:20px; } }
+        </style></head><body>
+
+        <h1>${play.play_name}</h1>
+        <div class="meta">Play ID: <strong>${play.play_id}</strong> &nbsp;·&nbsp; Generated ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div>
+        ${goalLabel   ? `<span class="goal-badge">🎯 ${goalLabel}</span>` : ''}
+        ${play.product? `<span class="product-badge">📦 ${play.product}</span>` : ''}
+
+        ${sec('Elevator Pitch',         play.elevator_pitch   ? play.elevator_pitch                 : '')}
+        ${sec('Why It Matters',         play.why_it_matters   ? play.why_it_matters                 : play.pitch_details || '')}
+        ${sec('Key Value Propositions', valueProps.length     ? listHtml(valueProps)                : '')}
+        ${sec('Ideal Customer Profile', play.icp              ? play.icp                            : '')}
+        ${sec('Target Persona / Buyer', play.target_persona   ? play.target_persona                 : play.persona_notes || '')}
+        ${sec('Competitive Positioning',competitive           ? competitive                         : '')}
+        ${sec('Rep Instructions',       play.instructions     ? play.instructions                   : play.next_step_guidance || '')}
+        ${sec('Discovery Questions',    keyQs.length          ? listHtml(keyQs)                     : '')}
+        ${objections.length ? `<div class="section"><div class="section-label">Common Objections &amp; Responses</div><div class="section-value">${objHtml}</div></div>` : ''}
+
+        ${outcomeHtml ? `<hr class="divider">
+          <div class="section-label" style="margin-bottom:14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;color:#0078d4;">Outcome Options &amp; Rep Guidance</div>
+          ${outcomeHtml}` : ''}
+
+        <div class="footer">INFRA SalesPlay Tracker &nbsp;·&nbsp; Progress Software — Proprietary &amp; Confidential &nbsp;·&nbsp; Progress Employees Only</div>
+        <br><button class="print-btn" onclick="window.print()">🖨 Print / Save as PDF</button>
+        </body></html>`);
+        win.document.close();
+      } catch(e) { alert('Could not generate PDF: ' + e.message); }
     }
 
     async function togglePlayActive(playId, newActive) {
@@ -1295,6 +1812,160 @@
       } catch(e) {
         statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
         statusEl.textContent = '✗ Delete failed: ' + e.message;
+      }
+    }
+
+    // ── Play Edit Modal ───────────────────────────────────────────────────────
+    let _editPlayId = null;
+    let _editPlayActive = true;
+
+    async function showPlayEditModal(playId) {
+      _editPlayId = playId;
+      const config = await getPlaysConfig();
+      const play = (config.plays || []).find(p => p.play_id === playId);
+      if (!play) { alert('Play not found: ' + playId); return; }
+
+      document.getElementById('edit-play-id').value = play.play_id;
+      document.getElementById('edit-play-name').value = play.play_name || '';
+      document.getElementById('edit-play-description').value = play.elevator_pitch || '';
+      document.getElementById('edit-play-icp').value        = play.icp || '';
+      document.getElementById('edit-play-persona').value    = play.target_persona || play.persona_notes || '';
+      document.getElementById('edit-play-why').value        = play.why_it_matters || '';
+      document.getElementById('edit-play-valueprops').value = (play.value_props || []).filter(Boolean).join('\n');
+      document.getElementById('edit-play-competitive').value= play.competitive_positioning || '';
+      document.getElementById('edit-play-questions').value  = (play.key_questions || play.discovery_questions || []).filter(Boolean).join('\n');
+      document.getElementById('edit-play-instructions').value = play.instructions || '';
+
+      // Product dropdown
+      const productSel = document.getElementById('edit-play-product');
+      const productOpts = Array.from(productSel.options).map(o => o.value);
+      if (play.product && productOpts.includes(play.product)) {
+        productSel.value = play.product;
+      } else if (play.product) {
+        productSel.value = 'Other';
+        document.getElementById('edit-play-product-other').value = play.product;
+        document.getElementById('edit-product-other-wrap').style.display = 'block';
+      } else {
+        productSel.value = '';
+      }
+      onEditProductChange();
+
+      // Status
+      _editPlayActive = play.active !== false;
+      setEditPlayStatus(_editPlayActive);
+
+      // Warning for plays with engagements
+      const warningEl = document.getElementById('play-edit-warning');
+      const engCount = (_allData || []).filter(r => r.play_id === playId).length;
+      if (engCount > 0) {
+        warningEl.style.display = 'block';
+        warningEl.innerHTML = `⚠️ This play has <strong>${engCount}</strong> engagement log${engCount !== 1 ? 's' : ''}. Changes apply to future submissions only. The play ID cannot be changed.`;
+      } else {
+        warningEl.style.display = 'none';
+      }
+
+      document.getElementById('play-edit-status').style.display = 'none';
+      document.getElementById('edit-play-save-btn').disabled = false;
+      document.getElementById('edit-play-save-btn').textContent = '💾 Save Changes';
+      document.getElementById('edit-play-save-btn').style.background = '#0078d4';
+      document.getElementById('play-edit-modal').style.display = 'block';
+    }
+
+    function closePlayEditModal() {
+      document.getElementById('play-edit-modal').style.display = 'none';
+      _editPlayId = null;
+    }
+
+    function onEditProductChange() {
+      const sel = document.getElementById('edit-play-product');
+      const otherWrap = document.getElementById('edit-product-other-wrap');
+      if (otherWrap) otherWrap.style.display = sel.value === 'Other' ? 'block' : 'none';
+    }
+
+    function setEditPlayStatus(active) {
+      _editPlayActive = active;
+      const draftBtn = document.getElementById('edit-status-draft');
+      const activeBtn = document.getElementById('edit-status-active');
+      draftBtn.style.background = active ? '#fff' : '#fff3cd';
+      draftBtn.style.color = active ? '#374151' : '#92400e';
+      draftBtn.style.fontWeight = active ? '500' : '700';
+      activeBtn.style.background = active ? '#e8f5e9' : '#fff';
+      activeBtn.style.color = active ? '#107c10' : '#374151';
+      activeBtn.style.fontWeight = active ? '700' : '500';
+    }
+
+    async function savePlayEdit() {
+      if (!_editPlayId) return;
+      const name = document.getElementById('edit-play-name').value.trim();
+      if (!name) { alert('Play name is required.'); return; }
+
+      const btn = document.getElementById('edit-play-save-btn');
+      const statusEl = document.getElementById('play-edit-status');
+      btn.disabled = true;
+      btn.textContent = '⏳ Saving…';
+
+      try {
+        const config = await getPlaysConfig();
+        const play = (config.plays || []).find(p => p.play_id === _editPlayId);
+        if (!play) throw new Error('Play not found');
+
+        // Check if deactivating a play with active accounts
+        if (!_editPlayActive && play.active !== false) {
+          try {
+            const assignText = await getFileText(SP_ROOT + '/assignments.json');
+            if (assignText) {
+              const assignData = JSON.parse(assignText);
+              const activeAccts = (assignData.assignments || []).filter(a => a.play_id === _editPlayId && a.active !== 'No');
+              if (activeAccts.length > 0 && !confirm(`This play has ${activeAccts.length} active account assignment${activeAccts.length !== 1 ? 's' : ''}. Deactivating will hide it from reps. Continue?`)) {
+                btn.disabled = false;
+                btn.textContent = '💾 Save Changes';
+                return;
+              }
+            }
+          } catch(e) {}
+        }
+
+        // Product
+        const productSel = document.getElementById('edit-play-product');
+        const product = productSel.value === 'Other'
+          ? (document.getElementById('edit-play-product-other')?.value?.trim() || 'Other')
+          : productSel.value;
+
+        // Update play — play_id is IMMUTABLE
+        play.play_name    = name;
+        play.product      = product;
+        play.elevator_pitch = document.getElementById('edit-play-description').value.trim();
+        play.icp            = document.getElementById('edit-play-icp').value.trim();
+        play.target_persona = document.getElementById('edit-play-persona').value.trim();
+        play.why_it_matters = document.getElementById('edit-play-why').value.trim();
+        play.value_props    = document.getElementById('edit-play-valueprops').value.split('\n').map(s=>s.trim()).filter(Boolean);
+        play.competitive_positioning = document.getElementById('edit-play-competitive').value.trim();
+        play.key_questions  = document.getElementById('edit-play-questions').value.split('\n').map(s=>s.trim()).filter(Boolean);
+        play.instructions   = document.getElementById('edit-play-instructions').value.trim();
+        play.active = _editPlayActive;
+
+        await savePlaysConfig(config);
+        try { await logActivity(currentUser, 'play_edited', `Edited play: ${name} (${_editPlayId})`); } catch(e) {}
+
+        statusEl.style.display = 'block';
+        statusEl.style.background = '#e8f5e9';
+        statusEl.style.color = '#107c10';
+        statusEl.textContent = '✅ Play updated successfully.';
+        btn.textContent = '✅ Saved';
+        btn.style.background = '#107c10';
+
+        setTimeout(() => {
+          closePlayEditModal();
+          loadPlaysTab();
+        }, 1000);
+      } catch(e) {
+        statusEl.style.display = 'block';
+        statusEl.style.background = '#fde8e8';
+        statusEl.style.color = '#c00';
+        statusEl.textContent = '✗ Save failed: ' + e.message;
+        btn.disabled = false;
+        btn.textContent = '💾 Save Changes';
+        btn.style.background = '#0078d4';
       }
     }
 
@@ -1384,6 +2055,73 @@
       return backupAndReset();
     }
 
+    // ── Pre-Launch: Repair Play Configs ────────────────────────────────────────
+    async function repairPlayConfigs() {
+      const statusEl = document.getElementById('repair-config-status');
+      const showStatus = (msg, isError) => {
+        statusEl.style.display = 'block';
+        statusEl.style.background = isError ? '#fee2e2' : '#f0fdf4';
+        statusEl.style.color      = isError ? '#b91c1c' : '#166534';
+        statusEl.style.border     = `1px solid ${isError ? '#fca5a5' : '#86efac'}`;
+        statusEl.textContent = msg;
+      };
+      if (currentAdminRole !== 'owner' && currentAdminRole !== 'manager') {
+        showStatus('⚠ Owner or manager role required.', true); return;
+      }
+      showStatus('⏳ Scanning plays…', false);
+      try {
+        const config = await getPlaysConfig();
+        const plays = config.plays || [];
+        let repaired = 0;
+        for (const play of plays) {
+          const hasConfig   = play.config && play.config.outcomes && Object.keys(play.config.outcomes).length > 0;
+          const hasIntake   = play.outcomes_intake && Object.keys(play.outcomes_intake).length > 0;
+          if (!hasConfig && hasIntake) {
+            play.config = { ...(play.config || {}), outcomes: play.outcomes_intake };
+            repaired++;
+          }
+        }
+        if (repaired === 0) {
+          showStatus('✅ All plays already have config.outcomes — nothing to repair.', false);
+          return;
+        }
+        await savePlaysConfig(config);
+        showStatus(`✅ Repaired ${repaired} play${repaired !== 1 ? 's' : ''} — config.outcomes populated from outcomes_intake.`, false);
+      } catch(e) {
+        showStatus('❌ Error: ' + e.message, true);
+      }
+    }
+
+    // ── Pre-Launch: Clear All Plays ─────────────────────────────────────────────
+    async function clearAllPlays() {
+      if (currentAdminRole !== 'owner') {
+        alert('Owner role required to clear all plays.'); return;
+      }
+      const confirm1 = window.prompt('This will delete ALL plays. Type CLEAR to confirm:');
+      if ((confirm1 || '').trim() !== 'CLEAR') {
+        alert('Cancelled — you must type CLEAR exactly.'); return;
+      }
+      const statusEl = document.getElementById('repair-config-status');
+      const showStatus = (msg, isError) => {
+        statusEl.style.display = 'block';
+        statusEl.style.background = isError ? '#fee2e2' : '#f0fdf4';
+        statusEl.style.color      = isError ? '#b91c1c' : '#166534';
+        statusEl.style.border     = `1px solid ${isError ? '#fca5a5' : '#86efac'}`;
+        statusEl.textContent = msg;
+      };
+      showStatus('⏳ Creating snapshot before clearing…', false);
+      try {
+        // Auto-snapshot first
+        await backupAndReset().catch(() => {});
+        // Wipe plays
+        await savePlaysConfig({ plays: [] });
+        showStatus('✅ All plays cleared. Reload the page to confirm.', false);
+        setTimeout(() => loadPlaysTab(), 1500);
+      } catch(e) {
+        showStatus('❌ Error clearing plays: ' + e.message, true);
+      }
+    }
+
     // ── Accounts Tab ──────────────────────────────────────────────────────────
     let _allAssignmentsData = [];
     let _filteredRows = [];   // last filtered set — used by correction modal
@@ -1403,7 +2141,7 @@
         rSel.innerHTML = '<option value="">All Reps</option>'  + reps.map(r => `<option>${escHtml(r)}</option>`).join('');
         filterAccounts();
       } catch(e) {
-        tbody.innerHTML = `<tr><td colspan="8" style="padding:20px;text-align:center;color:#d32f2f;">Error loading accounts: ${escHtml(e.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="padding:20px;text-align:center;color:#d32f2f;">Error loading accounts: ${escHtml(e.message)}</td></tr>`;
       }
     }
 
@@ -1421,7 +2159,7 @@
       document.getElementById('acct-summary').textContent = `${rows.length} account${rows.length !== 1 ? 's' : ''} shown`;
       const tbody = document.getElementById('acct-body');
       if (rows.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="padding:20px;text-align:center;color:#aaa;">No accounts found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="padding:20px;text-align:center;color:#aaa;">No accounts found.</td></tr>';
         return;
       }
       tbody.innerHTML = rows.map((a, i) => {
@@ -1432,7 +2170,13 @@
           : '<span style="background:#e8f5e9;color:#107c10;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;">Active</span>';
         const updatedNote = a.updated_at
           ? `<div style="font-size:10px;color:#aaa;margin-top:2px;">Updated ${a.updated_at.slice(0,10)}</div>` : '';
+        const playId = escHtml(a.play_id || a.play_name || '');
+        const accountId = escHtml(a.account_id || a.crm_id || '');
         return `<tr style="border-bottom:1px solid #f0f0f0;${rowStyle}">
+          <td style="width:32px;padding:8px 4px;text-align:center;">
+            <input type="checkbox" class="account-row-cb" data-play="${playId}" data-account="${accountId}"
+              onchange="toggleOverrideCheckbox(this, '${playId}', '${accountId}')">
+          </td>
           <td style="padding:9px 8px;font-weight:600;">${escHtml(a.account_name)}</td>
           <td style="padding:9px 8px;font-family:monospace;font-size:12px;color:#888;">${escHtml(a.account_id)}</td>
           <td style="padding:9px 8px;">${escHtml(a.rep_name || '')}</td>
@@ -1445,6 +2189,107 @@
           </td>
         </tr>`;
       }).join('');
+    }
+
+    // ── Account Override (Manager) ────────────────────────────────────────────
+    let _overrideSelected = new Set(); // Set of "playId::accountId" strings
+
+    function toggleOverrideCheckbox(cb, playId, accountId) {
+      const key = playId + '::' + accountId;
+      if (cb.checked) _overrideSelected.add(key);
+      else _overrideSelected.delete(key);
+      updateOverrideActionBar();
+    }
+
+    function toggleAllOverrideCheckboxes(masterCb) {
+      document.querySelectorAll('.account-row-cb').forEach(cb => {
+        cb.checked = masterCb.checked;
+        const key = cb.dataset.play + '::' + cb.dataset.account;
+        if (masterCb.checked) _overrideSelected.add(key);
+        else _overrideSelected.delete(key);
+      });
+      updateOverrideActionBar();
+    }
+
+    function updateOverrideActionBar() {
+      const bar = document.getElementById('override-action-bar');
+      const countEl = document.getElementById('override-selected-count');
+      const n = _overrideSelected.size;
+      if (n > 0) {
+        bar.style.display = 'flex';
+        countEl.textContent = n + ' account' + (n !== 1 ? 's' : '') + ' selected';
+      } else {
+        bar.style.display = 'none';
+      }
+    }
+
+    function clearOverrideSelection() {
+      _overrideSelected.clear();
+      document.querySelectorAll('.account-row-cb').forEach(cb => cb.checked = false);
+      const masterCb = document.getElementById('override-master-cb');
+      if (masterCb) masterCb.checked = false;
+      updateOverrideActionBar();
+    }
+
+    function openOverrideModal() {
+      if (_overrideSelected.size === 0) return;
+      document.getElementById('override-note-input').value = '';
+      document.getElementById('override-modal-status').style.display = 'none';
+      document.getElementById('override-modal').style.display = 'flex';
+    }
+
+    function closeOverrideModal() {
+      document.getElementById('override-modal').style.display = 'none';
+    }
+
+    async function confirmOverride() {
+      const note = document.getElementById('override-note-input').value.trim();
+      const statusEl = document.getElementById('override-modal-status');
+      const btn = document.querySelector('#override-modal button[onclick="confirmOverride()"]');
+
+      statusEl.style.display = 'block';
+      statusEl.style.color = '#856404';
+      statusEl.textContent = '⏳ Applying overrides…';
+      btn.disabled = true;
+
+      let done = 0, failed = 0;
+      for (const key of _overrideSelected) {
+        const [playId, accountId] = key.split('::');
+        try {
+          // Get current outcome and rep email for audit trail
+          let prevOutcome = '';
+          let repEmail = '';
+          try {
+            const row = (_allAssignmentsData || []).find(a =>
+              (a.play_id || a.play_name || '') === playId &&
+              (a.account_id || a.crm_id || '') === accountId);
+            prevOutcome = row ? (row.latest_outcome || row.outcome || '') : '';
+            repEmail    = row ? (row.rep_sso_login || row.rep_email || '') : '';
+          } catch(e) {}
+
+          await writeManagerOverride(playId, accountId,
+            currentUser ? (currentUser.username || currentUser.mail || currentUser.email || '') : '',
+            repEmail, note, prevOutcome);
+          done++;
+        } catch(e) {
+          console.error('[Override] Failed for', key, e.message);
+          failed++;
+        }
+      }
+
+      if (failed === 0) {
+        statusEl.style.color = '#107c10';
+        statusEl.textContent = `✅ ${done} account${done !== 1 ? 's' : ''} reset successfully.`;
+        setTimeout(() => {
+          closeOverrideModal();
+          clearOverrideSelection();
+          loadAccountsTab();
+        }, 1200);
+      } else {
+        statusEl.style.color = '#c00';
+        statusEl.textContent = `✓ ${done} succeeded, ✗ ${failed} failed. Check console for details.`;
+        btn.disabled = false;
+      }
     }
 
     // ── Assignment Correction Modal ───────────────────────────────────────────
@@ -1746,113 +2591,72 @@
     }
 
     // ── Invite Tab ────────────────────────────────────────────────────────────
-    function loadInviteTab() { rebuildInvite(); }
-
-    function rebuildInvite() {
+    function loadMessageTab() {
       const appUrl = window.location.origin + window.location.pathname.replace('admin.html', 'app.html');
-      const prize  = (document.getElementById('prize-text')?.value || 'a special prize — TBD by your manager!').trim();
-      const msg =
-`🏆 INFRA SalesPlay Tracker — You're In!
-
-Hey team,
-
-We're using a new tool to track our INFRA SalesPlay initiatives and friendly competition is ON. Log your pitches, earn points, and climb the leaderboard.
-
-👉 Your link: ${appUrl}
-
-📌 BOOKMARK THIS — you'll use it every time you log a pitch.
-   On mobile: tap Share → Add to Home Screen for a one-tap shortcut.
-
-────────────────────────────────
-HOW POINTS WORK
-────────────────────────────────
-Every account you pitch earns you points:
-
-  📞 Not Interested          → 15 pts
-  ✅ Interested              → 30 pts
-  ✅ Interested + next step  → 45 pts
-
-The more you pitch, the higher you climb:
-
-  🌱 Rookie      0 pts
-  🎯 Pitcher    50 pts
-  ⭐ Pro        150 pts
-  🥇 Champion   300 pts
-  🏆 Legend     500 pts
-
-────────────────────────────────
-🎁 PRIZES
-────────────────────────────────
-The TOP 3 reps at the end of the quarter win ${prize}
-
-────────────────────────────────
-
-Log in with your Progress credentials — no new password needed.
-Questions? Reply to this message.
-
-Let's go! 🚀`;
-      document.getElementById('invite-preview').textContent = msg;
+      const el = document.getElementById('team-message');
+      if (el && !el.value) resetTeamMessage();
     }
 
-    function copyInvite() {
-      const text = document.getElementById('invite-preview').textContent;
+    function _defaultTeamMessage() {
+      const appUrl = window.location.origin + window.location.pathname.replace('admin.html', 'app.html');
+      return `Hey team — don't forget to log your pitches in the INFRA SalesPlay Tracker!
+
+👉 ${appUrl}
+
+Bookmark it or add it to your home screen on mobile. Every interaction counts toward the leaderboard. 🏆
+
+Let's go! 🚀`;
+    }
+
+    function openMessageModal() {
+      const el = document.getElementById('team-message');
+      if (el && !el.value) resetTeamMessage();
+      const m = document.getElementById('message-modal');
+      if (m) { m.style.display = 'flex'; }
+    }
+    function closeMessageModal() {
+      const m = document.getElementById('message-modal');
+      if (m) m.style.display = 'none';
+    }
+
+    function resetTeamMessage() {
+      const el = document.getElementById('team-message');
+      if (el) el.value = _defaultTeamMessage();
+    }
+
+    function copyTeamMessage() {
+      const text = document.getElementById('team-message')?.value || '';
       navigator.clipboard.writeText(text).then(() => {
-        const el = document.getElementById('copy-confirm');
-        el.style.display = 'inline';
-        setTimeout(() => el.style.display = 'none', 2500);
+        const el = document.getElementById('message-copy-confirm');
+        if (el) { el.style.display = 'inline'; setTimeout(() => el.style.display = 'none', 2500); }
       });
     }
 
     // ── Role-based access control ─────────────────────────────────────────────
     // owner  : full access — all tabs + destructive actions
     // manager: read-only — Activity Log, Leaderboard, Coverage, Broadcast, Health
-    const ADMIN_ROLES = {
-      'langer@progress.com':         'owner',
-      'philip.langer@progress.com':  'owner',
-      'planger@progress.com':        'owner',
-      'phil.langer@progress.com':    'owner',
-      'kathleen.faria@progress.com': 'manager',
-      'kfaria@progress.com':         'manager',
-      'k.faria@progress.com':        'manager',
-      'kathy.faria@progress.com':    'manager',
-      'scheaney@progress.com':       'manager',
-    };
-    const MANAGER_TABS    = ['activity-log','leaderboard','coverage','broadcast','health','config','plays','accounts','invite'];
-    const OWNER_ONLY_TABS = [];
+    const ADMIN_ROLES = CONFIG.ADMIN_ROLES;
+    const OWNER_ONLY_TABS = ['identity', 'access-log']; // only adding managers is owner-only
 
     let currentAdminRole = null;
 
     function applyRoleUI(role) {
       currentAdminRole = role;
-      // Show activity-log-user tab only for owner
-      if (role === 'owner') {
-        const alUserTab = document.getElementById('tab-btn-activity-log-user');
-        if (alUserTab) alUserTab.style.display = '';
-        const demoTabBtn = document.getElementById('tab-btn-demo-activity');
-        if (demoTabBtn) demoTabBtn.style.display = '';
-        const snapshotsTabBtn = document.getElementById('tab-btn-snapshots');
-        if (snapshotsTabBtn) snapshotsTabBtn.style.display = '';
-        const identityTabBtn = document.getElementById('tab-btn-identity');
-        if (identityTabBtn) identityTabBtn.style.display = '';
-        const accessLogTabBtn = document.getElementById('tab-btn-access-log');
-        if (accessLogTabBtn) accessLogTabBtn.style.display = '';
-        const correctionsTabBtn = document.getElementById('tab-btn-corrections');
-        if (correctionsTabBtn) correctionsTabBtn.style.display = '';
-      }
-      // Hide owner-only tabs for managers
+      // Unhide all tabs for everyone first
+      document.querySelectorAll('.admin-tab').forEach(btn => btn.style.display = '');
+
+      // Owner-only: identity tab (add/remove managers) and access log
       if (role === 'manager') {
         OWNER_ONLY_TABS.forEach(tab => {
-          const btn = document.querySelector(`.admin-tab[data-tab="${tab}"]`);
+          const btn = document.getElementById('tab-btn-' + tab) || document.querySelector(`.admin-tab[data-tab="${tab}"]`);
           if (btn) btn.style.display = 'none';
         });
-        // Hide destructive buttons
-        ['btn-export-all'].forEach(id => {
-          const el = document.getElementById(id);
-          // keep export for managers — hide upload only
-        });
-        const uploadLink = document.querySelector('a[href="ingest.html"]');
-        if (uploadLink) uploadLink.style.display = 'none';
+        const identityCard  = document.getElementById('at-card-identity');
+        const accessLogCard = document.getElementById('at-card-access-log');
+        if (identityCard)  identityCard.style.display  = 'none';
+        if (accessLogCard) accessLogCard.style.display = 'none';
       }
+
       // Add role badge next to name
       const nameEl = document.getElementById('admin-user-name');
       if (nameEl) {
@@ -1864,8 +2668,17 @@ Let's go! 🚀`;
     }
 
     (async () => {
+      // Safety net: if something hangs, force the screen visible after 12s
+      const _loadingTimeout = setTimeout(() => {
+        console.error('[Admin] Startup timed out after 12s — forcing screen-main');
+        showScreen("screen-main");
+        const rb = document.getElementById("results-body");
+        if (rb) rb.innerHTML = `<tr><td colspan="12" class="no-results" style="color:#d32f2f;">Startup timed out. Try reloading. Check browser console for details.</td></tr>`;
+      }, 12000);
+
       // ── Startup guard: verify MSAL library loaded before doing anything ──
       if (typeof msal === 'undefined' || typeof msal.PublicClientApplication === 'undefined') {
+        clearTimeout(_loadingTimeout);
         document.body.innerHTML = `
           <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;flex-direction:column;gap:16px;color:#d32f2f;">
             <div style="font-size:48px;">⚠️</div>
@@ -1880,8 +2693,11 @@ Let's go! 🚀`;
         return;
       }
       try {
+        console.log('[Admin] initAuth start');
         const account = await initAuth();
+        console.log('[Admin] initAuth done, account:', account?.username);
         if (!account) {
+          clearTimeout(_loadingTimeout);
           signIn();
           return;
         }
@@ -1898,6 +2714,7 @@ Let's go! 🚀`;
         let role = emailCandidates.map(e => ADMIN_ROLES[e]).find(r => r);
         if (!role) {
           // Not an admin at all — block access
+          clearTimeout(_loadingTimeout);
           console.warn('[Admin] Access denied. Candidates:', emailCandidates, 'Known roles:', Object.keys(ADMIN_ROLES));
           document.body.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">
             <div style="text-align:center;padding:40px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.1);max-width:400px;">
@@ -1911,17 +2728,23 @@ Let's go! 🚀`;
           </div>`;
           return;
         }
+        clearTimeout(_loadingTimeout);
+        console.log('[Admin] Role confirmed:', role, '— showing screen-main');
         applyRoleUI(role);
-        showScreen("screen-main");
+        showScreen("screen-main");  // show UI immediately — don't block on data/seed
 
         // Start browser notification permission request + polling (owner + managers)
         requestNotifPermission();
         startAlertPolling();
 
+        // Dev seed runs after screen is visible so it never blocks the loading spinner
+        if (typeof seedDevDataIfNeeded === 'function') await seedDevDataIfNeeded();
+
         _allData = await getMotionLog({});
         await populateFilterDropdowns(_allData);
         renderTable(_allData);
         renderAdminFunnel(_allData);
+        showAdminTab('overview');
       } catch (err) {
         console.error("Admin load error:", err);
         document.getElementById("results-body").innerHTML =
@@ -1932,44 +2755,24 @@ Let's go! 🚀`;
 
     // ── Response Options Config Tab ────────────────────────────────────────
 
-    const STANDARD_INTERESTED = [
-      'Evaluating solutions in this space',
-      'Active budget / funded initiative',
-      'Replacing a current tool',
-      'Executive sponsor engaged',
-      'Strong use case fit',
-    ];
-    const STANDARD_NOT_INTERESTED = [
-      'No budget / not in current plan',
-      'Already have a solution',
-      'Not the right time — revisit later',
-      'Not the right contact / needs escalation',
-      'No need identified',
-    ];
     const STANDARD_FORM_CONFIG = {
       interaction_types: ['Call', 'Email', 'Text', 'In-Person Meeting'],
-      next_step_types:   ['Schedule follow-up', 'Send information', 'Introduce stakeholder', 'Create opportunity', 'Revisit later'],
-      timing_options:    ['Now', 'This month', 'Next quarter', 'Later'],
     };
-
-    function seedStandardOptionsForPlay(config, rsId) {
-      config.options = (config.options || []).filter(o =>
-        (o.response_set_id || '').toUpperCase() !== rsId.toUpperCase()
-      );
-      STANDARD_INTERESTED.forEach((label, i) => config.options.push({
-        response_set_id: rsId, outcome_type: 'Interested',
-        reason_label: label, reason_code: '', sort_order: i + 1, active_flag: true
-      }));
-      STANDARD_NOT_INTERESTED.forEach((label, i) => config.options.push({
-        response_set_id: rsId, outcome_type: 'Not Interested',
-        reason_label: label, reason_code: '', sort_order: i + 1, active_flag: true
-      }));
-    }
 
     let _currentConfig = null;
     let _allAssignments = null;
-    let _selectedResponseSetId = null;
+    let _currentPlayConfig = null;
+    let _selectedPlayId = null;
     let _loadedPlays = [];
+    let _configDirty = false;
+
+    function _setConfigDirty(dirty) {
+      _configDirty = dirty;
+      const ind = document.getElementById('config-dirty-indicator');
+      const btn = document.getElementById('config-save-btn');
+      if (ind) ind.style.display = dirty ? 'block' : 'none';
+      if (btn) btn.style.boxShadow = dirty ? '0 0 8px 2px rgba(16,124,16,0.5)' : 'none';
+    }
 
     async function loadConfigTab() {
       const el = document.getElementById('config-editor');
@@ -1977,183 +2780,233 @@ Let's go! 🚀`;
       try {
         const [config, playsConfig] = await Promise.all([getFullResponseConfig(), getPlaysConfig()]);
         _currentConfig = config;
-        _loadedPlays = (playsConfig.plays || []).filter(p => p.active !== false).map(p => ({
-          play_id: p.play_id,
-          play_name: p.play_name || p.play_id,
-          response_set_id: p.play_id.replace(/[^a-z0-9]/gi, '_').toUpperCase() + '_STANDARD'
-        }));
-
-        // Auto-seed standard options for any play that has none yet
-        let needsSave = false;
-        _loadedPlays.forEach(p => {
-          const hasAny = (_currentConfig.options || []).some(o =>
-            (o.response_set_id || '').toUpperCase() === p.response_set_id.toUpperCase() && o.active_flag !== false
-          );
-          if (!hasAny) { seedStandardOptionsForPlay(_currentConfig, p.response_set_id); needsSave = true; }
-        });
         // Seed standard form config if empty
         if (!_currentConfig.form_config || !Object.keys(_currentConfig.form_config).length) {
           _currentConfig.form_config = { ...STANDARD_FORM_CONFIG };
-          needsSave = true;
+          await saveFullResponseConfig(_currentConfig);
         }
-        if (needsSave) await saveFullResponseConfig(_currentConfig);
+        _loadedPlays = (playsConfig.plays || []).filter(p => p.active !== false).map(p => ({
+          play_id: p.play_id,
+          play_name: p.play_name || p.play_id,
+        }));
 
         const picker = document.getElementById('config-play-picker');
         if (_loadedPlays.length === 0) {
           picker.innerHTML = '<option value="">No plays found — upload accounts first</option>';
-        } else {
-          picker.innerHTML = _loadedPlays.map(p =>
-            `<option value="${escHtml(p.response_set_id)}" data-play="${escHtml(p.play_name)}">${escHtml(p.play_name)}</option>`
-          ).join('');
-          _selectedResponseSetId = _loadedPlays[0].response_set_id;
-          document.getElementById('config-response-set-label').textContent = 'Response set: ' + _selectedResponseSetId;
+          return;
         }
-        renderConfigEditor(_currentConfig);
+        picker.innerHTML = _loadedPlays.map(p =>
+          `<option value="${escHtml(p.play_id)}">${escHtml(p.play_name)}</option>`
+        ).join('');
+        _selectedPlayId = _loadedPlays[0].play_id;
+        await loadPlayConfigEditor(_selectedPlayId);
       } catch(e) {
         el.innerHTML = `<div style="color:#d32f2f;padding:16px;">Error loading config: ${escHtml(e.message)}</div>`;
       }
     }
 
-    function onPlayPickerChange() {
-      // Flush any pending edits first
-      flushEdits();
-      const picker = document.getElementById('config-play-picker');
-      const opt = picker.options[picker.selectedIndex];
-      _selectedResponseSetId = picker.value;
-      document.getElementById('config-response-set-label').textContent = 'Response set: ' + _selectedResponseSetId;
-      renderConfigEditor(_currentConfig);
-    }
-
-    function flushEdits() {
-      document.querySelectorAll('[data-group]').forEach(input => {
-        updateConfigItem(input.dataset.group, parseInt(input.dataset.index), input.value);
-      });
-    }
-
-    function makeOptionGroup(title, items, key, hint) {
-      return `
-        <div style="background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:16px;">
-          <div style="font-weight:700;font-size:14px;margin-bottom:4px;">${escHtml(title)}</div>
-          ${hint ? `<div style="font-size:12px;color:#888;margin-bottom:10px;">${escHtml(hint)}</div>` : ''}
-          <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
-            ${items.map((item, i) => `
-              <div style="display:flex;align-items:center;gap:8px;">
-                <input type="text" value="${escHtml(item)}" data-group="${escHtml(key)}" data-index="${i}"
-                  style="flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;" />
-                <button onclick="removeConfigItem('${escHtml(key)}', ${i})"
-                  style="background:none;border:none;color:#d32f2f;font-size:18px;cursor:pointer;line-height:1;padding:4px;">✕</button>
-              </div>`).join('')}
-          </div>
-          <button onclick="addConfigItem('${escHtml(key)}')"
-            style="font-size:13px;color:#0078d4;background:none;border:1px dashed #0078d4;border-radius:6px;padding:6px 12px;cursor:pointer;width:100%;">+ Add option</button>
-        </div>`;
-    }
-
-    function makeReasonGroup(title, outcomeType, hint) {
-      const rsId = _selectedResponseSetId || 'SAAS_STANDARD';
-      const reasons = (_currentConfig.options || [])
-        .filter(o => o.outcome_type === outcomeType && o.active_flag !== false &&
-          (o.response_set_id || 'SAAS_STANDARD').toUpperCase() === rsId.toUpperCase())
-        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
-      const key = 'reason_' + outcomeType.replace(/\s+/g, '_') + '|' + rsId;
-      return makeOptionGroup(title, reasons.map(r => r.reason_label), key, hint);
-    }
-
-    function renderConfigEditor(config) {
-      const fc = config.form_config || {};
-      document.getElementById('config-editor').innerHTML =
-        makeReasonGroup('✅ Interested — Reasons', 'Interested', 'Why the customer said yes (specific to this play)') +
-        makeReasonGroup('❌ Not Interested — Reasons', 'Not Interested', 'Why the customer said no (specific to this play)') +
-        '<div style="grid-column:1/-1;border-top:2px solid #eee;padding-top:4px;font-size:11px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:0.5px;">Global options (apply to all plays)</div>' +
-        makeOptionGroup('📞 Interaction Types', fc.interaction_types || [], 'interaction_types', 'How the rep reached the customer') +
-        makeOptionGroup('📅 Next Step Types', fc.next_step_types || [], 'next_step_types', 'What happens after an Interested outcome') +
-        makeOptionGroup('⏱️ Timing Options', fc.timing_options || [], 'timing_options', 'When the customer wants to move forward');
-    }
-
-    function updateConfigItem(key, index, value) {
-      if (key.startsWith('reason_')) {
-        const parts = key.split('|');
-        const outcomeKey = parts[0];
-        const rsId = parts[1];
-        const outcomeType = outcomeKey.includes('Not') ? 'Not Interested' : 'Interested';
-        const reasons = (_currentConfig.options || [])
-          .filter(o => o.outcome_type === outcomeType && o.active_flag !== false &&
-            (o.response_set_id || 'SAAS_STANDARD').toUpperCase() === (rsId || 'SAAS_STANDARD').toUpperCase())
-          .sort((a, b) => (a.sort_order||0)-(b.sort_order||0));
-        if (reasons[index]) reasons[index].reason_label = value;
-      } else {
-        if (!_currentConfig.form_config) _currentConfig.form_config = {};
-        if (_currentConfig.form_config[key]) _currentConfig.form_config[key][index] = value;
+    async function loadPlayConfigEditor(playId) {
+      const el = document.getElementById('config-editor');
+      el.innerHTML = '<div style="text-align:center;color:#999;padding:32px;">Loading play config…</div>';
+      try {
+        _currentPlayConfig = await getPlayConfig(playId);
+        _selectedPlayId = playId;
+        _setConfigDirty(false);
+        renderConfigEditor();
+      } catch(e) {
+        el.innerHTML = `<div style="color:#d32f2f;padding:16px;">Error loading play config: ${escHtml(e.message)}</div>`;
       }
     }
 
-    function removeConfigItem(key, index) {
-      flushEdits();
-      if (key.startsWith('reason_')) {
-        const parts = key.split('|');
-        const outcomeKey = parts[0];
-        const rsId = parts[1];
-        const outcomeType = outcomeKey.includes('Not') ? 'Not Interested' : 'Interested';
-        const reasons = (_currentConfig.options || [])
-          .filter(o => o.outcome_type === outcomeType && o.active_flag !== false &&
-            (o.response_set_id || 'SAAS_STANDARD').toUpperCase() === (rsId || 'SAAS_STANDARD').toUpperCase())
-          .sort((a, b) => (a.sort_order||0)-(b.sort_order||0));
-        if (reasons[index]) reasons[index].active_flag = false;
-      } else {
-        if (_currentConfig.form_config && _currentConfig.form_config[key]) {
-          _currentConfig.form_config[key].splice(index, 1);
+    function onPlayPickerChange() {
+      if (_configDirty) {
+        if (!confirm('You have unsaved changes. Discard?')) {
+          // Revert picker to current play
+          document.getElementById('config-play-picker').value = _selectedPlayId;
+          return;
         }
       }
-      renderConfigEditor(_currentConfig);
+      const picker = document.getElementById('config-play-picker');
+      loadPlayConfigEditor(picker.value);
     }
 
-    function addConfigItem(key) {
-      flushEdits();
-      if (key.startsWith('reason_')) {
-        const parts = key.split('|');
-        const outcomeKey = parts[0];
-        const rsId = parts[1];
-        const outcomeType = outcomeKey.includes('Not') ? 'Not Interested' : 'Interested';
-        const existing = (_currentConfig.options || []).filter(o => o.outcome_type === outcomeType && (o.response_set_id||'SAAS_STANDARD').toUpperCase() === (rsId||'SAAS_STANDARD').toUpperCase());
-        _currentConfig.options = _currentConfig.options || [];
-        _currentConfig.options.push({ response_set_id: rsId || 'SAAS_STANDARD', outcome_type: outcomeType, reason_label: '', reason_code: '', sort_order: existing.length + 1, active_flag: true });
-      } else {
-        if (!_currentConfig.form_config) _currentConfig.form_config = {};
-        _currentConfig.form_config[key] = _currentConfig.form_config[key] || [];
-        _currentConfig.form_config[key].push('');
-      }
-      renderConfigEditor(_currentConfig);
+    function renderConfigEditor() {
+      const OUTCOME_META = {
+        'Interested':        { emoji: '✅', accent: '#4caf50' },
+        'Not Interested':    { emoji: '❌', accent: '#d32f2f' },
+        'Would Not Engage':  { emoji: '⚠️', accent: '#f57c00' },
+      };
+      const FIELD_LABELS = {
+        reasons:    { title: 'Reasons',    addLabel: '+ Add reason' },
+        next_steps: { title: 'Next Steps', addLabel: '+ Add next step' },
+        timing:     { title: 'Timing',     addLabel: '+ Add timing option' },
+      };
+      let html = '';
+
+      // Outcome sections
+      OUTCOME_TYPES.forEach(ot => {
+        const meta = OUTCOME_META[ot];
+        const outcomeData = (_currentPlayConfig && _currentPlayConfig.outcomes && _currentPlayConfig.outcomes[ot]) || {};
+        html += `<div style="grid-column:1/-1;background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:16px;">`;
+        html += `<div style="font-weight:700;font-size:15px;margin-bottom:12px;">${meta.emoji} ${escHtml(ot)}</div>`;
+
+        ['reasons', 'next_steps', 'timing'].forEach(field => {
+          const fl = FIELD_LABELS[field];
+          const items = outcomeData[field] || [];
+          html += `<div style="margin-bottom:14px;border-left:3px solid ${meta.accent};padding-left:12px;">`;
+          html += `<div style="font-weight:700;font-size:13px;margin-bottom:6px;">${escHtml(fl.title)}</div>`;
+          html += `<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px;">`;
+          items.forEach((item, i) => {
+            const safeOt = escHtml(ot);
+            const safeField = escHtml(field);
+            html += `<div style="display:flex;align-items:center;gap:6px;">`;
+            html += `<input type="text" value="${escHtml(item)}" data-ot="${safeOt}" data-field="${safeField}" data-index="${i}" oninput="updateConfigTreeItem('${safeOt}','${safeField}',${i},this.value)" style="flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;" />`;
+            html += `<button onclick="moveConfigTreeItem('${safeOt}','${safeField}',${i},-1)" style="background:none;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;padding:2px 6px;font-size:13px;color:#555;" title="Move up">▲</button>`;
+            html += `<button onclick="moveConfigTreeItem('${safeOt}','${safeField}',${i},1)" style="background:none;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;padding:2px 6px;font-size:13px;color:#555;" title="Move down">▼</button>`;
+            html += `<button onclick="removeConfigTreeItem('${safeOt}','${safeField}',${i})" style="background:none;border:none;color:#d32f2f;font-size:18px;cursor:pointer;line-height:1;padding:4px;" title="Remove">✕</button>`;
+            html += `</div>`;
+          });
+          html += `</div>`;
+          html += `<button onclick="addConfigTreeItem('${escHtml(ot)}','${escHtml(field)}')" style="font-size:13px;color:#0078d4;background:none;border:1px dashed #0078d4;border-radius:6px;padding:6px 12px;cursor:pointer;width:100%;">${escHtml(fl.addLabel)}</button>`;
+          html += `</div>`;
+        });
+        html += `</div>`;
+      });
+
+      // Global separator
+      html += `<div style="grid-column:1/-1;border-top:2px solid #eee;padding-top:4px;font-size:11px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:0.5px;">Global options (apply to all plays)</div>`;
+
+      // Interaction types from _currentConfig.form_config
+      const fc = (_currentConfig && _currentConfig.form_config) || {};
+      const itTypes = fc.interaction_types || [];
+      html += `<div style="grid-column:1/-1;background:#fff;border:1px solid #e8e8e8;border-radius:10px;padding:16px;">`;
+      html += `<div style="font-weight:700;font-size:14px;margin-bottom:4px;">📞 Interaction Types</div>`;
+      html += `<div style="font-size:12px;color:#888;margin-bottom:10px;">How the rep reached the customer</div>`;
+      html += `<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:8px;">`;
+      itTypes.forEach((item, i) => {
+        html += `<div style="display:flex;align-items:center;gap:6px;">`;
+        html += `<input type="text" value="${escHtml(item)}" data-global="interaction_types" data-index="${i}" oninput="updateGlobalItem('interaction_types',${i},this.value)" style="flex:1;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;" />`;
+        html += `<button onclick="moveGlobalItem('interaction_types',${i},-1)" style="background:none;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;padding:2px 6px;font-size:13px;color:#555;" title="Move up">▲</button>`;
+        html += `<button onclick="moveGlobalItem('interaction_types',${i},1)" style="background:none;border:1px solid #d1d5db;border-radius:4px;cursor:pointer;padding:2px 6px;font-size:13px;color:#555;" title="Move down">▼</button>`;
+        html += `<button onclick="removeGlobalItem('interaction_types',${i})" style="background:none;border:none;color:#d32f2f;font-size:18px;cursor:pointer;line-height:1;padding:4px;" title="Remove">✕</button>`;
+        html += `</div>`;
+      });
+      html += `</div>`;
+      html += `<button onclick="addGlobalItem('interaction_types')" style="font-size:13px;color:#0078d4;background:none;border:1px dashed #0078d4;border-radius:6px;padding:6px 12px;cursor:pointer;width:100%;">+ Add interaction type</button>`;
+      html += `</div>`;
+
+      document.getElementById('config-editor').innerHTML = html;
+    }
+
+    // ── Tree edit functions (per-play config) ──────────────────────────────
+
+    function updateConfigTreeItem(outcomeType, field, index, value) {
+      if (!_currentPlayConfig || !_currentPlayConfig.outcomes[outcomeType]) return;
+      _currentPlayConfig.outcomes[outcomeType][field][index] = value;
+      _setConfigDirty(true);
+    }
+
+    function removeConfigTreeItem(outcomeType, field, index) {
+      if (!_currentPlayConfig || !_currentPlayConfig.outcomes[outcomeType]) return;
+      _currentPlayConfig.outcomes[outcomeType][field].splice(index, 1);
+      _setConfigDirty(true);
+      renderConfigEditor();
+    }
+
+    function addConfigTreeItem(outcomeType, field) {
+      if (!_currentPlayConfig) return;
+      if (!_currentPlayConfig.outcomes[outcomeType]) _currentPlayConfig.outcomes[outcomeType] = {};
+      if (!_currentPlayConfig.outcomes[outcomeType][field]) _currentPlayConfig.outcomes[outcomeType][field] = [];
+      _currentPlayConfig.outcomes[outcomeType][field].push('');
+      _setConfigDirty(true);
+      renderConfigEditor();
       setTimeout(() => {
-        const inputs = document.querySelectorAll(`[data-group="${key}"]`);
+        const inputs = document.querySelectorAll(`[data-ot="${outcomeType}"][data-field="${field}"]`);
         if (inputs.length) inputs[inputs.length - 1].focus();
       }, 50);
     }
 
+    function moveConfigTreeItem(outcomeType, field, index, direction) {
+      if (!_currentPlayConfig || !_currentPlayConfig.outcomes[outcomeType]) return;
+      const arr = _currentPlayConfig.outcomes[outcomeType][field];
+      const target = index + direction;
+      if (target < 0 || target >= arr.length) return;
+      [arr[index], arr[target]] = [arr[target], arr[index]];
+      _setConfigDirty(true);
+      renderConfigEditor();
+    }
+
+    // ── Global edit functions (form_config in response-options.json) ───────
+
+    function updateGlobalItem(field, index, value) {
+      if (!_currentConfig) _currentConfig = {};
+      if (!_currentConfig.form_config) _currentConfig.form_config = {};
+      if (_currentConfig.form_config[field]) _currentConfig.form_config[field][index] = value;
+      _setConfigDirty(true);
+    }
+
+    function removeGlobalItem(field, index) {
+      if (_currentConfig && _currentConfig.form_config && _currentConfig.form_config[field]) {
+        _currentConfig.form_config[field].splice(index, 1);
+      }
+      _setConfigDirty(true);
+      renderConfigEditor();
+    }
+
+    function addGlobalItem(field) {
+      if (!_currentConfig) _currentConfig = {};
+      if (!_currentConfig.form_config) _currentConfig.form_config = {};
+      _currentConfig.form_config[field] = _currentConfig.form_config[field] || [];
+      _currentConfig.form_config[field].push('');
+      _setConfigDirty(true);
+      renderConfigEditor();
+      setTimeout(() => {
+        const inputs = document.querySelectorAll(`[data-global="${field}"]`);
+        if (inputs.length) inputs[inputs.length - 1].focus();
+      }, 50);
+    }
+
+    function moveGlobalItem(field, index, direction) {
+      if (!_currentConfig || !_currentConfig.form_config || !_currentConfig.form_config[field]) return;
+      const arr = _currentConfig.form_config[field];
+      const target = index + direction;
+      if (target < 0 || target >= arr.length) return;
+      [arr[index], arr[target]] = [arr[target], arr[index]];
+      _setConfigDirty(true);
+      renderConfigEditor();
+    }
+
+    // ── Reset / Save ──────────────────────────────────────────────────────
+
     function resetPlayToStandard() {
-      if (!_selectedResponseSetId) return;
-      const playName = (_loadedPlays.find(p => p.response_set_id === _selectedResponseSetId) || {}).play_name || _selectedResponseSetId;
-      if (!confirm(`Reset "${playName}" response options back to the standard defaults?\n\nThis will replace all Interested and Not Interested reasons for this play.`)) return;
-      flushEdits();
-      seedStandardOptionsForPlay(_currentConfig, _selectedResponseSetId);
-      renderConfigEditor(_currentConfig);
+      if (!_selectedPlayId) return;
+      const playName = (_loadedPlays.find(p => p.play_id === _selectedPlayId) || {}).play_name || _selectedPlayId;
+      if (!confirm(`Reset "${playName}" config back to the standard defaults?\n\nThis will replace all outcomes (Interested, Not Interested, Would Not Engage) including reasons, next steps, and timing.`)) return;
+      _currentPlayConfig = JSON.parse(JSON.stringify(DEFAULT_PLAY_CONFIG));
+      _setConfigDirty(true);
+      renderConfigEditor();
       const statusEl = document.getElementById('config-status');
       statusEl.style.display = 'block'; statusEl.style.background = '#fff8e1'; statusEl.style.color = '#856404';
       statusEl.textContent = '↩ Reset to standard — click Save to SharePoint to apply.';
     }
 
     async function resetAllPlaysToStandard() {
-      if (!confirm('Reset ALL plays to standard response options?\n\nThis will replace Interested and Not Interested reasons for every play and restore standard form config.')) return;
-      flushEdits();
-      _loadedPlays.forEach(p => seedStandardOptionsForPlay(_currentConfig, p.response_set_id));
-      _currentConfig.form_config = { ...STANDARD_FORM_CONFIG };
+      if (!confirm('Reset ALL plays to standard config?\n\nThis will replace Interested, Not Interested, and Would Not Engage outcomes for every play and restore standard form config.')) return;
       const statusEl = document.getElementById('config-status');
       statusEl.style.display = 'block'; statusEl.style.background = '#fff3cd'; statusEl.style.color = '#856404';
       statusEl.textContent = '⏳ Saving all plays to standard…';
       try {
+        const defaultCfg = JSON.parse(JSON.stringify(DEFAULT_PLAY_CONFIG));
+        for (const p of _loadedPlays) {
+          await savePlayConfig(p.play_id, defaultCfg);
+        }
+        _currentConfig.form_config = { ...STANDARD_FORM_CONFIG };
         await saveFullResponseConfig(_currentConfig);
+        _currentPlayConfig = JSON.parse(JSON.stringify(DEFAULT_PLAY_CONFIG));
+        _setConfigDirty(false);
         statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
         statusEl.textContent = '✅ All plays reset to standard and saved.';
-        renderConfigEditor(_currentConfig);
+        renderConfigEditor();
       } catch(e) {
         statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
         statusEl.textContent = '✗ Save failed: ' + e.message;
@@ -2161,31 +3014,87 @@ Let's go! 🚀`;
     }
 
     async function saveConfig() {
-      flushEdits();
+      // Flush all inputs into _currentPlayConfig
+      document.querySelectorAll('[data-ot][data-field]').forEach(input => {
+        const ot = input.dataset.ot;
+        const field = input.dataset.field;
+        const idx = parseInt(input.dataset.index);
+        if (_currentPlayConfig && _currentPlayConfig.outcomes[ot] && _currentPlayConfig.outcomes[ot][field]) {
+          _currentPlayConfig.outcomes[ot][field][idx] = input.value;
+        }
+      });
+      document.querySelectorAll('[data-global]').forEach(input => {
+        const field = input.dataset.global;
+        const idx = parseInt(input.dataset.index);
+        if (_currentConfig && _currentConfig.form_config && _currentConfig.form_config[field]) {
+          _currentConfig.form_config[field][idx] = input.value;
+        }
+      });
+
+      // Validate: filter out blank strings
+      for (const ot of OUTCOME_TYPES) {
+        if (_currentPlayConfig.outcomes[ot]) {
+          for (const field of ['reasons', 'next_steps', 'timing']) {
+            if (_currentPlayConfig.outcomes[ot][field]) {
+              _currentPlayConfig.outcomes[ot][field] = _currentPlayConfig.outcomes[ot][field].filter(v => v.trim() !== '');
+            }
+          }
+        }
+      }
+      if (_currentConfig.form_config) {
+        for (const key of Object.keys(_currentConfig.form_config)) {
+          if (Array.isArray(_currentConfig.form_config[key])) {
+            _currentConfig.form_config[key] = _currentConfig.form_config[key].filter(v => v.trim() !== '');
+          }
+        }
+      }
+
+      // Warn on duplicates (but don't block)
+      for (const ot of OUTCOME_TYPES) {
+        if (_currentPlayConfig.outcomes[ot]) {
+          for (const field of ['reasons', 'next_steps', 'timing']) {
+            const arr = _currentPlayConfig.outcomes[ot][field] || [];
+            const lower = arr.map(v => v.toLowerCase());
+            const dupes = lower.filter((v, i) => lower.indexOf(v) !== i);
+            if (dupes.length) console.warn(`Duplicate ${field} in ${ot}:`, [...new Set(dupes)]);
+          }
+        }
+      }
+
       const statusEl = document.getElementById('config-status');
       statusEl.style.display = 'block';
       statusEl.style.background = '#fff3cd';
       statusEl.style.color = '#856404';
-      statusEl.textContent = '⏳ Saving to SharePoint…';
-
-      // Re-number sort_order per response_set per outcome
-      const bySetAndOutcome = {};
-      (_currentConfig.options || []).filter(o => o.active_flag !== false).forEach(o => {
-        const k = (o.response_set_id||'SAAS_STANDARD') + '|' + o.outcome_type;
-        bySetAndOutcome[k] = bySetAndOutcome[k] || [];
-        bySetAndOutcome[k].push(o);
-      });
-      Object.values(bySetAndOutcome).forEach(arr => arr.sort((a,b) => (a.sort_order||0)-(b.sort_order||0)).forEach((o,i) => { o.sort_order = i+1; }));
+      statusEl.textContent = '⏳ Saving…';
 
       try {
-        await saveFullResponseConfig(_currentConfig);
+        await Promise.all([
+          savePlayConfig(_selectedPlayId, _currentPlayConfig),
+          saveFullResponseConfig(_currentConfig),
+        ]);
+
         statusEl.style.background = '#e8f5e9';
         statusEl.style.color = '#107c10';
-        statusEl.textContent = '✅ Saved! Changes will appear in the rep app immediately.';
+        statusEl.textContent = '✅ Saved!';
+        _setConfigDirty(false);
+
+        // Reload and verify persistence
+        try {
+          const reloaded = await getPlayConfig(_selectedPlayId);
+          const origReasons = (_currentPlayConfig.outcomes['Interested'] || {}).reasons || [];
+          const reloadedReasons = (reloaded.outcomes['Interested'] || {}).reasons || [];
+          if (JSON.stringify(origReasons) !== JSON.stringify(reloadedReasons)) {
+            statusEl.textContent = '✅ Saved! (Note: verification mismatch — reload to confirm)';
+          }
+          _currentPlayConfig = reloaded;
+        } catch(ve) {
+          console.warn('Post-save verification failed:', ve);
+        }
+        renderConfigEditor();
       } catch(e) {
         statusEl.style.background = '#fde8e8';
         statusEl.style.color = '#c00';
-        statusEl.textContent = '✗ Save failed: ' + e.message;
+        statusEl.textContent = '❌ Save failed: ' + e.message + ' — try again or check your connection.';
       }
     }
     // ── Health Check Tab ──────────────────────────────────────────────────────
@@ -2455,56 +3364,8 @@ Let's go! 🚀`;
     }
 
     // ── Broadcast Tab ─────────────────────────────────────────────────────────
-    let _broadcastData = [];
+    let _unused = null; // formerly _broadcastData
 
-    async function loadBroadcastTab() {
-      _broadcastData = [];
-      const lbWrap = document.getElementById('broadcast-leaderboard-preview');
-      lbWrap.innerHTML = '<div style="text-align:center;padding:24px;color:#aaa;"><div class="spinner"></div></div>';
-      try {
-        const data = await getLeaderboard();
-        _broadcastData = data || [];
-        const top10 = data.slice(0, 10);
-        const rankEmoji = (i) => i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
-        lbWrap.innerHTML = top10.map((rep, i) => {
-          const level = getLevel(rep.totalPoints);
-          return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #f0f0f0;">
-            <span style="font-size:18px;width:32px;text-align:center;flex-shrink:0;">${rankEmoji(i)}</span>
-            <div style="flex:1;font-weight:600;">${escHtml(rep.repName)}</div>
-            <span style="font-size:13px;color:#888;">${level.badge} ${escHtml(level.name)}</span>
-            <span style="font-weight:700;color:#0078d4;">${rep.totalPoints} pts</span>
-          </div>`;
-        }).join('') || '<div style="padding:20px;text-align:center;color:#aaa;">No data yet</div>';
-        refreshBroadcastPreview();
-      } catch(e) {
-        lbWrap.innerHTML = `<div style="padding:16px;color:#d32f2f;">Error: ${escHtml(e.message)}</div>`;
-      }
-    }
-
-    function refreshBroadcastPreview() {
-      const subject = document.getElementById('broadcast-subject')?.value || '🏆 INFRA SalesPlay Tracker — Mid-Quarter Update';
-      const opening = document.getElementById('broadcast-opening')?.value || '';
-      const closing = document.getElementById('broadcast-closing')?.value || '';
-      const rankLabels = ['🥇', '🥈', '🥉'];
-      const standings = _broadcastData.slice(0, 10).map((rep, i) => {
-        const level  = getLevel(rep.totalPoints);
-        const prefix = i < 3 ? rankLabels[i] : `  #${i+1}`;
-        return `${prefix} ${rep.repName} — ${rep.totalPoints} pts (${level.name})`;
-      }).join('\n');
-
-      const msg = `${subject}\n\n${opening}\n\nCurrent Standings:\n${standings || '(No data yet)'}\n\n${closing}\n\nKeep pitching! 🚀`;
-      const el = document.getElementById('broadcast-message-preview');
-      if (el) el.textContent = msg;
-    }
-
-    function copyBroadcastMessage() {
-      refreshBroadcastPreview();
-      const text = document.getElementById('broadcast-message-preview')?.textContent || '';
-      navigator.clipboard.writeText(text).then(() => {
-        const el = document.getElementById('broadcast-copy-confirm');
-        if (el) { el.style.display = 'inline'; setTimeout(() => el.style.display = 'none', 2500); }
-      });
-    }
 
     // ── Export dropdown ──────────────────────────────────────────────────────
     function toggleExportMenu(btn) {
@@ -2523,7 +3384,7 @@ Let's go! 🚀`;
       const body = document.getElementById('activity-log-body');
       body.innerHTML = '<tr><td colspan="5" class="no-results">Loading…</td></tr>';
       try {
-        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/activity_log.csv');
+        const text = await getFileText(`${SP_ROOT}/activity_log.csv`);
         if (!text || !text.trim()) {
           body.innerHTML = '<tr><td colspan="5" class="no-results">No activity logged yet</td></tr>';
           return;
@@ -2583,7 +3444,7 @@ Let's go! 🚀`;
       body.innerHTML = '<tr><td colspan="8" class="no-results">Loading…</td></tr>';
       summaryBar.style.display = 'none';
       try {
-        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/identity_log.csv');
+        const text = await getFileText(`${SP_ROOT}/identity_log.csv`);
         if (!text || !text.trim()) {
           body.innerHTML = '<tr><td colspan="8" class="no-results">No identity events logged yet — events are written on each rep login.</td></tr>';
           return;
@@ -2676,9 +3537,15 @@ Let's go! 🚀`;
       if (!wrap) return;
       wrap.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:24px;">Loading snapshots…</div>';
 
-      const snapshots = await listSnapshots();
+      let snapshots;
+      try {
+        snapshots = await listSnapshots();
+      } catch(e) {
+        wrap.innerHTML = `<div style="text-align:center;color:#d32f2f;padding:24px;">Error loading snapshots: ${escHtml(e.message)}</div>`;
+        return;
+      }
 
-      if (!snapshots.length) {
+      if (!snapshots || !snapshots.length) {
         wrap.innerHTML = '<div style="text-align:center;color:#9ca3af;padding:32px;">No snapshots found. Use "Save Snapshot" to create your first one.</div>';
         return;
       }
@@ -2686,16 +3553,21 @@ Let's go! 🚀`;
       const rows = snapshots.map(s => {
         const dt = s.timestamp ? new Date(s.timestamp).toLocaleString() : '—';
         const typeClass = 'snap-type-' + (s.type || 'unknown');
-        const counts = Object.entries(s.record_counts || {})
-          .map(([k, v]) => `${k.replace(/_engagements\.csv|\.json|\.csv/g,'')}: ${v}`)
-          .join(' · ');
+        const fileCount = (s.files || []).length;
+        // Summarise record counts: highlight plays, assignments, and total engagement rows
+        const playsCount = s.record_counts?.['plays.json'] ?? '—';
+        const assignCount = s.record_counts?.['assignments.json'] ?? '—';
+        const engRows = Object.entries(s.record_counts || {})
+          .filter(([k]) => k.endsWith('_engagements.csv'))
+          .reduce((sum, [, v]) => sum + (Number(v) || 0), 0);
+        const countsHtml = `Plays: ${playsCount} · Assignments: ${assignCount} · Engagements: ${engRows} · Files: ${fileCount}`;
         return `
           <tr>
             <td>${escHtml(dt)}</td>
-            <td>${escHtml(s.snapshot_id || '')}</td>
+            <td style="font-family:monospace;font-size:11px;">${escHtml(s.snapshot_id || '')}</td>
             <td><span class="snap-type-badge ${escHtml(typeClass)}">${escHtml(s.type || 'unknown')}</span></td>
             <td>${escHtml(s.label || '—')}</td>
-            <td style="font-size:11px;color:#6b7280;">${escHtml(counts || '—')}</td>
+            <td style="font-size:11px;color:#6b7280;">${countsHtml}</td>
             <td>
               <button class="admin-action-btn admin-action-btn-secondary" style="padding:4px 10px;font-size:12px;"
                 onclick="openRestoreModal(${JSON.stringify(JSON.stringify(s))})">Restore</button>
@@ -2856,7 +3728,7 @@ Let's go! 🚀`;
       statsBar.style.display = 'none';
 
       try {
-        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/demo_log.csv');
+        const text = await getFileText(`${SP_ROOT}/demo_log.csv`);
         if (!text || !text.trim()) {
           body.innerHTML = '<tr><td colspan="6" class="no-results">No demo activity logged yet</td></tr>';
           return;
@@ -2922,7 +3794,7 @@ Let's go! 🚀`;
     const demoBtnExport = document.getElementById('demo-btn-export');
     if (demoBtnExport) demoBtnExport.addEventListener('click', async () => {
       try {
-        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/demo_log.csv');
+        const text = await getFileText(`${SP_ROOT}/demo_log.csv`);
         if (!text) { alert('No demo activity to export'); return; }
         const blob = new Blob([text], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
@@ -2934,76 +3806,6 @@ Let's go! 🚀`;
 
     // ── Export All ────────────────────────────────────────────────────────────
     // ── Identity Tab ──────────────────────────────────────────────────────────
-    async function checkIdentityFile() {
-      const statusEl = document.getElementById('identity-status-text');
-      statusEl.textContent = 'Checking…';
-      try {
-        const text = await getFileText(SP_ROOT + '/rep-identity.json').catch(() => null);
-        if (text) {
-          const data = JSON.parse(text);
-          const reps = data.reps || data || [];
-          const count = Array.isArray(reps) ? reps.length : Object.keys(reps).length;
-          statusEl.innerHTML = `<span style="color:#107c10;font-weight:700;">✅ Uploaded</span> — ${count} reps loaded. Alias matching is active.`;
-        } else {
-          statusEl.innerHTML = `<span style="color:#d97706;font-weight:700;">⚠ Not uploaded</span> — reps matched by exact email only (no alias file found).`;
-        }
-      } catch(e) {
-        statusEl.innerHTML = `<span style="color:#c00;">✗ Error checking: ${escHtml(e.message)}</span>`;
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const fileInput = document.getElementById('identity-file-input');
-      if (fileInput) {
-        fileInput.addEventListener('change', () => {
-          const file = fileInput.files[0];
-          const btn = document.getElementById('btn-upload-identity');
-          const preview = document.getElementById('identity-file-preview');
-          if (!file) { btn.disabled = true; preview.style.display = 'none'; return; }
-          const reader = new FileReader();
-          reader.onload = e => {
-            try {
-              const data = JSON.parse(e.target.result);
-              const reps = data.reps || data || [];
-              const count = Array.isArray(reps) ? reps.length : '?';
-              preview.style.display = 'block';
-              preview.textContent = `✓ Valid JSON — ${count} reps found. Ready to upload.`;
-              btn.disabled = false;
-            } catch(err) {
-              preview.style.display = 'block';
-              preview.textContent = '✗ Invalid JSON: ' + err.message;
-              btn.disabled = true;
-            }
-          };
-          reader.readAsText(file);
-        });
-      }
-    });
-
-    async function uploadIdentityFile() {
-      if (!requireOwner('Upload Identity File')) return;
-      const file = document.getElementById('identity-file-input').files[0];
-      if (!file) return;
-      const statusEl = document.getElementById('identity-upload-status');
-      const btn = document.getElementById('btn-upload-identity');
-      statusEl.style.display = 'block';
-      statusEl.style.background = '#fff3cd'; statusEl.style.color = '#856404';
-      statusEl.textContent = '⏳ Uploading rep-identity.json to SharePoint…';
-      btn.disabled = true;
-      try {
-        const text = await file.text();
-        JSON.parse(text); // validate
-        await putFile(SP_ROOT + '/rep-identity.json', text, 'application/json');
-        statusEl.style.background = '#e8f5e9'; statusEl.style.color = '#107c10';
-        statusEl.textContent = '✅ rep-identity.json uploaded! Alias matching is now active for all reps.';
-        try { await logActivity(currentUser, 'identity_upload', 'rep-identity.json uploaded'); } catch(e) {}
-        checkIdentityFile();
-      } catch(e) {
-        statusEl.style.background = '#fde8e8'; statusEl.style.color = '#c00';
-        statusEl.textContent = '✗ Upload failed: ' + e.message;
-        btn.disabled = false;
-      }
-    }
 
     // ── Email Lookup Map (authoritative identity source) ───────────────────
 
@@ -3400,12 +4202,12 @@ Let's go! 🚀`;
       try {
         await Promise.all([
           _pollCSV(
-            'Chef SaaS Tracker/ChefSaaS/activity_log.csv',
+            `${SP_ROOT}/activity_log.csv`,
             TS_KEY_ACTIVITY,
             processActivityRow
           ),
           _pollCSV(
-            'Chef SaaS Tracker/ChefSaaS/identity_log.csv',
+            `${SP_ROOT}/identity_log.csv`,
             TS_KEY_IDENTITY,
             processIdentityRow
           ),
@@ -3424,9 +4226,401 @@ Let's go! 🚀`;
       console.log(`[Poll] Alert polling started — ${POLL_INTERVAL_MS / 1000}s interval`);
     }
 
+    // ── Rep View Tab (Manager) ──────────────────────────────────────────────
+    let _repViewInitialized = false;
+    async function loadRepViewTab() {
+      const wrap    = document.getElementById('rep-view-content');
+      const select  = document.getElementById('rep-view-select');
+
+      if (!_repViewInitialized) {
+        _repViewInitialized = true;
+        wrap.innerHTML = '<div style="text-align:center;padding:32px;"><div class="spinner"></div><p style="color:#888;margin-top:12px;">Loading rep list…</p></div>';
+        try {
+          const allAssignments = await getPlayAssignments(null);
+          const repMap = {};
+          allAssignments.forEach(a => {
+            const email = (a.rep_sso_login || a.rep_email || '').toLowerCase();
+            if (!email) return;
+            if (!repMap[email]) repMap[email] = a.rep_name || email;
+          });
+          const reps = Object.entries(repMap).sort((a, b) => a[1].localeCompare(b[1]));
+          select.innerHTML = '<option value="">— Choose a rep —</option>' +
+            reps.map(([email, name]) => `<option value="${escHtml(email)}">${escHtml(name)} (${escHtml(email)})</option>`).join('');
+          wrap.innerHTML = '<div style="text-align:center;padding:48px;color:#aaa;font-size:14px;">Select a rep to view their plays and accounts</div>';
+        } catch (e) {
+          wrap.innerHTML = `<div style="color:#d32f2f;padding:16px;">Error loading reps: ${escHtml(e.message)}</div>`;
+          return;
+        }
+        select.addEventListener('change', () => renderRepView(select.value));
+      }
+    }
+
+    async function renderRepView(repEmail) {
+      const wrap = document.getElementById('rep-view-content');
+      if (!repEmail) {
+        wrap.innerHTML = '<div style="text-align:center;padding:48px;color:#aaa;font-size:14px;">Select a rep to view their plays and accounts</div>';
+        return;
+      }
+      wrap.innerHTML = '<div style="text-align:center;padding:32px;"><div class="spinner"></div><p style="color:#888;margin-top:12px;">Loading rep data…</p></div>';
+
+      try {
+        const [allAssignments, playsConfig] = await Promise.all([
+          getPlayAssignments(null),
+          getPlaysConfig()
+        ]);
+        const plays = playsConfig.plays || [];
+        const engagements = _allData || [];
+
+        // Filter assignments for this rep
+        const repAssignments = allAssignments.filter(a =>
+          (a.rep_sso_login || a.rep_email || '').toLowerCase() === repEmail.toLowerCase()
+        );
+        const repName = repAssignments[0]?.rep_name || repEmail;
+
+        // Group assignments by play_id
+        const playGroups = {};
+        repAssignments.forEach(a => {
+          if (!playGroups[a.play_id]) playGroups[a.play_id] = { play_name: a.play_name || a.play_id, accounts: [] };
+          playGroups[a.play_id].accounts.push(a);
+        });
+
+        // Build engagement index: key = account_id|play_id → latest engagement
+        const engByAcctPlay = {};
+        engagements.forEach(e => {
+          const key = e.account_id + '|' + e.play_id;
+          const prev = engByAcctPlay[key];
+          if (!prev || (e.submitted_at || '') > (prev.submitted_at || '')) engByAcctPlay[key] = e;
+        });
+
+        // Compute global stats
+        let totalAccounts = 0, totalEngaged = 0, totalInterested = 0, totalNotInterested = 0, totalWNE = 0, totalNotStarted = 0;
+
+        const playCards = Object.entries(playGroups).map(([playId, group]) => {
+          const accts = group.accounts;
+          const acctCount = accts.length;
+          totalAccounts += acctCount;
+
+          let engaged = 0, interested = 0, notInterested = 0, wne = 0, notStarted = 0;
+          const acctRows = accts.map(a => {
+            const latest = engByAcctPlay[a.account_id + '|' + playId];
+            let status = 'Not Started', badgeClass = 'badge-not-started', lastTouch = '—', lastReason = '—', nextStep = '—', timing = '—';
+            if (latest) {
+              engaged++;
+              status = latest.outcome || 'Engaged';
+              lastTouch = latest.submitted_at ? formatDate(latest.submitted_at) : '—';
+              lastReason = latest.reason_label || '—';
+              nextStep = latest.next_step_type || '—';
+              timing = latest.timing || '—';
+              if (latest.outcome === 'Interested') { interested++; badgeClass = 'badge-won'; }
+              else if (latest.outcome === 'Not Interested') { notInterested++; badgeClass = 'badge-lost'; }
+              else if (latest.outcome === 'Would Not Engage') { wne++; badgeClass = 'badge-wne'; }
+              else { badgeClass = ''; }
+            } else {
+              notStarted++;
+            }
+            return `<tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:8px;">${escHtml(a.account_name || a.account_id)}</td>
+              <td style="padding:8px;"><span class="badge ${badgeClass}">${escHtml(status)}</span></td>
+              <td style="padding:8px;white-space:nowrap;">${escHtml(lastTouch)}</td>
+              <td style="padding:8px;">${escHtml(lastReason)}</td>
+              <td style="padding:8px;">${escHtml(nextStep)}</td>
+              <td style="padding:8px;">${escHtml(timing)}</td>
+            </tr>`;
+          }).join('');
+
+          totalEngaged += engaged;
+          totalInterested += interested;
+          totalNotInterested += notInterested;
+          totalWNE += wne;
+          totalNotStarted += notStarted;
+
+          const playObj = plays.find(p => p.play_id === playId);
+          const displayName = playObj ? playObj.play_name : group.play_name;
+          const cardId = 'rv-play-' + playId.replace(/[^a-zA-Z0-9]/g, '_');
+
+          return `
+            <div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:14px;overflow:hidden;">
+              <div onclick="document.getElementById('${cardId}').style.display = document.getElementById('${cardId}').style.display === 'none' ? 'block' : 'none'; this.querySelector('.rv-arrow').textContent = document.getElementById('${cardId}').style.display === 'none' ? '▶' : '▼';"
+                   style="padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;background:#f8f9fa;border-bottom:1px solid #eee;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <span class="rv-arrow" style="font-size:11px;color:#888;">▶</span>
+                  <span style="font-weight:700;font-size:14px;color:#333;">${escHtml(displayName)}</span>
+                </div>
+                <div style="font-size:12px;color:#666;">${acctCount} accounts · ${engaged} engaged · ${interested} interested</div>
+              </div>
+              <div id="${cardId}" style="display:none;padding:0;">
+                <div style="overflow-x:auto;">
+                  <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead>
+                      <tr style="background:#fafafa;text-align:left;">
+                        <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Account Name</th>
+                        <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Status</th>
+                        <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Last Touch</th>
+                        <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Last Reason</th>
+                        <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Next Step</th>
+                        <th style="padding:10px 8px;border-bottom:2px solid #e9ecef;">Timing</th>
+                      </tr>
+                    </thead>
+                    <tbody>${acctRows}</tbody>
+                  </table>
+                </div>
+              </div>
+            </div>`;
+        }).join('');
+
+        const totalPlays = Object.keys(playGroups).length;
+        const summaryHtml = `
+          <div style="background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:20px;">
+            <div style="font-size:15px;font-weight:700;color:#333;margin-bottom:10px;">👤 ${escHtml(repName)} <span style="font-weight:400;font-size:13px;color:#888;">(${escHtml(repEmail)})</span></div>
+            <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:13px;color:#555;">
+              <span><strong>Total Plays:</strong> ${totalPlays}</span>
+              <span style="color:#ccc;">|</span>
+              <span><strong>Total Accounts:</strong> ${totalAccounts}</span>
+              <span style="color:#ccc;">|</span>
+              <span style="color:#0078d4;"><strong>Engaged:</strong> ${totalEngaged}</span>
+              <span style="color:#ccc;">|</span>
+              <span style="color:#107c10;"><strong>Interested:</strong> ${totalInterested}</span>
+              <span style="color:#ccc;">|</span>
+              <span style="color:#d32f2f;"><strong>Not Interested:</strong> ${totalNotInterested}</span>
+              <span style="color:#ccc;">|</span>
+              <span style="color:#f57c00;"><strong>WNE:</strong> ${totalWNE}</span>
+              <span style="color:#ccc;">|</span>
+              <span style="color:#856404;"><strong>Not Started:</strong> ${totalNotStarted}</span>
+            </div>
+          </div>`;
+
+        wrap.innerHTML = summaryHtml + (playCards || '<div style="text-align:center;padding:24px;color:#aaa;">No plays assigned to this rep.</div>');
+      } catch (e) {
+        wrap.innerHTML = `<div style="color:#d32f2f;padding:16px;">Error loading rep view: ${escHtml(e.message)}</div>`;
+      }
+    }
+
+    // ── Play Briefs Tab ─────────────────────────────────────────────
+    let _briefsData = [];
+
+    async function loadPlayBriefsTab() {
+      const container = document.getElementById('briefs-list');
+      container.innerHTML = '<div class="empty">Loading...</div>';
+      try {
+        const raw = await getFileText(SP_ROOT + '/play_briefs.json');
+        if (!raw) { container.innerHTML = '<div class="empty">No briefs submitted yet. Share the <a href="intake.html" target="_blank">intake form</a> with product managers.</div>'; return; }
+        const data = JSON.parse(raw);
+        _briefsData = (data.submissions || []).sort((a, b) => (b.submitted_at || '').localeCompare(a.submitted_at || ''));
+        filterBriefs();
+      } catch (e) {
+        console.error('Load briefs error:', e);
+        container.innerHTML = '<div class="empty">Could not load briefs.</div>';
+      }
+    }
+
+    function filterBriefs() {
+      const filter = document.getElementById('briefs-filter').value;
+      const filtered = filter === 'all' ? _briefsData : _briefsData.filter(b => b.status === filter);
+      const container = document.getElementById('briefs-list');
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="empty">No briefs matching filter.</div>';
+        return;
+      }
+      container.innerHTML = filtered.map(b => {
+        const statusColor = { New: '#f59e0b', Reviewed: '#0078d4', Approved: '#16a34a', Resolved: '#94a3b8' }[b.status] || '#94a3b8';
+        const urgencyLabel = b.urgency ? `<span style="font-size:11px;padding:2px 6px;border-radius:10px;background:#fef3c7;color:#92400e;margin-left:6px;">${escHtml(b.urgency)}</span>` : '';
+        return `
+        <details style="border:1px solid #e2e8f0;border-radius:10px;margin-bottom:12px;background:#fff;overflow:hidden;">
+          <summary style="padding:14px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:14px;">
+            <div>
+              <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${statusColor};margin-right:8px;"></span>
+              <strong>${escHtml(b.play_name || 'Untitled')}</strong>
+              <span style="font-size:12px;color:#64748b;margin-left:8px;">${escHtml(b.product || '')}</span>
+              ${urgencyLabel}
+            </div>
+            <div style="font-size:11px;color:#94a3b8;">${b.submitted_at ? new Date(b.submitted_at).toLocaleDateString() : ''} by ${escHtml(b.submitter_name || b.submitter_email || '?')}</div>
+          </summary>
+          <div style="padding:0 16px 16px;border-top:1px solid #f0f0f0;">
+            ${briefField('Submitter', `${escHtml(b.submitter_name || '')} <span style="color:#6b7280;">${escHtml(b.submitter_email || '')}</span>`)}
+            ${briefField('Product', escHtml(b.product || ''))}
+            ${briefField('Play Name', escHtml(b.play_name || ''))}
+            ${briefField('Elevator Pitch', escHtml(b.pitch || ''))}
+            ${briefField('Why Customer Cares', escHtml(b.customer_value || ''))}
+            ${briefField('ICP', escHtml(b.icp || ''))}
+            ${briefField('Target Persona', escHtml(b.persona || ''))}
+            ${briefField('Competitive Positioning', escHtml(b.competitive || ''))}
+            ${briefField('Key Questions for Reps', (b.key_questions || []).length > 0 ? b.key_questions.map(q => `• ${escHtml(q)}`).join('<br>') : '—')}
+            ${briefField('Outcomes Config', (() => {
+              const oc = b.outcomes_intake;
+              if (!oc || typeof oc !== 'object') return '—';
+              return Object.entries(oc).filter(([,v]) => v && v.enabled !== false).map(([name, v]) => {
+                const parts = [];
+                if ((v.reasons||[]).length)    parts.push(`${v.reasons.length} reason${v.reasons.length>1?'s':''}`);
+                if ((v.next_steps||[]).length) parts.push(`${v.next_steps.length} next step${v.next_steps.length>1?'s':''}`);
+                if ((v.timing||[]).length)     parts.push(`${v.timing.length} timing`);
+                if (v.freeform) parts.push('freeform');
+                return `<div style="margin-bottom:2px;"><strong>${escHtml(name)}</strong> — ${parts.join(', ') || 'enabled'}</div>`;
+              }).join('') || '—';
+            })())}
+            ${briefField('Target Accounts', b.target_account_count ? `~${escHtml(String(b.target_account_count))} accounts` : '—')}
+            ${briefField('Urgency', escHtml(b.urgency || '—'))}
+            ${briefField('Notes', escHtml(b.notes || '—'))}
+            <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0;">
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <select id="brief-status-${b.id}" style="padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;">
+                  ${['New','Reviewed','Approved','Resolved'].map(s => `<option value="${s}" ${b.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+                </select>
+                <input id="brief-notes-${b.id}" placeholder="Manager notes..." value="${escHtml(b.manager_notes || '')}" style="flex:1;min-width:180px;padding:4px 8px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;" />
+                <button onclick="updateBrief('${b.id}')" style="padding:4px 12px;background:#6366f1;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;">Save</button>
+                ${b.status !== 'Approved' && b.status !== 'Resolved' ? `<button onclick="approveBrief('${b.id}')" style="padding:4px 12px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;">✅ Approve</button>` : ''}
+              </div>
+              ${b.status === 'Approved' ? `
+              <div style="margin-top:10px;padding:10px 14px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;font-size:13px;">
+                <strong style="color:#16a34a;">✅ Approved</strong> — Next steps:
+                <ol style="margin:6px 0 0 16px;padding:0;color:#374151;line-height:1.7;">
+                  <li>Kathy to collect target account list from <strong>${escHtml(b.submitter_name || b.submitter_email || 'submitter')}</strong>${b.target_account_count ? ` (~${b.target_account_count} accounts)` : ''}</li>
+                  <li><a href="ingest.html?brief=${encodeURIComponent(b.id)}" target="_blank" style="color:#6366f1;font-weight:600;">Open Play Wizard → Pre-filled from this brief</a></li>
+                </ol>
+              </div>` : ''}
+              </div>
+            </div>
+          </div>
+        </details>`;
+      }).join('');
+    }
+
+    function briefField(label, value) {
+      return `<div style="display:flex;gap:12px;padding:6px 0;border-bottom:1px solid #f8f9fa;font-size:13px;">
+        <div style="min-width:140px;font-weight:600;color:#374151;">${label}</div>
+        <div style="color:#1a1a2e;flex:1;">${value || '—'}</div>
+      </div>`;
+    }
+
+    async function approveBrief(id) {
+      const brief = _briefsData.find(b => b.id === id);
+      if (!brief) return;
+      brief.status = 'Approved';
+      brief.reviewed_by = currentUser ? (currentUser.email || currentUser.username || '') : '';
+      brief.approved_at = new Date().toISOString();
+      try {
+        await writeJsonFile('play_briefs.json', { submissions: _briefsData });
+        filterBriefs();
+      } catch(e) {
+        console.error('Approve brief error:', e);
+        alert('Failed to approve brief');
+      }
+    }
+
+
+    async function updateBrief(id) {
+      const brief = _briefsData.find(b => b.id === id);
+      if (!brief) return;
+      brief.status = document.getElementById('brief-status-' + id).value;
+      brief.manager_notes = document.getElementById('brief-notes-' + id).value;
+      brief.reviewed_by = currentUser || '';
+      try {
+        await writeJsonFile('play_briefs.json', { submissions: _briefsData });
+        filterBriefs();
+      } catch (e) {
+        console.error('Update brief error:', e);
+        alert('Failed to update brief');
+      }
+    }
+
+    // ── Overview Tab ──────────────────────────────────────────────────────
+    async function renderOverviewTab() {
+      const container = document.getElementById('overview-content');
+      if (!container) return;
+      container.innerHTML = '<div style="text-align:center;padding:48px;"><div class="spinner"></div></div>';
+      try {
+        const [allAssignments, plays] = await Promise.all([getPlayAssignments(null), getPlays()]);
+        const engagements = _allData;
+
+        const allAcctIds = new Set(allAssignments.map(a => a.account_id));
+        const globalLatest = {};
+        engagements.forEach(e => {
+          if (!allAcctIds.has(e.account_id)) return;
+          const prev = globalLatest[e.account_id];
+          if (!prev || e.submitted_at > prev.submitted_at) globalLatest[e.account_id] = e;
+        });
+        const gArr = Object.values(globalLatest);
+        const totalTargets    = allAssignments.length;
+        const totalEngaged    = gArr.length;
+        const totalInterested = gArr.filter(e => e.outcome === 'Interested').length;
+        const totalNI         = gArr.filter(e => e.outcome === 'Not Interested').length;
+        const totalWNE        = gArr.filter(e => e.outcome === 'Would Not Engage').length;
+        const totalNotYet     = totalTargets - totalEngaged;
+
+        const kpiCard = (num, lbl, cls = '') =>
+          `<div class="ov-kpi-card ${cls}"><div class="ov-kpi-num">${num}</div><div class="ov-kpi-lbl">${lbl}</div></div>`;
+
+        const kpiHtml = `<div class="ov-kpi-row">
+          ${kpiCard(totalTargets,    'Total Targets')}
+          ${kpiCard(totalEngaged,    'Engaged',        'ov-kpi-engaged')}
+          ${kpiCard(totalInterested, 'Interested',     'ov-kpi-interested')}
+          ${kpiCard(totalNI,         'Not Interested', 'ov-kpi-ni')}
+          ${kpiCard(totalWNE,        'WNE',            'ov-kpi-wne')}
+          ${kpiCard(totalNotYet,     'Not Yet',        'ov-kpi-notyet')}
+        </div>`;
+
+        const playStats = plays.map(play => {
+          const accts = allAssignments.filter(a => a.play_id === play.play_id);
+          const targets = accts.length;
+          const playAcctIds = new Set(accts.map(a => a.account_id));
+          const latest = {};
+          engagements.filter(e => e.play_id === play.play_id && playAcctIds.has(e.account_id)).forEach(e => {
+            const prev = latest[e.account_id];
+            if (!prev || e.submitted_at > prev.submitted_at) latest[e.account_id] = e;
+          });
+          const arr = Object.values(latest);
+          const engaged       = arr.length;
+          const interested    = arr.filter(e => e.outcome === 'Interested').length;
+          const notInterested = arr.filter(e => e.outcome === 'Not Interested').length;
+          const wne           = arr.filter(e => e.outcome === 'Would Not Engage').length;
+          const notYet        = targets - engaged;
+          const pct           = targets > 0 ? Math.round((engaged / targets) * 100) : 0;
+          return { play, targets, engaged, interested, notInterested, wne, notYet, pct };
+        }).filter(s => s.targets > 0);
+
+        const playCardsHtml = playStats.length ? `
+          <div class="ov-section-title">Play Progress</div>
+          <div class="ov-play-grid">
+            ${playStats.map(s => `
+              <div class="ov-play-card">
+                <div class="ov-play-header">
+                  <div class="ov-play-name">${escHtml(s.play.play_name)}</div>
+                  <span class="ov-play-pct">${s.pct}%</span>
+                </div>
+                <div class="ov-progress-track"><div class="ov-progress-fill" style="width:${s.pct}%"></div></div>
+                <div class="ov-play-stats">
+                  <span><strong>${s.targets}</strong> targets</span>
+                  <span style="color:#107c10"><strong>${s.interested}</strong> interested</span>
+                  <span style="color:#d32f2f"><strong>${s.notInterested}</strong> not interested</span>
+                  <span style="color:#d97706"><strong>${s.wne}</strong> WNE</span>
+                  <span style="color:#9ca3af"><strong>${s.notYet}</strong> not yet</span>
+                </div>
+                <button class="ov-view-btn" onclick="showAdminTab('activity-log')">View Activity →</button>
+              </div>`).join('')}
+          </div>` : '';
+
+        const recentHtml = engagements.length ? `
+          <div class="ov-section-title" style="margin-top:28px;">Recent Activity</div>
+          <div class="ov-recent-list">
+            ${engagements.slice(-5).reverse().map(r => `
+              <div class="ov-recent-row">
+                <span class="ov-recent-date">${escHtml(formatDate(r.submitted_at))}</span>
+                <span class="ov-recent-rep">${escHtml(r.rep_name || r.rep_email || '')}</span>
+                <span class="ov-recent-acct">${escHtml(r.account_name || '')}</span>
+                <span class="ov-recent-outcome" style="${r.outcome === 'Interested' ? 'color:#107c10;font-weight:700' : r.outcome === 'Not Interested' ? 'color:#d32f2f' : ''}">${escHtml(r.outcome || '')}</span>
+              </div>`).join('')}
+          </div>
+          <button style="margin-top:8px;background:none;border:none;color:#0078d4;font-size:13px;cursor:pointer;font-weight:600;" onclick="showAdminTab('activity-log')">View all activity →</button>` : '';
+
+        container.innerHTML = kpiHtml + playCardsHtml + recentHtml;
+      } catch (e) {
+        container.innerHTML = `<div style="color:#d32f2f;padding:24px;">Failed to load overview: ${escHtml(e.message)}</div>`;
+      }
+    }
+
   </script>
 <footer class="security-footer">
   INFRA SalesPlay Tracker — Progress Software Proprietary &amp; Confidential &nbsp;·&nbsp; Progress employees only &nbsp;<a href="security.html" class="sec-footer-link">Security &amp; Privacy</a>
+  &nbsp;·&nbsp; <a href="https://github.com/planger111/chef-saas-tracker/issues/new?title=[Bug]%20&body=%0A**Describe%20the%20issue:**%0A%0A**Steps%20to%20reproduce:**%0A1.%20%0A%0A**Expected%20behavior:**%0A%0A**Browser/Device:**%0A&labels=bug" target="_blank" class="sec-footer-link">🐛 Report Issue</a>
 </footer>
 </body>
 </html>

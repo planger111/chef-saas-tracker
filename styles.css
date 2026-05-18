@@ -600,13 +600,18 @@ tr:hover td {
 }
 
 /* ─── Admin Header ─── */
-.admin-header { display:flex; align-items:center; justify-content:space-between; padding:10px 20px; background:#fff; border-bottom:1px solid #e9ecef; position:sticky; top:0; z-index:100; }
-.admin-header-title { font-size:15px; font-weight:700; color:#1a1a2e; }
-.admin-header-right { display:flex; align-items:center; gap:8px; }
-.admin-nav-link { font-size:13px; color:#374151; text-decoration:none; padding:4px 8px; }
-.admin-nav-link:hover { color:#0078d4; }
+.admin-header { display:flex; align-items:center; justify-content:space-between; padding:12px 24px; background:#1a1a2e; border-bottom:2px solid #0078d4; position:sticky; top:0; z-index:100; }
+.admin-header-title { font-size:15px; font-weight:700; color:#fff; }
+.admin-header-right { display:flex; align-items:center; gap:6px; }
+.admin-user-name-block { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:#fff; padding-right:12px; margin-right:6px; border-right:1px solid rgba(255,255,255,0.2); }
+.admin-nav-link { font-size:13px; font-weight:600; color:rgba(255,255,255,0.85); text-decoration:none; padding:5px 10px; border-radius:5px; }
+.admin-nav-link:hover { color:#fff; background:rgba(255,255,255,0.12); }
+.admin-nav-link.signout { color:#fca5a5; }
+.admin-nav-link.signout:hover { color:#fff; background:rgba(220,38,38,0.3); }
 .admin-nav-btn { background:#0078d4; color:#fff !important; padding:5px 12px; border-radius:5px; font-size:13px; font-weight:600; text-decoration:none; border:none; cursor:pointer; }
-.admin-nav-btn-secondary { background:#f3f4f6; color:#374151 !important; border:1px solid #d1d5db; }
+.admin-nav-btn:hover { background:#005fa3; }
+.admin-nav-btn-secondary { background:rgba(255,255,255,0.12); color:#fff !important; border:1px solid rgba(255,255,255,0.25); }
+.admin-nav-btn-secondary:hover { background:rgba(255,255,255,0.2); }
 .export-dropdown { position:relative; }
 .export-menu { position:absolute; right:0; top:calc(100% + 4px); background:#fff; border:1px solid #d1d5db; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.1); min-width:200px; z-index:200; overflow:hidden; }
 .export-menu button { display:block; width:100%; padding:9px 14px; border:none; background:none; text-align:left; font-size:13px; cursor:pointer; color:#374151; }
@@ -750,6 +755,7 @@ tr:hover td {
 .badge-in-progress  { background: #cce5ff; color: #004085; }
 .badge-won          { background: #d4edda; color: #155724; }
 .badge-lost         { background: #f8d7da; color: #721c24; }
+.badge-wne          { background: #ffe8cc; color: #8a4500; }
 .badge-no-interest  { background: #e2e3e5; color: #383d41; }
 
 /* Account row */
@@ -1014,10 +1020,11 @@ tr:hover td {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* Admin tabs */
-.admin-tabs { display:flex; border-bottom:2px solid #e9ecef; margin-bottom:16px; overflow-x:auto; }
-.admin-tab { padding:8px 14px; border:none; background:none; cursor:pointer; font-size:13px; font-weight:500; color:#888; border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; }
-.admin-tab.active { color:#0078d4; font-weight:700; border-bottom-color:#0078d4; }
-.admin-tab:hover:not(.active) { color:#374151; }
+.admin-tabs { display:flex; align-items:center; background:#f1f5f9; border-bottom:2px solid #e2e8f0; padding:6px 16px; gap:2px; overflow-x:auto; flex-wrap:wrap; }
+.admin-tab { padding:6px 14px; border:none; background:none; cursor:pointer; font-size:13px; font-weight:600; color:#64748b; border-radius:6px; white-space:nowrap; transition:background 0.15s,color 0.15s; }
+.admin-tab.active { background:#0078d4; color:#fff; }
+.admin-tab:hover:not(.active) { background:#e2e8f0; color:#1e293b; }
+.tab-divider { width:1px; height:22px; background:#cbd5e1; margin:0 6px; flex-shrink:0; }
 
 /* Play summary rows */
 .play-summary-table { border:1px solid #e9ecef; border-radius:8px; overflow:hidden; margin-bottom:16px; }

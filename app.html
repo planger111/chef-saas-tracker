@@ -10,10 +10,67 @@
   <link rel="stylesheet" href="styles.css" />
   <style>
     /* v2 log-form step indicator */
-    .log-step-indicator { display:flex; background:#f0f6ff; border-bottom:1px solid #d0e4f7; padding:8px 16px; gap:16px; font-size:12px; font-weight:600; color:#9ca3af; }
+    .log-step-indicator { display:flex; align-items:center; background:#f0f6ff; border-bottom:1px solid #d0e4f7; padding:6px 16px; gap:0; }
+    .log-step-ind-item { display:flex; align-items:center; gap:5px; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:600; color:#9ca3af; flex:1; }
+    .log-step-ind-item.active { color:#0078d4; background:#dbeafe; }
+    .log-step-ind-item.done { color:#107c10; }
+    .log-step-ind-num { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:#d1d5db; color:#fff; font-size:10px; font-weight:700; flex-shrink:0; }
+    .log-step-ind-item.active .log-step-ind-num { background:#0078d4; }
+    .log-step-ind-item.done .log-step-ind-num { background:#107c10; }
+    .log-step-ind-sep { color:#d1d5db; padding:0 2px; font-size:14px; flex-shrink:0; }
+    /* Log form context card */
+    .log-context-card { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom:18px; }
+    .log-context-play { font-size:11px; font-weight:700; color:#0078d4; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
+    .log-context-account { font-size:17px; font-weight:700; color:#1a1a1a; line-height:1.2; }
+    .log-context-meta { font-size:12px; color:#6b7280; margin-top:2px; }
+    .log-context-divider { border:none; border-top:1px solid #e2e8f0; margin:10px 0; }
+    .log-context-step-label { font-size:12px; font-weight:700; color:#374151; }
+    .log-context-step-hint { font-size:12px; color:#6b7280; margin-top:2px; line-height:1.4; }
+    /* Section headings */
+    .log-section-heading { font-size:13px; font-weight:700; color:#374151; margin:0 0 8px; }
+    /* Interaction type options with selected state */
+    .int-type-option { display:flex; align-items:center; gap:10px; font-size:15px; cursor:pointer; padding:10px 12px; border:2px solid #e5e7eb; border-radius:8px; transition:border-color .12s,background .12s; }
+    .int-type-option:hover { border-color:#93c5fd; background:#f0f7ff; }
+    .int-type-option.selected { border-color:#0078d4; background:#eff6ff; font-weight:600; }
+    .int-type-option input { width:18px; height:18px; accent-color:#0078d4; flex-shrink:0; }
+    /* Outcome option rich cards */
+    .outcome-option { display:flex; align-items:flex-start; gap:12px; cursor:pointer; padding:12px 14px; border:2px solid #e5e7eb; border-radius:10px; transition:border-color .12s,background .12s; }
+    .outcome-option:hover { border-color:#93c5fd; background:#f0f7ff; }
+    .outcome-option.selected { border-color:#0078d4; background:#eff6ff; }
+    .outcome-option input[type="radio"] { width:18px; height:18px; accent-color:#0078d4; flex-shrink:0; margin-top:3px; }
+    .outcome-option-emoji { font-size:18px; flex-shrink:0; line-height:1.3; margin-top:1px; }
+    .outcome-option-content { flex:1; min-width:0; }
+    .outcome-option-label { font-size:15px; font-weight:700; color:#1a1a1a; display:block; }
+    .outcome-option-desc { font-size:12px; color:#6b7280; margin-top:3px; line-height:1.4; display:block; }
+    /* Step 2 selection summary */
+    .log-selection-summary { background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px; margin-bottom:16px; }
+    .log-selection-summary-label { font-size:11px; font-weight:700; color:#1a56db; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
+    .log-selection-summary-value { font-size:14px; font-weight:700; color:#1a1a1a; }
     /* Pitch brief card */
     .pitch-card { background:#eff6ff; border-left:4px solid #0078d4; border-radius:0 8px 8px 0; padding:14px 16px; margin-bottom:12px; font-size:14px; line-height:1.5; color:#1a1a1a; }
     .pitch-card-label { font-size:11px; font-weight:700; color:#0078d4; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+
+    /* Pitch Brief card */
+    #pitch-brief-card { background:#fff; border:1px solid #dbeafe; border-radius:12px; margin:0 16px 12px; overflow:hidden; box-shadow:0 1px 4px rgba(0,120,212,.07); }
+    #pitch-brief-card .pb-header { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; cursor:pointer; user-select:none; background:#eff6ff; gap:10px; }
+    #pitch-brief-card .pb-header:active { background:#dbeafe; }
+    #pitch-brief-card .pb-label { font-size:11px; font-weight:700; color:#0078d4; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
+    #pitch-brief-card .pb-summary { font-size:13px; line-height:1.5; color:#1e293b; }
+    #pitch-brief-card .pb-chevron { font-size:16px; color:#0078d4; flex-shrink:0; transition:transform 0.25s ease; }
+    #pitch-brief-card .pb-chevron.open { transform:rotate(180deg); }
+    #pitch-brief-card .pb-body { max-height:0; overflow:hidden; transition:max-height 0.3s ease; }
+    #pitch-brief-card .pb-body.open { max-height:1200px; }
+    #pitch-brief-card .pb-body-inner { padding:14px; border-top:1px solid #dbeafe; }
+    #pitch-brief-card .pb-section { margin-bottom:14px; }
+    #pitch-brief-card .pb-section:last-child { margin-bottom:0; }
+    #pitch-brief-card .pb-section-label { font-size:11px; font-weight:700; color:#0078d4; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:5px; }
+    #pitch-brief-card .pb-section-val { font-size:13px; line-height:1.6; color:#1e293b; }
+    #pitch-brief-card .pb-list { margin:4px 0 0 16px; padding:0; font-size:13px; line-height:1.7; color:#1e293b; }
+    #pitch-brief-card .pb-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+    #pitch-brief-card .pb-tag { background:#e8f0fe; color:#1a56db; border-radius:20px; padding:3px 10px; font-size:12px; font-weight:600; }
+    #pitch-brief-card .pb-obj { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 12px; margin-bottom:8px; }
+    #pitch-brief-card .pb-obj-q { font-size:12px; font-weight:700; color:#374151; margin-bottom:4px; }
+    #pitch-brief-card .pb-obj-a { font-size:13px; color:#4b5563; line-height:1.5; }
     /* Admin notes callout */
     .admin-notes-callout { background:#fffbeb; border-left:4px solid #f59e0b; border-radius:0 8px 8px 0; padding:12px 14px; margin-bottom:12px; font-size:13px; color:#78350f; }
     /* ICP / Persona chips */
@@ -34,6 +91,9 @@
   </style>
 </head>
 <body>
+<div id="dev-env-banner" style="display:block;background:#e65c00;color:#fff;text-align:center;padding:6px 12px;font-size:12px;font-weight:700;position:sticky;top:0;z-index:99999;border-bottom:2px solid #b34400;">
+  ⚠️ DEV — Loading…
+</div>
 
   <!-- ===================== SCREEN: LOADING ===================== -->
   <div id="screen-loading" class="screen active">
@@ -125,7 +185,7 @@
             <span id="demo-banner-msg">You don't have any assigned accounts yet. Practice with these demo accounts — your manager will assign real accounts soon.</span>
           </div>
           <div class="section-header-row">
-            <span class="section-label">YOUR PLAYS</span>
+            <span class="section-label">MY PLAYS</span>
             <span class="section-sub" id="plays-count-sub"></span>
           </div>
           <div class="plays-grid" id="dashboard-plays-list">
@@ -152,12 +212,27 @@
   <!-- ===================== SCREEN: PLAY DETAIL ===================== -->
   <div id="screen-play-detail" class="screen">
     <div class="header">
-      <button class="header-back btn btn-secondary" id="btn-back-to-dashboard">← Back</button>
+      <button class="header-back btn btn-secondary" id="btn-back-to-dashboard">🏠 Home</button>
       <span class="header-title" id="play-detail-title">Play</span>
-      <button id="btn-play-info" onclick="showPlayInfo(currentPlay && currentPlay.play_id)" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:4px 10px;font-size:13px;cursor:pointer;color:#0078d4;font-weight:600;">ℹ Pitch Info</button>
+      <button id="btn-play-info" onclick="focusPitchBrief()" style="background:none;border:1px solid #d1d5db;border-radius:6px;padding:4px 10px;font-size:13px;cursor:pointer;color:#0078d4;font-weight:600;">💬 Pitch</button>
     </div>
 
-    <div style="padding:16px;max-width:480px;margin:0 auto;">
+    <!-- Pitch Brief Card — rendered by renderPitchBrief(play) -->
+    <div id="pitch-brief-card" style="display:none;">
+      <div class="pb-header" onclick="togglePitchExpand()">
+        <div style="flex:1;min-width:0;">
+          <div class="pb-label">💬 Elevator Pitch</div>
+          <div class="pb-summary" id="pb-summary"></div>
+        </div>
+        <button id="pb-more-btn" onclick="event.stopPropagation();togglePitchExpand()" style="background:#dbeafe;border:none;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;color:#1a56db;cursor:pointer;flex-shrink:0;white-space:nowrap;">More ▾</button>
+        <div class="pb-chevron" id="pb-chevron" style="display:none;">▾</div>
+      </div>
+      <div class="pb-body" id="pb-body">
+        <div class="pb-body-inner" id="pb-body-inner"></div>
+      </div>
+    </div>
+
+    <div style="padding:0 16px 16px;max-width:480px;margin:0 auto;">
 
       <!-- Filter tabs -->
       <div class="filter-tabs" id="play-filter-tabs">
@@ -165,6 +240,7 @@
         <button class="filter-tab" data-filter="not-started">Not Started</button>
         <button class="filter-tab" data-filter="interested">Interested</button>
         <button class="filter-tab" data-filter="not-interested">Not Interested</button>
+        <button class="filter-tab" data-filter="would-not-engage">Would Not Engage</button>
       </div>
 
       <div style="font-size:13px;color:#0078d4;font-weight:600;padding:8px 2px 4px;">👇 Tap an account to log a pitch</div>
@@ -180,57 +256,84 @@
   <!-- ===================== SCREEN: LOG FORM ===================== -->
   <div id="screen-log-form" class="screen">
     <div class="header">
-      <button class="header-back btn btn-secondary" id="btn-back-to-play">← Back</button>
+      <button class="header-back btn btn-secondary" id="btn-back-to-play">🏠 Home</button>
       <span class="header-title" id="log-form-title">Log Interaction</span>
     </div>
 
-    <!-- Step indicator (2 steps) -->
+    <!-- Step indicator -->
     <div class="log-step-indicator">
-      <span id="step-ind-1" style="color:#0078d4;font-weight:700;">1. Interaction</span>
-      <span>›</span>
-      <span id="step-ind-2">2. Details</span>
+      <span id="step-ind-1" class="log-step-ind-item active"><span class="log-step-ind-num">1</span> Interaction</span>
+      <span class="log-step-ind-sep">›</span>
+      <span id="step-ind-2" class="log-step-ind-item"><span class="log-step-ind-num">2</span> Details</span>
     </div>
 
     <div style="padding:16px;max-width:480px;margin:0 auto;">
 
+      <!-- Context card — always visible, updated per step -->
+      <div id="log-context-card" class="log-context-card">
+        <div id="log-ctx-play" class="log-context-play"></div>
+        <div id="log-ctx-account" class="log-context-account"></div>
+        <div id="log-ctx-meta" class="log-context-meta" style="display:none;"></div>
+        <hr class="log-context-divider">
+        <div id="log-ctx-step-label" class="log-context-step-label"></div>
+        <div id="log-ctx-step-hint" class="log-context-step-hint"></div>
+      </div>
+
       <!-- STEP 1: Interaction -->
       <div id="log-step-1">
-        <div id="log-form-account-header" class="account-header-card"></div>
 
-        <div class="form-group">
-          <label class="form-label">Interaction Type <span style="color:#d32f2f;">*</span></label>
-          <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;" id="interaction-type-options">
-            <!-- populated dynamically from response-options.json -->
-            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
-              <input type="radio" name="interaction-type" value="Call" style="width:18px;height:18px;accent-color:#0078d4;"> 📞 Call
-            </label>
-            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
-              <input type="radio" name="interaction-type" value="Email" style="width:18px;height:18px;accent-color:#0078d4;"> 📧 Email
-            </label>
-            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
-              <input type="radio" name="interaction-type" value="Text" style="width:18px;height:18px;accent-color:#0078d4;"> 💬 Text
-            </label>
-          </div>
+        <p class="log-section-heading">How did you contact the customer?</p>
+        <div style="display:flex;flex-direction:column;gap:8px;" id="interaction-type-options">
+          <label class="int-type-option">
+            <input type="radio" name="interaction-type" value="Call"> 📞 Call
+          </label>
+          <label class="int-type-option">
+            <input type="radio" name="interaction-type" value="Email"> 📧 Email
+          </label>
+          <label class="int-type-option">
+            <input type="radio" name="interaction-type" value="Text"> 💬 Text
+          </label>
         </div>
 
-        <div class="form-group" style="margin-top:16px;">
-          <label class="form-label">Outcome <span style="color:#d32f2f;">*</span></label>
-          <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
-            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
-              <input type="radio" name="outcome" value="Interested" style="width:18px;height:18px;accent-color:#0078d4;"> ✅ Interested
-            </label>
-            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
-              <input type="radio" name="outcome" value="Not Interested" style="width:18px;height:18px;accent-color:#0078d4;"> ❌ Not Interested
-            </label>
-          </div>
+        <p class="log-section-heading" style="margin-top:20px;">What happened?</p>
+        <div id="outcome-radios-container" style="display:flex;flex-direction:column;gap:8px;">
+          <label class="outcome-option">
+            <input type="radio" name="outcome" value="Interested" data-outcome-key="interested">
+            <span class="outcome-option-emoji">✅</span>
+            <span class="outcome-option-content">
+              <span class="outcome-option-label">Interested</span>
+              <span class="outcome-option-desc">Customer is interested or moving forward — book a next step.</span>
+            </span>
+          </label>
+          <label class="outcome-option">
+            <input type="radio" name="outcome" value="Not Interested" data-outcome-key="not_interested">
+            <span class="outcome-option-emoji">❌</span>
+            <span class="outcome-option-content">
+              <span class="outcome-option-label">Not Interested</span>
+              <span class="outcome-option-desc">Customer declined or is not interested right now.</span>
+            </span>
+          </label>
+          <label class="outcome-option">
+            <input type="radio" name="outcome" value="Would Not Engage" data-outcome-key="would_not_engage">
+            <span class="outcome-option-emoji">⚠️</span>
+            <span class="outcome-option-content">
+              <span class="outcome-option-label">Would Not Engage</span>
+              <span class="outcome-option-desc">Customer has not responded after repeated attempts.</span>
+            </span>
+          </label>
         </div>
 
-        <button class="btn btn-primary btn-block" id="btn-step1-next" style="margin-top:16px;">Next →</button>
+        <button class="btn btn-primary btn-block" id="btn-step1-next" style="margin-top:20px;">Continue to Details →</button>
       </div>
 
       <!-- STEP 2: Details -->
       <div id="log-step-2" style="display:none;">
-        <div id="log-form-account-header-2" class="account-header-card"></div>
+
+        <!-- Selection summary — what they chose in step 1 -->
+        <div id="log-selection-summary" class="log-selection-summary" style="display:none;">
+          <div class="log-selection-summary-label">You selected</div>
+          <div id="log-sel-value" class="log-selection-summary-value"></div>
+        </div>
 
         <!-- Interested fields -->
         <div id="interested-fields">
@@ -283,6 +386,28 @@
           </div>
         </div>
 
+        <!-- Would Not Engage fields -->
+        <div id="wne-fields" style="display:none;">
+          <div class="form-group">
+            <label class="form-label">Reason <span style="color:#e53e3e;">*</span></label>
+            <select class="form-control" id="field-wne-reason" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Next Step <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <select class="form-control" id="field-wne-next-step" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Timing <span style="font-weight:400;color:#888;">(optional)</span></label>
+            <select class="form-control" id="field-wne-timing" style="width:100%;padding:12px;font-size:16px;border:1px solid #d1d5db;border-radius:8px;appearance:auto;">
+              <option value="">— Select —</option>
+            </select>
+          </div>
+        </div>
+
         <!-- Always shown on step 2 -->
         <div class="form-group" id="call-date-field-group">
           <label class="form-label">Date of call / meeting <span style="font-weight:400;color:#888;">(optional)</span></label>
@@ -297,7 +422,7 @@
         <!-- Custom questions (populated per-play from play.questions.custom) -->
         <div id="custom-questions-container"></div>
 
-        <button class="btn btn-primary btn-block" id="btn-submit-engagement" style="margin-top:8px;">Submit ✓</button>
+        <button class="btn btn-primary btn-block" id="btn-submit-engagement" style="margin-top:8px;">Save Interaction ✓</button>
       </div>
 
     </div>
@@ -348,7 +473,7 @@
       </div>
 
       <!-- Back button -->
-      <button id="btn-back-to-accounts" class="btn btn-primary btn-block">Back to My Accounts</button>
+      <button id="btn-back-to-accounts" class="btn btn-primary btn-block">🏠 Back to Home</button>
 
     </div>
   </div>
@@ -356,7 +481,7 @@
   <!-- ===================== SCREEN: LEADERBOARD ===================== -->
   <div id="screen-leaderboard" class="screen">
     <div class="header">
-      <button class="header-back btn btn-secondary" id="btn-back-to-dashboard-lb">← Back</button>
+      <button class="header-back btn btn-secondary" id="btn-back-to-dashboard-lb">🏠 Home</button>
       <span class="header-title">Leaderboard</span>
     </div>
 
@@ -370,9 +495,9 @@
 
   <!-- ===================== SCRIPTS ===================== -->
   <script src="msal-browser.js?v=10"></script>
-  <script src="config.js?v=10"></script>
-  <script src="msal-auth.js?v=11"></script>
-  <script src="graph-api.js?v=10"></script>
+  <script src="config.js?v=11"></script>
+  <script src="msal-auth.js?v=12"></script>
+  <script src="graph-api.js?v=11"></script>
   <script src="form-engine.js?v=10"></script>
 
   <script>
@@ -489,10 +614,15 @@
       const emojis = { "Call": "📞", "Email": "📧", "Text": "💬", "In-Person Meeting": "🤝" };
       const container = document.getElementById('interaction-type-options');
       container.innerHTML = config.interaction_types.map(t =>
-        `<label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
-          <input type="radio" name="interaction-type" value="${escHtml(t)}" style="width:18px;height:18px;accent-color:#0078d4;"> ${emojis[t] || '•'} ${escHtml(t)}
+        `<label class="int-type-option">
+          <input type="radio" name="interaction-type" value="${escHtml(t)}"> ${emojis[t] || '•'} ${escHtml(t)}
         </label>`
       ).join('');
+      container.addEventListener('change', () => {
+        container.querySelectorAll('.int-type-option').forEach(lbl => {
+          lbl.classList.toggle('selected', !!lbl.querySelector('input')?.checked);
+        });
+      });
     }
 
     async function renderNextStepOptions() {
@@ -507,6 +637,69 @@
       const sel = document.getElementById('field-timing');
       sel.innerHTML = '<option value="">— Select —</option>' +
         config.timing_options.map(t => `<option>${escHtml(t)}</option>`).join('');
+    }
+
+    // Render outcome radio buttons dynamically from play config (labels can be customized per play)
+    async function renderOutcomeRadios(playId) {
+      const container = document.getElementById('outcome-radios-container');
+      if (!container) return;
+      const EMOJI = { 'Interested': '✅', 'Not Interested': '❌', 'Would Not Engage': '⚠️' };
+      const KEYS  = { 'Interested': 'interested', 'Not Interested': 'not_interested', 'Would Not Engage': 'would_not_engage' };
+      const DESCS = {
+        'Interested':       'Customer is interested or moving forward — book a next step.',
+        'Not Interested':   'Customer declined or is not interested right now.',
+        'Would Not Engage': 'Customer has not responded after repeated attempts.',
+      };
+      const renderCards = (outcomes) => {
+        container.innerHTML = Object.entries(outcomes).map(([name, oc]) => {
+          const label = oc.label || name;
+          const key   = KEYS[name] || name.toLowerCase().replace(/\s+/g, '_');
+          const emoji = EMOJI[name] || '•';
+          const desc  = oc.description || DESCS[name] || '';
+          return `<label class="outcome-option">
+            <input type="radio" name="outcome" value="${escHtml(label)}" data-outcome-key="${escHtml(key)}">
+            <span class="outcome-option-emoji">${emoji}</span>
+            <span class="outcome-option-content">
+              <span class="outcome-option-label">${escHtml(label)}</span>
+              ${desc ? `<span class="outcome-option-desc">${escHtml(desc)}</span>` : ''}
+            </span>
+          </label>`;
+        }).join('');
+        container.addEventListener('change', () => {
+          container.querySelectorAll('.outcome-option').forEach(lbl => {
+            lbl.classList.toggle('selected', !!lbl.querySelector('input')?.checked);
+          });
+        }, { once: true });
+      };
+      try {
+        if (!playId || typeof getPlayConfig !== 'function') return;
+        const pc = await getPlayConfig(playId);
+        if (!pc?.outcomes) return;
+        renderCards(pc.outcomes);
+      } catch(e) { console.warn('[OutcomeRadios] Failed:', e); }
+    }
+
+    // Update filter tab text to match this play's custom outcome labels
+    async function updateFilterTabLabels(playId) {
+      if (!playId || typeof getPlayConfig !== 'function') return;
+      const FILTER_MAP = {
+        'Interested':       'interested',
+        'Not Interested':   'not-interested',
+        'Would Not Engage': 'would-not-engage'
+      };
+      try {
+        const pc = await getPlayConfig(playId);
+        if (!pc?.outcomes) return;
+        Object.entries(pc.outcomes).forEach(([name, oc]) => {
+          const filterKey = FILTER_MAP[name];
+          if (!filterKey) return;
+          const tab = document.querySelector(`.filter-tab[data-filter="${filterKey}"]`);
+          if (!tab) return;
+          const label = oc.label || name;
+          tab.textContent = label;
+          tab.dataset.filterValue = label;
+        });
+      } catch(e) {}
     }
 
     async function loadResponseOptionsForForm(account) {
@@ -542,12 +735,27 @@
     // ─────────────────────────────────────────────
     // SCREEN MANAGEMENT
     // ─────────────────────────────────────────────
+    let _screenHistory = ['screen-dashboard'];
     function showScreen(id) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       const target = document.getElementById(id);
       if (target) {
         target.classList.add('active');
         window.scrollTo(0, 0);
+        // Don't push the loading screen into navigation history — it's transient
+        if (id !== 'screen-loading' && _screenHistory[_screenHistory.length - 1] !== id) {
+          _screenHistory.push(id);
+          history.pushState({ screen: id }, '', location.pathname);
+        }
+      }
+    }
+    function goBack() {
+      if (_screenHistory.length > 1) {
+        _screenHistory.pop();
+        const prev = _screenHistory[_screenHistory.length - 1];
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const target = document.getElementById(prev);
+        if (target) { target.classList.add('active'); window.scrollTo(0, 0); }
       }
     }
 
@@ -558,19 +766,33 @@
       const log = latestLogs[accountId];
 
       if (!log) {
-        return { status: null, statusLabel: 'Not Started', badgeClass: 'badge-not-started', lastDate: null };
+        return { status: null, statusLabel: 'Not Started', badgeClass: 'badge-not-started', lastDate: null, isManagerOverride: false, managerNote: '' };
       }
 
       const lastDate = log.submitted_at || log.submitted_date || null;
+      const isManagerOverride = log.manager_override === 'true';
+      const managerNote = log.manager_note || '';
 
       if (log.outcome === 'Interested') {
-        return { status: 'Interested', statusLabel: 'Interested', badgeClass: 'badge-won', lastDate };
+        return { status: 'Interested', statusLabel: 'Interested', badgeClass: 'badge-won', lastDate, isManagerOverride, managerNote };
       }
       if (log.outcome === 'Not Interested') {
-        return { status: 'Not Interested', statusLabel: 'Not Interested', badgeClass: 'badge-lost', lastDate };
+        return { status: 'Not Interested', statusLabel: 'Not Interested', badgeClass: 'badge-lost', lastDate, isManagerOverride, managerNote };
+      }
+      if (log.outcome === 'Would Not Engage') {
+        return { status: 'Would Not Engage', statusLabel: 'Would Not Engage', badgeClass: 'badge-wne', lastDate, isManagerOverride, managerNote };
       }
 
-      return { status: null, statusLabel: 'Not Started', badgeClass: 'badge-not-started', lastDate: null };
+      // Log exists but outcome is unrecognized (e.g. 'Not Started' from a manager override).
+      // Still pass through isManagerOverride and managerNote so the 🔁 badge renders.
+      return {
+        status: null,
+        statusLabel: 'Not Started',
+        badgeClass: 'badge-not-started',
+        lastDate: log.submitted_at || log.submitted_date || null,
+        isManagerOverride: log.manager_override === 'true',
+        managerNote: log.manager_note || '',
+      };
     }
 
     function isCompleted(accountId) {
@@ -593,13 +815,19 @@
 
     // Re-render the dashboard play cards from current in-memory data (no fetch).
     // Call this whenever navigating back to the dashboard so counts stay fresh.
-    function showDashboard() {
+    async function showDashboard() {
       if (_dashboardReady) {
-        renderPlayCards();          // re-render with latest latestLogs
+        renderPlayCards();             // re-render with latest latestLogs
         renderPointsCard(totalPoints); // re-render points in case submission happened
+        // Re-render leaderboard peek with current data (non-blocking)
+        if (_selectedLbPlay !== null) {
+          getLeaderboard(_selectedLbPlay).then(lbData => {
+            renderLeaderboardPeek(lbData, allPlays, _selectedLbPlay);
+          }).catch(() => {});
+        }
         showScreen('screen-dashboard');
       } else {
-        loadDashboard();            // first time or data not ready — full load
+        loadDashboard();               // first time or data not ready — full load
       }
     }
 
@@ -654,7 +882,7 @@
           }
         }
 
-        // No accounts assigned → activate demo mode (still need points for display)
+        // No accounts assigned → fall through to demo mode
         if (repAccounts.length === 0) {
           const points = await getRepPoints(email);
           totalPoints = points || 0;
@@ -664,7 +892,7 @@
           const wbLv = document.getElementById('wb-level'); if (wbLv) wbLv.textContent = `${getLevel(totalPoints).badge} ${getLevel(totalPoints).name}`;
           showScreen('screen-dashboard');
           await showDemoMode();
-          if (currentUser.oid) registerOID(currentUser.username, currentUser.oid).catch(() => {});
+          if (currentUser.oid) { /* OID registration removed — identity via email-lookup.json */ }
           logActivity(currentUser, 'login', 'dashboard').catch(() => {});
           // Identity mismatch — signed in but no assignments found
           logIdentityEvent({
@@ -714,10 +942,6 @@
 
         showScreen('screen-dashboard');
 
-        // Background: register OID silently after dashboard is shown (non-blocking)
-        if (currentUser.oid) {
-          registerOID(currentUser.username, currentUser.oid).catch(() => {});
-        }
         // Background: log this login event (non-blocking)
         logActivity(currentUser, 'login', 'dashboard').catch(() => {});
         // Identity resolution success — log full details
@@ -823,6 +1047,10 @@
           const log = latestLogs[a.account_id];
           return !!(log && log.outcome === 'Not Interested');
         }).length;
+        const wouldNotEngage = playAccounts.filter(a => {
+          const log = latestLogs[a.account_id];
+          return !!(log && log.outcome === 'Would Not Engage');
+        }).length;
 
         const pct        = targets > 0 ? Math.round((engaged / targets) * 100) : 0;
         const goalLabel  = getGoalLabel(play.goal);
@@ -840,13 +1068,17 @@
         if (engaged > 0) parts.push(`${engaged} Engaged`);
         if (interested > 0)    parts.push(`${interested} Interested 🏆`);
         if (notInterested > 0) parts.push(`${notInterested} Not Interested`);
+        if (wouldNotEngage > 0) parts.push(`<span style="color:#ff6b35;font-weight:700;font-size:13px;">● ${wouldNotEngage} WNE</span>`);
         const metricsText = parts.join(' → ') || (targets > 0 ? 'No activity yet' : '');
 
         return `
           <div class="play-card" data-play-id="${escHtml(play.play_id)}">
             <div class="play-card-top">
               <div class="play-card-name">${escHtml(play.play_name)}</div>
-              ${goalLabel ? `<span class="play-goal-tag ${goalCls}">${goalIcon} Goal — ${escHtml(goalLabel)}</span>` : ''}
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                ${hasInfo ? `<button class="play-info-link" onclick="event.stopPropagation();openPlayWithPitch('${escHtml(play.play_id)}')">ⓘ</button>` : ''}
+                ${goalLabel ? `<span class="play-goal-tag ${goalCls}">${goalIcon} ${escHtml(goalLabel)}</span>` : ''}
+              </div>
             </div>
             <div class="play-card-summary">${escHtml(summaryLine)}</div>
             <div class="play-progress-wrap">
@@ -854,8 +1086,7 @@
               <span class="play-pct" style="${pct === 100 ? 'color:#107c10;font-weight:700;' : ''}">${pct}%</span>
             </div>
             <div class="play-card-bottom">
-              <span class="play-card-metrics">${escHtml(metricsText)}</span>
-              ${hasInfo ? `<button class="play-info-link" onclick="event.stopPropagation();showPlayInfo('${escHtml(play.play_id)}')">ⓘ Info</button>` : ''}
+              <span class="play-card-metrics">${metricsText}</span>
             </div>
           </div>
         `;
@@ -883,47 +1114,22 @@
     }
 
     function showPlayInfo(playId) {
+      // Replaced: now scrolls to and opens the inline pitch brief card instead of a modal
+      focusPitchBrief();
+    }
+
+    // Opens a play AND immediately expands the pitch brief (from dashboard ⓘ button)
+    function openPlayWithPitch(playId) {
       const play = allPlays.find(p => p.play_id === playId);
       if (!play) return;
-
-      // Compute live stats from rep data
-      const playAccts  = repAccounts.filter(a => a.play_id === playId);
-      const targets    = playAccts.length;
-      const engaged    = playAccts.filter(a => latestLogs[a.account_id]).length;
-      const interested = playAccts.filter(a => {
-        const log = latestLogs[a.account_id];
-        return !!(log && log.outcome === 'Interested');
-      }).length;
-
-      const goalLabel  = getGoalLabel(play.goal);
-      const isDisqual  = play.goal === 'disqualification' || play.goal === 'qualify_out';
-      const goalTagCls = isDisqual ? 'pi-goal-out' : 'pi-goal-in';
-      const GOAL_ICONS = { feedback:'📋', interest:'✅', meeting:'📅', disqualification:'🚫', expansion:'🚀', qualify_in:'✅', qualify_out:'🚫' };
-      const goalIcon   = GOAL_ICONS[play.goal] || '🎯';
-
-      const statsHtml = targets > 0 ? `
-        <div class="pi-stats-row">
-          <div class="pi-stat"><span class="pi-stat-val">${targets}</span><span class="pi-stat-lbl">Targets</span></div>
-          <div class="pi-stat"><span class="pi-stat-val">${engaged}</span><span class="pi-stat-lbl">Engaged</span></div>
-          <div class="pi-stat"><span class="pi-stat-val">${interested}</span><span class="pi-stat-lbl">Interested</span></div>
-        </div>` : '';
-
-      const overlay = document.createElement('div');
-      overlay.className = 'play-info-overlay';
-      overlay.innerHTML = `
-        <div class="play-info-sheet">
-          <div class="pi-header">
-            <strong class="pi-title">${escHtml(play.play_name)}</strong>
-            <button class="pi-close" onclick="this.closest('.play-info-overlay').remove()">✕</button>
-          </div>
-          ${goalLabel ? `<div class="pi-goal-badge ${goalTagCls}">${goalIcon} Goal — ${escHtml(goalLabel)}</div>` : ''}
-          ${statsHtml}
-          ${play.icp           ? `<div class="pi-field"><div class="pi-label">Ideal Customer Profile</div><div class="pi-value">${escHtml(play.icp)}</div></div>` : ''}
-          ${play.target_persona ? `<div class="pi-field"><div class="pi-label">Target Persona</div><div class="pi-value">${escHtml(play.target_persona)}</div></div>` : ''}
-          ${play.elevator_pitch ? `<div class="pi-field"><div class="pi-label">Elevator Pitch</div><div class="pi-pitch">${escHtml(play.elevator_pitch)}</div></div>` : ''}
-        </div>`;
-      document.body.appendChild(overlay);
-      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+      currentPlay  = play;
+      activeFilter = 'all';
+      loadPlayDetail(play).then(() => {
+        const body = document.getElementById('pb-body');
+        if (body && !body.classList.contains('open')) togglePitchExpand();
+        const card = document.getElementById('pitch-brief-card');
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
     }
 
     // ─────────────────────────────────────────────
@@ -1073,7 +1279,7 @@
 
       let demoData = DEMO_FALLBACK;
       try {
-        const text = await getFileText('Chef SaaS Tracker/ChefSaaS/demo-accounts.json');
+        const text = await getFileText(`${SP_ROOT}/demo-accounts.json`);
         if (text) {
           const json = JSON.parse(text);
           if (json && json.plays) demoData = json;
@@ -1099,9 +1305,9 @@
         row.points || 0
       ].join(',');
       try {
-        const existing = await getFileText('Chef SaaS Tracker/ChefSaaS/demo_log.csv') || '';
+        const existing = await getFileText(`${SP_ROOT}/demo_log.csv`) || '';
         const content  = existing ? existing + '\n' + line : headers + '\n' + line;
-        await putFile('Chef SaaS Tracker/ChefSaaS/demo_log.csv', content, 'text/csv');
+        await putFile(`${SP_ROOT}/demo_log.csv`, content, 'text/csv');
       } catch(e) { console.warn('Demo log write failed', e); }
     }
 
@@ -1141,6 +1347,92 @@
     // ─────────────────────────────────────────────
     // PLAY DETAIL
     // ─────────────────────────────────────────────
+    function togglePitchExpand() {
+      const body    = document.getElementById('pb-body');
+      const chevron = document.getElementById('pb-chevron');
+      const moreBtn = document.getElementById('pb-more-btn');
+      if (!body) return;
+      const isOpen = body.classList.contains('open');
+      body.classList.toggle('open', !isOpen);
+      if (chevron) chevron.classList.toggle('open', !isOpen);
+      if (moreBtn) moreBtn.textContent = isOpen ? 'More ▾' : 'Less ▴';
+    }
+
+    function focusPitchBrief() {
+      const card = document.getElementById('pitch-brief-card');
+      if (!card || card.style.display === 'none') return;
+      const body = document.getElementById('pb-body');
+      if (body && !body.classList.contains('open')) togglePitchExpand();
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function renderPitchBrief(play) {
+      const card = document.getElementById('pitch-brief-card');
+      if (!card) return;
+
+      const pitch        = (play.elevator_pitch    || play.description       || '').trim();
+      const icp          = (play.icp               || '').trim();
+      const persona      = (play.target_persona    || play.persona_notes     || '').trim();
+      const why          = (play.why_it_matters    || play.pitch_details     || '').trim();
+      const instructions   = (play.instructions         || play.next_step_guidance|| '').trim();
+      const competitive    = (play.competitive_positioning || '').trim();
+      const valueProps     = (play.value_props            || []).filter(Boolean);
+      const keyQs          = (play.key_questions          || play.discovery_questions || []).filter(Boolean);
+      const objections     = (play.objection_handling     || []).filter(Boolean);
+
+      const hasContent = pitch || icp || persona || why || competitive || valueProps.length || keyQs.length || objections.length || instructions;
+      if (!hasContent) { card.style.display = 'none'; return; }
+      card.style.display = '';
+
+      // Compact: first 2 sentences of pitch
+      const sentences  = pitch ? (pitch.match(/[^.!?]+[.!?]+/g) || [pitch]) : [];
+      const summaryText = sentences.length
+        ? sentences.slice(0, 2).join(' ').trim()
+        : (icp ? `Targeting: ${icp}` : 'Tap ▾ for pitch guidance');
+      document.getElementById('pb-summary').textContent = summaryText;
+
+      const fullPitch = pitch && pitch.length > summaryText.length;
+      const hasExtra  = fullPitch || valueProps.length || icp || persona || why || competitive || keyQs.length || objections.length || instructions;
+      const chevron   = document.getElementById('pb-chevron');
+      const moreBtn   = document.getElementById('pb-more-btn');
+      if (chevron) chevron.style.display = 'none'; // using More button instead
+      if (moreBtn) moreBtn.style.display = hasExtra ? '' : 'none';
+
+      // Build body sections
+      const sec = (label, html) =>
+        `<div class="pb-section"><div class="pb-section-label">${label}</div><div class="pb-section-val">${html}</div></div>`;
+      const list = items =>
+        `<ul class="pb-list">${items.map(i => `<li>${escHtml(i)}</li>`).join('')}</ul>`;
+      const objHtml = objections.map(o =>
+        typeof o === 'object' && o.q
+          ? `<div class="pb-obj"><div class="pb-obj-q">🙋 ${escHtml(o.q)}</div><div class="pb-obj-a">${escHtml(o.a || '')}</div></div>`
+          : `<div class="pb-obj"><div class="pb-obj-a">${escHtml(String(o))}</div></div>`
+      ).join('');
+
+      let body = '';
+      if (fullPitch)         body += sec('Full Pitch',             `<div style="line-height:1.6;">${escHtml(pitch)}</div>`);
+      if (valueProps.length) body += sec('Key Value Propositions', list(valueProps));
+      if (icp)               body += sec('Ideal Customer Profile', escHtml(icp));
+      if (persona)           body += sec('Target Buyer / Persona', escHtml(persona));
+      if (why)               body += sec('Why They Care',          escHtml(why));
+      if (competitive)       body += sec('Competitive Positioning', escHtml(competitive));
+      if (keyQs.length)      body += sec('Discovery Questions',    list(keyQs));
+      if (objections.length) body += `<div class="pb-section"><div class="pb-section-label">Common Objections</div>${objHtml}</div>`;
+      if (instructions)      body += sec('Recommended Next Steps', escHtml(instructions));
+
+      document.getElementById('pb-body-inner').innerHTML = body;
+
+      // Always start collapsed when loading a new play
+      const bodyEl    = document.getElementById('pb-body');
+      const moreBtnEl = document.getElementById('pb-more-btn');
+      bodyEl.classList.remove('open');
+      if (chevron) chevron.classList.remove('open');
+      if (moreBtnEl) moreBtnEl.textContent = 'More ▾';
+    }
+
+    // renderPitchCard is an alias kept for any legacy call sites
+    function renderPitchCard(play) { renderPitchBrief(play); }
+
     async function loadPlayDetail(play, forceRefresh = false) {
       showScreen('screen-loading');
       try {
@@ -1149,10 +1441,14 @@
           const email = currentUser ? currentUser.email : null;
           const accountIds = repAccounts.map(a => a.account_id);
           const logs = await getLatestLogsForRep(email, accountIds);
-          if (logs) Object.assign(latestLogs, logs);
+          // Don't overwrite a non-null in-memory entry with null — SP write propagation
+          // can lag a few seconds, causing the just-submitted log to vanish on refresh.
+          if (logs) Object.entries(logs).forEach(([id, v]) => { if (v !== null) latestLogs[id] = v; });
         }
 
         document.getElementById('play-detail-title').textContent = play.play_name;
+        renderPitchBrief(play);
+        updateFilterTabLabels((play || {}).play_id);
         const playAccounts = getPlayAccounts(play);
         renderAccountList(playAccounts, activeFilter);
 
@@ -1177,8 +1473,11 @@
 
         if (filter === 'all') return true;
         if (filter === 'not-started')   return !status;
-        if (filter === 'interested')    return status === 'Interested';
-        if (filter === 'not-interested') return status === 'Not Interested';
+        // Support custom outcome labels via data-filter-value set by updateFilterTabLabels
+        const fv = (slug, def) => document.querySelector(`.filter-tab[data-filter="${slug}"]`)?.dataset.filterValue || def;
+        if (filter === 'interested')       return status === fv('interested',       'Interested');
+        if (filter === 'not-interested')   return status === fv('not-interested',   'Not Interested');
+        if (filter === 'would-not-engage') return status === fv('would-not-engage', 'Would Not Engage');
 
         return true;
       });
@@ -1189,19 +1488,24 @@
       }
 
       const html = filtered.map(account => {
-        const { statusLabel, badgeClass, lastDate } = getAccountStatus(account.account_id);
+        const { statusLabel, badgeClass, lastDate, isManagerOverride, managerNote } = getAccountStatus(account.account_id);
         const region  = account.region  || '';
         const segment = account.segment || '';
         const meta    = [region, segment].filter(Boolean).join(' · ');
+        const wneStyle = badgeClass === 'badge-wne' ? ' style="background:#ff6b35;color:#fff;"' : '';
 
         return `
           <div class="account-row" data-account-id="${account.account_id}" style="cursor:pointer;">
             <div class="account-row-info">
               <div class="account-row-name">${account.account_name || account.name || account.account_id}</div>
               ${meta ? `<div class="account-row-meta">${meta}</div>` : ''}
+              ${isManagerOverride && managerNote ? `<div style="font-size:12px;color:#e67e22;margin-top:3px;">🔁 Manager note: ${escHtml(managerNote)}</div>` : ''}
             </div>
             <div class="account-row-right">
-              <span class="status-badge ${badgeClass}">${statusLabel}</span>
+              <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+                <span class="status-badge ${badgeClass}"${wneStyle}>${statusLabel}</span>
+                ${isManagerOverride ? '<span style="background:#e67e22;color:#fff;border-radius:10px;padding:2px 6px;font-size:11px;font-weight:700;">🔁</span>' : ''}
+              </div>
               <div class="account-row-date">${formatDate(lastDate)}</div>
             </div>
           </div>
@@ -1231,15 +1535,23 @@
       const accountName = account.account_name || account.name || account.account_id;
       const persona  = account.target_persona || '';
       const meta = [account.region || '', account.segment || '', persona].filter(Boolean).join(' · ');
-      const headerHtml = `<div class="account-header-name">${escHtml(accountName)}</div>${meta ? `<div class="account-header-meta">${escHtml(meta)}</div>` : ''}`;
+      const playName = (play || {}).play_name || account.play_name || '';
 
-      document.getElementById('log-form-account-header').innerHTML   = headerHtml;
-      document.getElementById('log-form-account-header-2').innerHTML = headerHtml;
+      // Populate context card
+      const ctxPlay    = document.getElementById('log-ctx-play');
+      const ctxAccount = document.getElementById('log-ctx-account');
+      const ctxMeta    = document.getElementById('log-ctx-meta');
+      if (ctxPlay)    ctxPlay.textContent    = playName ? `🎯 ${playName}` : '';
+      if (ctxAccount) ctxAccount.textContent = accountName;
+      if (ctxMeta) {
+        if (meta) { ctxMeta.textContent = meta; ctxMeta.style.display = ''; }
+        else { ctxMeta.style.display = 'none'; }
+      }
 
       // Reset all fields
       document.querySelectorAll('input[name="interaction-type"]').forEach(r => r.checked = false);
       document.querySelectorAll('input[name="outcome"]').forEach(r => r.checked = false);
-      ['field-not-interested-reason', 'field-interested-reason', 'field-next-step-type', 'field-timing', 'field-timing-ni'].forEach(id => {
+      ['field-not-interested-reason', 'field-interested-reason', 'field-next-step-type', 'field-timing', 'field-timing-ni', 'field-wne-reason', 'field-wne-next-step', 'field-wne-timing'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = '';
       });
@@ -1260,10 +1572,41 @@
       renderInteractionTypes();
       renderNextStepOptions();
       renderTimingOptions();
-      loadResponseOptionsForForm(account).then(({ interested, notInterested }) => {
-        document.getElementById('field-interested-reason').innerHTML     = buildReasonOptions(interested);
-        document.getElementById('field-not-interested-reason').innerHTML = buildReasonOptions(notInterested);
-      });
+      // Load ALL form dropdowns from play config — single source of truth
+      const playId = (play || {}).play_id || account.play_id || '';
+      const _fillSel = (id, items) => {
+        if (!items?.length) return;
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '<option value="">— Select —</option>' +
+          items.map(r => `<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
+      };
+      if (playId && typeof getPlayConfig === 'function') {
+        getPlayConfig(playId).then(pc => {
+          if (!pc?.outcomes) return;
+          const int = pc.outcomes['Interested']       || {};
+          const ni  = pc.outcomes['Not Interested']   || {};
+          const wne = pc.outcomes['Would Not Engage'] || {};
+          _fillSel('field-interested-reason',     int.reasons);
+          _fillSel('field-next-step-type',        int.next_steps);
+          _fillSel('field-timing',                int.timing);
+          _fillSel('field-not-interested-reason', ni.reasons);
+          _fillSel('field-timing-ni',             ni.timing);
+          _fillSel('field-wne-reason',            wne.reasons);
+          _fillSel('field-wne-next-step',         wne.next_steps);
+          _fillSel('field-wne-timing',            wne.timing);
+        }).catch(() => {
+          loadResponseOptionsForForm(account).then(({ interested, notInterested }) => {
+            document.getElementById('field-interested-reason').innerHTML     = buildReasonOptions(interested);
+            document.getElementById('field-not-interested-reason').innerHTML = buildReasonOptions(notInterested);
+          });
+        });
+      } else {
+        loadResponseOptionsForForm(account).then(({ interested, notInterested }) => {
+          document.getElementById('field-interested-reason').innerHTML     = buildReasonOptions(interested);
+          document.getElementById('field-not-interested-reason').innerHTML = buildReasonOptions(notInterested);
+        });
+      }
+      renderOutcomeRadios(playId);
     }
 
     // Apply per-play question config: show/hide boilerplate fields, render custom questions
@@ -1329,20 +1672,46 @@
       document.getElementById('log-step-2').style.display = step === 2 ? 'block' : 'none';
 
       if (step === 2) {
-        // Show/hide outcome-specific fields based on step 1 selection
-        const outcome = document.querySelector('input[name="outcome"]:checked')?.value;
-        document.getElementById('interested-fields').style.display     = outcome === 'Interested'     ? 'block' : 'none';
-        document.getElementById('not-interested-fields').style.display = outcome === 'Not Interested' ? 'block' : 'none';
+        // Show/hide outcome-specific fields based on step 1 selection (use key, not label)
+        const checkedInput = document.querySelector('input[name="outcome"]:checked');
+        const outcomeKey   = checkedInput?.dataset.outcomeKey || '';
+        document.getElementById('interested-fields').style.display     = outcomeKey === 'interested'       ? 'block' : 'none';
+        document.getElementById('not-interested-fields').style.display = outcomeKey === 'not_interested'   ? 'block' : 'none';
+        document.getElementById('wne-fields').style.display            = outcomeKey === 'would_not_engage' ? 'block' : 'none';
+
+        // Populate step 2 selection summary
+        const intType = document.querySelector('input[name="interaction-type"]:checked')?.value || '';
+        const outLabel = document.querySelector('input[name="outcome"]:checked')?.value || '';
+        const summaryEl = document.getElementById('log-selection-summary');
+        const valEl     = document.getElementById('log-sel-value');
+        if (summaryEl && valEl && (intType || outLabel)) {
+          valEl.textContent = [intType, outLabel].filter(Boolean).join(' · ');
+          summaryEl.style.display = '';
+        } else if (summaryEl) {
+          summaryEl.style.display = 'none';
+        }
       }
 
-      const titles = { 1: 'Log Interaction', 2: 'Details' };
-      document.getElementById('log-form-title').textContent = titles[step] || 'Log Interaction';
+      // Update context card step label and hint
+      const stepInfo = {
+        1: { label: 'Step 1 of 2 — Interaction', hint: 'Choose how you contacted the customer and what happened.' },
+        2: { label: 'Step 2 of 2 — Details', hint: 'Add the reason, next step, timing, and any notes.' },
+      };
+      const si = stepInfo[step] || {};
+      const stepLabelEl = document.getElementById('log-ctx-step-label');
+      const stepHintEl  = document.getElementById('log-ctx-step-hint');
+      if (stepLabelEl) stepLabelEl.textContent = si.label || '';
+      if (stepHintEl)  stepHintEl.textContent  = si.hint  || '';
 
+      // Update step indicator
       ['step-ind-1', 'step-ind-2'].forEach((id, i) => {
         const el = document.getElementById(id);
-        el.style.color      = (i + 1) === step ? '#0078d4' : '#9ca3af';
-        el.style.fontWeight = (i + 1) === step ? '700' : '400';
+        if (!el) return;
+        const n = i + 1;
+        el.className = 'log-step-ind-item' + (n === step ? ' active' : (n < step ? ' done' : ''));
       });
+
+      document.getElementById('log-form-title').textContent = step === 2 ? 'Details' : 'Log Interaction';
 
       window.scrollTo(0, 0);
     }
@@ -1382,7 +1751,7 @@
     }
 
     async function submitEngagement() {
-      console.log("PATCH LIVE v4 - deployed app.html");
+      console.log("PATCH LIVE v5 - deployed app.html");
       const interactionType = document.querySelector('input[name="interaction-type"]:checked')?.value;
       const outcome         = document.querySelector('input[name="outcome"]:checked')?.value;
 
@@ -1396,37 +1765,46 @@
       try {
         const nextStepType = document.getElementById('field-next-step-type')?.value || '';
 
-        // Validate required fields by outcome (skip if field was hidden by play config)
+        // Validate required fields by outcome (use outcome key, not label, for routing)
         const bq = currentPlay?.questions?.boilerplate || ['notes', 'next_step', 'timing', 'revisit_timing'];
-        if (outcome === 'Interested') {
+        const outcomeKey = document.querySelector('input[name="outcome"]:checked')?.dataset.outcomeKey || '';
+        if (outcomeKey === 'interested') {
           const intReason = document.getElementById('field-interested-reason')?.value || '';
           if (!intReason) { alert('Please select an Interested Reason.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
           if (bq.includes('next_step') && !nextStepType) { alert('Please select a Next Step.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
         }
-        if (outcome === 'Not Interested') {
+        if (outcomeKey === 'not_interested') {
           const niReason = document.getElementById('field-not-interested-reason')?.value || '';
           if (!niReason) { alert('Please select a Not Interested Reason.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
+        }
+        if (outcomeKey === 'would_not_engage') {
+          const wneReason = document.getElementById('field-wne-reason')?.value || '';
+          if (!wneReason) { alert('Please select a reason.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
         }
 
         // Validate required custom questions
         const missingCustom = validateCustomAnswers();
         if (missingCustom) { alert(missingCustom); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
 
-        // Derive reason select from outcome — fixed IDs, no intermediate variable needed
+        // Derive reason select from outcome key
         const reasonSelect =
-          outcome === 'Interested'
+          outcomeKey === 'interested'
             ? document.getElementById('field-interested-reason')
-            : outcome === 'Not Interested'
+            : outcomeKey === 'not_interested'
               ? document.getElementById('field-not-interested-reason')
-              : null;
+              : outcomeKey === 'would_not_engage'
+                ? document.getElementById('field-wne-reason')
+                : null;
 
         const selectedOption = reasonSelect?.options?.[reasonSelect.selectedIndex];
         const reasonLabel    = selectedOption?.text  || '';
         const reasonCode     = reasonSelect?.value   || '';
 
-        const timingVal = outcome === 'Interested'
+        const timingVal = outcomeKey === 'interested'
           ? (document.getElementById('field-timing')?.value || '')
-          : (document.getElementById('field-timing-ni')?.value || '');
+          : outcomeKey === 'would_not_engage'
+            ? (document.getElementById('field-wne-timing')?.value || '')
+            : (document.getElementById('field-timing-ni')?.value || '');
 
         const data = {
           account_id:       currentAccount.account_id,
@@ -1439,7 +1817,7 @@
           outcome,
           reason_label:     reasonLabel,
           reason_code:      reasonCode,
-          next_step_type:   outcome === 'Interested' ? nextStepType : '',
+          next_step_type:   outcome === 'Interested' ? nextStepType : outcome === 'Would Not Engage' ? (document.getElementById('field-wne-next-step')?.value || '') : '',
           timing:           timingVal,
           notes:            document.getElementById('field-notes')?.value || '',
           call_date:        document.getElementById('field-call-date')?.value || '',
@@ -1751,18 +2129,9 @@
       showDashboard();
     });
 
-    // Back: log form → play detail (step-aware)
+    // Home: log form → dashboard
     document.getElementById('btn-back-to-play').addEventListener('click', () => {
-      if (currentStep > 1) {
-        goToLogStep(currentStep - 1);
-      } else if (currentPlay) {
-        activeFilter = 'all';
-        renderAccountList(getPlayAccounts(currentPlay), activeFilter);
-        document.querySelectorAll('.filter-tab').forEach(t => {
-          t.classList.toggle('active', t.dataset.filter === 'all');
-        });
-        showScreen('screen-play-detail');
-      }
+      showDashboard();
     });
 
     // Back: leaderboard → dashboard
@@ -1770,13 +2139,9 @@
       showDashboard();
     });
 
-    // Back to accounts (confirm screen)
+    // Home: confirm screen → dashboard
     document.getElementById('btn-back-to-accounts').addEventListener('click', () => {
-      if (currentPlay) {
-        loadPlayDetail(currentPlay, true);
-      } else {
-        showDashboard();
-      }
+      showDashboard();
     });
 
     // Filter tabs
@@ -1810,6 +2175,53 @@
     });
 
     // ─────────────────────────────────────────────
+    // REP FEEDBACK MODAL
+    // ─────────────────────────────────────────────
+    function openFeedbackModal() {
+      const modal = document.getElementById('feedback-modal');
+      if (modal) {
+        document.getElementById('feedback-text').value = '';
+        document.getElementById('feedback-char-counter').textContent = '0 / 500 characters';
+        document.getElementById('feedback-submit-status').textContent = '';
+        modal.style.display = 'flex';
+      }
+    }
+    function closeFeedbackModal() {
+      const modal = document.getElementById('feedback-modal');
+      if (modal) modal.style.display = 'none';
+    }
+    async function submitFeedback() {
+      const text = (document.getElementById('feedback-text')?.value || '').trim();
+      if (!text) { alert('Please enter your feedback.'); return; }
+      const btn = document.getElementById('feedback-submit-btn');
+      const statusEl = document.getElementById('feedback-submit-status');
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+      try {
+        let existing = [];
+        try {
+          const raw = await getFileText(`${SP_ROOT}/rep_feedback.json`);
+          if (raw) existing = JSON.parse(raw);
+        } catch(e) { /* file may not exist yet */ }
+        existing.push({
+          submitted_at: new Date().toISOString(),
+          rep_email:    currentUser?.email || '',
+          rep_name:     currentUser?.name  || '',
+          feedback:     text,
+        });
+        await writeJsonFile('rep_feedback.json', existing);
+        statusEl.textContent = '✅ Thanks for your feedback!';
+        setTimeout(closeFeedbackModal, 1500);
+      } catch(e) {
+        console.error('Feedback submit error:', e);
+        statusEl.textContent = '⚠️ Failed to send — please try again.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Send Feedback';
+      }
+    }
+
+    // ─────────────────────────────────────────────
     // INIT
     // ─────────────────────────────────────────────
     // ─────────────────────────────────────────────
@@ -1837,10 +2249,20 @@
     }
 
     document.addEventListener('DOMContentLoaded', async () => {
+      // Show DEV banner only in non-production environments
+      const isProd = window.location.hostname === 'orange-smoke-04675d40f.7.azurestaticapps.net';
+      const devBanner = document.getElementById('dev-env-banner');
+      if (devBanner) devBanner.style.display = isProd ? 'none' : 'block';
+
       // Trap browser back button inside the app
-      history.pushState(null, '', location.href);
-      window.addEventListener('popstate', () => {
-        history.pushState(null, '', location.href);
+      history.pushState({ screen: 'screen-dashboard' }, '', location.pathname);
+      window.addEventListener('popstate', (e) => {
+        if (e.state && e.state.screen) {
+          goBack();
+        } else {
+          // Fell past our history stack — re-anchor to prevent leaving the app
+          history.pushState({ screen: _screenHistory[_screenHistory.length - 1] || 'screen-dashboard' }, '', location.pathname);
+        }
       });
 
       const onboardBtn = document.getElementById('btn-onboarding-done');
@@ -1855,6 +2277,7 @@
         const user = getCurrentUser();
         if (user) {
           currentUser = user;
+          if (typeof seedDevDataIfNeeded === 'function') await seedDevDataIfNeeded();
           await loadDashboard();
           showOnboardingIfNeeded();
           showBookmarkBannerIfNeeded();
@@ -1906,6 +2329,35 @@
       <div style="padding:16px 28px 24px;border-top:1px solid #f0f0f0;">
         <button id="btn-onboarding-done" style="width:100%;padding:15px;background:linear-gradient(135deg,#0078d4,#0056b3);color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;">Let's go! →</button>
       </div>
+    </div>
+  </div>
+
+
+  <!-- ===================== REP FEEDBACK BUTTON + MODAL ===================== -->
+  <button id="feedback-float-btn" onclick="openFeedbackModal()"
+    style="position:fixed;bottom:24px;right:24px;width:48px;height:48px;border-radius:50%;
+           background:#7c3aed;color:#fff;border:none;font-size:22px;cursor:pointer;
+           z-index:8000;box-shadow:0 4px 16px rgba(0,0,0,0.25);">?</button>
+
+  <div id="feedback-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+       z-index:9000;align-items:center;justify-content:center;padding:16px;">
+    <div style="background:#fff;border-radius:16px;max-width:420px;width:100%;padding:24px 20px;
+                box-shadow:0 20px 60px rgba(0,0,0,.3);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <strong style="font-size:17px;color:#1a1a1a;">💬 Send Feedback</strong>
+        <button onclick="closeFeedbackModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6b7280;">✕</button>
+      </div>
+      <p style="font-size:13px;color:#555;margin:0 0 12px;">Questions, bugs, or ideas? Let us know.</p>
+      <textarea id="feedback-text" rows="5" maxlength="500"
+        placeholder="Type your feedback here…"
+        oninput="document.getElementById('feedback-char-counter').textContent=this.value.length+' / 500 characters'"
+        style="width:100%;padding:10px 12px;font-size:15px;border:1px solid #d1d5db;border-radius:8px;
+               resize:vertical;box-sizing:border-box;"></textarea>
+      <div id="feedback-char-counter" style="font-size:12px;color:#6b7280;text-align:right;margin-top:4px;">0 / 500 characters</div>
+      <button id="feedback-submit-btn" onclick="submitFeedback()"
+        style="width:100%;margin-top:12px;padding:13px;background:#7c3aed;color:#fff;border:none;
+               border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;">Send Feedback</button>
+      <div id="feedback-submit-status" style="text-align:center;font-size:13px;margin-top:8px;color:#555;"></div>
     </div>
   </div>
 

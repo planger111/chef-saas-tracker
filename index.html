@@ -3,9 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <title>INFRA SalesPlay Tracker</title>
+  <script src="config.js?v=3"></script>
+  <script src="msal-browser.js"></script>
+  <script src="msal-auth.js?v=11"></script>
   <script>
-    // Preserve MSAL auth hash when redirecting to app.html
-    window.location.replace('app.html' + window.location.hash + window.location.search);
+    (async () => {
+      const hasAuthCode = window.location.hash.includes('code=') || window.location.search.includes('code=');
+      if (hasAuthCode) {
+        // Auth redirect return — let MSAL process it and navigate back to origin page
+        await initAuth();
+        // If MSAL didn't navigate (e.g. navigateToLoginRequestUrl disabled), fall through to app.html
+        window.location.replace('app.html');
+      } else {
+        // Normal entry — go to rep app, preserving any hash/search params
+        window.location.replace('app.html' + window.location.hash + window.location.search);
+      }
+    })();
   </script>
 </head>
 <body></body>

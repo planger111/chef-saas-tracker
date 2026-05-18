@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "id": "e6064372-7949-4ded-8f08-883ab6d1f3a1",
   "developer": {
-    "name": "Progress Software (DEV)",
+    "name": "Progress INFRA Sales",
     "websiteUrl": "https://orange-smoke-04675d40f.7.azurestaticapps.net",
     "privacyUrl": "https://orange-smoke-04675d40f.7.azurestaticapps.net/security.html",
     "termsOfUseUrl": "https://orange-smoke-04675d40f.7.azurestaticapps.net/security.html"
@@ -40,5 +40,5 @@
   "validDomains": [
     "orange-smoke-04675d40f.7.azurestaticapps.net"
   ],
-  "showLoadingIndicator": true
+  "showLoadingIndicator": false
 }

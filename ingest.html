@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>INFRA SalesPlay Tracker — Account Ingest</title>
   <script src="msal-browser.js?v=2"></script>
-  <script src="config.js?v=2"></script>
-  <script src="msal-auth.js?v=11"></script>
-  <script src="graph-api.js?v=2"></script>
+  <script src="config.js?v=11"></script>
+  <script src="msal-auth.js?v=12"></script>
+  <script src="graph-api.js?v=11"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -135,6 +135,9 @@
   </style>
 </head>
 <body>
+<div id="dev-env-banner" style="display:block;background:#e65c00;color:#fff;text-align:center;padding:6px 12px;font-size:12px;font-weight:700;position:sticky;top:0;z-index:99999;border-bottom:2px solid #b34400;">
+  ⚠️ DEV — Loading…
+</div>
 
 <div class="admin-hq-bar">
   <a href="admin.html" class="admin-hq-btn">🏠 Admin HQ</a>
@@ -175,50 +178,80 @@
   <div class="wizard-steps" id="wizard-steps" style="display:none;">
     <div class="wizard-step" id="ws-1">
       <span class="ws-num">1</span>
-      <span class="ws-label">Basics</span>
+      <span class="ws-label">The Play</span>
     </div>
     <div class="wizard-connector"></div>
     <div class="wizard-step" id="ws-2">
       <span class="ws-num">2</span>
-      <span class="ws-label">Outcomes</span>
+      <span class="ws-label">The Customer</span>
     </div>
     <div class="wizard-connector"></div>
     <div class="wizard-step" id="ws-3">
       <span class="ws-num">3</span>
-      <span class="ws-label">Questions</span>
+      <span class="ws-label">Outcomes</span>
     </div>
     <div class="wizard-connector"></div>
     <div class="wizard-step" id="ws-4">
       <span class="ws-num">4</span>
-      <span class="ws-label">Accounts</span>
+      <span class="ws-label">Review &amp; Submit</span>
     </div>
   </div>
 
-  <!-- Step 1: Basics -->
+  <!-- Step 1: The Play -->
   <div class="wizard-panel" id="step-1-panel" style="display:none;">
+    <h3 style="margin:0 0 16px;font-size:18px;">🎯 The Play</h3>
+    <p class="step-desc">Define the product and what this play is about.</p>
+
+    <div class="form-row">
+      <label>Product *</label>
+      <select id="play-product" onchange="onProductSelect()" style="padding:8px 10px;font-size:14px;border:1px solid #d1d5db;border-radius:6px;width:100%;">
+        <option value="">— select product —</option>
+        <option value="Chef">Chef</option>
+        <option value="WhatsUp Gold">WhatsUp Gold</option>
+        <option value="Loadmaster">Loadmaster</option>
+        <option value="Flowmon">Flowmon</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <div class="form-row" id="play-product-other-wrap" style="display:none;">
+      <label>Custom Product Name *</label>
+      <input type="text" id="play-product-other" placeholder="Enter product name" oninput="validatePlayStep()" />
+    </div>
 
     <div class="form-row">
       <label>Play Name *</label>
-      <input type="text" id="play-name-input" placeholder="e.g. Chef Infrastructure Upgrade"
+      <input type="text" id="play-name-input" placeholder="e.g. Chef SaaS Migration Q3"
              oninput="onPlayNameInput(this.value)" autocomplete="off" />
-      <div class="hint">A short name for this sales play. System auto-generates the ID (e.g. "Chef Infrastructure Upgrade" → chef-infrastructure-upgrade).</div>
+      <div class="hint">Keep it short and descriptive. The system auto-generates the play ID.</div>
       <div id="play-picker-options" style="margin-top:8px;display:none;"></div>
     </div>
 
     <div class="form-row">
-      <label>Goal *</label>
-      <div class="goal-seg">
-        <button type="button" class="goal-seg-btn" data-goal="feedback"        onclick="selectGoalSeg(this)">Feedback</button>
-        <button type="button" class="goal-seg-btn" data-goal="interest"        onclick="selectGoalSeg(this)">Interest</button>
-        <button type="button" class="goal-seg-btn" data-goal="meeting"         onclick="selectGoalSeg(this)">Meeting</button>
-        <button type="button" class="goal-seg-btn" data-goal="disqualification" onclick="selectGoalSeg(this)">Disqualification</button>
-        <button type="button" class="goal-seg-btn" data-goal="expansion"       onclick="selectGoalSeg(this)">Expansion</button>
-      </div>
+      <label>Elevator Pitch / Description *</label>
+      <textarea id="play-pitch" rows="3" placeholder="What is this play about? What problem are we solving for customers?"
+                oninput="validatePlayStep()"></textarea>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;">
+      <button class="btn-primary" id="btn-play-next" onclick="finishPlayStep()" disabled>Continue to The Customer →</button>
+    </div>
+  </div>
+
+  <!-- Step 2: The Customer -->
+  <div class="wizard-panel" id="step-2-panel" style="display:none;">
+    <h3 style="margin:0 0 16px;font-size:18px;">👤 The Customer</h3>
+    <p class="step-desc">Define who this play targets and why they should care.</p>
+
+    <div class="form-row">
+      <label>Why Does the Customer Care? *</label>
+      <textarea id="play-customer-value" rows="2" placeholder="What's the customer value prop? What problem does this solve for them?"></textarea>
+      <div class="hint">Focus on the customer's perspective — not why the rep should run the play.</div>
     </div>
 
     <div class="form-row">
       <label>Ideal Customer Profile (ICP)</label>
-      <textarea id="play-icp" rows="3" placeholder="Describe the ideal customer — size, industry, tech stack, pain points…"></textarea>
+      <textarea id="play-icp" rows="2" placeholder="Who is this play for? Describe the ideal customer — size, industry, tech stack, pain points…"></textarea>
     </div>
 
     <div class="form-row">
@@ -227,155 +260,34 @@
     </div>
 
     <div class="form-row">
-      <label>Elevator Pitch</label>
-      <textarea id="play-pitch" rows="3" placeholder="What should the rep say? Keep it concise — 2–4 sentences reps can memorize."></textarea>
+      <label>Competitive Positioning</label>
+      <textarea id="play-competitive" rows="2" placeholder="How do we win against the competition? Key differentiators, objection handlers…"></textarea>
     </div>
 
-
-
-    <div style="display:flex;justify-content:flex-end;">
-      <button class="btn-primary" id="btn-play-next" onclick="finishPlayStep()" disabled>Continue to Outcomes →</button>
-    </div>
-  </div>
-
-  <!-- Step 2: Outcomes -->
-  <div class="wizard-panel" id="step-2-panel" style="display:none;">
-    <p class="step-desc">Choose which outcomes reps can log for this play. You can customise per-outcome settings below.</p>
-
-    <div id="outcomes-list">
-
-      <div class="outcome-row">
-        <label class="outcome-check">
-          <input type="checkbox" class="outcome-cb" data-outcome="Interested" checked>
-          <span class="outcome-label">Interested</span>
-        </label>
-        <div class="outcome-config" style="display:flex;gap:8px;margin-left:auto;">
-          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
-          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
-          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
-        </div>
-      </div>
-
-      <div class="outcome-row">
-        <label class="outcome-check">
-          <input type="checkbox" class="outcome-cb" data-outcome="Not Interested" checked>
-          <span class="outcome-label">Not Interested</span>
-        </label>
-        <div class="outcome-config" style="display:flex;gap:8px;margin-left:auto;">
-          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
-          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
-          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
-        </div>
-      </div>
-
-      <div class="outcome-row">
-        <label class="outcome-check">
-          <input type="checkbox" class="outcome-cb" data-outcome="Meeting Booked" checked>
-          <span class="outcome-label">Meeting Booked</span>
-        </label>
-        <div class="outcome-config" style="display:flex;gap:8px;margin-left:auto;">
-          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
-          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
-          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
-        </div>
-      </div>
-
-      <div class="outcome-row">
-        <label class="outcome-check">
-          <input type="checkbox" class="outcome-cb" data-outcome="Follow-Up Needed" checked>
-          <span class="outcome-label">Follow-Up Needed</span>
-        </label>
-        <div class="outcome-config" style="display:flex;gap:8px;margin-left:auto;">
-          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
-          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
-          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
-        </div>
-      </div>
-
-      <div class="outcome-row">
-        <label class="outcome-check">
-          <input type="checkbox" class="outcome-cb" data-outcome="Feedback Collected" checked>
-          <span class="outcome-label">Feedback Collected</span>
-        </label>
-        <div class="outcome-config" style="display:flex;gap:8px;margin-left:auto;">
-          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
-          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
-          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
-        </div>
-      </div>
-
-      <div class="outcome-row">
-        <label class="outcome-check">
-          <input type="checkbox" class="outcome-cb" data-outcome="No Response">
-          <span class="outcome-label">No Response</span>
-        </label>
-        <div class="outcome-config" style="display:none;gap:8px;margin-left:auto;">
-          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
-          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
-          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
-        </div>
-      </div>
-
-      <div class="outcome-row">
-        <label class="outcome-check">
-          <input type="checkbox" class="outcome-cb" data-outcome="Wrong Contact">
-          <span class="outcome-label">Wrong Contact</span>
-        </label>
-        <div class="outcome-config" style="display:none;gap:8px;margin-left:auto;">
-          <select class="outcome-cfg-sel" data-field="reason"><option>Reason: required</option><option>Reason: optional</option><option>Reason: off</option></select>
-          <select class="outcome-cfg-sel" data-field="next_step"><option>Next Step: required</option><option>Next Step: optional</option><option>Next Step: off</option></select>
-          <select class="outcome-cfg-sel" data-field="notes"><option>Notes: encouraged</option><option>Notes: optional</option></select>
-        </div>
-      </div>
-
-    </div><!-- /#outcomes-list -->
-
-    <div class="wizard-nav">
-      <button class="btn-secondary" onclick="goToStep(1)">← Back to Basics</button>
-      <button class="btn-secondary" id="btn-save-config-only" onclick="savePlayConfigOnly()" style="background:#f0f7ff;color:#0078d4;border-color:#b3d4f5;">💾 Save Config Only</button>
-      <button class="btn-primary" id="btn-outcomes-next" onclick="goToStep(3)">Continue to Questions →</button>
+    <div style="display:flex;justify-content:space-between;">
+      <button class="btn-secondary" onclick="goToStep(1)">← Back to The Play</button>
+      <button class="btn-primary" onclick="finishCustomerStep()">Continue to Outcomes →</button>
     </div>
   </div>
 
-  <!-- Step 3: Questions -->
+  <!-- Step 3: Outcomes -->
   <div class="wizard-panel" id="step-3-panel" style="display:none;">
-    <p class="step-desc">Choose which fields reps see when logging an interaction for this play. Interaction type and outcome are always included.</p>
+    <h3 style="margin:0 0 16px;font-size:18px;">📊 Outcomes</h3>
+    <p class="step-desc">Select which outcomes reps can log for this play, and configure which reasons to offer for each.</p>
 
-    <!-- Section A: Standard Fields -->
-    <div style="margin-bottom:24px;">
-      <div class="q-section-header">Standard Fields</div>
-      <div id="boilerplate-questions-list"></div>
-    </div>
-
-    <!-- Section B: Custom Questions -->
-    <div style="margin-bottom:24px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-        <div class="q-section-header" style="margin-bottom:0;">Custom Questions</div>
-        <button class="btn-secondary" onclick="addCustomQuestion()" style="padding:6px 12px;font-size:13px;">+ Add Question</button>
-      </div>
-      <div id="custom-questions-list">
-        <div style="font-size:13px;color:#9ca3af;padding:8px 0;" id="cq-empty-msg">No custom questions yet.</div>
-      </div>
-    </div>
-
-    <!-- Preview toggle -->
-    <div style="margin-bottom:16px;">
-      <button class="btn-secondary" onclick="toggleFormPreview()" style="width:100%;font-size:13px;">👁 Preview Rep Form</button>
-      <div id="form-preview" style="display:none;margin-top:10px;border:1px solid #e5e7eb;border-radius:8px;padding:16px;background:#f9fafb;font-size:13px;">
-        <div style="font-weight:700;color:#374151;margin-bottom:8px;">Rep will see these fields:</div>
-        <div id="form-preview-content"></div>
-      </div>
+    <div id="outcomes-config-list" style="margin-bottom:16px;">
+      <div style="color:#9ca3af;font-size:13px;">Loading outcome options…</div>
     </div>
 
     <div class="wizard-nav">
-      <button class="btn-secondary" onclick="goToStep(2)">← Back to Outcomes</button>
-      <button class="btn-secondary" onclick="savePlayConfigOnly()" style="background:#f0f7ff;color:#0078d4;border-color:#b3d4f5;">💾 Save Config Only</button>
-      <button class="btn-primary" onclick="finishQuestionsStep()">Continue to Accounts →</button>
+      <button class="btn-secondary" onclick="goToStep(2)">← Back to The Customer</button>
+      <button class="btn-primary" onclick="finishOutcomesStep()">Continue to Review →</button>
     </div>
   </div>
 
-  <!-- Step 4: Accounts -->
+  <!-- Step 4: Accounts + Review -->
   <div class="wizard-panel" id="step-4-panel" style="display:none;">
+    <h3 style="margin:0 0 16px;font-size:18px;">📋 Accounts &amp; Review</h3>
 
     <!-- Context banner (shown for existing plays) -->
     <div id="step3-context-banner" style="display:none;background:#f0f7ff;border:1px solid #c3dafe;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;">
@@ -387,97 +299,98 @@
     <!-- Play summary bar -->
     <div class="play-summary-bar" id="play-summary-bar"></div>
 
-    <!-- Upload mode -->
-    <div style="font-size:13px;font-weight:600;margin-bottom:4px;color:#333;">Upload mode</div>
-    <div class="upload-mode-rows">
-      <label class="upload-mode-row safe">
-        <input type="radio" name="upload-mode" value="merge" checked onchange="updateStep3Context()">
-        <div>
-          <span class="mode-title">Add accounts</span>
-          <span class="mode-desc">New accounts added, existing updated, nothing removed</span>
+    <!-- Upload mode (hidden — always merge, admin can replace via admin panel) -->
+    <input type="radio" name="upload-mode" value="merge" checked style="display:none;">
+
+    <!-- Account upload section -->
+    <div id="account-upload-section" style="margin-bottom:28px;">
+      <h4 style="font-size:14px;font-weight:700;color:#374151;margin-bottom:12px;">Upload Accounts <span style="font-size:12px;font-weight:400;color:#6b7280;">(optional — can be added after admin review)</span></h4>
+
+      <!-- Upload tabs -->
+      <div class="upload-tabs">
+        <button class="upload-tab active" id="tab-file-btn" onclick="switchUploadTab('file')">Upload File</button>
+        <button class="upload-tab" id="tab-paste-btn" onclick="switchUploadTab('paste')">Paste from Excel</button>
+      </div>
+
+      <!-- File upload panel -->
+      <div id="tab-file-panel">
+        <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+          <div style="font-size:28px;">📂</div>
+          <strong>Click to select or drag your Excel file here</strong>
+          <p style="margin-top:6px;color:#555;font-size:13px;">account-upload-template.xlsx (or any .xlsx with the same columns)</p>
+          <p style="margin-top:4px;color:#888;font-size:12px;">Required columns: SFDC Account ID · Account Name · Rep Email · Rep Name</p>
+          <div style="margin-top:10px;font-size:12px;">
+            <a href="account-upload-template.xlsx" download style="color:#0078d4;" onclick="event.stopPropagation()">⬇ Download blank template</a>
+          </div>
         </div>
-      </label>
-      <label class="upload-mode-row destructive">
-        <input type="radio" name="upload-mode" value="replace" onchange="updateStep3Context()">
-        <div>
-          <span class="mode-title">Replace all</span>
-          <span class="mode-desc">⚠ Removes all existing accounts for this play</span>
-        </div>
-      </label>
-    </div>
+        <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
+      </div>
 
-    <!-- Upload tabs -->
-    <div class="upload-tabs">
-      <button class="upload-tab active" id="tab-file-btn" onclick="switchUploadTab('file')">Upload File</button>
-      <button class="upload-tab" id="tab-paste-btn" onclick="switchUploadTab('paste')">Paste from Excel</button>
-    </div>
-
-    <!-- File upload panel -->
-    <div id="tab-file-panel">
-      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
-        <div style="font-size:28px;">📂</div>
-        <strong>Click to select or drag your Excel file here</strong>
-        <p style="margin-top:6px;color:#555;font-size:13px;">account-upload-template.xlsx (or any .xlsx with the same columns)</p>
-        <p style="margin-top:4px;color:#888;font-size:12px;">Required columns: SFDC Account ID · Account Name · Rep Email · Rep Name</p>
-        <div style="margin-top:10px;font-size:12px;">
-          <a href="account-upload-template.xlsx" download style="color:#0078d4;" onclick="event.stopPropagation()">⬇ Download blank template</a>
+      <!-- Paste panel -->
+      <div id="tab-paste-panel" style="display:none;">
+        <p style="font-size:13px;color:#555;margin-bottom:8px;">Copy rows from Excel (including the header row) and paste below.</p>
+        <p style="font-size:12px;color:#888;margin-bottom:8px;">Required columns: <strong>SFDC Account ID, Account Name, Rep Email, Rep Name</strong>. Rep Email should be the rep's official Progress work email — the system will automatically match aliases.</p>
+        <textarea id="paste-area" rows="8" placeholder="Paste your Excel rows here…"
+                  style="width:100%;padding:10px;border:2px dashed #0078d4;border-radius:8px;font-size:13px;font-family:monospace;resize:vertical;"></textarea>
+        <div style="margin-top:10px;display:flex;gap:10px;">
+          <button class="btn-primary" onclick="handlePaste()">Parse Pasted Data</button>
+          <button class="btn-secondary" onclick="document.getElementById('paste-area').value=''">Clear</button>
         </div>
       </div>
-      <input type="file" id="file-input" accept=".xlsx,.xls" onchange="handleFile(this.files[0])">
-    </div>
 
-    <!-- Paste panel -->
-    <div id="tab-paste-panel" style="display:none;">
-      <p style="font-size:13px;color:#555;margin-bottom:8px;">Copy rows from Excel (including the header row) and paste below.</p>
-      <p style="font-size:12px;color:#888;margin-bottom:8px;">Required columns: <strong>SFDC Account ID, Account Name, Rep Email, Rep Name</strong>. Rep Email should be the rep's official Progress work email — the system will automatically match aliases.</p>
-      <textarea id="paste-area" rows="8" placeholder="Paste your Excel rows here…"
-                style="width:100%;padding:10px;border:2px dashed #0078d4;border-radius:8px;font-size:13px;font-family:monospace;resize:vertical;"></textarea>
-      <div style="margin-top:10px;display:flex;gap:10px;">
-        <button class="btn-primary" onclick="handlePaste()">Parse Pasted Data</button>
-        <button class="btn-secondary" onclick="document.getElementById('paste-area').value=''">Clear</button>
+      <!-- Validation bar (shown after parse) -->
+      <div class="validation-bar" id="validation-bar" style="display:none;margin-top:14px;">
+        <span class="vb-stat ok"   id="vb-total"></span>
+        <span class="vb-stat ok"   id="vb-valid"></span>
+        <span class="vb-stat warn" id="vb-missing"></span>
+        <span class="vb-stat err"  id="vb-dupes"></span>
+        <span class="vb-stat info" id="vb-new"></span>
+      </div>
+
+      <!-- Warning banner -->
+      <div id="ingest-warnings" style="display:none;background:#fffbeb;border:2px solid #fcd34d;border-radius:8px;padding:12px 16px;font-size:13px;"></div>
+
+      <!-- Preview & Upload (revealed after parse) -->
+      <div class="preview-section hidden" id="preview-card">
+        <h3>Preview &amp; Upload</h3>
+        <div class="summary-grid" id="summary-grid"></div>
+        <div style="overflow-x:auto;margin-top:16px;">
+          <table class="preview-table" id="preview-table">
+            <thead><tr>
+              <th>Account</th><th>Rep SSO Login</th><th>Rep Name</th><th>ARR</th><th>Active</th>
+            </tr></thead>
+            <tbody id="preview-body"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:20px;display:flex;gap:12px;align-items:center;justify-content:flex-end;">
+          <span style="font-size:13px;color:#555;">Uploads account assignments to SharePoint now.</span>
+          <button class="btn-success" id="btn-upload" onclick="doUpload()" disabled>🚀 Upload Accounts</button>
+        </div>
+      </div>
+
+      <!-- Upload status -->
+      <div class="upload-status" id="upload-status" style="display:none;">
+        <div id="upload-status-inner"></div>
       </div>
     </div>
 
-    <!-- Validation bar (shown after parse) -->
-    <div class="validation-bar" id="validation-bar" style="display:none;margin-top:14px;">
-      <span class="vb-stat ok"   id="vb-total"></span>
-      <span class="vb-stat ok"   id="vb-valid"></span>
-      <span class="vb-stat warn" id="vb-missing"></span>
-      <span class="vb-stat err"  id="vb-dupes"></span>
-      <span class="vb-stat info" id="vb-new"></span>
-    </div>
-
-    <!-- Warning banner -->
-    <div id="ingest-warnings" style="display:none;background:#fffbeb;border:2px solid #fcd34d;border-radius:8px;padding:12px 16px;font-size:13px;"></div>
-
-    <!-- Preview & Upload (revealed after parse) -->
-    <div class="preview-section hidden" id="preview-card">
-      <h3>Preview &amp; Upload</h3>
-      <div class="summary-grid" id="summary-grid"></div>
-      <div style="overflow-x:auto;margin-top:16px;">
-        <table class="preview-table" id="preview-table">
-          <thead><tr>
-            <th>Account</th><th>Rep SSO Login</th><th>Rep Name</th><th>ARR</th><th>Active</th>
-          </tr></thead>
-          <tbody id="preview-body"></tbody>
-        </table>
-      </div>
-      <div style="margin-top:20px;display:flex;gap:12px;align-items:center;justify-content:flex-end;">
-        <span style="font-size:13px;color:#555;">Saves the play definition and account list to SharePoint.</span>
-        <button class="btn-success" id="btn-upload" onclick="doUpload()" disabled>🚀 Launch Play</button>
+    <!-- Review summary -->
+    <div style="border-top:2px solid #e5e7eb;padding-top:20px;">
+      <h4 style="font-size:15px;font-weight:700;color:#374151;margin-bottom:8px;">📋 Play Summary</h4>
+      <p class="step-desc">Review your play details below. When you submit, the play goes to admin for review and activation.</p>
+      <div id="review-summary" style="font-size:14px;line-height:1.8;"></div>
+      <div style="margin-top:16px;padding:14px 16px;background:#fff3cd;border:1px solid #fbbf24;border-radius:8px;font-size:13px;color:#92400e;">
+        <strong>📬 What happens next:</strong> Your play will be saved as a draft and reviewed by an admin before going live to reps.
       </div>
     </div>
 
-    <!-- Upload status (replaces monospace log) -->
-    <div class="upload-status" id="upload-status" style="display:none;">
-      <div id="upload-status-inner"></div>
-    </div>
-
-    <!-- Step nav -->
     <div class="wizard-nav" style="margin-top:24px;">
-      <button class="btn-secondary" id="step4-back-btn" onclick="handleStep4Back()">← Back to Questions</button>
+      <button class="btn-secondary" id="step4-back-btn" onclick="handleStep4Back()">← Back to Outcomes</button>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-secondary" onclick="savePlayAsDraft()" style="background:#fff3cd;color:#92400e;border-color:#fbbf24;">💾 Save as Draft</button>
+        <button class="btn-success" id="btn-submit-review" onclick="submitPlayForReview()">📬 Submit for Admin Review</button>
+      </div>
     </div>
-
   </div><!-- /#step-4-panel -->
 
 </main>
@@ -507,12 +420,16 @@
   const _urlParams  = new URLSearchParams(location.search);
   const _urlPlayId  = _urlParams.get('play');
   const _urlMode    = _urlParams.get('mode') || 'full'; // 'full' | 'config' | 'accounts'
+  const _urlBriefId = _urlParams.get('brief');
+  let   _briefPrefill = null; // brief object when launched from Play Briefs tab
 
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   function esc(s) {
     return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
+
+  function escHtml(s) { return esc(s); }
 
   function slugify(name) {
     return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -543,25 +460,26 @@
       log('err', 'Not authenticated. Please sign in first.');
       return false;
     }
-    const ADMIN_EMAILS = [
-      'planger@progress.com',
-      'philip.langer@progress.com',
-      'langer@progress.com',
-      'phil.langer@progress.com',
-      'kfaria@progress.com',
-      'kathleen.faria@progress.com',
-      'k.faria@progress.com',
-      'kathy.faria@progress.com',
-      'scheaney@progress.com',
-    ];
-    // Check all email candidates from token
     const candidates = currentUser.emails || [(currentUser.email || currentUser.username || '').toLowerCase()];
-    const emailMatch = candidates.some(e => ADMIN_EMAILS.includes(e.toLowerCase()));
-    if (!emailMatch) {
+    const role = candidates.map(e => (CONFIG.ADMIN_ROLES || {})[e.toLowerCase()]).find(r => r);
+    if (!role) {
       log('err', `Access denied. Ingest requires admin permissions. Detected: ${candidates.join(', ')}`);
       return false;
     }
     return true;
+  }
+
+  function getIngestRole() {
+    if (!currentUser) return null;
+    const candidates = currentUser.emails || [(currentUser.email || currentUser.username || '').toLowerCase()];
+    return candidates.map(e => (CONFIG.ADMIN_ROLES || {})[e.toLowerCase()]).find(r => r) || null;
+  }
+
+  // Hide account upload section for product role — they can configure plays but not assign accounts
+  function applyIngestRoleUI() {
+    const role = getIngestRole();
+    const uploadSection = document.getElementById('account-upload-section');
+    if (uploadSection) uploadSection.style.display = role === 'product' ? 'none' : '';
   }
 
   function isValidEmail(val) {
@@ -593,7 +511,7 @@
     });
     currentStep = n;
     if (n === 3) {
-      renderBoilerplateQuestions();
+      loadStep3();
     }
     if (n === 4) {
       const inner = document.getElementById('upload-status-inner');
@@ -602,6 +520,7 @@
       if (statusEl) statusEl.style.display = 'none';
       populateSummaryBar();
       updateStep4Context();
+      buildReviewSummary();
       const backBtn = document.getElementById('step4-back-btn');
       if (backBtn && _urlMode === 'accounts') {
         backBtn.textContent = '← Back to Admin';
@@ -612,13 +531,24 @@
 
   function populateSummaryBar() {
     if (!currentPlayDef) return;
-    const outcomeCount = document.querySelectorAll('.outcome-cb:checked').length;
-    const goalLabel = getGoalLabel(selectedGoal);
+    const outcomesIntake = currentPlayDef.outcomes_intake || {};
+    const outcomeCount = Object.values(outcomesIntake).filter(v => v.enabled).length
+      || document.querySelectorAll('[id^="outcome-cb-"]:checked').length;
+    const productSel = document.getElementById('play-product');
+    const product = productSel?.value === 'Other'
+      ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
+      : (productSel?.value || '');
+    const pitch = currentPlayDef.pitch || currentPlayDef.elevator_pitch || '';
     const parts = [
       `<span class="psb-val">${esc(currentPlayDef.play_name)}</span>`,
-      `<span class="psb-sep">|</span>`,
-      `Goal: <span class="psb-val">${esc(goalLabel)}</span>`,
     ];
+    if (product) {
+      parts.push(`<span class="psb-sep">|</span>`, `Product: <span class="psb-val">${esc(product)}</span>`);
+    }
+    if (pitch) {
+      const shortPitch = pitch.length > 60 ? pitch.substring(0, 60) + '…' : pitch;
+      parts.push(`<span class="psb-sep">|</span>`, `<span class="psb-val" style="font-style:italic;font-weight:400;">${esc(shortPitch)}</span>`);
+    }
     if (currentPlayDef.target_persona) {
       parts.push(`<span class="psb-sep">|</span>`, `Persona: <span class="psb-val">${esc(currentPlayDef.target_persona)}</span>`);
     }
@@ -644,7 +574,21 @@
     document.getElementById('auth-status').className = 'status-bar status-signed-in';
     document.getElementById('auth-status').textContent = '✅ Signed in as ' + (currentUser.username || currentUser.email);
     document.getElementById('btn-signin').disabled = true;
+    applyIngestRoleUI();
     await loadExistingPlays();
+
+    // If launched from an approved play brief, pre-fill the wizard
+    if (_urlBriefId) {
+      try {
+        const raw = await getFileText(SP_ROOT + '/play_briefs.json');
+        if (raw) {
+          const briefs = JSON.parse(raw);
+          _briefPrefill = (briefs.submissions || []).find(b => b.id === _urlBriefId) || null;
+        }
+      } catch(e) { console.warn('[Brief prefill] Could not load brief:', e); }
+      if (_briefPrefill) prefillFromBrief(_briefPrefill);
+    }
+
     deepLinkPlay();
     if (!_urlPlayId && _urlMode !== 'accounts') {
       document.getElementById('wizard-steps').style.display = 'flex';
@@ -654,12 +598,52 @@
     }
   }
 
+  function prefillFromBrief(b) {
+    const banner = document.getElementById('brief-prefill-banner');
+    if (banner) {
+      banner.style.display = 'block';
+      banner.innerHTML = `📋 <strong>Pre-filled from play brief:</strong> "${esc(b.play_name || '')}" submitted by ${esc(b.submitter_name || b.submitter_email || '?')}. Review each step and adjust before launching.`;
+    }
+    // Step 1
+    const nameEl = document.getElementById('play-name-input');
+    if (nameEl) nameEl.value = b.play_name || '';
+    const pitchEl = document.getElementById('play-pitch');
+    if (pitchEl) pitchEl.value = b.pitch || '';
+    // Product dropdown
+    if (b.product) {
+      const productSel = document.getElementById('play-product');
+      if (productSel) {
+        const opt = Array.from(productSel.options).find(o => o.value.toLowerCase() === (b.product || '').toLowerCase());
+        if (opt) {
+          productSel.value = opt.value;
+        } else {
+          productSel.value = 'Other';
+          const otherInput = document.getElementById('play-product-other');
+          const otherWrap  = document.getElementById('play-product-other-wrap');
+          if (otherInput) otherInput.value = b.product;
+          if (otherWrap)  otherWrap.style.display = 'block';
+        }
+        onProductSelect?.();
+      }
+    }
+    // Step 2
+    const cvEl = document.getElementById('play-customer-value');
+    if (cvEl) cvEl.value = b.customer_value || '';
+    const icpEl = document.getElementById('play-icp');
+    if (icpEl) icpEl.value = b.icp || '';
+    const personaEl = document.getElementById('play-persona');
+    if (personaEl) personaEl.value = b.persona || '';
+    const compEl = document.getElementById('play-competitive');
+    if (compEl) compEl.value = b.competitive || '';
+    // Trigger validation so Next button enables
+    validatePlayStep?.();
+  }
+
   window.addEventListener('load', async () => {
     try {
-      await initAuth();
-      const accounts = window._msalInstance ? window._msalInstance.getAllAccounts() : [];
-      if (accounts.length > 0) {
-        currentUser = getCurrentUser() || accounts[0];
+      const account = await initAuth();
+      if (account) {
+        currentUser = account;
         onSignedIn();
       }
     } catch(e) {}
@@ -710,11 +694,9 @@
     if (_isExistingPlay && currentPlayDef) {
       banner.style.display = 'block';
       titleEl.textContent = 'Adding accounts to:';
-      const goalLabel = getGoalLabel(currentPlayDef.goal);
       playEl.innerHTML = `
         <strong style="color:#1a56db;">${esc(currentPlayDef.play_name)}</strong>
         <span style="font-family:monospace;font-size:11px;color:#888;margin-left:6px;">${esc(currentPlayDef.play_id)}</span>
-        <span style="color:#6b7280;margin-left:8px;">· Goal: ${goalLabel}</span>
         <span id="banner-acct-count" style="color:#6b7280;margin-left:8px;">· Loading targets…</span>
       `;
       loadPlayAccountCount(currentPlayDef.play_id).then(count => {
@@ -730,7 +712,7 @@
       if (_isExistingPlay) {
         btn.textContent = mode === 'replace' ? '↩ Replace Targets' : '➕ Add Targets';
       } else {
-        btn.textContent = '🚀 Launch Play';
+        btn.textContent = '🚀 Upload Accounts';
       }
     }
   }
@@ -973,7 +955,7 @@
   async function savePlayConfigOnly() {
     if (!requireIngestAdmin()) return;
     const name = document.getElementById('play-name-input').value.trim();
-    if (!name || !selectedGoal) { log('err', 'Play name and goal are required.'); return; }
+    if (!name) { log('err', 'Play name is required.'); return; }
 
     const btn = document.getElementById('btn-save-config-only');
     btn.disabled = true;
@@ -983,10 +965,15 @@
     const playDef = {
       play_id:        playId,
       play_name:      name,
-      goal:           selectedGoal,
-      icp:            document.getElementById('play-icp').value.trim(),
-      target_persona: document.getElementById('play-persona').value.trim(),
-      elevator_pitch: document.getElementById('play-pitch').value.trim(),
+      product:        document.getElementById('play-product')?.value === 'Other' 
+                        ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
+                        : (document.getElementById('play-product')?.value || ''),
+      goal:           currentPlayDef?.goal || '',
+      icp:            document.getElementById('play-icp')?.value?.trim() || '',
+      target_persona: document.getElementById('play-persona')?.value?.trim() || '',
+      elevator_pitch: document.getElementById('play-pitch')?.value?.trim() || '',
+      customer_value: document.getElementById('play-customer-value')?.value?.trim() || currentPlayDef?.customer_value || '',
+      competitive_positioning: document.getElementById('play-competitive')?.value?.trim() || currentPlayDef?.competitive_positioning || '',
       active:         true,
       outcomes:       getOutcomesConfig(),
       questions:      currentPlayDef?.questions || getQuestionsConfig(),
@@ -996,6 +983,12 @@
       let playsConfig = { plays: [] };
       try { playsConfig = await getPlaysConfig(); if (!playsConfig?.plays) playsConfig = { plays: [] }; } catch(e) {}
       const idx = playsConfig.plays.findIndex(p => p.play_id === playId);
+      // Build config.outcomes — prefer freshly-built tree, fall back to existing saved config
+      const builtOutcomes = _buildOutcomesTree();
+      const existingConfigOutcomes = idx >= 0 ? playsConfig.plays[idx]?.config?.outcomes : null;
+      playDef.config = {
+        outcomes: Object.keys(builtOutcomes).length > 0 ? builtOutcomes : (existingConfigOutcomes || {}),
+      };
       if (idx >= 0) playsConfig.plays[idx] = { ...playsConfig.plays[idx], ...playDef };
       else playsConfig.plays.push(playDef);
       await savePlaysConfig(playsConfig);
@@ -1019,8 +1012,8 @@
     existingPlays.forEach(p => {
       const goalLabel = getGoalLabel(p.goal);
       const row = document.createElement('label');
+      row.className = 'play-picker-row';
       row.innerHTML = `<input type="radio" name="play-picker" value="${esc(p.play_id)}"> <span class="ppr-name">${esc(p.play_name)}</span><span class="ppr-meta">· ${goalLabel}</span>`;
-      row.addEventListener('click', () => loadExistingPlay(p, row));
       wrap.appendChild(row);
     });
   }
@@ -1029,62 +1022,90 @@
     document.getElementById('play-name-input').value = p.play_name;
     document.getElementById('play-icp').value     = p.icp || '';
     document.getElementById('play-persona').value = p.target_persona || '';
-    document.getElementById('play-pitch').value   = p.elevator_pitch || '';
+    document.getElementById('play-pitch').value   = p.elevator_pitch || p.pitch || '';
+    const customerValueEl = document.getElementById('play-customer-value');
+    if (customerValueEl) customerValueEl.value = p.customer_value || p.why_it_matters || '';
+    const compEl = document.getElementById('play-competitive');
+    if (compEl) compEl.value = p.competitive_positioning || '';
+    // Set product dropdown — try exact match first, then case-insensitive
+    const productSel = document.getElementById('play-product');
+    if (productSel) {
+      const rawProduct = (p.product || '').trim();
+      const productOpts = Array.from(productSel.options);
+      const exactMatch = productOpts.find(o => o.value === rawProduct);
+      const ciMatch   = !exactMatch && rawProduct
+        ? productOpts.find(o => o.value.toLowerCase() === rawProduct.toLowerCase())
+        : null;
+      if (exactMatch) {
+        productSel.value = exactMatch.value;
+      } else if (ciMatch) {
+        productSel.value = ciMatch.value;
+      } else if (rawProduct) {
+        productSel.value = 'Other';
+        const otherInput = document.getElementById('play-product-other');
+        if (otherInput) otherInput.value = rawProduct;
+        const otherWrap = document.getElementById('play-product-other-wrap');
+        if (otherWrap) otherWrap.style.display = 'block';
+      }
+      onProductSelect();
+    }
     document.querySelectorAll('.play-picker-row').forEach(el => el.classList.remove('selected'));
     if (rowEl) rowEl.classList.add('selected');
-    if (p.goal) selectGoal(p.goal);
     _isExistingPlay = true;
-    _originalPlayId = p.play_id;  // lock the ID — renaming never changes this
+    _originalPlayId = p.play_id;
     currentPlayDef = { ...p };
-    loadQuestionsFromPlay(currentPlayDef);
     validatePlayStep();
   }
 
   function onPlayNameInput(val) {
     document.querySelectorAll('.play-picker-row').forEach(el => el.classList.remove('selected'));
-    if (!_originalPlayId) _isExistingPlay = false;  // only treat as new if not editing existing
-    validatePlayStep();
-  }
-
-  function selectGoalSeg(btn) {
-    document.querySelectorAll('.goal-seg-btn').forEach(b => b.classList.remove('selected'));
-    btn.classList.add('selected');
-    selectedGoal = btn.dataset.goal;
-    validatePlayStep();
-  }
-
-  function selectGoal(goal) {
-    // Map legacy qualify_in/qualify_out to semantic values
-    const legacyMap = { qualify_in: 'interest', qualify_out: 'disqualification' };
-    const canonical = legacyMap[goal] || goal;
-    selectedGoal = canonical;
-    document.querySelectorAll('.goal-seg-btn').forEach(b => b.classList.remove('selected'));
-    const btn = document.querySelector(`.goal-seg-btn[data-goal="${canonical}"]`);
-    if (btn) btn.classList.add('selected');
+    if (!_originalPlayId) _isExistingPlay = false;
     validatePlayStep();
   }
 
   function validatePlayStep() {
-    const name = document.getElementById('play-name-input').value.trim();
-    document.getElementById('btn-play-next').disabled = !(name && selectedGoal);
+    const name = document.getElementById('play-name-input')?.value?.trim() || '';
+    const pitch = document.getElementById('play-pitch')?.value?.trim() || '';
+    const product = document.getElementById('play-product')?.value || '';
+    const otherVal = product === 'Other' ? (document.getElementById('play-product-other')?.value?.trim() || '') : 'ok';
+    const btn = document.getElementById('btn-play-next');
+    if (btn) btn.disabled = !(name && pitch && product && otherVal);
   }
 
   function finishPlayStep() {
     if (!requireIngestAdmin()) return;
     const name = document.getElementById('play-name-input').value.trim();
-    if (!name || !selectedGoal) return;
+    const pitch = document.getElementById('play-pitch')?.value?.trim() || '';
+    const productSel = document.getElementById('play-product');
+    const product = productSel.value === 'Other'
+      ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
+      : productSel.value;
+    if (!name || !pitch || !product) return;
     const playId = (_isExistingPlay && _originalPlayId) ? _originalPlayId : slugify(name);
     currentPlayDef = {
       ...(currentPlayDef || {}),
       play_id:        playId,
       play_name:      name,
-      goal:           selectedGoal,
-      icp:            document.getElementById('play-icp').value.trim(),
-      target_persona: document.getElementById('play-persona').value.trim(),
-      elevator_pitch: document.getElementById('play-pitch').value.trim(),
-      active:         currentPlayDef?.active ?? true
+      product:        product,
+      pitch:          pitch,
+      elevator_pitch: pitch,
+      active:         currentPlayDef?.active ?? false,
+      pending_review: true,
     };
     goToStep(2);
+  }
+
+  function finishCustomerStep() {
+    if (!requireIngestAdmin()) return;
+    if (!currentPlayDef) { return; }
+    currentPlayDef = {
+      ...currentPlayDef,
+      customer_value:          document.getElementById('play-customer-value')?.value?.trim() || '',
+      icp:                     document.getElementById('play-icp').value.trim(),
+      target_persona:          document.getElementById('play-persona').value.trim(),
+      competitive_positioning: document.getElementById('play-competitive')?.value?.trim() || '',
+    };
+    goToStep(3);
   }
 
   // ── Step 2: Outcomes ───────────────────────────────────────────────────────
@@ -1353,33 +1374,35 @@
 
   // ── Step 3: Identity Resolution ──────────────────────────────────────────
 
-  let _identityMap = null;
+  let _emailLookupCache = null;
 
   async function resolveAssignments(assignments) {
     try {
-      if (!_identityMap) _identityMap = await getRepIdentityMap();
+      if (!_emailLookupCache) _emailLookupCache = await loadEmailLookup();
     } catch(e) {
-      log('warn', 'Identity map unavailable — rep resolution skipped');
+      log('warn', 'Email lookup unavailable — rep resolution skipped');
       return assignments;
     }
-    if (!_identityMap || !_identityMap.reps) return assignments;
+    if (!_emailLookupCache || !_emailLookupCache.length) return assignments;
+
+    // Build a quick index: lowercase email → lookup row
+    const idx = {};
+    (_emailLookupCache || []).forEach(row => {
+      if (row.primary_email) idx[row.primary_email.toLowerCase()] = row;
+      if (row.upn) idx[row.upn.toLowerCase()] = row;
+    });
 
     let resolved = 0, unresolved = 0;
     const result = assignments.map(a => {
-      // Try by email/alias first
       const emailKey = (a.rep_sso_login || a.rep_email || '').toLowerCase();
-      let rep = emailKey ? resolveRepByEmail(emailKey, _identityMap) : null;
+      const row = emailKey ? idx[emailKey] : null;
 
-      // Fallback: try by name
-      if (!rep && a.rep_name) rep = resolveRepByName(a.rep_name, _identityMap);
-
-      if (rep) {
+      if (row) {
         resolved++;
         return {
           ...a,
-          rep_sso_login: rep.upn || a.rep_sso_login,
-          rep_name:      rep.display_name || a.rep_name,
-          rep_oid:       rep.oid || '',
+          rep_sso_login: row.primary_email || a.rep_sso_login,
+          rep_name:      row.display_name  || a.rep_name,
         };
       } else {
         unresolved++;
@@ -1387,8 +1410,8 @@
       }
     });
 
-    if (resolved > 0)   log('ok',   `Identity resolved: ${resolved} rep${resolved !== 1 ? 's' : ''} matched to identity map`);
-    if (unresolved > 0) log('warn', `${unresolved} row${unresolved !== 1 ? 's' : ''} could not be matched — verify rep email or name`);
+    if (resolved > 0)   log('ok',   `Identity resolved: ${resolved} rep${resolved !== 1 ? 's' : ''} matched via email-lookup.json`);
+    if (unresolved > 0) log('warn', `${unresolved} row${unresolved !== 1 ? 's' : ''} could not be matched — verify rep email in email-lookup.json`);
     return result;
   }
 
@@ -1585,7 +1608,7 @@
         log('warn', 'Could not seed response options: ' + e.message);
       }
 
-      markStepDone(3);
+      markStepDone(4);
       const actionLabel = _isExistingPlay
         ? (document.querySelector('input[name="upload-mode"]:checked')?.value === 'replace' ? 'Targets Replaced' : 'Targets Added')
         : 'Play Launched';
@@ -1593,7 +1616,7 @@
       btn.style.background = '#107c10';
       log('ok', '');
       log('ok', `🎉 Done! ${_isExistingPlay ? 'Targets updated.' : 'Reps can now open the app and see their accounts.'}`);
-      log('info', 'Files written: Chef SaaS Tracker/ChefSaaS/assignments.json · plays.json');
+      log('info', `Files written: ${SP_ROOT}/assignments.json · plays.json`);
       try {
         await logActivity(currentUser, 'ingest_upload', `${actionLabel}: ${finalAssignments.length} total rows for play: ${currentPlayDef.play_name}`);
       } catch(e) {}
@@ -1604,6 +1627,470 @@
       try {
         await logActivity(currentUser, 'ingest_error', `Upload failed for play: ${(currentPlayDef||{}).play_name || 'unknown'} — ${e.message}`);
       } catch(e2) {}
+    }
+  }
+
+  // ── Step 1: Product Selection ─────────────────────────────────────────────
+  function onProductSelect() {
+    const sel = document.getElementById('play-product');
+    const otherWrap = document.getElementById('play-product-other-wrap');
+    if (otherWrap) otherWrap.style.display = sel.value === 'Other' ? 'block' : 'none';
+    validatePlayStep();
+  }
+
+  // ── Step 4: Review & Launch ───────────────────────────────────────────────
+  function buildReviewSummary() {
+    const el = document.getElementById('review-summary');
+    if (!el || !currentPlayDef) { if (el) el.innerHTML = '<p style="color:#999;">No play defined yet.</p>'; return; }
+    const productSel = document.getElementById('play-product');
+    const product = productSel?.value === 'Other' 
+      ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
+      : (productSel?.value || '—');
+
+    const outcomesIntake = currentPlayDef.outcomes_intake || {};
+    const enabledOutcomes = Object.entries(outcomesIntake).filter(([, v]) => v.enabled);
+    const acctCount = parsedAssignments.length;
+
+    const outcomesHtml = enabledOutcomes.length > 0
+      ? enabledOutcomes.map(([name, v]) => {
+          const displayName = (v.label && v.label !== name) ? `${esc(v.label)} <span style="color:#9ca3af;font-size:11px;">(${esc(name)})</span>` : esc(name);
+          return `${displayName} <span style="color:#6b7280;font-size:12px;">(${v.reasons.length} reason${v.reasons.length !== 1 ? 's' : ''})</span>`;
+        }).join(', ')
+      : Object.keys(outcomesIntake).length === 0
+        ? '<span style="color:#d97706;">Not configured — go back to step 3</span>'
+        : '<span style="color:#9ca3af;">None enabled</span>';
+
+    el.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;width:190px;">Product</td><td style="padding:10px 8px;">${esc(product)}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Play Name</td><td style="padding:10px 8px;">${esc(currentPlayDef.play_name)}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Play ID</td><td style="padding:10px 8px;font-family:monospace;font-size:12px;">${esc(currentPlayDef.play_id)}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Elevator Pitch</td><td style="padding:10px 8px;">${esc(currentPlayDef.pitch || currentPlayDef.elevator_pitch || '—')}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Customer Value</td><td style="padding:10px 8px;">${esc(currentPlayDef.customer_value || '—')}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">ICP</td><td style="padding:10px 8px;">${esc(currentPlayDef.icp || '—')}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Persona</td><td style="padding:10px 8px;">${esc(currentPlayDef.target_persona || '—')}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Competitive Positioning</td><td style="padding:10px 8px;">${esc(currentPlayDef.competitive_positioning || '—')}</td></tr>
+        <tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:10px 8px;font-weight:600;color:#555;">Outcomes</td><td style="padding:10px 8px;">${outcomesHtml}</td></tr>
+        <tr><td style="padding:10px 8px;font-weight:600;color:#555;">Accounts</td><td style="padding:10px 8px;">${acctCount > 0 ? acctCount + ' ready to upload' : '<span style="color:#d97706;">None — can be added after admin review</span>'}</td></tr>
+      </table>
+    `;
+  }
+
+  async function savePlayAsDraft() {
+    if (!requireIngestAdmin()) return;
+    currentPlayDef.active = false;
+    await _saveAndLaunchPlay(false);
+  }
+
+  async function launchPlay() {
+    if (!requireIngestAdmin()) return;
+    currentPlayDef.active = true;
+    await _saveAndLaunchPlay(true);
+  }
+
+  async function _saveAndLaunchPlay(isActive) {
+    const btn = isActive 
+      ? document.querySelector('#step-4-panel .btn-success')
+      : document.querySelector('#step-4-panel .btn-secondary[onclick*="savePlayAsDraft"]');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Saving…'; }
+
+    try {
+      const productSel = document.getElementById('play-product');
+      const product = productSel?.value === 'Other'
+        ? (document.getElementById('play-product-other')?.value?.trim() || 'Other')
+        : (productSel?.value || '');
+      
+      const outcomesConfig = getOutcomesConfig();
+      const questionsConfig = getQuestionsConfig();
+      
+      const playDef = {
+        ...currentPlayDef,
+        product:        product,
+        customer_value: document.getElementById('play-customer-value')?.value?.trim() || currentPlayDef.customer_value || '',
+        outcomes:       outcomesConfig,
+        questions:      questionsConfig,
+        active:         isActive,
+        source_brief_id: _urlBriefId || currentPlayDef.source_brief_id || undefined,
+        config: {
+          outcomes: _buildOutcomesTree(),
+        }
+      };
+
+      let playsConfig = { plays: [] };
+      try { playsConfig = await getPlaysConfig(); if (!playsConfig?.plays) playsConfig = { plays: [] }; } catch(e) {}
+      const idx = playsConfig.plays.findIndex(p => p.play_id === playDef.play_id);
+      if (idx >= 0) playsConfig.plays[idx] = { ...playsConfig.plays[idx], ...playDef };
+      else playsConfig.plays.push(playDef);
+      await savePlaysConfig(playsConfig);
+
+      if (parsedAssignments.length > 0) {
+        let existingData = {};
+        try {
+          const text = await getFileText(SP_ROOT + '/assignments.json');
+          if (text) existingData = JSON.parse(text);
+        } catch(e) {}
+        const existingAssignments = existingData.assignments || [];
+        const mode = document.querySelector('input[name="upload-mode"]:checked')?.value || 'merge';
+        const key = a => (a.account_id + '|' + (a.rep_sso_login || a.rep_email)).toLowerCase();
+        let finalAssignments;
+        if (mode === 'merge') {
+          const otherPlays = existingAssignments.filter(a => a.play_id !== currentPlayDef.play_id);
+          const newKeys = new Set(parsedAssignments.map(key));
+          const samePlayKept = existingAssignments.filter(a => a.play_id === currentPlayDef.play_id && !newKeys.has(key(a)));
+          finalAssignments = [...otherPlays, ...samePlayKept, ...parsedAssignments];
+        } else {
+          const otherPlays = existingAssignments.filter(a => a.play_id !== currentPlayDef.play_id);
+          finalAssignments = [...otherPlays, ...parsedAssignments];
+        }
+        await writeJsonFile('assignments.json', { ...existingData, assignments: finalAssignments, uploaded_at: new Date().toISOString() });
+      }
+
+      try { await logActivity(currentUser, isActive ? 'play_launched' : 'play_draft_saved', `${isActive ? 'Launched' : 'Saved draft'}: ${playDef.play_name} (${playDef.play_id})`); } catch(e) {}
+
+      // Mark the source brief as Resolved and link back the play_id
+      if (_urlBriefId && isActive) {
+        try {
+          const raw = await getFileText(SP_ROOT + '/play_briefs.json');
+          if (raw) {
+            const bData = JSON.parse(raw);
+            const bidx = (bData.submissions || []).findIndex(b => b.id === _urlBriefId);
+            if (bidx >= 0) {
+              bData.submissions[bidx].status     = 'Resolved';
+              bData.submissions[bidx].resolved_play_id = playDef.play_id;
+              bData.submissions[bidx].resolved_at = new Date().toISOString();
+              bData.submissions[bidx].resolved_by = currentUser?.username || currentUser?.name || '';
+              await writeJsonFile('play_briefs.json', bData);
+            }
+          }
+        } catch(e) { console.warn('[Brief resolve] Could not mark brief resolved:', e); }
+      }
+
+      const label = isActive ? '✅ Play Launched!' : '✅ Draft Saved!';
+      if (btn) { btn.textContent = label; btn.style.background = '#107c10'; btn.style.color = '#fff'; }
+      markStepDone(4);
+    } catch(e) {
+      alert('Save failed: ' + e.message);
+      if (btn) { btn.disabled = false; btn.textContent = isActive ? '🚀 Launch as Active' : '💾 Save as Draft'; }
+    }
+  }
+
+  function _buildOutcomesTree() {
+    const tree = {};
+    // Prefer outcomes_intake captured via finishOutcomesStep()
+    const outcomesIntake = (currentPlayDef && currentPlayDef.outcomes_intake) || {};
+    Object.entries(outcomesIntake).forEach(([outcomeName, cfg]) => {
+      if (!cfg.enabled) return;
+      const entry = {};
+      // Label: only store if different from the default name
+      if (cfg.label && cfg.label !== outcomeName) entry.label = cfg.label;
+      // Only include non-empty arrays so _mergePlayConfig falls back to defaults
+      if (cfg.reasons?.length)    entry.reasons    = cfg.reasons;
+      if (cfg.next_steps?.length) entry.next_steps = cfg.next_steps;
+      if (cfg.timing?.length)     entry.timing     = cfg.timing;
+      tree[outcomeName] = entry;
+    });
+    // Fallback: read checked outcome checkboxes from the rendered step 3
+    if (Object.keys(tree).length === 0) {
+      document.querySelectorAll('[id^="outcome-cb-"]:checked').forEach(cb => {
+        const safeId = cb.id.replace('outcome-cb-', '');
+        const span = cb.closest('div')?.querySelector('span[style*="font-weight:700"]');
+        const name = span ? span.textContent.trim() : safeId;
+        if (name) tree[name] = {};
+      });
+    }
+    return tree;
+  }
+
+  // ── Step 3: Outcomes with Reasons ─────────────────────────────────────────
+
+  const DEFAULT_INTAKE_REASONS = {
+    'Interested': {
+      description: 'Customer wants to move forward',
+      reasons: ['Requested demo', 'Requested pricing', 'Referred to partner', 'Active evaluation']
+    },
+    'Not Interested': {
+      description: 'Customer declined for now',
+      reasons: ['Already using competitor', 'Budget constraints', 'Not the right time', 'Not a priority', 'Other']
+    },
+    'Would Not Engage': {
+      description: 'Customer would not engage with rep',
+      reasons: ["Tried 5+ times, going away", 'Partner-led only', "Can't find right person", 'Other']
+    }
+  };
+
+  async function loadStep3() {
+    let globalReasons = null;
+    try {
+      const text = await getFileText(SP_ROOT + '/response-options.json');
+      if (text) {
+        const opts = JSON.parse(text);
+        const global = (opts.response_sets || []).find(s => s.response_set_id === 'GLOBAL_DEFAULTS');
+        if (global) globalReasons = global;
+      }
+    } catch(e) {}
+    // Prefer brief prefill, then existing intake, then convert from play.config.outcomes tree
+    const existingOutcomes = _briefPrefill?.outcomes_intake
+      || currentPlayDef?.outcomes_intake
+      || (currentPlayDef?.config?.outcomes ? _configOutcomesToIntake(currentPlayDef.config.outcomes) : null);
+    renderStep3(globalReasons, existingOutcomes);
+  }
+
+  // Convert play.config.outcomes tree format → outcomes_intake format for editing
+  function _configOutcomesToIntake(configOutcomes) {
+    const intake = {};
+    for (const name of OUTCOME_TYPES) {
+      const oc = configOutcomes[name] || {};
+      const isPresent = name in configOutcomes;
+      intake[name] = {
+        enabled:    isPresent,
+        label:      oc.label      || name,
+        reasons:    oc.reasons    || [],
+        next_steps: oc.next_steps || [],
+        timing:     oc.timing     || []
+      };
+    }
+    return intake;
+  }
+
+  function renderStep3(globalConfig, briefOutcomes) {
+    const container = document.getElementById('outcomes-config-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const outcomes = globalConfig
+      ? (globalConfig.outcomes || Object.keys(DEFAULT_INTAKE_REASONS))
+      : Object.keys(DEFAULT_INTAKE_REASONS);
+
+    const outcomeDefs = globalConfig
+      ? globalConfig.outcome_map || DEFAULT_INTAKE_REASONS
+      : DEFAULT_INTAKE_REASONS;
+
+    outcomes.forEach(outcomeName => {
+      const def = outcomeDefs[outcomeName] || {};
+      const briefDef = briefOutcomes ? (briefOutcomes[outcomeName] || {}) : null;
+      const isEnabled = briefDef ? (briefDef.enabled !== false) : true;
+
+      // Current custom label (from brief or default)
+      const currentLabel = briefDef?.label || outcomeName;
+
+      // Merge default reasons + brief reasons
+      const defaultReasons = def.reasons || DEFAULT_INTAKE_REASONS[outcomeName]?.reasons || [];
+      const briefReasons   = briefDef?.reasons || [];
+      const allReasons = [...defaultReasons];
+      briefReasons.forEach(r => { if (!allReasons.includes(r)) allReasons.push(r); });
+      const isReasonChecked = r => briefDef ? briefReasons.includes(r) : true;
+
+      // Merge default next_steps + brief next_steps
+      const defaultNextSteps = DEFAULT_PLAY_CONFIG?.outcomes?.[outcomeName]?.next_steps || [];
+      const briefNextSteps   = briefDef?.next_steps || defaultNextSteps;
+      const allNextSteps = [...defaultNextSteps];
+      briefNextSteps.forEach(s => { if (!allNextSteps.includes(s)) allNextSteps.push(s); });
+      const isNextStepChecked = s => briefDef?.next_steps ? briefNextSteps.includes(s) : true;
+
+      // Merge default timing + brief timing
+      const defaultTiming = DEFAULT_PLAY_CONFIG?.outcomes?.[outcomeName]?.timing || [];
+      const briefTiming   = briefDef?.timing || defaultTiming;
+      const allTiming = [...defaultTiming];
+      briefTiming.forEach(t => { if (!allTiming.includes(t)) allTiming.push(t); });
+      const isTimingChecked = t => briefDef?.timing ? briefTiming.includes(t) : true;
+
+      const safeId = outcomeName.replace(/\s+/g, '-').toLowerCase();
+      const opac = !isEnabled ? 'opacity:0.4;' : '';
+
+      const card = document.createElement('div');
+      card.style.cssText = `border:1px solid ${isEnabled ? '#e5e7eb' : '#f3f4f6'}; border-radius:8px; padding:14px 16px; margin-bottom:12px;`;
+      card.dataset.outcomeId = safeId;
+
+      // Header row
+      card.innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+          <input type="checkbox" id="outcome-cb-${safeId}" ${isEnabled ? 'checked' : ''}
+            onchange="toggleOutcomeSection(this, '${esc(outcomeName)}')"
+            style="width:16px; height:16px; cursor:pointer;">
+          <span style="font-size:14px; font-weight:700;">${esc(outcomeName)}</span>
+          <span style="font-size:12px; color:#777; flex:1;">${esc(def.description || '')}</span>
+          ${briefDef ? `<span style="font-size:11px; color:#6366f1;">📋 from brief</span>` : ''}
+        </div>
+
+        <!-- Label rename -->
+        <div id="outcome-label-group-${safeId}" style="padding-left:26px; margin-bottom:12px; ${opac}">
+          <div style="font-size:12px; color:#555; margin-bottom:4px; font-weight:600;">Display name shown to reps:</div>
+          <input type="text" id="outcome-label-${safeId}" value="${esc(currentLabel)}"
+            placeholder="${esc(outcomeName)}"
+            style="width:100%; max-width:320px; border:1px solid #d1d5db; border-radius:6px; padding:6px 10px; font-size:13px;">
+          <div style="font-size:11px; color:#999; margin-top:2px;">Leave blank to use the default name</div>
+        </div>
+
+        <!-- Reasons -->
+        <div id="outcome-reasons-${safeId}" style="padding-left:26px; margin-bottom:12px; ${opac}">
+          <div style="font-size:12px; color:#555; margin-bottom:6px; font-weight:600;">Reasons to offer reps:</div>
+          <div id="reason-list-${safeId}">
+            ${allReasons.map(r => `
+              <label style="display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:13px; cursor:pointer;">
+                <input type="checkbox" ${isReasonChecked(r) ? 'checked' : ''} value="${esc(r)}"> ${esc(r)}
+              </label>
+            `).join('')}
+          </div>
+          <button onclick="addIntakeReason('${esc(outcomeName)}', '${safeId}')"
+            style="background:none; border:1px dashed #aaa; padding:4px 12px; border-radius:6px; font-size:12px; color:#555; cursor:pointer; margin-top:4px;">
+            + Add a reason
+          </button>
+        </div>
+
+        <!-- Next Steps -->
+        <div id="outcome-nextsteps-${safeId}" style="padding-left:26px; margin-bottom:12px; ${opac}">
+          <div style="font-size:12px; color:#555; margin-bottom:6px; font-weight:600;">Next steps to offer reps:</div>
+          <div id="nextstep-list-${safeId}">
+            ${allNextSteps.map(s => `
+              <label style="display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:13px; cursor:pointer;">
+                <input type="checkbox" ${isNextStepChecked(s) ? 'checked' : ''} value="${esc(s)}"> ${esc(s)}
+              </label>
+            `).join('')}
+          </div>
+          <button onclick="addIntakeListItem('nextstep-list-${safeId}', 'New next step…')"
+            style="background:none; border:1px dashed #aaa; padding:4px 12px; border-radius:6px; font-size:12px; color:#555; cursor:pointer; margin-top:4px;">
+            + Add a next step
+          </button>
+        </div>
+
+        <!-- Timing -->
+        <div id="outcome-timing-${safeId}" style="padding-left:26px; ${opac}">
+          <div style="font-size:12px; color:#555; margin-bottom:6px; font-weight:600;">Timing options to offer reps:</div>
+          <div id="timing-list-${safeId}">
+            ${allTiming.map(t => `
+              <label style="display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:13px; cursor:pointer;">
+                <input type="checkbox" ${isTimingChecked(t) ? 'checked' : ''} value="${esc(t)}"> ${esc(t)}
+              </label>
+            `).join('')}
+          </div>
+          <button onclick="addIntakeListItem('timing-list-${safeId}', 'New timing option…')"
+            style="background:none; border:1px dashed #aaa; padding:4px 12px; border-radius:6px; font-size:12px; color:#555; cursor:pointer; margin-top:4px;">
+            + Add a timing option
+          </button>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
+
+  function toggleOutcomeSection(cb, outcomeName) {
+    const safeId = outcomeName.replace(/\s+/g, '-').toLowerCase();
+    const opac = cb.checked ? '1' : '0.4';
+    ['outcome-label-group', 'outcome-reasons', 'outcome-nextsteps', 'outcome-timing'].forEach(prefix => {
+      const el = document.getElementById(prefix + '-' + safeId);
+      if (el) el.style.opacity = opac;
+    });
+  }
+
+  function addIntakeReason(outcomeName, safeId) {
+    const listEl = document.getElementById('reason-list-' + safeId);
+    if (!listEl) return;
+    const wrapper = document.createElement('label');
+    wrapper.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:13px;';
+    const inputId = 'new-reason-' + Date.now();
+    wrapper.innerHTML = `
+      <input type="checkbox" checked>
+      <input type="text" id="${inputId}" placeholder="New reason…"
+        style="flex:1; border:1px solid #d1d5db; border-radius:4px; padding:4px 8px; font-size:12px;">
+    `;
+    listEl.appendChild(wrapper);
+    wrapper.querySelector('input[type="text"]').focus();
+  }
+
+  function addIntakeListItem(listId, placeholder) {
+    const listEl = document.getElementById(listId);
+    if (!listEl) return;
+    const wrapper = document.createElement('label');
+    wrapper.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:13px;';
+    wrapper.innerHTML = `
+      <input type="checkbox" checked>
+      <input type="text" placeholder="${esc(placeholder || 'New item…')}"
+        style="flex:1; border:1px solid #d1d5db; border-radius:4px; padding:4px 8px; font-size:12px;">
+    `;
+    listEl.appendChild(wrapper);
+    wrapper.querySelector('input[type="text"]').focus();
+  }
+
+  function getIntakeOutcomesConfig() {
+    const container = document.getElementById('outcomes-config-list');
+    if (!container) return {};
+    const config = {};
+    container.querySelectorAll('[id^="outcome-cb-"]').forEach(cb => {
+      const safeId = cb.id.replace('outcome-cb-', '');
+      // Outcome name from the static span (not a label element to avoid confusion)
+      const headerSpan = cb.closest('div')?.querySelector('span[style*="font-weight:700"]');
+      const outcomeName = headerSpan ? headerSpan.textContent.trim() : safeId;
+
+      // Custom label
+      const labelInput = document.getElementById('outcome-label-' + safeId);
+      const label = labelInput ? labelInput.value.trim() : '';
+
+      // Reasons
+      const reasons = _collectListItems('reason-list-' + safeId);
+
+      // Next steps
+      const next_steps = _collectListItems('nextstep-list-' + safeId);
+
+      // Timing
+      const timing = _collectListItems('timing-list-' + safeId);
+
+      config[outcomeName] = { enabled: cb.checked, label: label || outcomeName, reasons, next_steps, timing };
+    });
+    return config;
+  }
+
+  function _collectListItems(listId) {
+    const listEl = document.getElementById(listId);
+    if (!listEl) return [];
+    const items = [];
+    listEl.querySelectorAll('label').forEach(lbl => {
+      const checkEl = lbl.querySelector('input[type="checkbox"]');
+      const textEl  = lbl.querySelector('input[type="text"]');
+      const text = textEl ? textEl.value.trim() : (checkEl ? checkEl.value : '');
+      if (text && checkEl && checkEl.checked) items.push(text);
+    });
+    return items;
+  }
+
+  function finishOutcomesStep() {
+    currentPlayDef = { ...(currentPlayDef || {}), outcomes_intake: getIntakeOutcomesConfig() };
+    goToStep(4);
+  }
+
+  // ── Step 6: Submit for Admin Review ───────────────────────────────────────
+
+  async function submitPlayForReview() {
+    const btn = document.getElementById('btn-submit-review');
+    if (btn) btn.disabled = true;
+    try {
+      currentPlayDef.active = false;
+      currentPlayDef.pending_review = true;
+      currentPlayDef.submitted_by = currentUser?.username || currentUser?.mail || 'unknown';
+      currentPlayDef.submitted_at = new Date().toISOString();
+
+      let playsConfig = { plays: [] };
+      try { playsConfig = await getPlaysConfig(); if (!playsConfig?.plays) playsConfig = { plays: [] }; } catch(e) {}
+      const existingIdx = playsConfig.plays.findIndex(p => p.play_id === currentPlayDef.play_id);
+      if (existingIdx >= 0) playsConfig.plays[existingIdx] = { ...playsConfig.plays[existingIdx], ...currentPlayDef };
+      else playsConfig.plays.push(currentPlayDef);
+      await savePlaysConfig(playsConfig);
+
+      try { await logActivity(currentUser, 'play_submitted_for_review', `Submitted for review: ${currentPlayDef.play_name} (${currentPlayDef.play_id})`); } catch(e) {}
+
+      const reviewPanel = document.getElementById('step-4-panel');
+      if (reviewPanel) {
+        reviewPanel.innerHTML = `
+          <div style="text-align:center; padding:40px 20px;">
+            <div style="font-size:48px; margin-bottom:16px;">✅</div>
+            <h2 style="color:#107c10; margin-bottom:8px;">Play Submitted for Review</h2>
+            <p style="color:#555; font-size:14px;">An admin will review your play brief and activate it. You'll be notified when it goes live.</p>
+            <button onclick="location.href='admin.html'" style="margin-top:20px; background:#0078d4; color:#fff; border:none; padding:10px 24px; border-radius:6px; font-size:14px; cursor:pointer;">Go to Admin</button>
+          </div>
+        `;
+      }
+    } catch(e) {
+      alert('Failed to submit: ' + e.message);
+      if (btn) btn.disabled = false;
     }
   }
 </script>

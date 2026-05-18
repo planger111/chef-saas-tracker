@@ -76,7 +76,10 @@
 
       } catch (err) {
         console.error('[teams-auth] Error:', err);
-        microsoftTeams.authentication.notifyFailure(err.message || String(err) || 'Auth error');
+        const msg = err.message || String(err) || 'Auth error';
+        // Tag admin-consent errors explicitly so teams-dev.html can show actionable UI
+        const isConsent = /AADSTS(65004|90094|90095|65001)|consent_required|admin_consent|declined to consent/i.test(msg);
+        microsoftTeams.authentication.notifyFailure(isConsent ? 'CONSENT_REQUIRED: ' + msg : msg);
       }
     })();
   </script>
