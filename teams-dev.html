@@ -10,7 +10,42 @@
   <link rel="stylesheet" href="styles.css" />
   <style>
     /* v2 log-form step indicator */
-    .log-step-indicator { display:flex; background:#f0f6ff; border-bottom:1px solid #d0e4f7; padding:8px 16px; gap:16px; font-size:12px; font-weight:600; color:#9ca3af; }
+    .log-step-indicator { display:flex; align-items:center; background:#f0f6ff; border-bottom:1px solid #d0e4f7; padding:6px 16px; gap:0; }
+    .log-step-ind-item { display:flex; align-items:center; gap:5px; padding:4px 8px; border-radius:6px; font-size:12px; font-weight:600; color:#9ca3af; flex:1; }
+    .log-step-ind-item.active { color:#0078d4; background:#dbeafe; }
+    .log-step-ind-item.done { color:#107c10; }
+    .log-step-ind-num { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; border-radius:50%; background:#d1d5db; color:#fff; font-size:10px; font-weight:700; flex-shrink:0; }
+    .log-step-ind-item.active .log-step-ind-num { background:#0078d4; }
+    .log-step-ind-item.done .log-step-ind-num { background:#107c10; }
+    .log-step-ind-sep { color:#d1d5db; padding:0 2px; font-size:14px; flex-shrink:0; }
+    /* Log form context card */
+    .log-context-card { background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom:18px; }
+    .log-context-play { font-size:11px; font-weight:700; color:#0078d4; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
+    .log-context-account { font-size:17px; font-weight:700; color:#1a1a1a; line-height:1.2; }
+    .log-context-meta { font-size:12px; color:#6b7280; margin-top:2px; }
+    .log-context-divider { border:none; border-top:1px solid #e2e8f0; margin:10px 0; }
+    .log-context-step-label { font-size:12px; font-weight:700; color:#374151; }
+    .log-context-step-hint { font-size:12px; color:#6b7280; margin-top:2px; line-height:1.4; }
+    /* Section headings */
+    .log-section-heading { font-size:13px; font-weight:700; color:#374151; margin:0 0 8px; }
+    /* Interaction type options with selected state */
+    .int-type-option { display:flex; align-items:center; gap:10px; font-size:15px; cursor:pointer; padding:10px 12px; border:2px solid #e5e7eb; border-radius:8px; transition:border-color .12s,background .12s; }
+    .int-type-option:hover { border-color:#93c5fd; background:#f0f7ff; }
+    .int-type-option.selected { border-color:#0078d4; background:#eff6ff; font-weight:600; }
+    .int-type-option input { width:18px; height:18px; accent-color:#0078d4; flex-shrink:0; }
+    /* Outcome option rich cards */
+    .outcome-option { display:flex; align-items:flex-start; gap:12px; cursor:pointer; padding:12px 14px; border:2px solid #e5e7eb; border-radius:10px; transition:border-color .12s,background .12s; }
+    .outcome-option:hover { border-color:#93c5fd; background:#f0f7ff; }
+    .outcome-option.selected { border-color:#0078d4; background:#eff6ff; }
+    .outcome-option input[type="radio"] { width:18px; height:18px; accent-color:#0078d4; flex-shrink:0; margin-top:3px; }
+    .outcome-option-emoji { font-size:18px; flex-shrink:0; line-height:1.3; margin-top:1px; }
+    .outcome-option-content { flex:1; min-width:0; }
+    .outcome-option-label { font-size:15px; font-weight:700; color:#1a1a1a; display:block; }
+    .outcome-option-desc { font-size:12px; color:#6b7280; margin-top:3px; line-height:1.4; display:block; }
+    /* Step 2 selection summary */
+    .log-selection-summary { background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px; margin-bottom:16px; }
+    .log-selection-summary-label { font-size:11px; font-weight:700; color:#1a56db; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
+    .log-selection-summary-value { font-size:14px; font-weight:700; color:#1a1a1a; }
     /* Pitch brief card */
     .pitch-card { background:#eff6ff; border-left:4px solid #0078d4; border-radius:0 8px 8px 0; padding:14px 16px; margin-bottom:12px; font-size:14px; line-height:1.5; color:#1a1a1a; }
     .pitch-card-label { font-size:11px; font-weight:700; color:#0078d4; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
@@ -188,56 +223,80 @@
       <span class="header-title" id="log-form-title">Log Interaction</span>
     </div>
 
-    <!-- Step indicator (2 steps) -->
+    <!-- Step indicator -->
     <div class="log-step-indicator">
-      <span id="step-ind-1" style="color:#0078d4;font-weight:700;">1. Interaction</span>
-      <span>›</span>
-      <span id="step-ind-2">2. Details</span>
+      <span id="step-ind-1" class="log-step-ind-item active"><span class="log-step-ind-num">1</span> Interaction</span>
+      <span class="log-step-ind-sep">›</span>
+      <span id="step-ind-2" class="log-step-ind-item"><span class="log-step-ind-num">2</span> Details</span>
     </div>
 
     <div style="padding:16px;max-width:480px;margin:0 auto;">
 
+      <!-- Context card — always visible, updated per step -->
+      <div id="log-context-card" class="log-context-card">
+        <div id="log-ctx-play" class="log-context-play"></div>
+        <div id="log-ctx-account" class="log-context-account"></div>
+        <div id="log-ctx-meta" class="log-context-meta" style="display:none;"></div>
+        <hr class="log-context-divider">
+        <div id="log-ctx-step-label" class="log-context-step-label"></div>
+        <div id="log-ctx-step-hint" class="log-context-step-hint"></div>
+      </div>
+
       <!-- STEP 1: Interaction -->
       <div id="log-step-1">
-        <div id="log-form-account-header" class="account-header-card"></div>
 
-        <div class="form-group">
-          <label class="form-label">Interaction Type <span style="color:#d32f2f;">*</span></label>
-          <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;" id="interaction-type-options">
-            <!-- populated dynamically from response-options.json -->
-            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
-              <input type="radio" name="interaction-type" value="Call" style="width:18px;height:18px;accent-color:#0078d4;"> 📞 Call
-            </label>
-            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
-              <input type="radio" name="interaction-type" value="Email" style="width:18px;height:18px;accent-color:#0078d4;"> 📧 Email
-            </label>
-            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
-              <input type="radio" name="interaction-type" value="Text" style="width:18px;height:18px;accent-color:#0078d4;"> 💬 Text
-            </label>
-          </div>
+        <p class="log-section-heading">How did you contact the customer?</p>
+        <div style="display:flex;flex-direction:column;gap:8px;" id="interaction-type-options">
+          <label class="int-type-option">
+            <input type="radio" name="interaction-type" value="Call"> 📞 Call
+          </label>
+          <label class="int-type-option">
+            <input type="radio" name="interaction-type" value="Email"> 📧 Email
+          </label>
+          <label class="int-type-option">
+            <input type="radio" name="interaction-type" value="Text"> 💬 Text
+          </label>
         </div>
 
-        <div class="form-group" style="margin-top:16px;">
-          <label class="form-label">Outcome <span style="color:#d32f2f;">*</span></label>
-          <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px;">
-            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
-              <input type="radio" name="outcome" value="Interested" style="width:18px;height:18px;accent-color:#0078d4;"> ✅ Interested
-            </label>
-            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
-              <input type="radio" name="outcome" value="Not Interested" style="width:18px;height:18px;accent-color:#0078d4;"> ❌ Not Interested
-            </label>
-            <label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
-              <input type="radio" name="outcome" value="Would Not Engage" style="width:18px;height:18px;accent-color:#0078d4;"> ⚠️ Would Not Engage
-            </label>
-          </div>
+        <p class="log-section-heading" style="margin-top:20px;">What happened?</p>
+        <div id="outcome-radios-container" style="display:flex;flex-direction:column;gap:8px;">
+          <label class="outcome-option">
+            <input type="radio" name="outcome" value="Interested" data-outcome-key="interested">
+            <span class="outcome-option-emoji">✅</span>
+            <span class="outcome-option-content">
+              <span class="outcome-option-label">Interested</span>
+              <span class="outcome-option-desc">Customer is interested or moving forward — book a next step.</span>
+            </span>
+          </label>
+          <label class="outcome-option">
+            <input type="radio" name="outcome" value="Not Interested" data-outcome-key="not_interested">
+            <span class="outcome-option-emoji">❌</span>
+            <span class="outcome-option-content">
+              <span class="outcome-option-label">Not Interested</span>
+              <span class="outcome-option-desc">Customer declined or is not interested right now.</span>
+            </span>
+          </label>
+          <label class="outcome-option">
+            <input type="radio" name="outcome" value="Would Not Engage" data-outcome-key="would_not_engage">
+            <span class="outcome-option-emoji">⚠️</span>
+            <span class="outcome-option-content">
+              <span class="outcome-option-label">Would Not Engage</span>
+              <span class="outcome-option-desc">Customer has not responded after repeated attempts.</span>
+            </span>
+          </label>
         </div>
 
-        <button class="btn btn-primary btn-block" id="btn-step1-next" style="margin-top:16px;">Next →</button>
+        <button class="btn btn-primary btn-block" id="btn-step1-next" style="margin-top:20px;">Continue to Details →</button>
       </div>
 
       <!-- STEP 2: Details -->
       <div id="log-step-2" style="display:none;">
-        <div id="log-form-account-header-2" class="account-header-card"></div>
+
+        <!-- Selection summary — what they chose in step 1 -->
+        <div id="log-selection-summary" class="log-selection-summary" style="display:none;">
+          <div class="log-selection-summary-label">You selected</div>
+          <div id="log-sel-value" class="log-selection-summary-value"></div>
+        </div>
 
         <!-- Interested fields -->
         <div id="interested-fields">
@@ -326,7 +385,7 @@
         <!-- Custom questions (populated per-play from play.questions.custom) -->
         <div id="custom-questions-container"></div>
 
-        <button class="btn btn-primary btn-block" id="btn-submit-engagement" style="margin-top:8px;">Submit ✓</button>
+        <button class="btn btn-primary btn-block" id="btn-submit-engagement" style="margin-top:8px;">Save Interaction ✓</button>
       </div>
 
     </div>
@@ -553,10 +612,54 @@
       const emojis = { "Call": "📞", "Email": "📧", "Text": "💬", "In-Person Meeting": "🤝" };
       const container = document.getElementById('interaction-type-options');
       container.innerHTML = config.interaction_types.map(t =>
-        `<label style="display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;padding:10px 12px;border:1px solid #d1d5db;border-radius:8px;">
-          <input type="radio" name="interaction-type" value="${escHtml(t)}" style="width:18px;height:18px;accent-color:#0078d4;"> ${emojis[t] || '•'} ${escHtml(t)}
+        `<label class="int-type-option">
+          <input type="radio" name="interaction-type" value="${escHtml(t)}"> ${emojis[t] || '•'} ${escHtml(t)}
         </label>`
       ).join('');
+      container.addEventListener('change', () => {
+        container.querySelectorAll('.int-type-option').forEach(lbl => {
+          lbl.classList.toggle('selected', !!lbl.querySelector('input')?.checked);
+        });
+      });
+    }
+
+    async function renderOutcomeRadios(playId) {
+      const container = document.getElementById('outcome-radios-container');
+      if (!container) return;
+      const EMOJI = { 'Interested': '✅', 'Not Interested': '❌', 'Would Not Engage': '⚠️' };
+      const KEYS  = { 'Interested': 'interested', 'Not Interested': 'not_interested', 'Would Not Engage': 'would_not_engage' };
+      const DESCS = {
+        'Interested':       'Customer is interested or moving forward — book a next step.',
+        'Not Interested':   'Customer declined or is not interested right now.',
+        'Would Not Engage': 'Customer has not responded after repeated attempts.',
+      };
+      const renderCards = (outcomes) => {
+        container.innerHTML = Object.entries(outcomes).map(([name, oc]) => {
+          const label = oc.label || name;
+          const key   = KEYS[name] || name.toLowerCase().replace(/\s+/g, '_');
+          const emoji = EMOJI[name] || '•';
+          const desc  = oc.description || DESCS[name] || '';
+          return `<label class="outcome-option">
+            <input type="radio" name="outcome" value="${escHtml(label)}" data-outcome-key="${escHtml(key)}">
+            <span class="outcome-option-emoji">${emoji}</span>
+            <span class="outcome-option-content">
+              <span class="outcome-option-label">${escHtml(label)}</span>
+              ${desc ? `<span class="outcome-option-desc">${escHtml(desc)}</span>` : ''}
+            </span>
+          </label>`;
+        }).join('');
+        container.addEventListener('change', () => {
+          container.querySelectorAll('.outcome-option').forEach(lbl => {
+            lbl.classList.toggle('selected', !!lbl.querySelector('input')?.checked);
+          });
+        }, { once: true });
+      };
+      try {
+        if (!playId || typeof getPlayConfig !== 'function') return;
+        const pc = await getPlayConfig(playId);
+        if (!pc?.outcomes) return;
+        renderCards(pc.outcomes);
+      } catch(e) { console.warn('[OutcomeRadios] Failed:', e); }
     }
 
     async function renderNextStepOptions() {
@@ -1340,10 +1443,22 @@
       const accountName = account.account_name || account.name || account.account_id;
       const persona  = account.target_persona || '';
       const meta = [account.region || '', account.segment || '', persona].filter(Boolean).join(' · ');
-      const headerHtml = `<div class="account-header-name">${escHtml(accountName)}</div>${meta ? `<div class="account-header-meta">${escHtml(meta)}</div>` : ''}`;
+      const playName = (play || {}).play_name || account.play_name || '';
 
-      document.getElementById('log-form-account-header').innerHTML   = headerHtml;
-      document.getElementById('log-form-account-header-2').innerHTML = headerHtml;
+      // Populate context card
+      const ctxPlay    = document.getElementById('log-ctx-play');
+      const ctxAccount = document.getElementById('log-ctx-account');
+      const ctxMeta    = document.getElementById('log-ctx-meta');
+      if (ctxPlay)    ctxPlay.textContent    = playName ? `🎯 ${playName}` : '';
+      if (ctxAccount) ctxAccount.textContent = accountName;
+      if (ctxMeta) {
+        if (meta) { ctxMeta.textContent = meta; ctxMeta.style.display = ''; }
+        else { ctxMeta.style.display = 'none'; }
+      }
+
+      // Dynamic back button label
+      const backBtn = document.getElementById('btn-back-to-play');
+      if (backBtn) backBtn.textContent = playName ? `← ${playName}` : '← Back';
 
       // Reset all fields
       document.querySelectorAll('input[name="interaction-type"]').forEach(r => r.checked = false);
@@ -1369,33 +1484,41 @@
       renderInteractionTypes();
       renderNextStepOptions();
       renderTimingOptions();
-      loadResponseOptionsForForm(account).then(({ interested, notInterested }) => {
-        document.getElementById('field-interested-reason').innerHTML     = buildReasonOptions(interested);
-        document.getElementById('field-not-interested-reason').innerHTML = buildReasonOptions(notInterested);
-      });
-
-      // Load WNE + per-play config options
+      // Load ALL form dropdowns from play config — single source of truth
       const playId = (play || {}).play_id || account.play_id || '';
+      const _fillSel = (id, items) => {
+        if (!items?.length) return;
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '<option value="">— Select —</option>' +
+          items.map(r => `<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
+      };
       if (playId && typeof getPlayConfig === 'function') {
         getPlayConfig(playId).then(pc => {
-          if (!pc || !pc.outcomes) return;
-          const wne = pc.outcomes['Would Not Engage'];
-          if (wne) {
-            const wneReasonSel = document.getElementById('field-wne-reason');
-            if (wneReasonSel) wneReasonSel.innerHTML = '<option value="">— Select —</option>' + (wne.reasons || []).map(r => `<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
-            const wneNextSel = document.getElementById('field-wne-next-step');
-            if (wneNextSel) wneNextSel.innerHTML = '<option value="">— Select —</option>' + (wne.next_steps || []).map(r => `<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
-            const wneTimingSel = document.getElementById('field-wne-timing');
-            if (wneTimingSel) wneTimingSel.innerHTML = '<option value="">— Select —</option>' + (wne.timing || []).map(r => `<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
-          }
-          // Also update NI timing from play config
-          const ni = pc.outcomes['Not Interested'];
-          if (ni && ni.timing) {
-            const niTimingSel = document.getElementById('field-timing-ni');
-            if (niTimingSel) niTimingSel.innerHTML = '<option value="">— Select —</option>' + ni.timing.map(r => `<option value="${escHtml(r)}">${escHtml(r)}</option>`).join('');
-          }
-        }).catch(e => console.warn('[PlayConfig] Failed to load WNE config:', e));
+          if (!pc?.outcomes) return;
+          const int = pc.outcomes['Interested']       || {};
+          const ni  = pc.outcomes['Not Interested']   || {};
+          const wne = pc.outcomes['Would Not Engage'] || {};
+          _fillSel('field-interested-reason',     int.reasons);
+          _fillSel('field-next-step-type',        int.next_steps);
+          _fillSel('field-timing',                int.timing);
+          _fillSel('field-not-interested-reason', ni.reasons);
+          _fillSel('field-timing-ni',             ni.timing);
+          _fillSel('field-wne-reason',            wne.reasons);
+          _fillSel('field-wne-next-step',         wne.next_steps);
+          _fillSel('field-wne-timing',            wne.timing);
+        }).catch(() => {
+          loadResponseOptionsForForm(account).then(({ interested, notInterested }) => {
+            document.getElementById('field-interested-reason').innerHTML     = buildReasonOptions(interested);
+            document.getElementById('field-not-interested-reason').innerHTML = buildReasonOptions(notInterested);
+          });
+        });
+      } else {
+        loadResponseOptionsForForm(account).then(({ interested, notInterested }) => {
+          document.getElementById('field-interested-reason').innerHTML     = buildReasonOptions(interested);
+          document.getElementById('field-not-interested-reason').innerHTML = buildReasonOptions(notInterested);
+        });
       }
+      renderOutcomeRadios(playId);
     }
 
     // Apply per-play question config: show/hide boilerplate fields, render custom questions
@@ -1461,21 +1584,46 @@
       document.getElementById('log-step-2').style.display = step === 2 ? 'block' : 'none';
 
       if (step === 2) {
-        // Show/hide outcome-specific fields based on step 1 selection
-        const outcome = document.querySelector('input[name="outcome"]:checked')?.value;
-        document.getElementById('interested-fields').style.display     = outcome === 'Interested'       ? 'block' : 'none';
-        document.getElementById('not-interested-fields').style.display = outcome === 'Not Interested'   ? 'block' : 'none';
-        document.getElementById('wne-fields').style.display            = outcome === 'Would Not Engage' ? 'block' : 'none';
+        // Show/hide outcome-specific fields based on step 1 selection (use key, not label)
+        const checkedInput = document.querySelector('input[name="outcome"]:checked');
+        const outcomeKey   = checkedInput?.dataset.outcomeKey || '';
+        document.getElementById('interested-fields').style.display     = outcomeKey === 'interested'       ? 'block' : 'none';
+        document.getElementById('not-interested-fields').style.display = outcomeKey === 'not_interested'   ? 'block' : 'none';
+        document.getElementById('wne-fields').style.display            = outcomeKey === 'would_not_engage' ? 'block' : 'none';
+
+        // Populate step 2 selection summary
+        const intType  = document.querySelector('input[name="interaction-type"]:checked')?.value || '';
+        const outLabel = document.querySelector('input[name="outcome"]:checked')?.value || '';
+        const summaryEl = document.getElementById('log-selection-summary');
+        const valEl     = document.getElementById('log-sel-value');
+        if (summaryEl && valEl && (intType || outLabel)) {
+          valEl.textContent = [intType, outLabel].filter(Boolean).join(' · ');
+          summaryEl.style.display = '';
+        } else if (summaryEl) {
+          summaryEl.style.display = 'none';
+        }
       }
 
-      const titles = { 1: 'Log Interaction', 2: 'Details' };
-      document.getElementById('log-form-title').textContent = titles[step] || 'Log Interaction';
+      // Update context card step label and hint
+      const stepInfo = {
+        1: { label: 'Step 1 of 2 — Interaction', hint: 'Choose how you contacted the customer and what happened.' },
+        2: { label: 'Step 2 of 2 — Details', hint: 'Add the reason, next step, timing, and any notes.' },
+      };
+      const si = stepInfo[step] || {};
+      const stepLabelEl = document.getElementById('log-ctx-step-label');
+      const stepHintEl  = document.getElementById('log-ctx-step-hint');
+      if (stepLabelEl) stepLabelEl.textContent = si.label || '';
+      if (stepHintEl)  stepHintEl.textContent  = si.hint  || '';
 
+      // Update step indicator
       ['step-ind-1', 'step-ind-2'].forEach((id, i) => {
         const el = document.getElementById(id);
-        el.style.color      = (i + 1) === step ? '#0078d4' : '#9ca3af';
-        el.style.fontWeight = (i + 1) === step ? '700' : '400';
+        if (!el) return;
+        const n = i + 1;
+        el.className = 'log-step-ind-item' + (n === step ? ' active' : (n < step ? ' done' : ''));
       });
+
+      document.getElementById('log-form-title').textContent = step === 2 ? 'Details' : 'Log Interaction';
 
       window.scrollTo(0, 0);
     }
@@ -1529,33 +1677,34 @@
       try {
         const nextStepType = document.getElementById('field-next-step-type')?.value || '';
 
-        // Validate required fields by outcome (skip if field was hidden by play config)
+        // Validate required fields by outcome (use outcome key, not label, for routing)
         const bq = currentPlay?.questions?.boilerplate || ['notes', 'next_step', 'timing', 'revisit_timing'];
-        if (outcome === 'Interested') {
+        const outcomeKey = document.querySelector('input[name="outcome"]:checked')?.dataset.outcomeKey || '';
+        if (outcomeKey === 'interested') {
           const intReason = document.getElementById('field-interested-reason')?.value || '';
-          if (!intReason) { alert('Please select an Interested Reason.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
-          if (bq.includes('next_step') && !nextStepType) { alert('Please select a Next Step.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
+          if (!intReason) { alert('Please select an Interested Reason.'); btn.textContent = 'Save Interaction ✓'; btn.disabled = false; return; }
+          if (bq.includes('next_step') && !nextStepType) { alert('Please select a Next Step.'); btn.textContent = 'Save Interaction ✓'; btn.disabled = false; return; }
         }
-        if (outcome === 'Not Interested') {
+        if (outcomeKey === 'not_interested') {
           const niReason = document.getElementById('field-not-interested-reason')?.value || '';
-          if (!niReason) { alert('Please select a Not Interested Reason.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
+          if (!niReason) { alert('Please select a Not Interested Reason.'); btn.textContent = 'Save Interaction ✓'; btn.disabled = false; return; }
         }
-        if (outcome === 'Would Not Engage') {
+        if (outcomeKey === 'would_not_engage') {
           const wneReason = document.getElementById('field-wne-reason')?.value || '';
-          if (!wneReason) { alert('Please select a reason.'); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
+          if (!wneReason) { alert('Please select a reason.'); btn.textContent = 'Save Interaction ✓'; btn.disabled = false; return; }
         }
 
         // Validate required custom questions
         const missingCustom = validateCustomAnswers();
-        if (missingCustom) { alert(missingCustom); btn.textContent = 'Submit ✓'; btn.disabled = false; return; }
+        if (missingCustom) { alert(missingCustom); btn.textContent = 'Save Interaction ✓'; btn.disabled = false; return; }
 
-        // Derive reason select from outcome
+        // Derive reason select from outcome key
         const reasonSelect =
-          outcome === 'Interested'
+          outcomeKey === 'interested'
             ? document.getElementById('field-interested-reason')
-            : outcome === 'Not Interested'
+            : outcomeKey === 'not_interested'
               ? document.getElementById('field-not-interested-reason')
-              : outcome === 'Would Not Engage'
+              : outcomeKey === 'would_not_engage'
                 ? document.getElementById('field-wne-reason')
                 : null;
 
@@ -1563,9 +1712,9 @@
         const reasonLabel    = selectedOption?.text  || '';
         const reasonCode     = reasonSelect?.value   || '';
 
-        const timingVal = outcome === 'Interested'
+        const timingVal = outcomeKey === 'interested'
           ? (document.getElementById('field-timing')?.value || '')
-          : outcome === 'Would Not Engage'
+          : outcomeKey === 'would_not_engage'
             ? (document.getElementById('field-wne-timing')?.value || '')
             : (document.getElementById('field-timing-ni')?.value || '');
 
@@ -1580,7 +1729,7 @@
           outcome,
           reason_label:     reasonLabel,
           reason_code:      reasonCode,
-          next_step_type:   outcome === 'Interested' ? nextStepType : outcome === 'Would Not Engage' ? (document.getElementById('field-wne-next-step')?.value || '') : '',
+          next_step_type:   outcomeKey === 'interested' ? nextStepType : outcomeKey === 'would_not_engage' ? (document.getElementById('field-wne-next-step')?.value || '') : '',
           timing:           timingVal,
           notes:            document.getElementById('field-notes')?.value || '',
           call_date:        document.getElementById('field-call-date')?.value || '',
@@ -1599,7 +1748,7 @@
           latestLogs[currentAccount.account_id] = { ...data, outcome };
           lastSubmittedData = data;
           showConfirm();
-          btn.textContent = 'Submit ✓';
+          btn.textContent = 'Save Interaction ✓';
           btn.disabled    = false;
           return;
         }
@@ -1625,7 +1774,7 @@
           : '⚠️ Something went wrong submitting. Please try again.';
         alert(msg);
       } finally {
-        btn.textContent = 'Submit ✓';
+        btn.textContent = 'Save Interaction ✓';
         btn.disabled    = false;
       }
     }
