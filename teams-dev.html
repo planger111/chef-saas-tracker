@@ -2252,6 +2252,12 @@
             showDashboard();
           }
         });
+        // Ensure dev banner shows version number in demo mode
+        const devBanner = document.getElementById('dev-env-banner');
+        if (devBanner) {
+          devBanner.style.display = 'block';
+          devBanner.textContent = `⚠️ TEAMS DEV  v${typeof APP_VERSION !== 'undefined' ? APP_VERSION : '2.1.0'}  —  DEMO MODE — Data: ChefSaaS-Dev`;
+        }
         showDemoMode();
       });
     } else {
