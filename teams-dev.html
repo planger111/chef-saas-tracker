@@ -1356,7 +1356,8 @@
       showScreen('screen-loading');
       try {
         // Only re-fetch logs if explicitly refreshing (e.g. after submitting)
-        if (forceRefresh) {
+        // Skip SharePoint fetch in demo mode — latestLogs is already up to date in memory
+        if (forceRefresh && !window._demoMode) {
           const email = currentUser ? currentUser.email : null;
           const accountIds = repAccounts.map(a => a.account_id);
           const logs = await getLatestLogsForRep(email, accountIds);
@@ -1723,8 +1724,8 @@
           account_name:     currentAccount.account_name || currentAccount.name || currentAccount.account_id,
           play_id:          (currentPlay || {}).play_id   || currentAccount.play_id   || '',
           play_name:        (currentPlay || {}).play_name || currentAccount.play_name || '',
-          rep_email:        currentUser.email,
-          rep_name:         currentUser.name,
+          rep_email:        currentUser ? currentUser.email : 'demo@demo.com',
+          rep_name:         currentUser ? currentUser.name  : 'Demo User',
           interaction_type: interactionType,
           outcome,
           reason_label:     reasonLabel,
@@ -1741,10 +1742,10 @@
           setTimeout(() => reject(new Error('timeout')), 25000)
         );
 
-        // Demo mode: write to demo_log.csv instead of real motion_log
+        // Demo mode: update in-memory state only — nothing written to SharePoint
         if (window._demoMode) {
-          try { await appendToDemoLog(data); } catch(e) { console.warn('Demo log write failed', e); }
-          lastPointsEarned = 0;
+          lastPointsEarned = 5;
+          totalPoints      = (totalPoints || 0) + lastPointsEarned;
           latestLogs[currentAccount.account_id] = { ...data, outcome };
           lastSubmittedData = data;
           showConfirm();
