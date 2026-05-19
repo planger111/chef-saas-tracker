@@ -628,17 +628,31 @@
       document.getElementById('tab-btn-untouched').style.borderBottomColor = isSnap ? 'transparent' : '#e65c00';
       document.getElementById('tab-btn-untouched').style.color = isSnap ? '#64748b' : '#e65c00';
       document.getElementById('tab-btn-untouched').style.fontWeight = isSnap ? '600' : '700';
-      if (!isSnap) renderUntouchedByRep();
+      if (!isSnap) renderUntouchedByRep(null);
     }
 
-    function renderUntouchedByRep() {
+    function renderUntouchedByRep(filterPlayId) {
       const el = document.getElementById('report-untouched');
       if (!el) return;
+
+      const activePlays = allPlays.filter(p => p.active !== false);
+      const playsToShow = filterPlayId ? activePlays.filter(p => p.play_id === filterPlayId) : activePlays;
+
+      // Play filter bar
+      const filterBar = `
+        <div class="no-print" style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
+          <label style="font-size:13px;font-weight:600;color:#374151;">Filter by Play:</label>
+          <select id="untouched-play-filter" onchange="renderUntouchedByRep(this.value||null)"
+            style="padding:7px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
+            <option value="">All Active Plays</option>
+            ${activePlays.map(p => `<option value="${p.play_id}" ${filterPlayId===p.play_id?'selected':''}>${esc(p.play_name)}</option>`).join('')}
+          </select>
+        </div>`;
 
       // Build a map: repEmail → { name, plays: { playId: { playName, untouched: [], touched: N, total: N } } }
       const repMap = {};
 
-      allPlays.filter(p => p.active !== false).forEach(play => {
+      playsToShow.forEach(play => {
         const playAssignments = allAssignments.filter(a => a.play_id === play.play_id);
         playAssignments.forEach(acct => {
           const rep = (acct.rep_email || '').toLowerCase();
@@ -650,8 +664,6 @@
           repMap[rep].plays[play.play_id].total++;
           repMap[rep].totalAccounts++;
 
-          // Check if touched — look in currentPlayLogs (only loaded for current play)
-          // So we use allAssignments + check if account has any log
           const hasLog = (acct.last_outcome || acct.last_touched || acct.engagement_count > 0);
           if (!hasLog) {
             repMap[rep].plays[play.play_id].untouched.push(acct.account_name || acct.account_id || '—');
@@ -664,15 +676,16 @@
       const totalUntouched = reps.reduce((s, r) => s + r.totalUntouched, 0);
 
       if (reps.length === 0) {
-        el.innerHTML = `<div style="text-align:center;padding:60px;color:#64748b;font-size:15px;">✅ No untouched accounts found across any active play.</div>`;
+        el.innerHTML = filterBar + `<div style="text-align:center;padding:60px;color:#64748b;font-size:15px;">✅ No untouched accounts found${filterPlayId ? ' for this play' : ' across any active play'}.</div>`;
         return;
       }
 
+            const playLabel = filterPlayId ? (playsToShow[0]?.play_name || filterPlayId) : 'All Active Plays';
       const now = new Date();
-      let html = `
+      let html = filterBar + `
         <div class="snap-title">
           <h1>🔴 Untouched Accounts by Rep</h1>
-          <div class="snap-date">All Active Plays · ${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
+          <div class="snap-date">${esc(playLabel)} · ${now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
         </div>
         <div class="card" style="margin-bottom:20px;">
           <div class="kpi-grid">
