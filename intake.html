@@ -254,8 +254,11 @@
   function makeSubSection(sid, sectionKey, label, items) {
     if (!items || items.length === 0) return '';
     const checkboxes = items.map(r => `
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:4px;cursor:pointer;">
-        <input type="checkbox" data-field="${sectionKey}" value="${escHtml(r)}" checked style="width:14px;height:14px;"> ${escHtml(r)}
+      <label style="display:flex;align-items:center;gap:6px;font-size:13px;margin-bottom:4px;">
+        <input type="checkbox" data-field="${sectionKey}" checked style="width:14px;height:14px;flex-shrink:0;">
+        <input type="text" data-field="${sectionKey}" value="${escHtml(r)}"
+          style="flex:1;border:none;border-bottom:1px solid #e5e7eb;background:transparent;padding:2px 4px;font-size:13px;outline:none;min-width:0;"
+          onfocus="this.style.borderBottomColor='#6366f1'" onblur="this.style.borderBottomColor='#e5e7eb'">
       </label>`).join('');
     return `
       <div style="margin-bottom:12px;">
