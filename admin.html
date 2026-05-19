@@ -527,6 +527,24 @@
             <p style="font-size:11px;color:#9ca3af;margin:10px 0 0;">Both actions require Owner role + typed confirmation. Go to the Snapshots tab to browse and restore any prior snapshot.</p>
           </div>
         </details>
+        <!-- Pending Approval Section -->
+        <div id="pending-approval-section" style="display:none;margin-bottom:20px;">
+          <div style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:11px 16px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px 10px 0 0;user-select:none;"
+               onclick="togglePendingSection()">
+            <span id="pending-toggle-arrow" style="font-size:11px;color:#92400e;transition:transform 0.2s;">▼</span>
+            <span style="font-weight:700;color:#92400e;font-size:14px;">⏳ Pending Approval</span>
+            <span id="pending-count-badge" style="background:#f59e0b;color:#fff;border-radius:20px;padding:1px 9px;font-size:12px;font-weight:700;"></span>
+            <span style="flex:1;"></span>
+            <span style="font-size:12px;color:#a16207;">Review and approve or reject submitted plays</span>
+          </div>
+          <div id="pending-approval-body" style="border:1px solid #fde68a;border-top:none;border-radius:0 0 10px 10px;overflow:hidden;">
+            <div style="display:grid;grid-template-columns:1.5fr 1fr 1.2fr 1fr auto;gap:10px;padding:7px 14px;background:#fef9c3;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:#92400e;border-bottom:1px solid #fde68a;">
+              <span>Play Name</span><span>Product</span><span>Submitted By</span><span>Submitted</span><span>Actions</span>
+            </div>
+            <div id="pending-approval-rows"></div>
+          </div>
+        </div>
+
         <div id="plays-table-wrap" style="overflow-x:auto;">
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             <thead>
@@ -1599,6 +1617,9 @@
         const allAssignments = assignmentsText ? (JSON.parse(assignmentsText).assignments || []) : [];
         const plays = (playsConfig.plays || []);
 
+        // Render pending approval section
+        renderPendingPlays(plays);
+
         // Populate quick-action picker
         _quickPlays = plays;
         const quickSel = document.getElementById('plays-tab-quick-play');
@@ -1964,6 +1985,71 @@
         btn.disabled = false;
         btn.textContent = '💾 Save Changes';
         btn.style.background = '#0078d4';
+      }
+    }
+
+    // ── Pending Approval ──────────────────────────────────────────────────────
+
+    function renderPendingPlays(plays) {
+      const pending = (plays || []).filter(p => p.status === 'pending_approval');
+      const section = document.getElementById('pending-approval-section');
+      const badge   = document.getElementById('pending-count-badge');
+      const rows    = document.getElementById('pending-approval-rows');
+      if (!section || !rows) return;
+      if (!pending.length) { section.style.display = 'none'; return; }
+      badge.textContent = pending.length;
+      section.style.display = 'block';
+      rows.innerHTML = pending.map(p => `
+        <div style="display:grid;grid-template-columns:1.5fr 1fr 1.2fr 1fr auto;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid #fef3c7;font-size:13px;background:#fffdf5;">
+          <div style="font-weight:600;color:#1a1a2e;">${escHtml(p.play_name)}</div>
+          <div>${escHtml(p.product || '—')}</div>
+          <div style="color:#374151;">${escHtml(p.submitted_by_name || '—')}<br><span style="font-size:11px;color:#9ca3af;">${escHtml(p.submitted_by_email || '')}</span></div>
+          <div style="color:#6b7280;font-size:12px;">${p.submitted_at ? new Date(p.submitted_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—'}</div>
+          <div style="display:flex;gap:6px;flex-shrink:0;">
+            <button onclick="approvePendingPlay('${escHtml(p.play_id)}')"
+              style="background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;">✅ Approve</button>
+            <button onclick="rejectPendingPlay('${escHtml(p.play_id)}','${escHtml(p.play_name)}')"
+              style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;border-radius:5px;padding:5px 10px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;">❌ Reject</button>
+          </div>
+        </div>`).join('');
+    }
+
+    function togglePendingSection() {
+      const body  = document.getElementById('pending-approval-body');
+      const arrow = document.getElementById('pending-toggle-arrow');
+      if (!body) return;
+      const open = body.style.display !== 'none';
+      body.style.display    = open ? 'none' : '';
+      arrow.style.transform = open ? 'rotate(-90deg)' : '';
+    }
+
+    async function approvePendingPlay(playId) {
+      try {
+        const config = await getPlaysConfig();
+        const play = (config.plays || []).find(p => p.play_id === playId);
+        if (!play) { alert('Play not found'); return; }
+        play.active = true;
+        play.status = 'active';
+        await savePlaysConfig(config);
+        try { await logActivity(currentUser, 'play_approved', `Approved play: ${play.play_name} (${playId})`); } catch(e) {}
+        showToast('Play Approved', play.play_name + ' is now active.', 'success');
+        loadPlaysTab();
+      } catch(e) {
+        showToast('Error', 'Failed to approve: ' + e.message, 'error');
+      }
+    }
+
+    async function rejectPendingPlay(playId, playName) {
+      if (!confirm(`Reject and delete "${playName}"?\n\nThis cannot be undone.`)) return;
+      try {
+        const config = await getPlaysConfig();
+        config.plays = (config.plays || []).filter(p => p.play_id !== playId);
+        await savePlaysConfig(config);
+        try { await logActivity(currentUser, 'play_rejected', `Rejected play: ${playName} (${playId})`); } catch(e) {}
+        showToast('Play Rejected', playName + ' has been removed.', 'success');
+        loadPlaysTab();
+      } catch(e) {
+        showToast('Error', 'Failed to reject: ' + e.message, 'error');
       }
     }
 

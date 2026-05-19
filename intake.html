@@ -8,13 +8,13 @@
   <link rel="stylesheet" href="styles.css" />
   <style>
     body { background:#f5f7fa; margin:0; font-family:system-ui,-apple-system,sans-serif; }
-    .intake-wrap { max-width:640px; margin:0 auto; padding:20px 16px 60px; }
+    .intake-wrap { max-width:700px; margin:0 auto; padding:20px 16px 80px; }
     .intake-header { text-align:center; margin-bottom:24px; }
     .intake-header h1 { font-size:22px; color:#1a1a2e; margin:0 0 4px; }
     .intake-header p { font-size:14px; color:#64748b; margin:0; }
     .intake-card { background:#fff; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.06); padding:24px; margin-bottom:16px; }
     .intake-card h2 { font-size:16px; color:#1a1a2e; margin:0 0 16px; border-bottom:1px solid #f0f0f0; padding-bottom:8px; }
-    .intake-field { margin-bottom:14px; }
+    .intake-field { margin-bottom:16px; }
     .intake-field label { display:block; font-size:13px; font-weight:600; color:#374151; margin-bottom:4px; }
     .intake-field label .req { color:#dc2626; }
     .intake-field input, .intake-field select, .intake-field textarea {
@@ -26,15 +26,15 @@
     }
     .intake-field textarea { resize:vertical; min-height:80px; }
     .intake-field .hint { font-size:12px; color:#9ca3af; margin-top:3px; }
-    .intake-section-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#6366f1; margin-bottom:12px; }
     .intake-submit-wrap { text-align:center; margin-top:24px; }
-    .intake-submit { padding:14px 40px; background:#6366f1; color:#fff; border:none; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; }
+    .intake-submit { padding:14px 48px; background:#6366f1; color:#fff; border:none; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; }
     .intake-submit:hover { background:#4f46e5; }
     .intake-submit:disabled { background:#a5b4fc; cursor:not-allowed; }
     .intake-status { text-align:center; margin-top:12px; font-size:14px; }
     .intake-login { text-align:center; padding:80px 20px; }
     .intake-login button { padding:12px 32px; background:#6366f1; color:#fff; border:none; border-radius:8px; font-size:15px; font-weight:600; cursor:pointer; }
-    @media(max-width:480px) { .intake-wrap { padding:12px 10px 40px; } .intake-card { padding:16px; } }
+    .intake-login button:hover { background:#4f46e5; }
+    @media(max-width:480px) { .intake-wrap { padding:12px 10px 60px; } .intake-card { padding:16px; } }
   </style>
 </head>
 <body>
@@ -51,13 +51,13 @@
   <div id="intake-form" style="display:none;">
     <div class="intake-header">
       <h1>📋 Sales Play Intake Form</h1>
-      <p>Submit a play brief for the sales team to review and launch.</p>
+      <p>Submit a new play for Phil or Kathy to review and approve.</p>
     </div>
 
     <!-- Process banner -->
     <div style="background:#f5f3ff;border:1px solid #c4b5fd;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:13px;color:#4c1d95;line-height:1.6;">
       <strong style="font-size:14px;">📋 How this works</strong><br>
-      Fill out the form below and submit. Your brief goes to <strong>Kathy Faria</strong> for review — she'll reach out to discuss, finalize the account list, and coordinate launch. Questions? <a href="mailto:faria@progress.com" style="color:#6366f1;font-weight:600;">faria@progress.com</a>
+      Fill out the form below and submit. Your play will be sent to <strong>Phil or Kathy</strong> for review. Once approved it becomes live in the tracker. Questions? <a href="mailto:faria@progress.com" style="color:#6366f1;font-weight:600;">faria@progress.com</a>
     </div>
 
     <!-- Submitter identity (auto-filled, read-only) -->
@@ -70,6 +70,10 @@
     <!-- Section 1: The Play -->
     <div class="intake-card">
       <h2>1. The Play</h2>
+      <div class="intake-field">
+        <label for="intake-play-name">Play Name <span class="req">*</span></label>
+        <input type="text" id="intake-play-name" placeholder="e.g. Chef SaaS Migration Q3" />
+      </div>
       <div class="intake-field">
         <label for="intake-product">Product / Solution <span class="req">*</span></label>
         <select id="intake-product">
@@ -86,12 +90,8 @@
         <input type="text" id="intake-product-other" placeholder="Enter product name" />
       </div>
       <div class="intake-field">
-        <label for="intake-play-name">Play Name <span class="req">*</span></label>
-        <input type="text" id="intake-play-name" placeholder="e.g. INFRA Migration Q3" />
-      </div>
-      <div class="intake-field">
-        <label for="intake-pitch">Elevator Pitch <span class="req">*</span></label>
-        <textarea id="intake-pitch" placeholder="In 2-3 sentences, what is this play and what problem does it solve?"></textarea>
+        <label for="intake-pitch">Description / Elevator Pitch <span class="req">*</span></label>
+        <textarea id="intake-pitch" rows="3" placeholder="In 2-3 sentences, what is this play and what problem does it solve?"></textarea>
       </div>
     </div>
 
@@ -99,84 +99,74 @@
     <div class="intake-card">
       <h2>2. The Customer</h2>
       <div class="intake-field">
-        <label for="intake-customer-value">Why Does the Customer Care? <span class="req">*</span></label>
-        <textarea id="intake-customer-value" placeholder="What outcome does the customer get? Why would they say yes?"></textarea>
-      </div>
-      <div class="intake-field">
         <label for="intake-icp">Ideal Customer Profile (ICP)</label>
-        <textarea id="intake-icp" placeholder="Industry, company size, product usage, pain points..."></textarea>
+        <textarea id="intake-icp" rows="2" placeholder="Industry, company size, product usage, pain points... (e.g. Mid-market Chef customers running 3.x)"></textarea>
       </div>
       <div class="intake-field">
-        <label for="intake-persona">Target Persona</label>
-        <input type="text" id="intake-persona" placeholder="e.g. IT Director, DevOps Lead, CTO" />
+        <label for="intake-persona">Target Persona / Buyer</label>
+        <textarea id="intake-persona" rows="2" placeholder="e.g. IT Director, DevOps Lead, Infrastructure Manager"></textarea>
       </div>
       <div class="intake-field">
-        <label for="intake-competitive">Competitive Positioning</label>
-        <textarea id="intake-competitive" placeholder="How do we differentiate? What objections will come up?"></textarea>
+        <label for="intake-why">Why It Matters / Why They Care <span class="req">*</span></label>
+        <textarea id="intake-why" rows="3" placeholder="What outcome does the customer get? Why would they say yes?"></textarea>
       </div>
     </div>
 
-    <!-- Section 3: Goals & Outcomes -->
+    <!-- Section 3: Value & Differentiation -->
     <div class="intake-card">
-      <h2>3. Goals &amp; Outcomes</h2>
-      <p style="font-size:13px;color:#64748b;margin:0 0 14px;">Configure the outcomes reps can log. Click any outcome to expand it and customize the reasons, next steps, and timing options reps will see.</p>
+      <h2>3. Value &amp; Differentiation</h2>
+      <div class="intake-field">
+        <label for="intake-valueprops">Key Value Propositions <span style="font-weight:400;color:#9ca3af;">(one per line)</span></label>
+        <textarea id="intake-valueprops" rows="4" placeholder="Security patches included&#10;SaaS — no infrastructure to manage&#10;Faster upgrades"></textarea>
+      </div>
+      <div class="intake-field">
+        <label for="intake-competitive">Competitive Positioning</label>
+        <textarea id="intake-competitive" rows="2" placeholder="How do we differentiate? What objections will come up? (e.g. vs Puppet, Ansible…)"></textarea>
+      </div>
+    </div>
+
+    <!-- Section 4: Rep Enablement -->
+    <div class="intake-card">
+      <h2>4. Rep Enablement</h2>
+      <div class="intake-field">
+        <label>Discovery Questions</label>
+        <div class="hint" style="margin-bottom:8px;">Questions reps should ask to uncover fit. Leave blank if unsure — admin can add later.</div>
+        <div id="kq-list" style="margin-bottom:8px;"></div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="kq-input" placeholder="e.g. What version are you running today?"
+            style="flex:1;padding:9px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
+          <button type="button" onclick="addKQ()"
+            style="background:#6366f1;color:#fff;border:none;padding:9px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">+ Add</button>
+        </div>
+      </div>
+      <div class="intake-field">
+        <label for="intake-instructions">Rep Instructions / Next Steps</label>
+        <textarea id="intake-instructions" rows="3" placeholder="What should the rep do during the call? What action should they take?"></textarea>
+      </div>
+    </div>
+
+    <!-- Section 5: Outcomes Config -->
+    <div class="intake-card">
+      <h2>5. Outcome Options</h2>
+      <p style="font-size:13px;color:#64748b;margin:0 0 14px;">Configure the outcomes reps can log. Click any outcome to expand and customize the reasons, next steps, and timing options reps will see.</p>
       <div id="intake-outcomes-container">
         <div style="font-size:13px;color:#9ca3af;">Loading outcome options…</div>
       </div>
     </div>
 
-    <!-- Section 4: Key Questions for Reps -->
-    <div class="intake-card">
-      <h2>4. Key Questions for Reps</h2>
-      <div id="kq-list" style="margin-bottom:10px;"></div>
-      <div style="display:flex;gap:8px;">
-        <input type="text" id="kq-input" placeholder="e.g. What's your current patching process?"
-          style="flex:1;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
-        <button onclick="addKQ()"
-          style="background:#6366f1;color:#fff;border:none;padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">+ Add</button>
-      </div>
-      <div class="hint" style="margin-top:6px;">Questions reps should ask to uncover fit. Leave blank if unsure — admin can add later.</div>
-    </div>
-
-    <!-- Section 5: Wrap-up -->
-    <div class="intake-card">
-      <h2>5. Wrap-up</h2>
-      <div class="intake-field">
-        <label for="intake-urgency">Timing / Urgency</label>
-        <select id="intake-urgency">
-          <option value="">— select —</option>
-          <option value="Immediate">Immediate — start this week</option>
-          <option value="Soon">Soon — within 2 weeks</option>
-          <option value="Planned">Planned — next quarter</option>
-          <option value="Exploring">Exploring — just an idea</option>
-        </select>
-      </div>
-      <div class="intake-field">
-        <label for="intake-target-count">Estimated Number of Target Accounts</label>
-        <input type="number" id="intake-target-count" min="1" max="500"
-          placeholder="e.g. 150"
-          style="width:100%;padding:10px 12px;font-size:15px;border:1px solid #d1d5db;border-radius:8px;">
-        <p style="font-size:12px;color:#94a3b8;margin:6px 0 0;">Recommended max: 300 accounts per play. Kathy Faria will follow up to collect the target account list after approval.</p>
-      </div>
-      <div class="intake-field">
-        <label for="intake-notes">Additional Notes</label>
-        <textarea id="intake-notes" placeholder="Collateral links, context, anything else for the sales team"></textarea>
-      </div>
-    </div>
-
     <div class="intake-submit-wrap">
-      <button class="intake-submit" id="btn-intake-submit" onclick="submitIntake()">📨 Submit Play Brief</button>
+      <button class="intake-submit" id="btn-intake-submit" onclick="submitIntake()">📨 Submit for Approval</button>
       <div class="intake-status" id="intake-status"></div>
     </div>
   </div>
 
   <!-- Success -->
-  <div id="intake-success" style="display:none;text-align:center;padding:60px 20px;">
-    <div style="font-size:48px;margin-bottom:16px;">✅</div>
-    <h2 style="color:#16a34a;margin:0 0 8px;">Play Brief Submitted!</h2>
-    <p style="color:#64748b;font-size:14px;margin:0 0 8px;">Your brief is under review. Once approved, <strong>Kathy Faria</strong> will reach out to coordinate the target account list.</p>
-    <p style="color:#94a3b8;font-size:13px;margin:0 0 24px;">Questions? Contact <a href="mailto:faria@progress.com" style="color:#6366f1;">faria@progress.com</a></p>
-    <button onclick="resetForm()" style="padding:10px 24px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;">Submit Another</button>
+  <div id="intake-success" style="display:none;text-align:center;padding:80px 20px;">
+    <div style="font-size:56px;margin-bottom:16px;">✅</div>
+    <h2 style="color:#16a34a;margin:0 0 10px;font-size:24px;">Play Submitted for Approval!</h2>
+    <p style="color:#374151;font-size:15px;margin:0 0 8px;">Your play has been submitted for review. Phil or Kathy will approve it shortly.</p>
+    <p style="color:#94a3b8;font-size:13px;margin:0 0 28px;">Once approved it will go live in the tracker. Questions? <a href="mailto:faria@progress.com" style="color:#6366f1;">faria@progress.com</a></p>
+    <button onclick="resetForm()" style="padding:11px 28px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;">Submit Another Play</button>
   </div>
 
 </div>
@@ -185,17 +175,16 @@
   INFRA SalesPlay Tracker — Progress Software Proprietary &amp; Confidential &nbsp;·&nbsp; Progress employees only
 </footer>
 
-<script src="msal-browser.js?v=2"></script>
+<script src="msal-browser.js?v=10"></script>
 <script src="config.js?v=11"></script>
 <script src="msal-auth.js?v=12"></script>
 <script src="graph-api.js?v=11"></script>
 <script>
-  // ── escHtml ──
   function escHtml(s) {
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  // ── Key Questions ──
+  // ── Discovery Questions ──
   let _kqs = [];
   function addKQ() {
     const inp = document.getElementById('kq-input');
@@ -216,7 +205,7 @@
     list.innerHTML = _kqs.map((q, i) =>
       `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f3f4f6;">
          <span style="flex:1;font-size:13px;">• ${escHtml(q)}</span>
-         <button onclick="removeKQ(${i})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px;padding:0 4px;">×</button>
+         <button type="button" onclick="removeKQ(${i})" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:16px;padding:0 4px;">×</button>
        </div>`
     ).join('');
   }
@@ -250,7 +239,6 @@
         const global = (opts.response_sets||[]).find(s => s.response_set_id === 'GLOBAL_DEFAULTS');
         if (global && global.outcome_config) cfg = global.outcome_config;
         else if (global && global.outcome_map) {
-          // upgrade old format
           cfg = {};
           Object.entries(global.outcome_map).forEach(([k,v]) => {
             cfg[k] = { reasons: Array.isArray(v) ? v : (v.reasons || []) };
@@ -393,16 +381,17 @@
     const statusEl = document.getElementById('intake-status');
     const btn = document.getElementById('btn-intake-submit');
 
-    const product = document.getElementById('intake-product').value === 'Other'
+    const productRaw = document.getElementById('intake-product').value;
+    const product = productRaw === 'Other'
       ? (document.getElementById('intake-product-other').value.trim() || 'Other')
-      : document.getElementById('intake-product').value;
+      : productRaw;
     const playName = document.getElementById('intake-play-name').value.trim();
     const pitch = document.getElementById('intake-pitch').value.trim();
-    const customerValue = document.getElementById('intake-customer-value').value.trim();
+    const whyMatters = document.getElementById('intake-why').value.trim();
     const submitterName = document.getElementById('intake-submitter-name').value.trim();
     const submitterEmail = document.getElementById('intake-submitter-email').value.trim();
 
-    if (!product || !playName || !pitch || !customerValue) {
+    if (!product || !playName || !pitch || !whyMatters) {
       statusEl.innerHTML = '<span style="color:#dc2626;">Please fill in all required fields (*).</span>';
       return;
     }
@@ -410,56 +399,58 @@
     btn.disabled = true;
     statusEl.innerHTML = '<span style="color:#6366f1;">⏳ Submitting…</span>';
 
-    const brief = {
-      id: 'brief_' + Date.now() + '_' + Math.random().toString(36).substr(2,6),
-      submitted_at: new Date().toISOString(),
-      status: 'New',
-      submitter_name: submitterName,
-      submitter_email: submitterEmail,
-      product,
+    const playId = playName.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') + '-' + Date.now().toString(36);
+    const outcomesConfig = getOutcomesConfig();
+
+    const play = {
+      play_id: playId,
       play_name: playName,
-      pitch,
-      customer_value: customerValue,
+      product: product,
+      description: pitch,
+      elevator_pitch: pitch,
       icp: document.getElementById('intake-icp').value.trim(),
       persona: document.getElementById('intake-persona').value.trim(),
+      target_persona: document.getElementById('intake-persona').value.trim(),
+      why_matters: whyMatters,
+      why_it_matters: whyMatters,
+      value_props: document.getElementById('intake-valueprops').value.split('\n').map(s=>s.trim()).filter(Boolean),
       competitive: document.getElementById('intake-competitive').value.trim(),
-      outcomes_intake: getOutcomesConfig(),
+      competitive_positioning: document.getElementById('intake-competitive').value.trim(),
+      discovery_questions: [..._kqs],
       key_questions: [..._kqs],
-      urgency: document.getElementById('intake-urgency').value,
-      target_account_count: parseInt(document.getElementById('intake-target-count').value || '0', 10) || null,
-      notes: document.getElementById('intake-notes').value.trim(),
-      manager_notes: '',
-      reviewed_by: ''
+      rep_instructions: document.getElementById('intake-instructions').value.trim(),
+      instructions: document.getElementById('intake-instructions').value.trim(),
+      active: false,
+      status: 'pending_approval',
+      submitted_by_name: submitterName,
+      submitted_by_email: submitterEmail,
+      submitted_at: new Date().toISOString(),
+      outcomes_intake: outcomesConfig,
+      config: { outcomes: outcomesConfig }
     };
 
     try {
-      let briefs = { submissions: [] };
-      try {
-        const existing = await getFileText(SP_ROOT + '/play_briefs.json');
-        if (existing) briefs = JSON.parse(existing);
-        if (!briefs.submissions) briefs.submissions = [];
-      } catch(e) {}
-      briefs.submissions.push(brief);
-      await writeJsonFile('play_briefs.json', briefs);
+      const playsConfig = await getPlaysConfig();
+      playsConfig.plays = playsConfig.plays || [];
+      playsConfig.plays.push(play);
+      await savePlaysConfig(playsConfig);
       document.getElementById('intake-form').style.display = 'none';
       document.getElementById('intake-success').style.display = '';
     } catch(err) {
       statusEl.innerHTML = '<span style="color:#dc2626;">❌ Failed to submit. Please try again.</span>';
-    } finally {
       btn.disabled = false;
-      statusEl.innerHTML = statusEl.innerHTML.includes('❌') ? statusEl.innerHTML : '';
     }
   }
 
   function resetForm() {
     document.getElementById('intake-success').style.display = 'none';
     document.getElementById('intake-form').style.display = '';
-    ['intake-play-name','intake-pitch','intake-customer-value','intake-icp',
-     'intake-persona','intake-competitive','intake-notes'].forEach(id => {
+    ['intake-play-name','intake-pitch','intake-icp','intake-persona',
+     'intake-why','intake-valueprops','intake-competitive','intake-instructions'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';
     });
     document.getElementById('intake-product').value = '';
-    document.getElementById('intake-urgency').value = '';
+    document.getElementById('intake-product-other-wrap').style.display = 'none';
     _kqs = []; renderKQs();
     document.getElementById('intake-status').innerHTML = '';
     loadOutcomes();
