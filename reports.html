@@ -628,44 +628,53 @@
       document.getElementById('tab-btn-untouched').style.borderBottomColor = isSnap ? 'transparent' : '#e65c00';
       document.getElementById('tab-btn-untouched').style.color = isSnap ? '#64748b' : '#e65c00';
       document.getElementById('tab-btn-untouched').style.fontWeight = isSnap ? '600' : '700';
-      if (!isSnap) renderUntouchedByRep(null);
+      if (!isSnap) { showScreen('screen-loading'); renderUntouchedByRep(null).then(() => showScreen('screen-reports')); }
     }
 
-    function renderUntouchedByRep(filterPlayId) {
+    async function renderUntouchedByRep(filterPlayId) {
       const el = document.getElementById('report-untouched');
       if (!el) return;
 
       const activePlays = allPlays.filter(p => p.active !== false);
       const playsToShow = filterPlayId ? activePlays.filter(p => p.play_id === filterPlayId) : activePlays;
 
-      // Play filter bar
       const filterBar = `
         <div class="no-print" style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap;">
           <label style="font-size:13px;font-weight:600;color:#374151;">Filter by Play:</label>
-          <select id="untouched-play-filter" onchange="renderUntouchedByRep(this.value||null)"
+          <select id="untouched-play-filter" onchange="showScreen('screen-loading');renderUntouchedByRep(this.value||null).then(()=>showScreen('screen-reports'))"
             style="padding:7px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;">
             <option value="">All Active Plays</option>
             ${activePlays.map(p => `<option value="${p.play_id}" ${filterPlayId===p.play_id?'selected':''}>${esc(p.play_name)}</option>`).join('')}
           </select>
         </div>`;
 
-      // Build a map: repEmail → { name, plays: { playId: { playName, untouched: [], touched: N, total: N } } }
-      const repMap = {};
+      // Load engagement CSVs for all plays being shown — build set of touched account_ids per play
+      const touchedByPlay = {}; // playId → Set of account_ids that have engagements
+      await Promise.all(playsToShow.map(async play => {
+        const safePid = play.play_id.replace(/[^a-z0-9]/gi, '_');
+        try {
+          const text = await getFileText(SP_ROOT + '/' + safePid + '_engagements.csv');
+          const logs = text ? parseCSV(text) : [];
+          touchedByPlay[play.play_id] = new Set(logs.map(l => l.account_id).filter(Boolean));
+        } catch (e) {
+          touchedByPlay[play.play_id] = new Set();
+        }
+      }));
 
+      // Build rep map using real engagement data
+      const repMap = {};
       playsToShow.forEach(play => {
-        const playAssignments = allAssignments.filter(a => a.play_id === play.play_id);
+        const touched = touchedByPlay[play.play_id] || new Set();
+        const playAssignments = allAssignments.filter(a => a.play_id === play.play_id && a.active_flag !== false);
         playAssignments.forEach(acct => {
-          const rep = (acct.rep_email || '').toLowerCase();
+          const rep = (acct.rep_sso_login || acct.rep_email || '').toLowerCase();
           const repName = acct.rep_name || acct.rep_email || 'Unknown';
           if (!rep) return;
           if (!repMap[rep]) repMap[rep] = { name: repName, email: rep, totalUntouched: 0, totalAccounts: 0, plays: {} };
           if (!repMap[rep].plays[play.play_id]) repMap[rep].plays[play.play_id] = { playName: play.play_name, untouched: [], total: 0 };
-
           repMap[rep].plays[play.play_id].total++;
           repMap[rep].totalAccounts++;
-
-          const hasLog = (acct.last_outcome || acct.last_touched || acct.engagement_count > 0);
-          if (!hasLog) {
+          if (!touched.has(acct.account_id)) {
             repMap[rep].plays[play.play_id].untouched.push(acct.account_name || acct.account_id || '—');
             repMap[rep].totalUntouched++;
           }
@@ -680,7 +689,7 @@
         return;
       }
 
-            const playLabel = filterPlayId ? (playsToShow[0]?.play_name || filterPlayId) : 'All Active Plays';
+      const playLabel = filterPlayId ? (playsToShow[0]?.play_name || filterPlayId) : 'All Active Plays';
       const now = new Date();
       let html = filterBar + `
         <div class="snap-title">
@@ -691,7 +700,7 @@
           <div class="kpi-grid">
             <div class="kpi kr"><div class="kv">${totalUntouched}</div><div class="kl">Total Untouched</div></div>
             <div class="kpi"><div class="kv">${reps.length}</div><div class="kl">Reps with Gaps</div></div>
-            <div class="kpi"><div class="kv">${allPlays.filter(p=>p.active!==false).length}</div><div class="kl">Active Plays</div></div>
+            <div class="kpi"><div class="kv">${playsToShow.length}</div><div class="kl">Plays</div></div>
           </div>
         </div>
         <div class="card">
@@ -734,23 +743,18 @@
         </div>`;
 
       el.innerHTML = html;
+      // Store for CSV export
+      window._lastUntouchedReps = reps;
+      window._lastUntouchedPlayLabel = playLabel;
     }
 
     function exportUntouchedCSV() {
+      const reps = window._lastUntouchedReps || [];
       const rows = [['Rep Name','Rep Email','Play','Untouched Accounts','Total Assigned','% Untouched']];
-      allPlays.filter(p => p.active !== false).forEach(play => {
-        const playAssignments = allAssignments.filter(a => a.play_id === play.play_id);
-        const repMap = {};
-        playAssignments.forEach(acct => {
-          const rep = (acct.rep_email || '').toLowerCase();
-          if (!rep) return;
-          if (!repMap[rep]) repMap[rep] = { name: acct.rep_name || rep, untouched: 0, total: 0 };
-          repMap[rep].total++;
-          if (!(acct.last_outcome || acct.last_touched || acct.engagement_count > 0)) repMap[rep].untouched++;
-        });
-        Object.entries(repMap).filter(([,v]) => v.untouched > 0).forEach(([email, v]) => {
-          const pct = v.total > 0 ? Math.round((v.untouched / v.total) * 100) : 0;
-          rows.push([v.name, email, play.play_name, v.untouched, v.total, pct + '%']);
+      reps.forEach(r => {
+        Object.values(r.plays).filter(p => p.untouched.length > 0).forEach(p => {
+          const pct = p.total > 0 ? Math.round((p.untouched.length / p.total) * 100) : 0;
+          rows.push([r.name, r.email, p.playName, p.untouched.length, p.total, pct + '%']);
         });
       });
       const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
