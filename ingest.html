@@ -477,19 +477,17 @@
       log('err', 'Not authenticated. Please sign in first.');
       return false;
     }
-    const candidates = currentUser.emails || [(currentUser.email || currentUser.username || '').toLowerCase()];
-    const role = candidates.map(e => (CONFIG.ADMIN_ROLES || {})[e.toLowerCase()]).find(r => r);
-    if (!role) {
-      log('err', `Access denied. Ingest requires admin permissions. Detected: ${candidates.join(', ')}`);
-      return false;
-    }
-    return true;
+    return true; // any authenticated Progress employee may submit a play
   }
 
   function getIngestRole() {
     if (!currentUser) return null;
     const candidates = currentUser.emails || [(currentUser.email || currentUser.username || '').toLowerCase()];
-    return candidates.map(e => (CONFIG.ADMIN_ROLES || {})[e.toLowerCase()]).find(r => r) || null;
+    // Explicit role in ADMIN_ROLES wins; any @progress.com email gets product role by default
+    const explicit = candidates.map(e => (CONFIG.ADMIN_ROLES || {})[e.toLowerCase()]).find(r => r);
+    if (explicit) return explicit;
+    const isProgress = candidates.some(e => e.toLowerCase().endsWith('@progress.com'));
+    return isProgress ? 'product' : null;
   }
 
   // Hide account upload section for product role — they can configure plays but not assign accounts
