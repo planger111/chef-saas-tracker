@@ -46,6 +46,9 @@ const CONFIG = (() => {
       'kathy.faria@progress.com':      'manager',
       'scheaney@progress.com':         'manager',
       'sara.scheaney@progress.com':    'manager',
+      'joseph.kuderer@progress.com':   'product',
+      'joe.kuderer@progress.com':      'product',
+      'jkuderer@progress.com':         'product',
     },
 
     // Leave these as-is
